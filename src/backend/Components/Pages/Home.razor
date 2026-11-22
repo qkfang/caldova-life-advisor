@@ -1,0 +1,332 @@
+@page "/"
+@using System.Text.RegularExpressions
+
+<PageTitle>Wealth Team in a Day — Caldova Wealth</PageTitle>
+
+<section class="home-hero" aria-labelledby="home-hero-title">
+    <div class="home-hero-copy">
+        <div class="hero-eyebrow">Caldova Wealth · Client Operations</div>
+        <h1 id="home-hero-title">Wealth Team <span class="hl">in a Day</span></h1>
+        <p class="hero-lead">
+            Eight specialist AI agents work Caldova's member requests. Each one checks, drafts and
+            recommends — a person approves.
+        </p>
+    </div>
+
+    <aside class="hero-board" aria-label="Member scenarios">
+        <div class="hero-board-head">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span>Member scenarios</span>
+            <span class="hero-board-count">@ScenarioCatalog.All.Count cases</span>
+        </div>
+        <ul class="hero-board-list">
+            @foreach (var scenario in ScenarioCatalog.All)
+            {
+                <li>
+                    <a href="@($"scenarios/{scenario.Id}")">
+                        <span class="hb-icon" aria-hidden="true">@scenario.Icon</span>
+                        <span class="hb-body">
+                            <span class="hb-name">@scenario.Customer</span>
+                            <span class="hb-meta">@scenario.ShortTitle · @scenario.CaseNumber</span>
+                        </span>
+                        <span class="hb-status @StatusClass(scenario.Outcome)">@CleanOutcome(scenario.Outcome)</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </aside>
+</section>
+
+<section id="agents" class="home-section" aria-labelledby="agents-title">
+    <div class="section-head">
+        <h2 id="agents-title">AI agents</h2>
+        <p>Open an agent to run it live.</p>
+    </div>
+    <div class="agent-grid">
+        @foreach (var (agent, index) in AgentCatalog.All.Select((a, i) => (a, i + 1)))
+        {
+            <a class="agent-card" href="@($"agents/{agent.Id}")" style="--accent: @agent.Accent">
+                <div class="agent-card-top">
+                    <span class="agent-card-icon" aria-hidden="true">@agent.Icon<span class="agent-card-num">@index</span></span>
+                    <span class="agent-card-dept">@agent.Department</span>
+                </div>
+                <h3>@agent.Name</h3>
+                <div class="agent-card-persona">@agent.Persona</div>
+                <p>@agent.Tagline</p>
+                <span class="agent-card-cta">Open agent <span aria-hidden="true">→</span></span>
+            </a>
+        }
+    </div>
+</section>
+
+@code {
+    // Outcomes end with a status emoji (e.g. "Account opened ✅"); the status pill carries that meaning instead.
+    private static string CleanOutcome(string outcome) =>
+        Regex.Replace(outcome, @"[\s\p{So}\p{Cs}\p{Mn}]+$", string.Empty);
+
+    private static string StatusClass(string outcome) =>
+        outcome.Contains("block", StringComparison.OrdinalIgnoreCase) ? "is-blocked"
+        : outcome.Contains("partial", StringComparison.OrdinalIgnoreCase) ? "is-partial"
+        : "is-done";
+}
+
+<style>
+    /* ── Hero — light, soft blue-to-ivory wash with navy type ─────────── */
+    .home-hero {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+        gap: 2.75rem;
+        align-items: center;
+        padding: 2.75rem 3rem;
+        border-radius: 24px;
+        color: var(--cw-text);
+        border: 1px solid var(--cw-line);
+        background:
+            radial-gradient(ellipse 55% 85% at 100% 0%, rgba(22, 96, 208, 0.12), transparent 62%),
+            linear-gradient(135deg, #eaf1fb 0%, #f4f7fc 55%, #fbf8f1 100%);
+    }
+    /* Concentric gold hairline rings — a quiet "private wealth" motif. */
+    .home-hero::before,
+    .home-hero::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .home-hero::before {
+        right: -220px;
+        bottom: -400px;
+        width: 640px;
+        height: 640px;
+        border: 1px solid rgba(201, 162, 74, 0.45);
+    }
+    .home-hero::after {
+        right: -340px;
+        bottom: -520px;
+        width: 880px;
+        height: 880px;
+        border: 1px solid rgba(201, 162, 74, 0.25);
+    }
+
+    .hero-eyebrow {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--cw-gold-ink);
+        margin-bottom: 1rem;
+    }
+
+    .home-hero h1 {
+        margin: 0 0 1rem 0;
+        font-size: clamp(2.1rem, 3.4vw, 3.15rem);
+        line-height: 1.1;
+        color: var(--cw-ink);
+        max-width: 40rem;
+    }
+    .home-hero h1 .hl {
+        color: var(--cw-gold-ink);
+        font-style: italic;
+    }
+
+    .hero-lead {
+        margin: 0;
+        max-width: 40rem;
+        font-size: 1.05rem;
+        line-height: 1.65;
+        color: var(--cw-text-2);
+    }
+
+    /* White "case board" card on the light hero. */
+    .hero-board {
+        background: #fff;
+        border: 1px solid var(--cw-line);
+        border-radius: 20px;
+        padding: 1.1rem 1.1rem 0.9rem 1.1rem;
+        box-shadow: var(--cw-shadow-lg);
+    }
+    .hero-board-head {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0 0.35rem 0.8rem 0.35rem;
+        border-bottom: 1px solid var(--cw-line);
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: var(--cw-ink);
+    }
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #12b76a;
+        box-shadow: 0 0 0 4px rgba(18, 183, 106, 0.16);
+    }
+    .hero-board-count {
+        margin-left: auto;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--cw-text-2);
+        background: var(--cw-surface-2);
+        border: 1px solid var(--cw-line);
+        border-radius: 999px;
+        padding: 0.15rem 0.6rem;
+    }
+    .hero-board-list {
+        list-style: none;
+        margin: 0.5rem 0 0.4rem 0;
+        padding: 0;
+    }
+    .hero-board-list a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.4rem;
+        border-radius: 12px;
+        color: var(--cw-ink);
+        text-decoration: none;
+        transition: background 0.15s ease;
+    }
+    .hero-board-list a:hover { background: var(--cw-surface-2); text-decoration: none; }
+    .hb-icon {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--cw-surface-2);
+        border: 1px solid var(--cw-line);
+        font-size: 1rem;
+    }
+    .hb-body { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+    .hb-name { font-weight: 600; font-size: 0.92rem; }
+    .hb-meta {
+        font-size: 0.76rem;
+        color: var(--cw-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .hb-status {
+        margin-left: auto;
+        flex-shrink: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 0.2rem 0.6rem;
+        white-space: nowrap;
+    }
+    .hb-status.is-done { color: var(--cw-success); background: #e6f4ee; }
+    .hb-status.is-partial { color: var(--cw-warn); background: #fdf1e1; }
+    .hb-status.is-blocked { color: var(--cw-danger); background: #fdeceb; }
+
+    /* ── Sections ─────────────────────────────────────────────────────── */
+    .home-section { margin-top: 2.75rem; }
+    .section-head { max-width: 46rem; margin-bottom: 1.25rem; }
+    .section-head h2 {
+        margin: 0 0 0.35rem 0;
+        font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+        line-height: 1.2;
+    }
+    .section-head p {
+        margin: 0;
+        color: var(--cw-muted);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* ── Agent cards ──────────────────────────────────────────────────── */
+    .agent-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+        gap: 1.1rem;
+    }
+    .agent-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 1.35rem 1.35rem 1.2rem 1.35rem;
+        background: #fff;
+        border: 1px solid var(--cw-line);
+        border-radius: 18px;
+        color: var(--cw-text);
+        text-decoration: none;
+        box-shadow: var(--cw-shadow-sm);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .agent-card:hover {
+        transform: translateY(-3px);
+        border-color: color-mix(in srgb, var(--cw-primary) 35%, var(--cw-line));
+        box-shadow: var(--cw-shadow-lg);
+        text-decoration: none;
+        color: var(--cw-text);
+    }
+    .agent-card-top { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 1rem; }
+    .agent-card-icon {
+        position: relative;
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        border-radius: 13px;
+        font-size: 1.35rem;
+        background: color-mix(in srgb, var(--accent) 12%, #fff);
+        border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+    /* Position in the request journey (onboarding → … → team leader). */
+    .agent-card-num {
+        position: absolute;
+        top: -7px;
+        left: -7px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--cw-navy-800);
+        color: #fff;
+        font-family: var(--cw-font-sans);
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1;
+        box-shadow: 0 0 0 2px #fff;
+    }
+    .agent-card-dept {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: color-mix(in srgb, var(--accent) 60%, var(--cw-ink));
+    }
+    .agent-card h3 {
+        margin: 0 0 0.2rem 0;
+        font-size: 1.12rem;
+        font-weight: 650;
+        color: var(--cw-ink);
+    }
+    .agent-card-persona { font-size: 0.84rem; color: var(--cw-muted); margin-bottom: 0.65rem; }
+    .agent-card p { margin: 0 0 1rem 0; font-size: 0.93rem; line-height: 1.55; color: var(--cw-text); }
+    .agent-card-cta {
+        margin-top: auto;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--cw-primary);
+    }
+    .agent-card-cta span { display: inline-block; transition: transform 0.15s ease; }
+    .agent-card:hover .agent-card-cta span { transform: translateX(3px); }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @@media (max-width: 1100px) {
+        .home-hero { grid-template-columns: minmax(0, 1fr); padding: 2.25rem 2rem; }
+    }
+    @@media (max-width: 720px) {
+        .home-hero { padding: 1.75rem 1.25rem; border-radius: 18px; }
+    }
+</style>

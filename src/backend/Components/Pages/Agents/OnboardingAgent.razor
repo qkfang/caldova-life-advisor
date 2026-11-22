@@ -1,0 +1,539 @@
+@page "/agents/onboarding"
+
+<PageTitle>Onboarding Agent — Wealth Team in a Day</PageTitle>
+
+<div class="agent-header" style="--accent: #0ea5e9">
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to operations office</a>
+    <div class="agent-header-row">
+        <div class="agent-header-icon">📥</div>
+        <div>
+            <div class="agent-header-dept">Onboarding &amp; Requests</div>
+            <h1>Onboarding Agent</h1>
+            <div class="agent-header-persona">Olivia — Onboarding &amp; Requests Officer</div>
+            <p class="tagline">Every application and request, set up right first time.</p>
+        </div>
+    </div>
+</div>
+
+<div class="agent-tab-scope" style="--accent: #0ea5e9">
+    <section class="panel intake-panel" style="--accent: #0ea5e9">
+        <!-- Step 1 — pick a sample inbound request -->
+        <div class="intake-step" data-step="1">
+            <div class="intake-step-head">
+                <span class="intake-step-num">1</span>
+                <h3>Pick a sample inbound request</h3>
+            </div>
+            <div class="intake-samples" id="intake-samples"></div>
+            <div class="intake-preview" id="intake-preview" hidden>
+                <div class="intake-preview-grid">
+                    <div>
+                        <div class="intake-preview-label">Email</div>
+                        <div class="intake-preview-meta">
+                            <div><span class="k">From</span><span id="intake-email-from"></span></div>
+                            <div><span class="k">Date</span><span id="intake-email-date"></span></div>
+                            <div><span class="k">Subject</span><span id="intake-email-subject"></span></div>
+                        </div>
+                        <pre class="intake-preview-body" id="intake-email-body"></pre>
+                    </div>
+                    <div>
+                        <div class="intake-preview-label">📎 Attachment — <span id="intake-form-name"></span></div>
+                        <pre class="intake-preview-body intake-form-doc" id="intake-form-body"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 — engage the agent -->
+        <div class="intake-step" data-step="2" id="intake-step-2" hidden>
+            <div class="intake-step-head">
+                <span class="intake-step-num">2</span>
+                <h3>Engage the Onboarding Agent</h3>
+            </div>
+            <button id="intake-process-btn" type="button" disabled>Process with Onboarding Agent</button>
+            <div id="intake-process-status" class="intake-status" hidden></div>
+
+            <div class="engage-tabs-scope" data-engage-role="onboarding">
+                <div class="engage-tabs" role="tablist">
+                    <button type="button" class="engage-tab-btn active" data-engage-tab="narrative">Agent Narrative</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="reference">Reference</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="prompt">Agent Prompt &amp; Tools</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="input">Agent Input</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="output">Raw Output</button>
+                </div>
+
+                <div class="engage-tab-panel active" data-engage-tab="narrative">
+                    <div class="engage-info-block">
+                        <h4>Agent narrative (streamed)</h4>
+                        <div class="agent-md engage-narrative-body"><div class="engage-empty">Engage the agent to see the streamed narrative.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="reference">
+                    <div class="engage-info-block">
+                        <h4>Reference documents cited by the agent</h4>
+                        <div class="engage-references-body"><div class="engage-empty">Engage the agent to see the reference documents cited in its response.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="prompt">
+                    <div class="engage-info-block">
+                        <h4>Agent metadata</h4>
+                        <div class="engage-info-meta engage-meta"></div>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>System prompt</h4>
+                        <pre class="engage-pre engage-prompt-body">Loading…</pre>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>Tools available</h4>
+                        <ul class="engage-tools-list"><li class="engage-empty">Loading…</li></ul>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="input">
+                    <div class="engage-info-block">
+                        <h4>Prompt sent to the agent</h4>
+                        <pre class="engage-pre engage-input-body engage-empty">Engage the agent to capture the input that was sent.</pre>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="output">
+                    <div class="engage-info-block">
+                        <h4>Raw agent output (text, citations, every output item including tool / function calls)</h4>
+                        <div class="json-viewer engage-output-body"><div class="engage-empty">Engage the agent to see the full raw response.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 — review the Member Case, NIGO checklist and priority -->
+        <div class="intake-step" data-step="3" id="intake-step-3" hidden>
+            <div class="intake-step-head">
+                <span class="intake-step-num">3</span>
+                <h3>Review the Member Case</h3>
+            </div>
+            <p class="muted">Everything is editable — Olivia checks it before the case opens.</p>
+            <div class="intake-form-wrap" id="intake-form-wrap" hidden>
+                <form id="intake-form" class="intake-form" autocomplete="off">
+                    <div class="intake-subhead">Member Case</div>
+                    <div class="intake-grid">
+                        <label>Client name<input name="clientName" required /></label>
+                        <label>Client email<input type="email" name="clientEmail" /></label>
+                        <label>Client phone<input name="clientPhone" /></label>
+                        <label>Member number<input name="memberNumber" required /></label>
+                        <label>Product<input name="product" /></label>
+                        <label>
+                            Request type
+                            <select name="requestType" id="intake-request-type">
+                                @foreach (var requestType in RequestTypeOptions)
+                                {
+                                    <option value="@requestType">@requestType</option>
+                                }
+                            </select>
+                        </label>
+                        <label>Received date<input type="text" name="receivedDate" placeholder="YYYY-MM-DD" /></label>
+                        <label>Amount<input name="amount" /></label>
+                        <label>Adviser<input name="adviserName" /></label>
+                        <label>Advice practice<input name="adviserPractice" /></label>
+                        <label class="span-2">Request summary<textarea name="requestSummary" rows="3"></textarea></label>
+                        <label class="span-2">Preferred contact<input name="preferredContact" /></label>
+                    </div>
+
+                    <div class="intake-nigo" id="intake-nigo">
+                        <div class="intake-nigo-head">
+                            <span class="intake-subhead">NIGO checklist</span>
+                            <span class="intake-nigo-summary" id="intake-nigo-summary"></span>
+                        </div>
+                        <p class="muted intake-nigo-help">✅ in good order · ⚠️ needs action</p>
+                        <ul class="intake-nigo-list" id="intake-nigo-list"></ul>
+                    </div>
+
+                    <div class="intake-priority" id="intake-priority" hidden>
+                        <div class="intake-priority-head">
+                            <span class="intake-priority-title">Priority</span>
+                            <select name="priority" id="intake-priority-select" aria-label="Priority">
+                                <option value="Standard">Standard</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                            <span class="intake-priority-pill" id="intake-priority-pill"></span>
+                        </div>
+                        <textarea name="priorityReason" id="intake-priority-reason" rows="2" aria-label="Reason for the priority"></textarea>
+                    </div>
+
+                    <div class="intake-routing-preview" id="intake-routing-preview" hidden>
+                        <div class="intake-subhead">Will be routed to</div>
+                        <div class="other-agents" id="intake-routing-preview-list"></div>
+                    </div>
+
+                    <div class="intake-form-actions">
+                        <button type="submit" id="intake-submit-btn">
+                            <span class="intake-step-num inline">4</span>
+                            Confirm &amp; open case
+                        </button>
+                        <span class="muted intake-submit-hint">Olivia confirms — the agent never opens a case on its own.</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 4 — case opened and routed -->
+        <div class="intake-step intake-receipt" data-step="4" id="intake-receipt" hidden>
+            <div class="intake-step-head">
+                <span class="intake-step-num">4</span>
+                <h3>Case opened</h3>
+            </div>
+            <div class="intake-receipt-body">
+                <div class="intake-receipt-num" id="intake-receipt-num"></div>
+                <div class="intake-receipt-meta" id="intake-receipt-meta"></div>
+                <div class="intake-subhead">Routed to</div>
+                <div class="intake-routes" id="intake-routes"></div>
+                <div class="intake-outstanding" id="intake-outstanding" hidden></div>
+                <p class="muted">Every agent page can now pick up this case.</p>
+                <button type="button" id="intake-reset-btn" class="intake-reset">Run another sample</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .intake-panel { --intake-accent: #0ea5e9; }
+
+    .other-agent.primary {
+        border-color: color-mix(in srgb, #0ea5e9 60%, transparent);
+        background: color-mix(in srgb, #0ea5e9 14%, rgba(16, 38, 72, 0.028));
+        color: #0b1f3a;
+    }
+
+    .intake-step {
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 0.95rem 1.1rem 1rem 1.1rem;
+        margin-top: 0.9rem;
+    }
+    .intake-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .intake-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
+    .intake-step-num {
+        display: inline-grid; place-items: center;
+        width: 1.55rem; height: 1.55rem;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--intake-accent) 22%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--intake-accent) 55%, transparent);
+        color: color-mix(in srgb, var(--intake-accent) 60%, #0b1f3a);
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .intake-step-num.inline { margin-right: 0.45rem; vertical-align: middle; }
+    .intake-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
+
+    .intake-subhead {
+        display: block;
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700;
+        margin: 0.2rem 0 0.5rem 0;
+    }
+
+    .intake-samples {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 0.6rem;
+        margin-top: 0.5rem;
+    }
+    .intake-sample {
+        text-align: left;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-radius: 10px;
+        padding: 0.7rem 0.85rem;
+        color: #344054;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+    .intake-sample:hover { border-color: color-mix(in srgb, var(--intake-accent) 45%, transparent); background: #f2f4f7; }
+    .intake-sample.selected {
+        border-color: var(--intake-accent);
+        background: color-mix(in srgb, var(--intake-accent) 14%, #ffffff);
+    }
+    .intake-sample-label { font-weight: 700; color: #0b1f3a; font-size: 0.92rem; margin-bottom: 0.2rem; }
+    .intake-sample-meta { font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
+    .intake-sample-meta .pill {
+        display: inline-block;
+        background: rgba(110, 193, 255, 0.10);
+        border: 1px solid rgba(110, 193, 255, 0.28);
+        color: #1564a8;
+        padding: 0.05rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .intake-preview { margin-top: 0.8rem; }
+    .intake-preview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem;
+    }
+    @@media (max-width: 820px) { .intake-preview-grid { grid-template-columns: 1fr; } }
+    .intake-preview-label {
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.3rem;
+    }
+    .intake-preview-meta { font-size: 0.82rem; color: #344054; margin-bottom: 0.4rem; }
+    .intake-preview-meta div { padding: 0.1rem 0; }
+    .intake-preview-meta .k {
+        display: inline-block; min-width: 60px;
+        color: var(--cw-muted, #5d6b7e); font-weight: 600;
+        text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em;
+        margin-right: 0.5rem;
+    }
+    .intake-preview-body {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.7rem 0.85rem;
+        color: #344054;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        max-height: 280px;
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .intake-form-doc { background: rgba(16, 38, 72, 0.028); border-style: dashed; }
+
+    .intake-status {
+        margin-top: 0.6rem; font-size: 0.88rem;
+        color: #344054;
+    }
+    .intake-status.error { color: #c11818; }
+    .intake-status.warn { color: #954f12; }
+    .intake-status .spinner {
+        display: inline-block; width: 12px; height: 12px;
+        border: 2px solid rgba(16, 38, 72, 0.25); border-top-color: #0b1f3a;
+        border-radius: 50%; margin-right: 6px; vertical-align: middle;
+        animation: intake-spin 0.7s linear infinite;
+    }
+    @@keyframes intake-spin { to { transform: rotate(360deg); } }
+
+    .intake-form-wrap { margin-top: 0.6rem; }
+    .intake-form .intake-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem 0.85rem;
+    }
+    @@media (max-width: 820px) { .intake-form .intake-grid { grid-template-columns: 1fr; } }
+    .intake-form .span-2 { grid-column: span 2; }
+    @@media (max-width: 820px) { .intake-form .span-2 { grid-column: span 1; } }
+    .intake-form label {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cw-muted, #5d6b7e);
+        font-weight: 700;
+    }
+    .intake-form input,
+    .intake-form textarea,
+    .intake-form select {
+        display: block; width: 100%;
+        margin-top: 0.3rem;
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-radius: 6px;
+        color: #0b1f3a;
+        font-size: 0.9rem;
+        padding: 0.55rem 0.7rem;
+        font-family: inherit;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .intake-form select option { background: #ffffff; color: #0b1f3a; }
+    .intake-form input:focus,
+    .intake-form textarea:focus,
+    .intake-form select:focus {
+        outline: none;
+        border-color: var(--intake-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--intake-accent) 25%, transparent);
+    }
+    .intake-form textarea { resize: vertical; min-height: 70px; }
+
+    /* NIGO checklist */
+    .intake-nigo {
+        margin-top: 1rem;
+        background: #f9fafb;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+    }
+    .intake-nigo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+    .intake-nigo-head .intake-subhead { margin: 0; }
+    .intake-nigo-summary { font-size: 0.8rem; color: #344054; }
+    .intake-nigo-summary .ok { color: #0f7032; font-weight: 700; }
+    .intake-nigo-summary .action { color: #954f12; font-weight: 700; }
+    .intake-step .muted.intake-nigo-help { margin: 0.25rem 0 0.6rem 0; font-size: 0.82rem; }
+    .intake-nigo-list { list-style: none; margin: 0; padding: 0; }
+    .intake-nigo-item {
+        display: grid;
+        grid-template-columns: 175px 1fr;
+        gap: 0.7rem;
+        align-items: start;
+        padding: 0.5rem 0.6rem;
+        margin-bottom: 0.4rem;
+        border-radius: 8px;
+        background: rgba(16, 38, 72, 0.025);
+        border: 1px solid rgba(16, 38, 72, 0.087);
+        border-left: 3px solid #34d399;
+    }
+    .intake-nigo-item.action { border-left-color: #fbbf24; background: rgba(245, 158, 11, 0.06); }
+    @@media (max-width: 720px) { .intake-nigo-item { grid-template-columns: 1fr; } }
+    .intake-form .intake-nigo-item select { margin-top: 0; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+    .intake-nigo-label { color: #0b1f3a; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.25rem; }
+    .intake-form .intake-nigo-item input { margin-top: 0; padding: 0.4rem 0.55rem; font-size: 0.84rem; }
+
+    /* Priority */
+    .intake-priority {
+        margin-top: 0.85rem;
+        background: color-mix(in srgb, var(--intake-accent) 10%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--intake-accent) 35%, transparent);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+    }
+    .intake-priority-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; flex-wrap: wrap; }
+    .intake-priority-title { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; }
+    .intake-form .intake-priority-head select { width: auto; min-width: 150px; margin-top: 0; padding: 0.35rem 0.55rem; }
+    .intake-priority-pill {
+        margin-left: auto;
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .intake-priority-pill.urgent   { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .intake-priority-pill.high     { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .intake-priority-pill.standard { background: rgba(34, 197, 94, 0.16); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .intake-form .intake-priority textarea { margin-top: 0; min-height: 56px; font-size: 0.86rem; }
+
+    .intake-routing-preview { margin-top: 0.85rem; }
+    .intake-routing-preview .other-agent { cursor: default; }
+
+    .intake-form-actions {
+        margin-top: 0.95rem;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem;
+    }
+    .intake-form-actions button[type=submit] {
+        background: var(--cw-primary);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: filter 0.15s ease, transform 0.15s ease;
+    }
+    .intake-form-actions button[type=submit]:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+    .intake-form-actions button[type=submit]:disabled { opacity: 0.55; cursor: not-allowed; }
+    .intake-form-actions .intake-step-num.inline { background: rgba(16, 38, 72, 0.03); color: #001624; border-color: #e4e7ec; }
+    .intake-step .muted.intake-submit-hint { font-size: 0.82rem; margin: 0; }
+
+    #intake-process-btn {
+        background: var(--cw-primary);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.5rem 1rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.35rem;
+    }
+    #intake-process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Case opened */
+    .intake-receipt { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.35); }
+    .intake-receipt .intake-step-num { color: #0f7032; border-color: rgba(34, 197, 94, 0.55); background: rgba(34, 197, 94, 0.15); }
+    .intake-receipt-num {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 1.45rem;
+        color: #0f7032;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 0.55rem 0.85rem;
+        background: #f6f7f9;
+        border: 1px dashed rgba(34, 197, 94, 0.5);
+        border-radius: 8px;
+        display: inline-block;
+        margin: 0.35rem 0 0.4rem 0;
+    }
+    .intake-receipt-meta { color: #344054; font-size: 0.88rem; margin-bottom: 0.8rem; }
+    .intake-receipt-meta .sep { color: var(--cw-muted, #5d6b7e); margin: 0 0.35rem; }
+    .intake-routes {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 0.6rem;
+        margin-bottom: 0.8rem;
+    }
+    .intake-route {
+        display: flex; flex-direction: column; gap: 0.3rem;
+        padding: 0.7rem 0.85rem;
+        border-radius: 10px;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-top: 3px solid var(--route-accent, #0ea5e9);
+        color: #344054;
+        text-decoration: none;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .intake-route:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--route-accent, #0ea5e9) 60%, transparent); color: #0b1f3a; text-decoration: none; }
+    .intake-route-head { display: flex; align-items: center; gap: 0.45rem; }
+    .intake-route-icon { font-size: 1.1rem; }
+    .intake-route-dept { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; }
+    .intake-route-tag {
+        margin-left: auto;
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+        padding: 0.05rem 0.45rem; border-radius: 999px;
+        background: rgba(14, 165, 233, 0.16); color: #126794; border: 1px solid rgba(14, 165, 233, 0.4);
+    }
+    .intake-route-tag.parallel { background: rgba(148, 163, 184, 0.12); color: #1d2939; border-color: rgba(16, 38, 72, 0.217); }
+    .intake-route-persona { font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
+    .intake-route-reason { font-size: 0.84rem; line-height: 1.45; }
+    .intake-route-cta { font-size: 0.78rem; color: #126891; font-weight: 600; margin-top: auto; }
+    .intake-outstanding {
+        margin-bottom: 0.7rem;
+        padding: 0.6rem 0.8rem;
+        border-radius: 8px;
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #954f12;
+        font-size: 0.86rem;
+    }
+    .intake-outstanding ul { margin: 0.3rem 0 0 0; padding-left: 1.1rem; color: #344054; }
+    .intake-reset {
+        background: transparent;
+        color: #344054;
+        border: 1px solid rgba(16, 38, 72, 0.198);
+        border-radius: 6px;
+        padding: 0.4rem 0.85rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+    .intake-reset:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+</style>
+
+@* Demo wiring lives in wwwroot/js/onboarding-demo.js (loaded globally from
+   App.razor) so it runs on full page loads and after Blazor enhanced
+   navigation — inline <script> tags in enhanced-navigated pages are not
+   reliably executed. *@
+
+@code {
+    private static readonly string[] RequestTypeOptions =
+    {
+        RequestTypes.NewAccount,
+        RequestTypes.RolloverOutSmsf,
+        RequestTypes.PensionCommencement,
+        RequestTypes.FinancialHardship,
+        RequestTypes.DeathBenefit,
+    };
+}

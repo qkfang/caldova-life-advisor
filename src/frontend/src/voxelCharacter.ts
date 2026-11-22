@@ -1,0 +1,751 @@
+import {
+  Color3,
+  Mesh,
+  MeshBuilder,
+  Scene,
+  StandardMaterial,
+  TransformNode,
+  Vector3,
+} from "@babylonjs/core";
+import type { VoxelCharacterPalette } from "./characterPalettes";
+
+/**
+ * Metadata stamped on a character's invisible hitbox so the scene-pick
+ * handler can identify which character was clicked, regardless of which
+ * body part the ray actually hit.
+ */
+export interface CharacterPickMetadata {
+  kind: "character";
+  /** Matches the `id` passed to the VoxelCharacter constructor. */
+  id: string;
+}
+
+/**
+ * A blocky humanoid built from boxes — head, torso, two arms, two legs —
+ * with optional details (hair styles, glasses, beard, dress, etc.) so that
+ * each persona reads as a distinct individual in the lakehouse.
+ *
+ * Exposes `setWalking()` to drive a tiny limb-swing animation and `root`
+ * so callers can move the character around the scene.
+ */
+export class VoxelCharacter {
+  public readonly root: TransformNode;
+  /** Stable id stamped on the click hitbox (matches StaffPersona/Customer id). */
+  public readonly id: string;
+  private readonly leftArm: Mesh;
+  private readonly rightArm: Mesh;
+  private readonly leftLeg: Mesh;
+  private readonly rightLeg: Mesh;
+  private readonly heldItemAnchor: TransformNode;
+  /** Invisible click hitbox covering the full body. */
+  private readonly hitbox: Mesh;
+  /** All visible body meshes — used to disable picking on body parts. */
+  private readonly visibleMeshes: Mesh[] = [];
+  private highlighted = false;
+  /** Glowing disc on the floor used to spotlight the active/focused character. */
+  private spotlightDisc: Mesh | null = null;
+  private spotlightPhase = 0;
+  private walking = false;
+  private walkPhase = 0;
+
+  constructor(
+    scene: Scene,
+    name: string,
+    palette: VoxelCharacterPalette,
+  ) {
+    const root = new TransformNode(`char_${name}`, scene);
+    this.root = root;
+    this.id = name;
+
+    const matCache = new Map<string, StandardMaterial>();
+    const mat = (hex: string): StandardMaterial => {
+      let m = matCache.get(hex);
+      if (!m) {
+        m = new StandardMaterial(`m_${hex}_${name}`, scene);
+        m.diffuseColor = Color3.FromHexString(hex);
+        m.specularColor = new Color3(0.04, 0.04, 0.04);
+        matCache.set(hex, m);
+      }
+      return m;
+    };
+
+    const hairStyle = palette.hairStyle ?? "short";
+    const facial = palette.facial ?? "none";
+    const lower = palette.lowerBody ?? "pants";
+    const eyeHex = palette.eye ?? "#1a1410";
+
+    // Slightly darker shade of the skin tone, used for facial hair.
+    const darken = (hex: string, amt = 0.45): string => {
+      const c = Color3.FromHexString(hex);
+      const r = Math.max(0, Math.floor(c.r * 255 * (1 - amt)));
+      const g = Math.max(0, Math.floor(c.g * 255 * (1 - amt)));
+      const b = Math.max(0, Math.floor(c.b * 255 * (1 - amt)));
+      const toHex = (v: number) => v.toString(16).padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    };
+
+    // ---------- Head & face ----------
+    const headSize = 0.6;
+    const headY = 1.55;
+    const head = MeshBuilder.CreateBox(`head_${name}`, { size: headSize }, scene);
+    head.material = mat(palette.skin);
+    head.parent = root;
+    head.position.y = headY;
+
+    // Eyes — two small dark blocks slightly inset on the front of the head.
+    const eyeMat = mat(eyeHex);
+    const eyeWhiteMat = mat("#ffffff");
+    const makeEye = (side: 1 | -1): void => {
+      const white = MeshBuilder.CreateBox(
+        `eyeW_${side}_${name}`,
+        { width: 0.12, height: 0.1, depth: 0.04 },
+        scene,
+      );
+      white.material = eyeWhiteMat;
+      white.parent = root;
+      white.position = new Vector3(side * 0.13, headY + 0.04, headSize / 2 + 0.001);
+
+      const pupil = MeshBuilder.CreateBox(
+        `eye_${side}_${name}`,
+        { width: 0.06, height: 0.06, depth: 0.04 },
+        scene,
+      );
+      pupil.material = eyeMat;
+      pupil.parent = root;
+      pupil.position = new Vector3(side * 0.13, headY + 0.04, headSize / 2 + 0.01);
+    };
+    makeEye(1);
+    makeEye(-1);
+
+    // Mouth — a thin dark line.
+    const mouth = MeshBuilder.CreateBox(
+      `mouth_${name}`,
+      { width: 0.18, height: 0.03, depth: 0.04 },
+      scene,
+    );
+    mouth.material = mat(darken(palette.skin, 0.55));
+    mouth.parent = root;
+    mouth.position = new Vector3(0, headY - 0.14, headSize / 2 + 0.001);
+
+    // Glasses — bridge + two square lenses framing the eyes.
+    if (palette.glasses) {
+      const frameMat = mat("#1a1a1a");
+      const bridge = MeshBuilder.CreateBox(
+        `gbridge_${name}`,
+        { width: 0.1, height: 0.03, depth: 0.04 },
+        scene,
+      );
+      bridge.material = frameMat;
+      bridge.parent = root;
+      bridge.position = new Vector3(0, headY + 0.04, headSize / 2 + 0.02);
+
+      const makeLens = (side: 1 | -1): void => {
+        const lens = MeshBuilder.CreateBox(
+          `glens_${side}_${name}`,
+          { width: 0.18, height: 0.16, depth: 0.04 },
+          scene,
+        );
+        lens.material = frameMat;
+        lens.parent = root;
+        lens.position = new Vector3(
+          side * 0.15,
+          headY + 0.04,
+          headSize / 2 + 0.02,
+        );
+        // Inner pane — slightly inset to look like a lens.
+        const pane = MeshBuilder.CreateBox(
+          `gpane_${side}_${name}`,
+          { width: 0.13, height: 0.11, depth: 0.02 },
+          scene,
+        );
+        pane.material = mat("#9fc7e6");
+        pane.parent = lens;
+        pane.position.z = 0.012;
+      };
+      makeLens(1);
+      makeLens(-1);
+    }
+
+    // Facial hair.
+    if (facial !== "none") {
+      const beardMat = mat(darken(palette.hair, 0.05));
+      if (facial === "beard" || facial === "stubble") {
+        const beard = MeshBuilder.CreateBox(
+          `beard_${name}`,
+          {
+            width: 0.5,
+            height: facial === "stubble" ? 0.12 : 0.22,
+            depth: 0.5,
+          },
+          scene,
+        );
+        beard.material = beardMat;
+        beard.parent = root;
+        beard.position = new Vector3(0, headY - 0.18, 0);
+      }
+      if (facial === "moustache") {
+        const m1 = MeshBuilder.CreateBox(
+          `must_${name}`,
+          { width: 0.22, height: 0.04, depth: 0.04 },
+          scene,
+        );
+        m1.material = beardMat;
+        m1.parent = root;
+        m1.position = new Vector3(0, headY - 0.08, headSize / 2 + 0.001);
+      }
+    }
+
+    // ---------- Hair / headwear ----------
+    this.buildHair(scene, name, root, mat, palette, hairStyle, headY, headSize);
+
+    // ---------- Neck ----------
+    const neck = MeshBuilder.CreateBox(
+      `neck_${name}`,
+      { width: 0.22, height: 0.1, depth: 0.22 },
+      scene,
+    );
+    neck.material = mat(palette.skin);
+    neck.parent = root;
+    neck.position.y = 1.22;
+
+    // ---------- Torso ----------
+    const torso = MeshBuilder.CreateBox(
+      `torso_${name}`,
+      { width: 0.7, height: 0.7, depth: 0.42 },
+      scene,
+    );
+    torso.material = mat(palette.shirt);
+    torso.parent = root;
+    torso.position.y = 0.92;
+
+    // Optional accent tie / scarf hanging from the collar.
+    if (palette.accent && lower !== "dress") {
+      const tie = MeshBuilder.CreateBox(
+        `tie_${name}`,
+        { width: 0.12, height: 0.4, depth: 0.05 },
+        scene,
+      );
+      tie.material = mat(palette.accent);
+      tie.parent = root;
+      tie.position = new Vector3(0, 1.0, 0.22);
+    }
+
+    // Optional shirt logo / pocket detail.
+    if (palette.shirtLogo && palette.accent) {
+      const logo = MeshBuilder.CreateBox(
+        `logo_${name}`,
+        { width: 0.14, height: 0.14, depth: 0.03 },
+        scene,
+      );
+      logo.material = mat(palette.accent);
+      logo.parent = root;
+      logo.position = new Vector3(0.18, 1.05, 0.22);
+    }
+
+    // ---------- Arms ----------
+    const makeArm = (side: 1 | -1): Mesh => {
+      const pivot = new TransformNode(`arm_pivot_${side}_${name}`, scene);
+      pivot.parent = root;
+      pivot.position = new Vector3(side * 0.48, 1.22, 0);
+
+      const arm = MeshBuilder.CreateBox(
+        `arm_${side}_${name}`,
+        { width: 0.22, height: 0.55, depth: 0.22 },
+        scene,
+      );
+      arm.material = mat(palette.shirt);
+      arm.parent = pivot;
+      arm.position.y = -0.27;
+
+      // Hand — small skin-tone block at the cuff.
+      const hand = MeshBuilder.CreateBox(
+        `hand_${side}_${name}`,
+        { width: 0.22, height: 0.14, depth: 0.22 },
+        scene,
+      );
+      hand.material = mat(palette.skin);
+      hand.parent = pivot;
+      hand.position.y = -0.62;
+
+      (arm as Mesh & { pivotNode: TransformNode }).pivotNode = pivot;
+      return arm;
+    };
+
+    this.leftArm = makeArm(1);
+    this.rightArm = makeArm(-1);
+
+    // ---------- Lower body ----------
+    if (lower === "dress") {
+      // Flared dress replaces both pants and torso bottom.
+      const dress = MeshBuilder.CreateBox(
+        `dress_${name}`,
+        { width: 0.95, height: 0.55, depth: 0.55 },
+        scene,
+      );
+      dress.material = mat(palette.pants);
+      dress.parent = root;
+      dress.position.y = 0.45;
+    } else if (lower === "skirt") {
+      const skirt = MeshBuilder.CreateBox(
+        `skirt_${name}`,
+        { width: 0.85, height: 0.32, depth: 0.5 },
+        scene,
+      );
+      skirt.material = mat(palette.pants);
+      skirt.parent = root;
+      skirt.position.y = 0.6;
+    }
+
+    // Legs — shorter when wearing a skirt or dress so they peek out below.
+    const legHeight = lower === "dress" ? 0.32 : lower === "skirt" ? 0.45 : 0.55;
+    const legY = lower === "dress" ? 0.32 : lower === "skirt" ? 0.45 : 0.55;
+    // For a dress, color the visible lower-leg in skin tone (tights would be palette.pants).
+    const legColor =
+      lower === "dress" ? palette.skin : palette.pants;
+
+    const makeLeg = (side: 1 | -1): Mesh => {
+      const pivot = new TransformNode(`leg_pivot_${side}_${name}`, scene);
+      pivot.parent = root;
+      pivot.position = new Vector3(side * 0.18, legY, 0);
+
+      const leg = MeshBuilder.CreateBox(
+        `leg_${side}_${name}`,
+        { width: 0.26, height: legHeight, depth: 0.28 },
+        scene,
+      );
+      leg.material = mat(legColor);
+      leg.parent = pivot;
+      leg.position.y = -legHeight / 2;
+      (leg as Mesh & { pivotNode: TransformNode }).pivotNode = pivot;
+      return leg;
+    };
+
+    this.leftLeg = makeLeg(1);
+    this.rightLeg = makeLeg(-1);
+
+    const makeShoe = (parent: Mesh, n: string): void => {
+      const shoe = MeshBuilder.CreateBox(
+        `shoe_${n}_${name}`,
+        { width: 0.3, height: 0.12, depth: 0.36 },
+        scene,
+      );
+      shoe.material = mat(palette.shoes);
+      shoe.parent = parent.parent as TransformNode;
+      shoe.position.y = -legHeight - 0.06;
+      shoe.position.z = 0.04;
+    };
+    makeShoe(this.leftLeg, "L");
+    makeShoe(this.rightLeg, "R");
+
+    // ---------- Held-item anchor (in the right hand) ----------
+    this.heldItemAnchor = new TransformNode(`hand_${name}`, scene);
+    this.heldItemAnchor.parent = this.rightArm.parent as TransformNode;
+    this.heldItemAnchor.position = new Vector3(0, -0.7, 0.18);
+
+    // ---------- Click hitbox (invisible, full-body) ----------
+    // A single tall box covering the character so picking is reliable
+    // regardless of which voxel sub-piece the ray hits. Tagged via metadata
+    // so the pointer handler can identify the character.
+    const hitbox = MeshBuilder.CreateBox(
+      `hit_${name}`,
+      { width: 1.1, height: 2.2, depth: 0.9 },
+      scene,
+    );
+    hitbox.parent = root;
+    hitbox.position = new Vector3(0, 1.0, 0);
+    hitbox.isPickable = true;
+    hitbox.visibility = 0; // invisible but still pickable
+    hitbox.metadata = { kind: "character", id: name } as CharacterPickMetadata;
+    this.hitbox = hitbox;
+
+    // Collect visible body meshes for highlight effect — every Mesh child of
+    // root that has a material. Skip the hitbox itself.
+    const collect = (node: TransformNode): void => {
+      const children = node.getChildren();
+      for (const child of children) {
+        if (child instanceof Mesh && child !== this.hitbox && child.material) {
+          this.visibleMeshes.push(child);
+        }
+        if (child instanceof TransformNode) {
+          collect(child);
+        }
+      }
+    };
+    collect(root);
+
+    // Make sure the visible body parts don't intercept picks (they'd hide
+    // the invisible hitbox otherwise on some Babylon versions).
+    for (const m of this.visibleMeshes) {
+      m.isPickable = false;
+    }
+  }
+
+  /** Builds hair / hat / hood / crown depending on `style`. */
+  private buildHair(
+    scene: Scene,
+    name: string,
+    root: TransformNode,
+    mat: (hex: string) => StandardMaterial,
+    palette: VoxelCharacterPalette,
+    style: NonNullable<VoxelCharacterPalette["hairStyle"]>,
+    headY: number,
+    headSize: number,
+  ): void {
+    const hairMat = mat(palette.hair);
+    const headTopY = headY + headSize / 2;
+
+    const addCap = (
+      capName: string,
+      width: number,
+      height: number,
+      depth: number,
+      yOffset: number,
+      material: StandardMaterial = hairMat,
+    ): Mesh => {
+      const m = MeshBuilder.CreateBox(
+        `${capName}_${name}`,
+        { width, height, depth },
+        scene,
+      );
+      m.material = material;
+      m.parent = root;
+      m.position.y = headTopY + yOffset - height / 2;
+      return m;
+    };
+
+    switch (style) {
+      case "bald":
+        // Nothing on top.
+        break;
+
+      case "short": {
+        addCap("hair", 0.66, 0.18, 0.66, 0.08);
+        // Side-burn slabs.
+        const sideL = MeshBuilder.CreateBox(
+          `hairSL_${name}`,
+          { width: 0.05, height: 0.25, depth: 0.6 },
+          scene,
+        );
+        sideL.material = hairMat;
+        sideL.parent = root;
+        sideL.position = new Vector3(-headSize / 2 - 0.02, headY + 0.05, 0);
+        const sideR = sideL.clone(`hairSR_${name}`);
+        sideR.position.x = headSize / 2 + 0.02;
+        break;
+      }
+
+      case "long": {
+        addCap("hair", 0.66, 0.2, 0.66, 0.1);
+        // Long flowing back.
+        const back = MeshBuilder.CreateBox(
+          `hairBack_${name}`,
+          { width: 0.6, height: 0.55, depth: 0.12 },
+          scene,
+        );
+        back.material = hairMat;
+        back.parent = root;
+        back.position = new Vector3(0, headY - 0.1, -headSize / 2 - 0.04);
+        // Front fringe.
+        const fringe = MeshBuilder.CreateBox(
+          `hairF_${name}`,
+          { width: 0.66, height: 0.12, depth: 0.08 },
+          scene,
+        );
+        fringe.material = hairMat;
+        fringe.parent = root;
+        fringe.position = new Vector3(0, headY + 0.18, headSize / 2 + 0.01);
+        break;
+      }
+
+      case "afro": {
+        const a = MeshBuilder.CreateBox(
+          `afro_${name}`,
+          { width: 0.85, height: 0.45, depth: 0.85 },
+          scene,
+        );
+        a.material = hairMat;
+        a.parent = root;
+        a.position.y = headTopY + 0.12;
+        break;
+      }
+
+      case "ponytail": {
+        addCap("hair", 0.66, 0.2, 0.66, 0.1);
+        const tail = MeshBuilder.CreateBox(
+          `tail_${name}`,
+          { width: 0.18, height: 0.5, depth: 0.18 },
+          scene,
+        );
+        tail.material = hairMat;
+        tail.parent = root;
+        tail.position = new Vector3(
+          0,
+          headY - 0.05,
+          -headSize / 2 - 0.12,
+        );
+        // Front fringe.
+        const fringe = MeshBuilder.CreateBox(
+          `pfringe_${name}`,
+          { width: 0.66, height: 0.1, depth: 0.08 },
+          scene,
+        );
+        fringe.material = hairMat;
+        fringe.parent = root;
+        fringe.position = new Vector3(0, headY + 0.2, headSize / 2 + 0.01);
+        break;
+      }
+
+      case "bun": {
+        addCap("hair", 0.66, 0.18, 0.66, 0.08);
+        const bun = MeshBuilder.CreateBox(
+          `bun_${name}`,
+          { width: 0.28, height: 0.28, depth: 0.28 },
+          scene,
+        );
+        bun.material = hairMat;
+        bun.parent = root;
+        bun.position = new Vector3(0, headTopY + 0.18, -0.08);
+        break;
+      }
+
+      case "beanie": {
+        addCap("beanie", 0.7, 0.28, 0.7, 0.16);
+        // Brim band in accent color if available.
+        const band = MeshBuilder.CreateBox(
+          `beanieBand_${name}`,
+          { width: 0.72, height: 0.08, depth: 0.72 },
+          scene,
+        );
+        band.material = mat(palette.accent ?? "#ffffff");
+        band.parent = root;
+        band.position.y = headTopY + 0.04;
+        break;
+      }
+
+      case "cap": {
+        // Crown of the cap.
+        const crownMat = mat(palette.accent ?? palette.hair);
+        addCap("capCrown", 0.7, 0.22, 0.7, 0.13, crownMat);
+        // Visor extending forward.
+        const visor = MeshBuilder.CreateBox(
+          `capVisor_${name}`,
+          { width: 0.7, height: 0.05, depth: 0.3 },
+          scene,
+        );
+        visor.material = crownMat;
+        visor.parent = root;
+        visor.position = new Vector3(0, headTopY + 0.04, 0.4);
+        // Tiny tuft of hair peeking out at sides.
+        const tuftL = MeshBuilder.CreateBox(
+          `capTuftL_${name}`,
+          { width: 0.05, height: 0.18, depth: 0.55 },
+          scene,
+        );
+        tuftL.material = hairMat;
+        tuftL.parent = root;
+        tuftL.position = new Vector3(-headSize / 2 - 0.02, headY + 0.1, 0);
+        const tuftR = tuftL.clone(`capTuftR_${name}`);
+        tuftR.position.x = headSize / 2 + 0.02;
+        break;
+      }
+
+      case "hat": {
+        // Fedora / wide-brim hat.
+        const hatMat = mat(palette.accent ?? palette.hair);
+        const brim = MeshBuilder.CreateBox(
+          `hatBrim_${name}`,
+          { width: 0.95, height: 0.05, depth: 0.95 },
+          scene,
+        );
+        brim.material = hatMat;
+        brim.parent = root;
+        brim.position.y = headTopY + 0.04;
+        const top = MeshBuilder.CreateBox(
+          `hatTop_${name}`,
+          { width: 0.62, height: 0.3, depth: 0.62 },
+          scene,
+        );
+        top.material = hatMat;
+        top.parent = root;
+        top.position.y = headTopY + 0.22;
+        break;
+      }
+
+      case "hood": {
+        // Hood extends a bit beyond the head and dips down the back.
+        const hoodMat = mat(palette.shirt);
+        const hood = MeshBuilder.CreateBox(
+          `hood_${name}`,
+          { width: 0.78, height: 0.7, depth: 0.78 },
+          scene,
+        );
+        hood.material = hoodMat;
+        hood.parent = root;
+        hood.position.y = headY + 0.08;
+        // Hollow out the front a touch by overlaying a face plate (skin).
+        const faceHole = MeshBuilder.CreateBox(
+          `hoodFace_${name}`,
+          { width: 0.6, height: 0.5, depth: 0.05 },
+          scene,
+        );
+        faceHole.material = mat(palette.skin);
+        faceHole.parent = root;
+        faceHole.position = new Vector3(0, headY + 0.02, headSize / 2 + 0.02);
+        break;
+      }
+
+      case "crown": {
+        addCap("hair", 0.66, 0.16, 0.66, 0.06);
+        const crownMat = mat(palette.accent ?? "#f4c463");
+        const band = MeshBuilder.CreateBox(
+          `crownBand_${name}`,
+          { width: 0.7, height: 0.08, depth: 0.7 },
+          scene,
+        );
+        band.material = crownMat;
+        band.parent = root;
+        band.position.y = headTopY + 0.18;
+        // Three little spikes on top.
+        for (let i = -1; i <= 1; i++) {
+          const spike = MeshBuilder.CreateBox(
+            `crownSpike_${i}_${name}`,
+            { width: 0.1, height: 0.18, depth: 0.1 },
+            scene,
+          );
+          spike.material = crownMat;
+          spike.parent = root;
+          spike.position = new Vector3(i * 0.22, headTopY + 0.32, 0);
+        }
+        break;
+      }
+    }
+  }
+
+  setWalking(walking: boolean): void {
+    this.walking = walking;
+    if (walking) {
+      // A pose's sideways spread would otherwise carry into the stride.
+      this.armPivot(this.leftArm).rotation.z = 0;
+      this.armPivot(this.rightArm).rotation.z = 0;
+    } else {
+      this.resetLimbs();
+    }
+  }
+
+  /**
+   * Pose the arms while standing still: `left` and `right` raise each arm
+   * forward from the shoulder (0 is down by the side, π is straight up), and
+   * `spread` opens both out to the sides. Ignored while walking; walking
+   * resets the pose.
+   */
+  setArmPose(left: number, right: number, spread = 0): void {
+    if (this.walking) return;
+    const l = this.armPivot(this.leftArm);
+    const r = this.armPivot(this.rightArm);
+    l.rotation.x = -left;
+    r.rotation.x = -right;
+    l.rotation.z = spread;
+    r.rotation.z = -spread;
+  }
+
+  private armPivot(arm: Mesh): TransformNode {
+    return (arm as Mesh & { pivotNode: TransformNode }).pivotNode;
+  }
+
+  /** Anchor where a held item should be parented. */
+  getHandAnchor(): TransformNode {
+    return this.heldItemAnchor;
+  }
+
+  /** The full-body invisible click target. */
+  getHitbox(): Mesh {
+    return this.hitbox;
+  }
+
+  /**
+   * Highlight the focused character with a glowing spotlight disc on the
+   * floor at their feet (used for hover state and to draw attention to
+   * the focused character during scripted scenarios). Deliberately does
+   * NOT outline the character figure — the spotlight reads as a stage
+   * "follow spot" and keeps the voxel silhouette clean.
+   */
+  setHighlight(on: boolean, color?: Color3): void {
+    if (this.highlighted === on) return;
+    this.highlighted = on;
+    const c = color ?? new Color3(1.0, 0.78, 0.28);
+    if (on) {
+      const scene = this.root.getScene();
+      if (!this.spotlightDisc) {
+        const disc = MeshBuilder.CreateDisc(
+          `spot_${this.id}`,
+          { radius: 0.95, tessellation: 48 },
+          scene,
+        );
+        // Lay flat on the floor and parent to the character so it tracks
+        // the character's position as they walk around.
+        disc.rotation.x = Math.PI / 2;
+        disc.parent = this.root;
+        disc.position.y = 0.06;
+        disc.isPickable = false;
+        const m = new StandardMaterial(`spotMat_${this.id}`, scene);
+        m.diffuseColor = new Color3(0, 0, 0);
+        m.emissiveColor = c;
+        m.specularColor = new Color3(0, 0, 0);
+        m.alpha = 0.55;
+        m.backFaceCulling = false;
+        m.disableLighting = true;
+        disc.material = m;
+        this.spotlightDisc = disc;
+      } else {
+        (this.spotlightDisc.material as StandardMaterial).emissiveColor = c;
+      }
+      this.spotlightDisc.isVisible = true;
+    } else if (this.spotlightDisc) {
+      this.spotlightDisc.isVisible = false;
+    }
+  }
+
+  /** Per-frame update — advances the walk animation if active. */
+  update(dtSec: number): void {
+    if (this.spotlightDisc && this.spotlightDisc.isVisible) {
+      // Gentle breathing pulse so the spotlight reads as alive.
+      this.spotlightPhase += dtSec * 2.2;
+      const pulse = 0.5 + 0.5 * Math.sin(this.spotlightPhase);
+      const mat = this.spotlightDisc.material as StandardMaterial;
+      mat.alpha = 0.4 + pulse * 0.25;
+      const scale = 1.0 + pulse * 0.08;
+      this.spotlightDisc.scaling.x = scale;
+      this.spotlightDisc.scaling.y = scale;
+    }
+    if (!this.walking) return;
+    this.walkPhase += dtSec * 9;
+    const swing = Math.sin(this.walkPhase) * 0.7;
+
+    const lArmPivot = (this.leftArm as Mesh & { pivotNode: TransformNode })
+      .pivotNode;
+    const rArmPivot = (this.rightArm as Mesh & { pivotNode: TransformNode })
+      .pivotNode;
+    const lLegPivot = (this.leftLeg as Mesh & { pivotNode: TransformNode })
+      .pivotNode;
+    const rLegPivot = (this.rightLeg as Mesh & { pivotNode: TransformNode })
+      .pivotNode;
+
+    lArmPivot.rotation.x = -swing;
+    rArmPivot.rotation.x = swing;
+    lLegPivot.rotation.x = swing;
+    rLegPivot.rotation.x = -swing;
+  }
+
+  private resetLimbs(): void {
+    const reset = (mesh: Mesh) => {
+      const pivot = (mesh as Mesh & { pivotNode: TransformNode }).pivotNode;
+      pivot.rotation.x = 0;
+      pivot.rotation.z = 0;
+    };
+    reset(this.leftArm);
+    reset(this.rightArm);
+    reset(this.leftLeg);
+    reset(this.rightLeg);
+    this.walkPhase = 0;
+  }
+}

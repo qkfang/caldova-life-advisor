@@ -1,0 +1,606 @@
+@page "/agents/financial-crime"
+
+<PageTitle>Financial Crime Agent — Wealth Team in a Day</PageTitle>
+
+<div class="agent-header" style="--accent: #ef4444">
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+    <div class="agent-header-row">
+        <div class="agent-header-icon">🛡️</div>
+        <div>
+            <div class="agent-header-dept">Financial Crime</div>
+            <h1>Financial Crime Agent</h1>
+            <div class="agent-header-persona">Felix — Financial Crime Investigator</div>
+            <p class="tagline">Protects members from fraud, scams and identity takeover.</p>
+        </div>
+    </div>
+</div>
+
+<div class="agent-tab-scope" style="--accent: #ef4444">
+    <section class="panel fc-panel" style="--accent: #ef4444">
+        <!-- Step 1 — pick a case -->
+        <div class="fc-step" data-step="1">
+            <div class="fc-step-head">
+                <span class="fc-step-num">1</span>
+                <h3>Pick a case to review</h3>
+            </div>
+            <div class="fc-case-row">
+                <select id="fc-case-select" class="fc-select" aria-label="Member Case">
+                    <option value="">— Loading cases… —</option>
+                </select>
+                <button type="button" id="fc-refresh-btn" class="fc-secondary" title="Reload cases" aria-label="Reload cases">↻</button>
+            </div>
+            <div class="fc-empty" id="fc-empty" hidden>
+                No cases yet. Open one with the <a href="/agents/onboarding">Onboarding Agent</a> first.
+            </div>
+        </div>
+
+        <!-- Step 2 — review the case and its account activity -->
+        <div class="fc-step" data-step="2" id="fc-case-step" hidden>
+            <div class="fc-step-head">
+                <span class="fc-step-num">2</span>
+                <h3>Review the case and its account activity</h3>
+            </div>
+            <div class="fc-case-grid" id="fc-case-details"></div>
+
+            <div class="fc-review-grid">
+                <div class="fc-review-block fc-review-wide">
+                    <div class="fc-label">Account-activity timeline</div>
+                    <ol class="fc-timeline" id="fc-timeline"><li class="fc-muted-item">Loading…</li></ol>
+                </div>
+                <div class="fc-review-block">
+                    <div class="fc-label">Screening &amp; verification</div>
+                    <ul class="fc-screening" id="fc-screening"><li class="fc-muted-item">Loading…</li></ul>
+                </div>
+                <div class="fc-review-block">
+                    <div class="fc-label">People on the case</div>
+                    <div id="fc-parties" class="fc-parties"><span class="fc-muted-item">Loading…</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 — scan the documents on the case -->
+        <div class="fc-step" data-step="3" id="fc-docs-step" hidden>
+            <div class="fc-step-head">
+                <span class="fc-step-num">3</span>
+                <h3>Scan the documents on the case</h3>
+            </div>
+            <p class="muted">
+                Each document is checked with Azure Content Understanding and scored <em>legit</em>,
+                <em>suspicious</em> or <em>fake</em>. Untick one to leave it out, or add a specimen.
+            </p>
+            <div class="fc-docs-row">
+                <div id="fc-case-docs" class="fc-doc-grid">
+                    <div class="fc-doc-empty muted">Loading case documents…</div>
+                </div>
+                <span id="fc-sample-host"></span>
+            </div>
+            <button id="fc-scan-btn" class="fc-primary" type="button">Scan documents</button>
+            <div id="fc-scan-status" class="fc-status" hidden></div>
+
+            <div id="fc-doc-output" class="fc-doc-output" hidden>
+                <div class="fc-label">Document authenticity</div>
+                <p class="muted fc-doc-output-hint" id="fc-doc-output-hint"></p>
+                <div id="fc-doc-cards" class="fc-doc-cards"></div>
+            </div>
+        </div>
+
+        <!-- Step 4 — engage the agent -->
+        <div class="fc-step" data-step="4" id="fc-process-step" hidden>
+            <div class="fc-step-head">
+                <span class="fc-step-num">4</span>
+                <h3>Engage the Financial Crime Agent</h3>
+            </div>
+            <button id="fc-process-btn" class="fc-primary" type="button">Run financial crime review</button>
+            <div id="fc-process-status" class="fc-status" hidden></div>
+
+            <div class="engage-tabs-scope" data-engage-role="financial-crime">
+                <div class="engage-tabs" role="tablist">
+                    <button type="button" class="engage-tab-btn active" data-engage-tab="narrative">Agent Narrative</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="reference">Reference</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="prompt">Agent Prompt &amp; Tools</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="input">Agent Input</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="output">Raw Output</button>
+                </div>
+
+                <div class="engage-tab-panel active" data-engage-tab="narrative">
+                    <div class="engage-info-block">
+                        <h4>Agent narrative (streamed)</h4>
+                        <div class="agent-md engage-narrative-body"><div class="engage-empty">Engage the agent to see the streamed narrative.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="reference">
+                    <div class="engage-info-block">
+                        <h4>Reference documents cited by the agent</h4>
+                        <div class="engage-references-body"><div class="engage-empty">Engage the agent to see the reference documents cited in its response.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="prompt">
+                    <div class="engage-info-block">
+                        <h4>Agent metadata</h4>
+                        <div class="engage-info-meta engage-meta"></div>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>System prompt</h4>
+                        <pre class="engage-pre engage-prompt-body">Loading…</pre>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>Tools available</h4>
+                        <ul class="engage-tools-list"><li class="engage-empty">Loading…</li></ul>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="input">
+                    <div class="engage-info-block">
+                        <h4>Prompt sent to the agent</h4>
+                        <pre class="engage-pre engage-input-body engage-empty">Engage the agent to capture the input that was sent.</pre>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="output">
+                    <div class="engage-info-block">
+                        <h4>Raw agent output (text, citations, every output item including tool / function calls)</h4>
+                        <div class="json-viewer engage-output-body"><div class="engage-empty">Engage the agent to see the full raw response.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5 — risk summary & recommended actions -->
+        <div class="fc-step" data-step="5" id="fc-output-step" hidden>
+            <div class="fc-step-head">
+                <span class="fc-step-num">5</span>
+                <h3>Risk summary &amp; recommended actions</h3>
+            </div>
+
+            <div class="fc-risk-card">
+                <div class="fc-risk-head">
+                    <span class="fc-risk-label">Financial crime risk</span>
+                    <span class="fc-risk-pill" id="fc-risk-pill"></span>
+                    <span class="fc-risk-num" id="fc-risk-num"></span>
+                </div>
+                <p id="fc-risk-summary" class="fc-risk-summary"></p>
+                <p id="fc-agent-view" class="fc-agent-view" hidden></p>
+            </div>
+
+            <div class="fc-output-grid">
+                <div class="fc-output-block fc-output-wide">
+                    <div class="fc-label">Risk indicators &amp; evidence</div>
+                    <ul id="fc-indicators" class="fc-indicators"></ul>
+                    <p id="fc-score-breakdown" class="fc-score-breakdown"></p>
+                </div>
+                <div class="fc-output-block">
+                    <div class="fc-label">Recommended actions</div>
+                    <ol id="fc-actions" class="fc-actions"></ol>
+                </div>
+                <div class="fc-output-block">
+                    <div class="fc-label">What checked out</div>
+                    <ul id="fc-clear" class="fc-clear"></ul>
+                </div>
+                <div class="fc-output-block fc-output-wide">
+                    <div class="fc-label">Human approval required</div>
+                    <p id="fc-approval" class="fc-approval-text"></p>
+                    <p id="fc-smr" class="fc-smr" hidden></p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .fc-panel { --fc-accent: #ef4444; }
+    .fc-panel code { background: rgba(239, 68, 68, 0.12); padding: 1px 6px; border-radius: 4px; font-size: 0.85rem; }
+
+    .fc-step {
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 0.95rem 1.1rem 1rem 1.1rem;
+        margin-top: 0.9rem;
+    }
+    .fc-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .fc-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
+    .fc-step-num {
+        display: inline-grid; place-items: center;
+        width: 1.55rem; height: 1.55rem;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--fc-accent) 22%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--fc-accent) 55%, transparent);
+        color: color-mix(in srgb, var(--fc-accent) 60%, #0b1f3a);
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .fc-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
+    .fc-label {
+        font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.4rem;
+    }
+    .fc-muted-item { color: var(--cw-muted, #5d6b7e); font-size: 0.84rem; list-style: none; }
+
+    /* Step 1 */
+    .fc-case-row { display: flex; gap: 0.5rem; align-items: center; }
+    .fc-select {
+        flex: 1;
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-radius: 6px;
+        color: #0b1f3a;
+        font-size: 0.9rem;
+        padding: 0.55rem 0.7rem;
+    }
+    .fc-select:focus {
+        outline: none;
+        border-color: var(--fc-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--fc-accent) 25%, transparent);
+    }
+    .fc-secondary {
+        background: transparent;
+        color: #344054;
+        border: 1px solid rgba(16, 38, 72, 0.198);
+        border-radius: 6px;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+    .fc-secondary:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+    .fc-empty {
+        margin-top: 0.6rem;
+        padding: 0.6rem 0.8rem;
+        background: rgba(245, 158, 11, 0.10);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        border-radius: 8px;
+        color: #954f12;
+        font-size: 0.86rem;
+    }
+    .fc-empty a { color: #954f12; }
+
+    /* Step 2 */
+    .fc-case-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem 0.85rem;
+        font-size: 0.86rem;
+        color: #344054;
+    }
+    .fc-case-grid .k {
+        display: inline-block; min-width: 118px;
+        color: var(--cw-muted, #5d6b7e); font-weight: 600;
+        text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em;
+        margin-right: 0.5rem;
+    }
+    .fc-case-grid .span-2 { grid-column: span 2; }
+    .fc-review-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem;
+        margin-top: 0.85rem;
+    }
+    .fc-review-block, .fc-output-block {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.65rem 0.85rem;
+    }
+    .fc-review-wide, .fc-output-wide { grid-column: span 2; }
+    @@media (max-width: 820px) {
+        .fc-case-grid, .fc-review-grid, .fc-output-grid { grid-template-columns: 1fr; }
+        .fc-case-grid .span-2, .fc-review-wide, .fc-output-wide { grid-column: span 1; }
+    }
+
+    .fc-timeline { list-style: none; margin: 0; padding: 0; }
+    .fc-timeline li {
+        display: grid;
+        grid-template-columns: 172px 1fr;
+        gap: 0.7rem;
+        padding: 0.45rem 0 0.45rem 0.7rem;
+        border-left: 3px solid #94a3b8;
+        margin-bottom: 0.35rem;
+    }
+    .fc-timeline li.flag-red { border-left-color: #ef4444; }
+    .fc-timeline li.flag-amber { border-left-color: #f59e0b; }
+    .fc-timeline li.flag-ok { border-left-color: #22c55e; }
+    .fc-timeline li.flag-info { border-left-color: #64748b; }
+    .fc-tl-when {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.78rem; color: #475467;
+    }
+    .fc-tl-channel {
+        font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700;
+    }
+    .fc-tl-summary { color: #0b1f3a; font-weight: 600; font-size: 0.88rem; }
+    .fc-tl-detail { color: #344054; font-size: 0.83rem; line-height: 1.45; }
+    @@media (max-width: 720px) { .fc-timeline li { grid-template-columns: 1fr; gap: 0.2rem; } }
+
+    .fc-screening, .fc-clear { list-style: none; margin: 0; padding: 0; font-size: 0.84rem; line-height: 1.45; color: #344054; }
+    .fc-screening li, .fc-clear li { display: flex; gap: 0.45rem; align-items: flex-start; padding: 0.18rem 0; }
+    .fc-icon { width: 1rem; flex: 0 0 1rem; font-weight: 700; }
+    .fc-icon.pass { color: #0f7032; }
+    .fc-icon.fail { color: #c11818; }
+    .fc-icon.warn { color: #954f12; }
+    .fc-icon.info, .fc-icon.na { color: #51627a; }
+    .fc-screening .fc-check-name { font-weight: 600; color: #1d2939; }
+
+    .fc-parties { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .fc-party {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.28);
+        border-radius: 999px;
+        padding: 0.2rem 0.65rem;
+        font-size: 0.8rem;
+        color: #1d2939;
+    }
+    .fc-party small { color: var(--cw-muted, #5d6b7e); }
+    .fc-trusted { margin: 0.6rem 0 0 0; font-size: 0.82rem; color: #344054; }
+    .fc-trusted strong { color: #0f7032; }
+
+    /* Buttons & status */
+    .fc-primary {
+        background: var(--cw-primary);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.6rem;
+    }
+    .fc-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .fc-status { margin-top: 0.6rem; font-size: 0.88rem; color: #344054; }
+    .fc-status.error { color: #c11818; }
+    .fc-status .spinner {
+        display: inline-block; width: 12px; height: 12px;
+        border: 2px solid rgba(16, 38, 72, 0.25); border-top-color: #0b1f3a;
+        border-radius: 50%; margin-right: 6px; vertical-align: middle;
+        animation: fc-spin 0.7s linear infinite;
+    }
+    @@keyframes fc-spin { to { transform: rotate(360deg); } }
+
+    /* Step 3 — case documents */
+    .fc-docs-row { display: flex; gap: 0.7rem; align-items: flex-start; flex-wrap: wrap; }
+    .fc-doc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+        gap: 0.55rem;
+        flex: 1;
+        min-width: 260px;
+    }
+    .fc-doc-empty { padding: 0.55rem; }
+    .fc-doc-tile {
+        position: relative;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-radius: 8px;
+        padding: 0.55rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    .fc-doc-tile.selected {
+        border-color: var(--fc-accent);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--fc-accent) 40%, transparent);
+    }
+    .fc-doc-tile img {
+        width: 100%; height: 100px; object-fit: cover;
+        border-radius: 5px; background: #f2f4f7; cursor: zoom-in;
+    }
+    .fc-doc-title { font-size: 0.78rem; color: #1d2939; line-height: 1.25; }
+    .fc-doc-kind {
+        font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--cw-muted, #5d6b7e);
+    }
+    .fc-doc-toggle { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: #344054; }
+    .fc-doc-remove {
+        position: absolute; top: 4px; right: 6px;
+        background: transparent; color: #475467;
+        border: none; cursor: pointer; font-size: 0.85rem; padding: 2px 4px;
+    }
+    .fc-doc-remove:hover { color: #c11818; }
+    #fc-sample-host { align-self: stretch; display: flex; align-items: flex-start; position: relative; }
+
+    .fc-doc-output { margin-top: 0.9rem; }
+    .fc-doc-output-hint { margin: 0 0 0.5rem 0; font-size: 0.82rem; }
+    .fc-doc-cards { display: grid; gap: 0.7rem; }
+    .fc-doc-card {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 10px;
+        padding: 0.7rem 0.85rem;
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        gap: 0.8rem;
+    }
+    @@media (max-width: 720px) { .fc-doc-card { grid-template-columns: 1fr; } }
+    .fc-doc-card img {
+        width: 100%; max-height: 150px; object-fit: cover;
+        border-radius: 6px; background: #f2f4f7; cursor: zoom-in;
+    }
+    .fc-doc-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .fc-doc-card-title { color: #0b1f3a; font-weight: 600; font-size: 0.92rem; }
+    .fc-doc-verdict {
+        padding: 0.16rem 0.62rem;
+        border-radius: 999px;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .fc-doc-verdict.legit      { background: rgba(34, 197, 94, 0.16); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .fc-doc-verdict.suspicious { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .fc-doc-verdict.fake       { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .fc-doc-source {
+        font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--cw-muted, #5d6b7e); margin-left: auto;
+    }
+    .fc-doc-summary { margin: 0.4rem 0 0 0; color: #1d2939; font-size: 0.86rem; }
+    .fc-doc-section-label {
+        font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700; margin: 0.55rem 0 0.25rem 0;
+    }
+    .fc-doc-reasons { margin: 0; padding-left: 1.05rem; font-size: 0.84rem; line-height: 1.45; color: #344054; }
+    .fc-doc-reasons li { margin: 0.18rem 0; }
+    .fc-doc-checks { list-style: none; margin: 0; padding: 0; font-size: 0.84rem; line-height: 1.45; color: #344054; }
+    .fc-doc-checks li { display: flex; gap: 0.45rem; align-items: flex-start; padding: 0.15rem 0; }
+    .fc-doc-checks .check-name { font-weight: 600; color: #1d2939; }
+    .fc-doc-checks .check-detail { color: #475467; }
+    .fc-doc-na { margin-top: 0.3rem; font-size: 0.8rem; color: var(--cw-muted, #5d6b7e); }
+    .fc-doc-na summary { cursor: pointer; }
+    .fc-doc-cu {
+        margin-top: 0.5rem;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 6px;
+    }
+    .fc-doc-cu summary { cursor: pointer; padding: 0.35rem 0.55rem; font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
+    .fc-doc-cu pre {
+        margin: 0; padding: 0.55rem 0.7rem;
+        font-size: 0.78rem; line-height: 1.45;
+        color: #344054;
+        white-space: pre-wrap; word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        max-height: 240px; overflow: auto;
+    }
+
+    /* Step 5 — risk summary */
+    .fc-risk-card {
+        background: color-mix(in srgb, var(--fc-accent) 10%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--fc-accent) 35%, transparent);
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        margin-top: 0.4rem;
+    }
+    .fc-risk-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; }
+    .fc-risk-label { color: #0b1f3a; font-weight: 700; font-size: 0.9rem; }
+    .fc-risk-pill {
+        padding: 0.18rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .fc-risk-pill.high   { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .fc-risk-pill.medium { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .fc-risk-pill.low    { background: rgba(34, 197, 94, 0.16); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .fc-risk-num {
+        margin-left: auto;
+        color: #344054;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85rem;
+    }
+    .fc-risk-summary { margin: 0; color: #1d2939; font-size: 0.88rem; line-height: 1.5; }
+    .fc-agent-view { margin: 0.45rem 0 0 0; color: var(--cw-muted, #5d6b7e); font-size: 0.8rem; }
+
+    .fc-output-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem;
+        margin-top: 0.7rem;
+    }
+    .fc-indicators { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+    .fc-indicator {
+        border-left: 3px solid #64748b;
+        background: #f6f7f9;
+        border-radius: 6px;
+        padding: 0.45rem 0.65rem;
+    }
+    .fc-indicator.sev-high { border-left-color: #ef4444; }
+    .fc-indicator.sev-medium { border-left-color: #f59e0b; }
+    .fc-indicator.sev-low { border-left-color: #eab308; }
+    .fc-indicator.sev-info { border-left-color: #38bdf8; }
+    .fc-ind-head { display: flex; align-items: baseline; gap: 0.6rem; }
+    .fc-ind-title { color: #0b1f3a; font-weight: 600; font-size: 0.88rem; }
+    .fc-ind-points {
+        margin-left: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.78rem; color: #c11818;
+    }
+    .fc-indicator.sev-info .fc-ind-points { color: #126891; }
+    .fc-ind-evidence { color: #344054; font-size: 0.83rem; line-height: 1.45; margin-top: 0.15rem; }
+    .fc-ind-source { color: var(--cw-muted, #5d6b7e); font-size: 0.72rem; margin-top: 0.2rem; }
+    .fc-score-breakdown {
+        margin: 0.55rem 0 0 0; color: var(--cw-muted, #5d6b7e);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.78rem;
+    }
+    .fc-actions { margin: 0; padding-left: 1.15rem; color: #344054; font-size: 0.85rem; line-height: 1.5; }
+    .fc-actions li { margin: 0.3rem 0; }
+    .fc-actions strong { color: #0b1f3a; }
+    .fc-approval-badge {
+        display: inline-block; margin-left: 0.35rem;
+        padding: 0.05rem 0.45rem; border-radius: 999px;
+        font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        background: rgba(245, 158, 11, 0.16); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.4);
+        vertical-align: middle;
+    }
+    .fc-approval-text { margin: 0; color: #344054; font-size: 0.88rem; line-height: 1.45; }
+    .fc-smr {
+        margin: 0.6rem 0 0 0;
+        padding: 0.5rem 0.7rem;
+        border-radius: 6px;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #c11818; font-size: 0.84rem; line-height: 1.45;
+    }
+
+    /* Lightbox */
+    .fc-lightbox {
+        position: fixed; inset: 0;
+        background: rgba(8, 22, 44, 0.8);
+        display: none; align-items: center; justify-content: center;
+        z-index: 9000; padding: 2rem;
+    }
+    .fc-lightbox.open { display: flex; }
+    .fc-lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 8px; box-shadow: 0 20px 60px rgba(16, 24, 40, 0.11); }
+    .fc-lightbox-close {
+        position: absolute; top: 14px; right: 18px;
+        background: transparent; color: #0b1f3a;
+        border: none; font-size: 2rem; cursor: pointer;
+    }
+
+    /* Specimen popover */
+    .fc-sample-trigger {
+        display: inline-block; padding: 0.45rem 0.7rem;
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 6px;
+        color: #c11818; font-size: 0.85rem; cursor: pointer;
+        white-space: nowrap;
+    }
+    .fc-sample-trigger:hover { background: rgba(239, 68, 68, 0.18); }
+    .fc-sample-popover {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 6px;
+        background: #f2f4f7;
+        border: 1px solid rgba(16, 38, 72, 0.198);
+        border-radius: 10px;
+        padding: 0.7rem;
+        width: 400px;
+        max-width: 90vw;
+        box-shadow: 0 18px 38px rgba(16, 24, 40, 0.099);
+        z-index: 80;
+        display: none;
+    }
+    .fc-sample-popover.open { display: block; }
+    .fc-sample-popover-title { font-weight: 600; color: #0b1f3a; margin-bottom: 4px; }
+    .fc-sample-popover-hint { font-size: 0.76rem; color: #5d6b7e; margin-bottom: 8px; }
+    .fc-sample-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.45rem;
+        max-height: 380px; overflow: auto;
+    }
+    .fc-sample-tile {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.4rem;
+        display: flex; flex-direction: column; gap: 0.3rem;
+    }
+    .fc-sample-tile img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; background: #f2f4f7; cursor: zoom-in; }
+    .fc-sample-label { font-size: 0.74rem; color: #1d2939; line-height: 1.25; }
+    .fc-sample-expected { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cw-muted, #5d6b7e); }
+    .fc-sample-add {
+        background: var(--cw-primary); color: #fff;
+        border: none; border-radius: 999px;
+        padding: 0.3rem 0.5rem; font-size: 0.78rem; font-weight: 700;
+        cursor: pointer;
+    }
+    .fc-sample-add:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>

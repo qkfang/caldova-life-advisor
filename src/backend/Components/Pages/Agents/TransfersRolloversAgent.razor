@@ -1,0 +1,421 @@
+@page "/agents/transfers-rollovers"
+
+<PageTitle>Transfers &amp; Rollovers Agent — Wealth Team in a Day</PageTitle>
+
+<div class="agent-header" style="--accent: #10b981">
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to operations office</a>
+    <div class="agent-header-row">
+        <div class="agent-header-icon">🔁</div>
+        <div>
+            <div class="agent-header-dept">Transfers &amp; Rollovers</div>
+            <h1>Transfers &amp; Rollovers Agent</h1>
+            <div class="agent-header-persona">Rory — Transfers &amp; Rollovers Coordinator</div>
+            <p class="tagline">Moves money between funds safely — and on time.</p>
+        </div>
+    </div>
+</div>
+
+<div class="agent-tab-scope" style="--accent: #10b981">
+    <section class="panel tr-panel" style="--accent: #10b981">
+        <!-- Step 1 — pick a case -->
+        <div class="tr-step" data-step="1">
+            <div class="tr-step-head">
+                <span class="tr-step-num">1</span>
+                <h3>Pick a case</h3>
+            </div>
+            <div class="tr-pick">
+                <label for="tr-case-select">Case</label>
+                <select id="tr-case-select">
+                    <option value="">— Loading cases —</option>
+                </select>
+                <button type="button" id="tr-refresh-btn" class="tr-refresh" title="Reload the list of cases">↻</button>
+            </div>
+            <p class="muted tr-empty" id="tr-empty" hidden>
+                No cases yet. Open one with the <a href="/agents/onboarding">Onboarding Agent</a>, then come back here.
+            </p>
+            <div class="tr-case-summary" id="tr-case-summary" hidden></div>
+        </div>
+
+        <!-- Step 2 — engage -->
+        <div class="tr-step" data-step="2" id="tr-step-2" hidden>
+            <div class="tr-step-head">
+                <span class="tr-step-num">2</span>
+                <h3>Engage the Transfers &amp; Rollovers Agent</h3>
+            </div>
+            <button id="tr-process-btn" type="button" disabled>Engage Transfers &amp; Rollovers Agent</button>
+            <div id="tr-process-status" class="tr-status" hidden></div>
+
+            <div class="engage-tabs-scope" data-engage-role="transfers-rollovers">
+                <div class="engage-tabs" role="tablist">
+                    <button type="button" class="engage-tab-btn active" data-engage-tab="narrative">Agent Narrative</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="reference">Reference</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="prompt">Agent Prompt &amp; Tools</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="input">Agent Input</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="output">Raw Output</button>
+                </div>
+
+                <div class="engage-tab-panel active" data-engage-tab="narrative">
+                    <div class="engage-info-block">
+                        <h4>Agent narrative (streamed)</h4>
+                        <div class="agent-md engage-narrative-body"><div class="engage-empty">Engage the agent to see the streamed narrative.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="reference">
+                    <div class="engage-info-block">
+                        <h4>Reference documents cited by the agent</h4>
+                        <div class="engage-references-body"><div class="engage-empty">Engage the agent to see the reference documents cited in its response.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="prompt">
+                    <div class="engage-info-block">
+                        <h4>Agent metadata</h4>
+                        <div class="engage-info-meta engage-meta"></div>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>System prompt</h4>
+                        <pre class="engage-pre engage-prompt-body">Loading…</pre>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>Tools available</h4>
+                        <ul class="engage-tools-list"><li class="engage-empty">Loading…</li></ul>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="input">
+                    <div class="engage-info-block">
+                        <h4>Prompt sent to the agent</h4>
+                        <pre class="engage-pre engage-input-body engage-empty">Engage the agent to capture the input that was sent.</pre>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="output">
+                    <div class="engage-info-block">
+                        <h4>Raw agent output (text, citations, every output item including tool / function calls)</h4>
+                        <div class="json-viewer engage-output-body"><div class="engage-empty">Engage the agent to see the full raw response.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 — counterparties, insurance warnings & SLA -->
+        <div class="tr-step" data-step="3" id="tr-plan-step" hidden>
+            <div class="tr-step-head">
+                <span class="tr-step-num">3</span>
+                <h3>Counterparties, insurance warnings &amp; SLA</h3>
+            </div>
+            <p class="muted" id="tr-plan-asat"></p>
+
+            <h4 class="tr-subhead">Transfer plan</h4>
+            <div class="tr-table-wrap" id="tr-legs-wrap">
+                <table class="tr-table" id="tr-legs-table"></table>
+            </div>
+            <div class="tr-callout info" id="tr-legs-empty" hidden></div>
+
+            <div class="tr-block" id="tr-warnings-block" hidden>
+                <h4 class="tr-subhead">Insurance-loss warnings</h4>
+                <div id="tr-warnings"></div>
+            </div>
+
+            <div class="tr-block" id="tr-svs-block" hidden>
+                <h4 class="tr-subhead">SMSF verification (ATO SVS)</h4>
+                <div class="tr-svs-head" id="tr-svs-head"></div>
+                <div class="tr-table-wrap"><table class="tr-table" id="tr-svs-table"></table></div>
+                <p class="muted tr-svs-rec" id="tr-svs-rec"></p>
+            </div>
+
+            <div class="tr-block" id="tr-counterparties-block" hidden>
+                <h4 class="tr-subhead">Counterparties (fund directory)</h4>
+                <div class="tr-cards" id="tr-counterparties"></div>
+            </div>
+
+            <div class="tr-block" id="tr-sla-block" hidden>
+                <h4 class="tr-subhead">SLA tracker — 3 business days</h4>
+                <div class="tr-table-wrap"><table class="tr-table" id="tr-sla-table"></table></div>
+            </div>
+
+            <div class="tr-block" id="tr-notes-block" hidden>
+                <h4 class="tr-subhead">Notes</h4>
+                <ul class="tr-list" id="tr-notes"></ul>
+            </div>
+        </div>
+
+        <!-- Step 4 — request dispatched / held -->
+        <div class="tr-step" data-step="4" id="tr-request-step" hidden>
+            <div class="tr-step-head">
+                <span class="tr-step-num">4</span>
+                <h3>Rollover request — dispatched, held or scheduled</h3>
+            </div>
+            <div class="tr-request-card" id="tr-request-card">
+                <div class="tr-request-label">Request status</div>
+                <div class="tr-request-status" id="tr-request-status"></div>
+                <div class="tr-request-headline" id="tr-request-headline"></div>
+            </div>
+
+            <div class="tr-pdf" id="tr-pdf" hidden>
+                <div class="tr-pdf-label">Rollover / transfer request PDF</div>
+                <div class="tr-pdf-row">
+                    <span class="tr-pdf-icon" aria-hidden="true">📄</span>
+                    <div class="tr-pdf-meta">
+                        <div class="tr-pdf-name" id="tr-pdf-name"></div>
+                        <div class="tr-pdf-sub" id="tr-pdf-sub"></div>
+                    </div>
+                    <a id="tr-pdf-link" class="tr-pdf-btn" href="#" download>Download PDF</a>
+                </div>
+            </div>
+
+            <div class="tr-block">
+                <h4 class="tr-subhead">Member / adviser update — drafts</h4>
+                <div id="tr-updates"></div>
+            </div>
+
+            <div class="tr-approval" id="tr-approval">
+                <span class="tr-approval-pill" id="tr-approval-pill"></span>
+                <span id="tr-approval-reason"></span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .tr-panel { --tr-accent: #10b981; }
+    .tr-step code {
+        background: rgba(16, 185, 129, 0.12); padding: 1px 6px; border-radius: 4px; font-size: 0.84rem;
+    }
+
+    .tr-step {
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 0.95rem 1.1rem 1rem 1.1rem;
+        margin-top: 0.9rem;
+    }
+    .tr-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .tr-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
+    .tr-step-num {
+        display: inline-grid; place-items: center;
+        width: 1.55rem; height: 1.55rem;
+        border-radius: 50%;
+        background: color-mix(in srgb, #10b981 22%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, #10b981 55%, transparent);
+        color: #0e6f4f;
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .tr-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
+    .tr-step .muted a, .tr-empty a { color: #0e6f4f; }
+
+    .tr-pick { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .tr-pick label {
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700;
+    }
+    .tr-pick select {
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.136);
+        border-radius: 6px;
+        color: #0b1f3a; font-size: 0.9rem;
+        padding: 0.5rem 0.7rem;
+        min-width: 320px;
+        max-width: 100%;
+    }
+    .tr-pick select:focus {
+        outline: none; border-color: #10b981;
+        box-shadow: 0 0 0 3px color-mix(in srgb, #10b981 25%, transparent);
+    }
+    .tr-refresh {
+        background: transparent;
+        color: #344054;
+        border: 1px solid rgba(16, 38, 72, 0.198);
+        border-radius: 6px;
+        padding: 0.4rem 0.7rem;
+        font-size: 1rem; cursor: pointer;
+    }
+    .tr-refresh:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+
+    .tr-case-summary {
+        margin-top: 0.7rem;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.7rem 0.85rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 0.5rem 1rem;
+        font-size: 0.85rem;
+        color: #344054;
+    }
+    .tr-case-summary .k {
+        display: block;
+        font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.15rem;
+    }
+    .tr-case-summary .wide { grid-column: 1 / -1; }
+
+    #tr-process-btn {
+        background: var(--cw-primary); color: #fff;
+        border: none; border-radius: 999px;
+        padding: 0.5rem 1rem;
+        font-size: 0.88rem; font-weight: 700;
+        cursor: pointer; margin-top: 0.35rem;
+    }
+    #tr-process-btn:hover:not(:disabled) { filter: brightness(1.08); }
+    #tr-process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .tr-status { margin-top: 0.6rem; font-size: 0.88rem; color: #344054; }
+    .tr-status.error { color: #c11818; }
+    .tr-status .spinner {
+        display: inline-block; width: 12px; height: 12px;
+        border: 2px solid rgba(16, 38, 72, 0.25); border-top-color: #0b1f3a;
+        border-radius: 50%; margin-right: 6px; vertical-align: middle;
+        animation: tr-spin 0.7s linear infinite;
+    }
+    @@keyframes tr-spin { to { transform: rotate(360deg); } }
+
+    .tr-block { margin-top: 0.95rem; }
+    .tr-subhead { margin: 0.6rem 0 0.4rem 0; font-size: 0.88rem; color: #1d2939; }
+    .tr-panel .engage-narrative-body { contain: inline-size; overflow-x: auto; }
+
+    /* `contain: inline-size` stops a wide table from stretching the page
+       layout; it scrolls inside its wrapper instead. */
+    .tr-table-wrap { overflow-x: auto; contain: inline-size; }
+    .tr-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; color: #1d2939; }
+    .tr-table th, .tr-table td {
+        padding: 0.42rem 0.55rem;
+        border-bottom: 1px solid rgba(16, 38, 72, 0.099);
+        text-align: left; vertical-align: top;
+    }
+    .tr-table th {
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700;
+    }
+    .tr-table th.num { text-align: right; }
+    .tr-table td.num { text-align: right; white-space: nowrap; }
+    .tr-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.8rem; }
+    .tr-table .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.76rem; }
+
+    .tr-pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.08rem 0.55rem;
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+    }
+    .tr-pill.ok { color: #126f4a; background: rgba(16, 185, 129, 0.12); }
+    .tr-pill.warn { color: #954f12; background: rgba(245, 158, 11, 0.12); }
+    .tr-pill.blocked { color: #c11818; background: rgba(239, 68, 68, 0.12); }
+    .tr-pill.info { color: #126891; background: rgba(14, 165, 233, 0.12); }
+
+    .tr-callout {
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.86rem;
+        margin-top: 0.3rem;
+    }
+    .tr-callout.info { background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.35); color: #126794; }
+    .tr-callout.warn { background: rgba(245, 158, 11, 0.10); border: 1px solid rgba(245, 158, 11, 0.4); color: #954f12; }
+    .tr-callout.blocked { background: rgba(239, 68, 68, 0.10); border: 1px solid rgba(239, 68, 68, 0.4); color: #c11818; }
+    .tr-callout strong { color: #0b1f3a; }
+    .tr-callout .tr-callout-action { display: block; margin-top: 0.3rem; font-size: 0.82rem; opacity: 0.92; }
+
+    .tr-svs-head { font-size: 0.88rem; margin-bottom: 0.4rem; }
+    .tr-svs-rec { font-size: 0.84rem !important; }
+
+    .tr-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.6rem; }
+    .tr-card {
+        background: color-mix(in srgb, #10b981 7%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+        border-radius: 10px;
+        padding: 0.7rem 0.85rem;
+        font-size: 0.82rem;
+        color: #344054;
+    }
+    .tr-card-name { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; }
+    .tr-card-id { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: #126f4a; font-size: 0.76rem; margin-top: 0.1rem; }
+    .tr-card-row { margin-top: 0.3rem; }
+    .tr-card-row .k {
+        display: block;
+        font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700;
+    }
+    .tr-card-insurance { color: #954f12; }
+
+    .tr-list { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; color: #344054; }
+    .tr-list li { margin-bottom: 0.3rem; }
+
+    .tr-request-card {
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(16, 38, 72, 0.186);
+        background: #f6f7f9;
+    }
+    .tr-request-card.ok { border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.08); }
+    .tr-request-card.warn { border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.08); }
+    .tr-request-card.blocked { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.08); }
+    .tr-request-card.info { border-color: rgba(14, 165, 233, 0.5); background: rgba(14, 165, 233, 0.08); }
+    .tr-request-label {
+        font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700;
+    }
+    .tr-request-status {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 1.05rem; font-weight: 700; color: #0b1f3a; margin-top: 0.15rem; letter-spacing: 0.03em;
+    }
+    .tr-request-headline { font-size: 0.88rem; color: #344054; margin-top: 0.25rem; }
+
+    .tr-pdf {
+        margin-top: 0.7rem;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        border-radius: 8px;
+        padding: 0.7rem 0.85rem;
+    }
+    .tr-pdf-label {
+        font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.45rem;
+    }
+    .tr-pdf-row { display: flex; align-items: center; gap: 0.7rem; }
+    .tr-pdf-icon { font-size: 1.6rem; }
+    .tr-pdf-meta { flex: 1; min-width: 0; contain: inline-size; }
+    .tr-pdf-name { color: #0b1f3a; font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tr-pdf-sub { color: var(--cw-muted, #5d6b7e); font-size: 0.78rem; margin-top: 0.1rem; }
+    .tr-pdf-btn {
+        background: #fff; color: var(--cw-primary);
+        border-radius: 999px; padding: 0.4rem 0.85rem;
+        font-size: 0.82rem; font-weight: 700;
+        text-decoration: none; white-space: nowrap; border: 1px solid color-mix(in srgb, var(--cw-primary) 40%, transparent); }
+    .tr-pdf-btn:hover { filter: brightness(1.1); }
+
+    .tr-update {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.65rem 0.85rem;
+        margin-top: 0.5rem;
+    }
+    .tr-update-head { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: baseline; }
+    .tr-update-audience { color: #0b1f3a; font-weight: 700; font-size: 0.88rem; }
+    .tr-update-channel { color: var(--cw-muted, #5d6b7e); font-size: 0.76rem; }
+    .tr-update-note { color: #954f12; font-size: 0.78rem; margin-top: 0.25rem; }
+    .tr-update-body { margin-top: 0.4rem; font-size: 0.88rem; }
+
+    .tr-approval {
+        margin-top: 0.8rem;
+        border-radius: 8px;
+        padding: 0.55rem 0.8rem;
+        font-size: 0.86rem;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #0f7043;
+    }
+    .tr-approval.required { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.4); color: #954f12; }
+    .tr-approval-pill {
+        display: inline-block;
+        border: 1px solid currentColor;
+        padding: 0.05rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+        margin-right: 0.5rem;
+    }
+</style>

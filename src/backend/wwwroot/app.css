@@ -1,0 +1,340 @@
+/* ============================================================
+   Wealth Team in a Day — global theme (Caldova Wealth)
+   Modelled on Australian super fund and wealth manager sites
+   (UniSuper, ART, AustralianSuper, Morgan Stanley, J.P. Morgan):
+   light ivory pages, white cards, deep navy brand ink, one
+   confident action blue, serif display headlines and a quiet
+   gold highlight.
+   ============================================================ */
+
+:root {
+    /* Brand */
+    --cw-navy-950: #041427;
+    --cw-navy-900: #071d38;
+    --cw-navy-800: #0b2a4f;
+    --cw-navy-700: #123866;
+    --cw-primary: #1660d0;        /* action blue — CTAs and links */
+    --cw-primary-hover: #0f4fb4;
+    --cw-primary-soft: #e9f0fc;
+    --cw-gold: #c9a24a;           /* premium highlight on navy */
+    --cw-gold-ink: #8a6a1e;       /* gold for text on light surfaces */
+    --cw-success: #0f7b55;
+    --cw-danger: #b42318;
+    --cw-warn: #b45309;
+
+    /* Surfaces */
+    --cw-bg: #f6f5f1;             /* warm ivory page background */
+    --cw-bg-2: #efede6;
+    --cw-surface: #ffffff;
+    --cw-surface-2: #f6f7f9;
+    --cw-line: #e3e6eb;
+    --cw-line-strong: #cfd5de;
+
+    /* Text */
+    --cw-ink: #0b1f3a;            /* headings */
+    --cw-text: #2b3646;           /* body */
+    --cw-text-2: #475467;
+    --cw-muted: #5d6b7e;
+    --cw-muted-2: #8a94a3;
+
+    /* Aliases kept for page-level styles written against the old tokens */
+    --cw-text-strong: var(--cw-ink);
+    --cw-panel: var(--cw-surface);
+    --cw-panel-solid: var(--cw-surface);
+    --cw-panel-border: var(--cw-line);
+    --cw-panel-border-strong: var(--cw-line-strong);
+    --cw-accent: var(--cw-primary);
+    --cw-accent-warm: var(--cw-navy-700);
+    --cw-accent-2: var(--cw-primary);
+    --cw-good: var(--cw-success);
+    --cw-bad: var(--cw-danger);
+
+    /* Type */
+    --cw-font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --cw-font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    --cw-font-mono: ui-monospace, "Cascadia Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* Shape & elevation */
+    --cw-radius: 16px;
+    --cw-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --cw-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -18px rgba(16, 24, 40, 0.18);
+    --cw-shadow-lg: 0 2px 4px rgba(16, 24, 40, 0.04), 0 24px 48px -20px rgba(11, 31, 58, 0.28);
+
+    /* Bootstrap hand-off */
+    --bs-body-font-family: var(--cw-font-sans);
+    --bs-body-color: var(--cw-text);
+    --bs-body-bg: var(--cw-bg);
+    --bs-border-color: var(--cw-line);
+}
+
+html, body {
+    font-family: var(--cw-font-sans);
+    background: var(--cw-bg);
+    color: var(--cw-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-size: 1rem;
+    line-height: 1.55;
+    font-feature-settings: "cv11";
+}
+
+a, .btn-link {
+    color: var(--cw-primary);
+    text-decoration: none;
+}
+
+a:hover, .btn-link:hover {
+    color: var(--cw-primary-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.btn-primary {
+    color: #fff;
+    background: var(--cw-primary);
+    border-color: var(--cw-primary);
+    border-radius: 999px;
+    font-weight: 600;
+    padding-inline: 1.25rem;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background: var(--cw-primary-hover);
+    border-color: var(--cw-primary-hover);
+    color: #fff;
+}
+
+.btn:focus-visible, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--cw-primary);
+    box-shadow: 0 0 0 0.22rem rgba(22, 96, 208, 0.22);
+}
+
+:focus-visible {
+    outline: 2px solid var(--cw-primary);
+    outline-offset: 2px;
+}
+
+.content {
+    padding-top: 1.75rem;
+    padding-bottom: 3.5rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--cw-ink);
+    letter-spacing: -0.01em;
+}
+
+h1, h2 {
+    font-family: var(--cw-font-serif);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
+h1:focus {
+    outline: none;
+}
+
+/* Shared page width used by the header, content and footer. */
+.site-container {
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2.25rem);
+}
+
+/* Inline code chips inside copy. */
+code {
+    background: #eef2f8;
+    color: #1b3a63;
+    border: 1px solid #dde4ee;
+    border-radius: 5px;
+    padding: 0.05em 0.4em;
+    font-size: 0.86em;
+    font-family: var(--cw-font-mono);
+}
+
+/* Quiet scrollbars to match the light surfaces. */
+* {
+    scrollbar-color: rgba(16, 38, 72, 0.22) transparent;
+    scrollbar-width: thin;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+    background: rgba(16, 38, 72, 0.18);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(16, 38, 72, 0.32); background-clip: padding-box; }
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Full-page toggle — hides the site header and footer for a wider, presenter-
+   friendly working area. Floats bottom-right like a fund site's chat button.
+   ───────────────────────────────────────────────────────────────────────────── */
+.full-page-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 900;
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--cw-line-strong);
+    color: var(--cw-navy-800);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--cw-shadow-lg);
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.full-page-toggle:hover {
+    background: var(--cw-primary);
+    border-color: var(--cw-primary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.full-page-toggle .icon-collapse { display: none; }
+body.left-nav-hidden .full-page-toggle .icon-expand { display: none; }
+body.left-nav-hidden .full-page-toggle .icon-collapse { display: inline-block; }
+body.left-nav-hidden .full-page-toggle { background: var(--cw-primary); border-color: var(--cw-primary); color: #fff; }
+
+/* Full-page mode: hide the site chrome and let the content use the width. */
+body.left-nav-hidden .site-header,
+body.left-nav-hidden .site-footer { display: none; }
+body.left-nav-hidden .site-container { max-width: none; }
+/* ─────────────────────────────────────────────────────────────────────────────
+   Account page "Ask AI" chatbot (ported from forex-trading-agent)
+   ───────────────────────────────────────────────────────────────────────────── */
+.aichat-settings {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+.aichat-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+.aichat-messages {
+    background: #f8f9fa;
+}
+.aichat-welcome {
+    text-align: center;
+    padding: 60px 20px 20px;
+    color: #6c757d;
+}
+.aichat-msg {
+    margin-bottom: 14px;
+}
+.aichat-msg-user .aichat-bubble {
+    background: #1a3a5c;
+    color: #fff;
+    border-radius: 12px 12px 4px 12px;
+    padding: 10px 14px;
+    max-width: 85%;
+    margin-left: auto;
+    font-size: 0.9rem;
+}
+.aichat-msg-assistant .aichat-bubble {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 12px 12px 12px 4px;
+    padding: 10px 14px;
+    max-width: 90%;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+.aichat-meta {
+    font-size: 0.72rem;
+    color: #adb5bd;
+    margin-top: 3px;
+}
+.aichat-msg-user .aichat-meta { text-align: right; }
+.aichat-composer {
+    border-top: 1px solid #dee2e6;
+    background: #fff;
+}
+.aichat-input:focus { box-shadow: none; border-color: #1a3a5c; }
+.aichat-send-btn { background: #1a3a5c; border: none; }
+.aichat-send-btn:hover { background: #0f2540; }
+.aichat-refs-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+.aichat-refs-header {
+    background: #1a3a5c;
+    color: #fff;
+    border-radius: 8px 8px 0 0;
+}
+.aichat-ref-card {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    transition: border-color 0.15s;
+}
+.aichat-ref-card:hover { border-color: #1a3a5c; }
+.aichat-ref-card a { color: #1a3a5c; font-weight: 600; text-decoration: none; }
+.aichat-ref-card a:hover { text-decoration: underline; }
+.aichat-typing .aichat-bubble {
+    font-style: italic;
+    color: #6c757d;
+}
+.aichat-select { font-size: 0.82rem; }
+.aichat-temp-slider { cursor: pointer; }
+.cat-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #e2e8f0;
+    color: #1a3a5c;
+}

@@ -1,0 +1,355 @@
+/* Header navigation — Caldova Wealth. White bar, serif wordmark, underline
+   active state and mega-menu dropdowns, as on Australian super fund sites.
+   NavLink renders its own <a>, so those anchors are reached with ::deep. */
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    min-height: 76px;
+}
+
+/* ── Brand ────────────────────────────────────────────────────────────── */
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--cw-ink);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.brand:hover {
+    color: var(--cw-ink);
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: block;
+    box-shadow: 0 6px 14px -6px rgba(11, 42, 79, 0.55);
+    border-radius: 10px;
+}
+
+.brand-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+}
+
+.brand-name {
+    font-family: var(--cw-font-serif);
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--cw-navy-800);
+    line-height: 1;
+}
+
+.brand-sub {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cw-gold-ink);
+}
+
+/* ── Primary navigation ───────────────────────────────────────────────── */
+.nav-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.primary-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 0.15rem;
+}
+
+.primary-nav ::deep .pnav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 76px;
+    padding: 0 0.95rem;
+    color: var(--cw-ink);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.primary-nav ::deep summary::-webkit-details-marker {
+    display: none;
+}
+
+.primary-nav ::deep .pnav-link::after {
+    content: "";
+    position: absolute;
+    left: 0.95rem;
+    right: 0.95rem;
+    bottom: -1px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--cw-primary);
+    transform: scaleX(0);
+    transition: transform 0.18s ease;
+}
+
+.primary-nav ::deep .pnav-link:hover {
+    color: var(--cw-primary);
+    text-decoration: none;
+}
+
+.primary-nav ::deep .pnav-link:hover::after,
+.primary-nav ::deep .pnav-link.active::after,
+.pnav-dd[open] > .pnav-link::after {
+    transform: scaleX(1);
+}
+
+.primary-nav ::deep .pnav-link.active {
+    color: var(--cw-primary);
+}
+
+.pnav-link i {
+    font-size: 0.7rem;
+    transition: transform 0.18s ease;
+}
+
+.pnav-dd {
+    position: relative;
+}
+
+.pnav-dd[open] > .pnav-link i {
+    transform: rotate(180deg);
+}
+
+/* ── Dropdown (mega-menu) ─────────────────────────────────────────────── */
+.pnav-menu {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    z-index: 900;
+    min-width: 380px;
+    padding: 0.9rem;
+    background: #fff;
+    border: 1px solid var(--cw-line);
+    border-radius: 16px;
+    box-shadow: var(--cw-shadow-lg);
+}
+
+.pnav-menu-wide {
+    width: min(740px, 90vw);
+}
+
+.pnav-menu-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.2rem 0.55rem 0.75rem 0.55rem;
+    margin-bottom: 0.45rem;
+    border-bottom: 1px solid var(--cw-line);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--cw-gold-ink);
+}
+
+.pnav-menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.2rem;
+}
+
+.pnav-menu-list {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.pnav-menu ::deep .pnav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.65rem;
+    border-radius: 12px;
+    color: var(--cw-ink);
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.pnav-menu ::deep .pnav-item:hover {
+    background: var(--cw-surface-2);
+    text-decoration: none;
+}
+
+.pnav-menu ::deep .pnav-item.active {
+    background: var(--cw-primary-soft);
+}
+
+.pnav-item-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--accent) 12%, #fff);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.pnav-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.pnav-item-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--cw-ink);
+}
+
+.pnav-item-sub {
+    font-size: 0.78rem;
+    color: var(--cw-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Call-to-action pills ─────────────────────────────────────────────── */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 42px;
+    padding: 0 1.3rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.cta:hover {
+    text-decoration: none;
+}
+
+.cta-outline {
+    color: var(--cw-navy-800);
+    background: #fff;
+    border: 1.5px solid var(--cw-navy-800);
+}
+
+.cta-outline:hover {
+    color: #fff;
+    background: var(--cw-navy-800);
+}
+
+.cta-solid {
+    color: #fff;
+    background: var(--cw-primary);
+    border: 1.5px solid var(--cw-primary);
+}
+
+.cta-solid:hover {
+    color: #fff;
+    background: var(--cw-primary-hover);
+    border-color: var(--cw-primary-hover);
+}
+
+/* ── Mobile menu ──────────────────────────────────────────────────────── */
+.nav-toggle {
+    display: none;
+}
+
+@media (max-width: 1080px) {
+    .header-inner {
+        flex-wrap: wrap;
+        gap: 0;
+        min-height: 66px;
+        padding-top: 0.65rem;
+        padding-bottom: 0.65rem;
+    }
+
+    .nav-toggle {
+        display: inline-block;
+        appearance: none;
+        margin-left: auto;
+        width: 46px;
+        height: 40px;
+        cursor: pointer;
+        border: 1px solid var(--cw-line-strong);
+        border-radius: 10px;
+        background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%230b2a4f' stroke-linecap='round' stroke-width='2.2' d='M5 8h20M5 15h20M5 22h20'/%3e%3c/svg%3e") no-repeat center / 22px;
+    }
+
+    .nav-toggle:checked {
+        background-color: var(--cw-primary-soft);
+        border-color: var(--cw-primary);
+    }
+
+    .nav-panel {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.4rem 0 1rem 0;
+        border-top: 1px solid var(--cw-line);
+    }
+
+    .nav-toggle:checked ~ .nav-panel {
+        display: flex;
+    }
+
+    .primary-nav {
+        flex-direction: column;
+    }
+
+    .primary-nav ::deep .pnav-link {
+        height: auto;
+        padding: 0.8rem 0.25rem;
+        justify-content: space-between;
+    }
+
+    .primary-nav ::deep .pnav-link::after {
+        display: none;
+    }
+
+    .pnav-menu,
+    .pnav-menu-wide {
+        position: static;
+        width: auto;
+        min-width: 0;
+        padding: 0 0 0.6rem 0;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .pnav-menu-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .header-actions {
+        padding-top: 0.4rem;
+    }
+}

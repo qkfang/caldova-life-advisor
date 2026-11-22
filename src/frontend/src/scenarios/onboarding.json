@@ -1,0 +1,29 @@
+{
+  "id": "onboarding",
+  "scenarioNumber": 1,
+  "caseId": "REQ-20261103-OPS001",
+  "customerId": "onboarding",
+  "amount": 138200,
+  "paidAmount": 138200,
+  "outcome": "approved",
+  "beats": [
+    {"at": "customer", "action": "lodge-at-reception", "narration": "The pack lands in the Onboarding inbox: a Caldova Super (Select) application in the Growth model, two rollovers, a $3,300 p.a. adviser fee consent and a BDBN naming Arjun."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent extracts every field from the pack and runs the NIGO checklist — ID verified electronically ✓, TFN supplied ✓, signatures ✓."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261103-OPS001 for new member CS-2049817 and routes it for a KYC/AML screen, then to Benefits & Eligibility."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix runs KYC/AML screening on Priya — identity verified electronically, no PEP or sanctions match. All clear."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-pickup", "narration": "Ben checks the adviser fee consent, the beneficiary nomination and the product fit against the PDS, the trust deed and super law."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-process", "narration": "Ben: s99FA fee consent valid ✓, TMD fit ✓ — but the BDBN has only one witness, so it is treated as non-binding until Priya re-signs it in front of two adult witnesses who are not beneficiaries."},
+    {"at": "Transfers & Rollovers Coordinator", "action": "transfers-coordinate", "narration": "Rory lodges the SuperStream rollover from Harbourline Retail Super (about $41,800) now, and holds Southern Cross Industry Super (about $96,400) — rolling it over would end Priya's $520,000 Death & TPD cover."},
+    {"at": "Investment Analyst", "action": "investment-review", "narration": "Ivy confirms the Growth model (80/20) fits Priya's Growth risk profile and compares Growth, Balanced and Index Balanced on $138,200 — fees in dollars — in a client workbook."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-handoff", "narration": "Ben hands the case to Payments with the investment instructions."},
+    {"at": "Payments Officer", "action": "payment", "narration": "Penny sets up the investment instructions: each rollover is invested in the Growth model on receipt, keeping 1% in the Caldova Cash Account for fees."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara sends Priya a welcome email and updates Hannah: re-sign the BDBN with two witnesses, and confirm or replace the insurance before the Southern Cross rollover."}
+  ],
+  "result": {
+    "status": "completed",
+    "headline": "Account opened — consolidation under way",
+    "figure": "$138,200",
+    "icon": "✅",
+    "summary": "Outcome: COMPLETED — account CS-2049817 opened; Harbourline rollover ($41,800) lodged, Southern Cross ($96,400) held until the insurance is confirmed"
+  }
+}

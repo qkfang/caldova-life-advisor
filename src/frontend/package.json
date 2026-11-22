@@ -1,0 +1,19 @@
+{
+  "name": "caldova-wealth-team-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Wealth Team in a Day — the Caldova Wealth Lakehouse storybook: a voxel house of the idea, the people, the AI agents and the engine room (Babylon.js).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^7.54.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.20"
+  }
+}

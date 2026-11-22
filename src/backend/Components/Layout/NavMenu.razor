@@ -1,0 +1,104 @@
+@* Site header: Caldova Wealth logo, primary navigation (with AI agents and
+   Scenarios dropdowns) and call-to-action pills — modelled on the header of
+   Australian super fund sites. Dropdowns use native <details>; js/site-nav.js
+   closes them on outside click, Escape and link click. *@
+@implements IDisposable
+@inject NavigationManager Nav
+
+<div class="site-container header-inner">
+    <a class="brand" href="" aria-label="Caldova Wealth — operations office home">
+        <svg class="brand-mark" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+            <rect width="40" height="40" rx="10" fill="#0b2a4f" />
+            <path d="M26.9 14.2A9 9 0 1 0 26.9 25.8" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" />
+            <circle cx="29.4" cy="20" r="2.3" fill="#c9a24a" />
+        </svg>
+        <span class="brand-text">
+            <span class="brand-name">Caldova</span>
+            <span class="brand-sub">Wealth</span>
+        </span>
+    </a>
+
+    <input type="checkbox" id="site-nav-toggle" class="nav-toggle" title="Menu" aria-label="Show navigation menu" />
+
+    <div class="nav-panel">
+        <nav class="primary-nav" aria-label="Main">
+            <NavLink class="pnav-link" href="" Match="NavLinkMatch.All">Operations office</NavLink>
+
+            <details class="pnav-dd">
+                <summary class="pnav-link @(IsAgentsActive ? "active" : null)">AI agents <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                <div class="pnav-menu pnav-menu-wide">
+                    <div class="pnav-menu-head">
+                        <span>Specialist agents</span>
+                    </div>
+                    <div class="pnav-menu-grid">
+                        @foreach (var agent in AgentCatalog.All)
+                        {
+                            <NavLink class="pnav-item" href="@($"agents/{agent.Id}")">
+                                <span class="pnav-item-icon" style="--accent: @agent.Accent" aria-hidden="true">@agent.Icon</span>
+                                <span class="pnav-item-text">
+                                    <span class="pnav-item-title">@agent.Department</span>
+                                    <span class="pnav-item-sub">@agent.Persona</span>
+                                </span>
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </details>
+
+            <details class="pnav-dd">
+                <summary class="pnav-link @(IsScenariosActive ? "active" : null)">Member scenarios <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                <div class="pnav-menu">
+                    <div class="pnav-menu-head">
+                        <span>Member journeys</span>
+                    </div>
+                    <div class="pnav-menu-list">
+                        @foreach (var scenario in ScenarioCatalog.All)
+                        {
+                            <NavLink class="pnav-item" href="@($"scenarios/{scenario.Id}")">
+                                <span class="pnav-item-icon" style="--accent: @scenario.Accent" aria-hidden="true">@scenario.Icon</span>
+                                <span class="pnav-item-text">
+                                    <span class="pnav-item-title">@scenario.ShortTitle</span>
+                                    <span class="pnav-item-sub">@scenario.Customer · @scenario.CaseNumber</span>
+                                </span>
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </details>
+        </nav>
+
+        <div class="header-actions">
+            <a class="cta cta-outline" href="agents/team-leader"><i class="fa-solid fa-compass" aria-hidden="true"></i> Team Leader</a>
+            <a class="cta cta-solid" href="@($"scenarios/{ScenarioCatalog.All[0].Id}")">Run a scenario</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool IsAgentsActive { get; set; }
+    private bool IsScenariosActive { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ApplyRoute(Nav.Uri);
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        ApplyRoute(e.Location);
+        StateHasChanged();
+    }
+
+    private void ApplyRoute(string uri)
+    {
+        var path = Nav.ToBaseRelativePath(uri).TrimStart('/');
+        IsAgentsActive = path.StartsWith("agents", StringComparison.OrdinalIgnoreCase);
+        IsScenariosActive = path.StartsWith("scenarios", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

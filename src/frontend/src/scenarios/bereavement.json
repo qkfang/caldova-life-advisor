@@ -1,0 +1,29 @@
+{
+  "id": "bereavement",
+  "scenarioNumber": 5,
+  "caseId": "REQ-20261113-OPS005",
+  "customerId": "bereavement",
+  "amount": 486200,
+  "paidAmount": 486200,
+  "outcome": "approved",
+  "beats": [
+    {"at": "customer", "action": "lodge-at-reception", "narration": "The death notification lands in the Onboarding inbox with a certified death certificate and IDs for Robert and his sister Lily."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent gently extracts the notification — Mei's pension CP-3019042 ($486,200), the death certificate and both children's IDs — and stops the pension payments."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261113-OPS005 and asks Theo to own it personally."},
+    {"at": "Client Operations Team Leader", "action": "team-leader-review", "narration": "Theo takes ownership of the case for compassionate oversight — every message to the family is reviewed by a person."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix checks the death certificate and both beneficiaries' IDs for authenticity — all genuine ✓."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-pickup", "narration": "Ben reviews Mei's binding death benefit nomination against SIS reg 6.17A and the trust deed."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-process", "narration": "Ben: BDBN signed 18 Mar 2024 before two adult non-beneficiary witnesses ✓, valid until 18 Mar 2027 ✓, Robert 50% and Lily 50% — both SIS dependants ✓. It is binding: the trustee must pay as nominated."},
+    {"at": "Investment Analyst", "action": "investment-review", "narration": "Ivy redeems Mei's pension portfolio to cash and notes that the final amounts depend on market movements until the units are sold."},
+    {"at": "Benefits & Eligibility Assessor", "action": "benefits-handoff", "narration": "Ben hands the case to Payments with the 50/50 beneficiary split."},
+    {"at": "Payments Officer", "action": "payment", "narration": "Penny calculates each payment: gross $243,100 — tax-free $92,378, taxable $150,722, 17% withheld ($25,622.74) — and pays $217,477.26 to each child once Theo approves the Microsoft Teams card (every death benefit needs Team Leader approval)."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara sends Robert and Lily gentle condolence letters explaining the tax, the timeline and their complaint rights (IDR, then AFCA)."}
+  ],
+  "result": {
+    "status": "completed",
+    "headline": "Benefit paid — Mum's wishes followed",
+    "figure": "$486,200",
+    "icon": "✅",
+    "summary": "Outcome: COMPLETED — $486,200 paid 50/50 to Robert and Lily under Mei's binding nomination ($217,477.26 net each)"
+  }
+}

@@ -1,0 +1,68 @@
+/* Site chrome — Caldova Wealth.
+   Sticky white header (NavMenu) + a single-line light footer. */
+
+.site {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.site-main {
+    flex: 1;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 800;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: saturate(1.4) blur(8px);
+    border-bottom: 1px solid var(--cw-line);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.site-footer {
+    margin-top: 2rem;
+    background: var(--cw-bg-2);
+    border-top: 1px solid var(--cw-line);
+    color: var(--cw-muted);
+    font-size: 0.8rem;
+}
+
+.footer-slim {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* ── Unhandled-error banner ───────────────────────────────────────────── */
+#blazor-error-ui {
+    background: #fef3f2;
+    color: #7a271a;
+    border-top: 1px solid #fecdca;
+    bottom: 0;
+    box-shadow: 0 -6px 18px rgba(16, 24, 40, 0.08);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .reload {
+        color: var(--cw-primary);
+        font-weight: 600;
+    }
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }

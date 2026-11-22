@@ -1,0 +1,722 @@
+@page "/agents/client-communications"
+
+<PageTitle>Client Communications Agent — Wealth Team in a Day</PageTitle>
+
+<div class="agent-header" style="--accent: #ec4899">
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+    <div class="agent-header-row">
+        <div class="agent-header-icon">✉️</div>
+        <div>
+            <div class="agent-header-dept">Client Communications</div>
+            <h1>Client Communications Agent</h1>
+            <div class="agent-header-persona">Cara — Client Communications Specialist</div>
+            <p class="tagline">Plain-English updates for members and their advisers.</p>
+        </div>
+    </div>
+</div>
+
+<div class="agent-tab-scope" style="--accent: #ec4899">
+    <nav class="agent-tabs" role="tablist" aria-label="Client Communications demos">
+        <button type="button" class="agent-tab active" data-tab="try" role="tab" aria-selected="true" tabindex="0">Try it out</button>
+        <button type="button" class="agent-tab" data-tab="voice" role="tab" aria-selected="false" tabindex="-1">Voice chat</button>
+    </nav>
+
+    <div class="agent-tab-panel active" data-panel="try" role="tabpanel">
+    <section class="panel comms-panel" style="--accent: #ec4899">
+        <!-- Step 1 — pick a case -->
+        <div class="comms-step" data-step="1">
+            <div class="comms-step-head">
+                <span class="comms-step-num">1</span>
+                <h3>Select a case</h3>
+            </div>
+            <div class="comms-pick-row">
+                <select id="comms-case-select" class="comms-select" disabled>
+                    <option value="">Loading cases…</option>
+                </select>
+                <button type="button" id="comms-refresh-btn" class="comms-secondary" title="Refresh the case list">↻ Refresh</button>
+            </div>
+            <div class="comms-case-box" id="comms-case-summary" hidden>
+                <div class="comms-case-grid">
+                    <div><span class="k">Client</span><span id="comms-case-client"></span></div>
+                    <div><span class="k">Member no.</span><span id="comms-case-member"></span></div>
+                    <div><span class="k">Request type</span><span id="comms-case-type"></span></div>
+                    <div><span class="k">Priority</span><span id="comms-case-priority"></span></div>
+                    <div><span class="k">Adviser</span><span id="comms-case-adviser"></span></div>
+                    <div><span class="k">Preferred contact</span><span id="comms-case-pref"></span></div>
+                    <div class="span-2"><span class="k">Request</span><span id="comms-case-request"></span></div>
+                    <div class="span-2"><span class="k">Amount</span><span id="comms-case-amount"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 — engage the agent -->
+        <div class="comms-step" data-step="2" id="comms-step-2" hidden>
+            <div class="comms-step-head">
+                <span class="comms-step-num">2</span>
+                <h3>Engage Client Communications Agent</h3>
+            </div>
+            <button id="comms-process-btn" type="button" disabled>Draft communications with Cara</button>
+            <div id="comms-process-status" class="comms-status" hidden></div>
+
+            <div class="engage-tabs-scope" data-engage-role="client-communications">
+                <div class="engage-tabs" role="tablist">
+                    <button type="button" class="engage-tab-btn active" data-engage-tab="narrative">Agent Narrative</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="reference">Reference</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="prompt">Agent Prompt &amp; Tools</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="input">Agent Input</button>
+                    <button type="button" class="engage-tab-btn" data-engage-tab="output">Raw Output</button>
+                </div>
+
+                <div class="engage-tab-panel active" data-engage-tab="narrative">
+                    <div class="engage-info-block">
+                        <h4>Agent narrative (streamed)</h4>
+                        <div class="agent-md engage-narrative-body"><div class="engage-empty">Engage the agent to see the streamed narrative.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="reference">
+                    <div class="engage-info-block">
+                        <h4>Reference documents cited by the agent</h4>
+                        <div class="engage-references-body"><div class="engage-empty">Engage the agent to see the reference documents cited in its response.</div></div>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="prompt">
+                    <div class="engage-info-block">
+                        <h4>Agent metadata</h4>
+                        <div class="engage-info-meta engage-meta"></div>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>System prompt</h4>
+                        <pre class="engage-pre engage-prompt-body">Loading…</pre>
+                    </div>
+                    <div class="engage-info-block">
+                        <h4>Tools available</h4>
+                        <ul class="engage-tools-list"><li class="engage-empty">Loading…</li></ul>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="input">
+                    <div class="engage-info-block">
+                        <h4>Prompt sent to the agent</h4>
+                        <pre class="engage-pre engage-input-body engage-empty">Engage the agent to capture the input that was sent.</pre>
+                    </div>
+                </div>
+
+                <div class="engage-tab-panel" data-engage-tab="output">
+                    <div class="engage-info-block">
+                        <h4>Raw agent output (text, citations, every output item including tool / function calls)</h4>
+                        <div class="json-viewer engage-output-body"><div class="engage-empty">Engage the agent to see the full raw response.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 — Cara's case summary -->
+        <div class="comms-step" data-step="3" id="comms-results" hidden>
+            <div class="comms-step-head">
+                <span class="comms-step-num">3</span>
+                <h3>Cara's case summary</h3>
+            </div>
+
+            <div class="comms-summary-card">
+                <div class="comms-summary-head">
+                    <span class="comms-summary-label">Where the case stands</span>
+                    <span class="comms-outcome-pill" id="comms-outcome-pill"></span>
+                    <span class="comms-stage-pill" id="comms-stage-pill"></span>
+                </div>
+                <div class="comms-summary-grid">
+                    <div class="comms-summary-block">
+                        <div class="comms-summary-sub">Sentiment <span class="comms-sentiment-chip" id="comms-sentiment-label"></span></div>
+                        <p id="comms-sentiment-text"></p>
+                    </div>
+                    <div class="comms-summary-block">
+                        <div class="comms-summary-sub">What happened</div>
+                        <p id="comms-summary-text"></p>
+                    </div>
+                    <div class="comms-summary-block span-2">
+                        <div class="comms-summary-sub">What's next</div>
+                        <ul id="comms-next-steps" class="comms-next-steps"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comms-flags" id="comms-flags" hidden>
+                <div class="comms-flags-head">
+                    <span class="comms-flags-icon" aria-hidden="true">⚠️</span>
+                    <span class="comms-flags-title">Vulnerability &amp; sensitivity flags</span>
+                    <span class="comms-approval-pill" id="comms-approval-pill"></span>
+                </div>
+                <ul id="comms-flags-list"></ul>
+                <p class="muted" id="comms-approval-reason"></p>
+            </div>
+        </div>
+
+        <!-- Step 4 — drafts for both audiences -->
+        <div class="comms-step" data-step="4" id="comms-drafts" hidden>
+            <div class="comms-step-head">
+                <span class="comms-step-num">4</span>
+                <h3>Drafts for the member and the adviser</h3>
+            </div>
+            <p class="muted">Nothing is sent until a person has reviewed it.</p>
+
+            <div class="comms-audience">
+                <div class="comms-audience-head"><span aria-hidden="true">✉️</span> Member</div>
+                <div id="comms-drafts-member"></div>
+            </div>
+            <div class="comms-audience">
+                <div class="comms-audience-head"><span aria-hidden="true">🤝</span> Adviser</div>
+                <div id="comms-drafts-adviser"></div>
+                <p class="muted comms-adviser-note" id="comms-adviser-note" hidden></p>
+            </div>
+            <div class="comms-audience">
+                <div class="comms-audience-head"><span aria-hidden="true">📱</span> SMS</div>
+                <div id="comms-drafts-sms"></div>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <div class="agent-tab-panel" data-panel="voice" role="tabpanel">
+    <section class="panel voice-panel" style="--accent: #ec4899">
+        <p class="muted voice-help">
+            Pick a caller, then press the mic and talk to Cara — or type a message. Cara treats you as
+            that verified caller.
+        </p>
+
+        <div class="voice-context-row">
+            <label class="voice-context-label" for="voice-case-select">Caller &amp; case (identity already verified)</label>
+            <select id="voice-case-select" class="comms-select voice-select" disabled>
+                <option value="">Loading cases…</option>
+            </select>
+            <button type="button" id="voice-refresh-btn" class="comms-secondary" title="Refresh the case list">↻ Refresh</button>
+        </div>
+
+        <div class="voice-prompts" id="voice-prompts" aria-label="Suggested opening lines">
+            <span class="voice-prompts-label">Try an opening line</span>
+            <button type="button" class="voice-chip" data-prompt="I'd like to start a pension">I'd like to start a pension</button>
+            <button type="button" class="voice-chip" data-prompt="What's happening with my mum's super?">What's happening with my mum's super?</button>
+            <button type="button" class="voice-chip" data-prompt="Someone changed my details!">Someone changed my details!</button>
+            <button type="button" class="voice-chip" data-prompt="I'm behind on my bills — can I access my super?">I'm behind on my bills — can I access my super?</button>
+            <button type="button" class="voice-chip" data-prompt="My super's scattered across old jobs — can you combine it?">My super's scattered across old jobs — can you combine it?</button>
+        </div>
+
+        <div class="voice-stage" aria-live="polite">
+            <button type="button" id="voice-mic-btn" class="voice-mic" aria-pressed="false" aria-label="Start talking to Cara">
+                <span class="voice-mic-icon" aria-hidden="true">
+                    <i class="fa-solid fa-microphone"></i>
+                </span>
+                <span class="voice-mic-label">Press to talk</span>
+            </button>
+
+            <div class="voice-wave" id="voice-wave" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="voice-status" id="voice-status">Idle. Press the mic and start speaking — Cara is listening.</div>
+        </div>
+
+        <div class="voice-text-row">
+            <input type="text" id="voice-text-input" class="voice-text-input" placeholder="…or type a message to Cara and press Enter" />
+            <button type="button" id="voice-text-send" class="voice-text-send">Send</button>
+            <label class="voice-toggle">
+                <input type="checkbox" id="voice-tts-toggle" checked />
+                <span>Speak replies</span>
+            </label>
+        </div>
+
+        <div class="voice-transcript" id="voice-transcript" role="log" aria-live="polite">
+            <div class="voice-empty">Your conversation with Cara will appear here.</div>
+        </div>
+    </section>
+    </div>
+</div>
+
+<style>
+    .comms-panel { --comms-accent: #ec4899; }
+    .comms-panel a { color: color-mix(in srgb, var(--comms-accent) 60%, #0b1f3a); }
+
+    .comms-step {
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 0.95rem 1.1rem 1rem 1.1rem;
+        margin-top: 0.9rem;
+    }
+    .comms-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .comms-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
+    .comms-step-num {
+        display: inline-grid; place-items: center;
+        width: 1.55rem; height: 1.55rem;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--comms-accent) 22%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--comms-accent) 55%, transparent);
+        color: color-mix(in srgb, var(--comms-accent) 60%, #0b1f3a);
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .comms-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
+
+    .comms-pick-row { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+    .comms-select {
+        flex: 1 1 320px;
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.174);
+        color: #0b1f3a;
+        font-size: 0.9rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: 6px;
+        font-family: inherit;
+    }
+    .comms-select:focus { outline: none; border-color: var(--comms-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--comms-accent) 25%, transparent); }
+    .comms-select:disabled { opacity: 0.6; cursor: not-allowed; }
+    .comms-secondary {
+        background: transparent;
+        color: #344054;
+        border: 1px solid rgba(16, 38, 72, 0.198);
+        border-radius: 6px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+    .comms-secondary:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+
+    .comms-case-box {
+        margin-top: 0.7rem;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 8px;
+        padding: 0.7rem 0.85rem;
+    }
+    .comms-case-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem 0.85rem;
+        font-size: 0.85rem;
+        color: #344054;
+    }
+    .comms-case-grid .span-2 { grid-column: span 2; }
+    @@media (max-width: 720px) {
+        .comms-case-grid { grid-template-columns: 1fr; }
+        .comms-case-grid .span-2 { grid-column: span 1; }
+    }
+    .comms-case-grid .k {
+        display: inline-block; min-width: 120px;
+        color: var(--cw-muted, #5d6b7e); font-weight: 600;
+        text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em;
+        margin-right: 0.5rem;
+    }
+
+    #comms-process-btn {
+        background: var(--cw-primary);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.35rem;
+    }
+    #comms-process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .comms-status { margin-top: 0.6rem; font-size: 0.88rem; color: #344054; }
+    .comms-status.error { color: #c11818; }
+    .comms-status .spinner {
+        display: inline-block; width: 12px; height: 12px;
+        border: 2px solid rgba(16, 38, 72, 0.25); border-top-color: #0b1f3a;
+        border-radius: 50%; margin-right: 6px; vertical-align: middle;
+        animation: comms-spin 0.7s linear infinite;
+    }
+    @@keyframes comms-spin { to { transform: rotate(360deg); } }
+
+    /* Step 3 — summary */
+    .comms-summary-card {
+        margin-top: 0.6rem;
+        background: color-mix(in srgb, var(--comms-accent) 8%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--comms-accent) 30%, transparent);
+        border-radius: 10px;
+        padding: 0.75rem 0.95rem;
+    }
+    .comms-summary-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .comms-summary-label { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; margin-right: auto; }
+    .comms-stage-pill, .comms-outcome-pill {
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        background: color-mix(in srgb, var(--comms-accent) 18%, transparent);
+        color: #ba1763;
+        border: 1px solid color-mix(in srgb, var(--comms-accent) 45%, transparent);
+    }
+    .comms-outcome-pill.completed { background: rgba(34, 197, 94, 0.16); color: #0f7032; border-color: rgba(34, 197, 94, 0.4); }
+    .comms-outcome-pill.blocked { background: rgba(239, 68, 68, 0.16); color: #c11818; border-color: rgba(239, 68, 68, 0.4); }
+    .comms-outcome-pill.partial { background: rgba(245, 158, 11, 0.16); color: #954f12; border-color: rgba(245, 158, 11, 0.45); }
+    .comms-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1rem; }
+    .comms-summary-grid .span-2 { grid-column: span 2; }
+    @@media (max-width: 820px) {
+        .comms-summary-grid { grid-template-columns: 1fr; }
+        .comms-summary-grid .span-2 { grid-column: span 1; }
+    }
+    .comms-summary-sub {
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.68rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.09em;
+        margin-bottom: 0.25rem;
+        display: flex; align-items: center; gap: 0.45rem;
+    }
+    .comms-sentiment-chip {
+        text-transform: none; letter-spacing: 0.01em;
+        font-size: 0.74rem; font-weight: 700;
+        padding: 0.05rem 0.55rem; border-radius: 999px;
+        background: rgba(16, 38, 72, 0.056);
+        border: 1px solid rgba(16, 38, 72, 0.162);
+        color: #0b1f3a;
+    }
+    .comms-summary-block p { margin: 0; color: #1d2939; font-size: 0.88rem; line-height: 1.5; }
+    .comms-next-steps {
+        margin: 0.1rem 0 0 1.1rem;
+        padding: 0;
+        color: #344054;
+        font-size: 0.86rem;
+        line-height: 1.5;
+    }
+    .comms-next-steps li { margin-bottom: 0.2rem; }
+
+    .comms-flags {
+        margin-top: 0.8rem;
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+    }
+    .comms-flags-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.35rem; }
+    .comms-flags-title { color: #954f12; font-weight: 700; font-size: 0.9rem; }
+    .comms-flags-icon { font-size: 1rem; }
+    .comms-approval-pill {
+        margin-left: auto;
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        white-space: nowrap;
+    }
+    .comms-approval-pill.required { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .comms-approval-pill.optional { background: rgba(34, 197, 94, 0.16); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .comms-flags ul { margin: 0.25rem 0 0.4rem 1.1rem; padding: 0; color: #1d2939; font-size: 0.86rem; line-height: 1.5; }
+    .comms-flags ul li { margin-bottom: 0.2rem; }
+
+    /* Step 4 — drafts */
+    .comms-audience { margin-top: 0.85rem; }
+    .comms-audience-head {
+        display: flex; align-items: center; gap: 0.45rem;
+        color: #ba1763;
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.12em;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px dashed rgba(236, 72, 153, 0.3);
+    }
+    .comms-adviser-note { margin: 0.5rem 0 0 0 !important; font-style: italic; }
+    .comms-draft {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-left: 3px solid color-mix(in srgb, var(--comms-accent) 70%, transparent);
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+        margin-top: 0.6rem;
+    }
+    .comms-draft-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.45rem; flex-wrap: wrap; }
+    .comms-draft-title { color: #0b1f3a; font-weight: 700; font-size: 0.9rem; }
+    .comms-draft-channel {
+        font-size: 0.68rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--cw-muted, #5d6b7e);
+        border: 1px solid rgba(16, 38, 72, 0.186);
+        border-radius: 999px;
+        padding: 0.05rem 0.5rem;
+    }
+    .comms-draft-meta {
+        display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.6rem;
+        font-size: 0.82rem; color: #344054;
+        margin-bottom: 0.5rem; padding-bottom: 0.45rem;
+        border-bottom: 1px dashed rgba(16, 38, 72, 0.124);
+    }
+    .comms-draft-meta .k {
+        color: var(--cw-muted, #5d6b7e); font-weight: 600;
+        text-transform: uppercase; font-size: 0.64rem; letter-spacing: 0.08em;
+        padding-top: 0.15rem;
+    }
+    .comms-channel-body {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.099);
+        border-radius: 6px;
+        padding: 0.65rem 0.8rem;
+        color: #1d2939;
+        font-size: 0.85rem;
+        line-height: 1.55;
+        margin: 0;
+    }
+    .comms-channel-body.comms-sms {
+        font-size: 0.88rem;
+        max-width: 30rem;
+        border-radius: 14px 14px 14px 4px;
+        background: color-mix(in srgb, var(--comms-accent) 10%, #f6f7f9);
+    }
+    .comms-sms-count { font-size: 0.72rem; color: var(--cw-muted, #5d6b7e); margin-top: 0.3rem; }
+    .comms-draft-foot {
+        display: grid; grid-template-columns: 1fr 1.3fr; gap: 0.7rem;
+        margin-top: 0.6rem;
+    }
+    @@media (max-width: 820px) { .comms-draft-foot { grid-template-columns: 1fr; } }
+    .comms-draft-foot h5 {
+        margin: 0 0 0.25rem 0;
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.66rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.09em;
+    }
+    .comms-tone { font-size: 0.83rem; color: #344054; line-height: 1.5; margin: 0; }
+    .comms-compliance { list-style: none; margin: 0; padding: 0; font-size: 0.82rem; line-height: 1.45; }
+    .comms-compliance li { display: flex; gap: 0.45rem; margin-bottom: 0.22rem; color: #344054; }
+    .comms-compliance .mark { flex: 0 0 auto; font-weight: 700; width: 1rem; text-align: center; }
+    .comms-compliance li.pass .mark { color: #0f7032; }
+    .comms-compliance li.warn .mark { color: #954f12; }
+    .comms-compliance li.na .mark { color: var(--cw-muted, #5d6b7e); }
+    .comms-compliance .lbl { color: #0b1f3a; font-weight: 600; }
+    .comms-compliance .note { color: #475467; }
+
+    /* Voice chat tab */
+    .voice-panel { --voice-accent: #ec4899; }
+    .voice-help { margin-bottom: 0.9rem; }
+
+    .voice-context-row {
+        display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    .voice-context-label {
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .voice-select { flex: 1 1 320px; }
+
+    .voice-prompts {
+        display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center;
+        margin-bottom: 0.85rem;
+    }
+    .voice-prompts-label {
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        margin-right: 0.2rem;
+    }
+    .voice-chip {
+        background: color-mix(in srgb, var(--voice-accent) 12%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--voice-accent) 40%, transparent);
+        color: #1d2939;
+        border-radius: 999px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.12s ease;
+    }
+    .voice-chip:hover { background: color-mix(in srgb, var(--voice-accent) 24%, #f6f7f9); transform: translateY(-1px); }
+    .voice-chip:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .voice-stage {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 0.85rem;
+        padding: 1.4rem 1rem 1.2rem 1rem;
+        border: 1px solid color-mix(in srgb, var(--voice-accent) 28%, transparent);
+        background:
+            radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--voice-accent) 14%, transparent) 0%, transparent 65%),
+            #f6f7f9;
+        border-radius: 14px;
+    }
+
+    .voice-mic {
+        width: 96px; height: 96px;
+        border-radius: 50%;
+        border: 1px solid color-mix(in srgb, var(--voice-accent) 55%, transparent);
+        background:
+            radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--voice-accent) 70%, #f2f4f7) 0%, color-mix(in srgb, var(--voice-accent) 30%, #f2f4f7) 70%);
+        color: #0b1f3a;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.8rem;
+        gap: 0.25rem;
+        box-shadow: 0 6px 22px color-mix(in srgb, var(--voice-accent) 28%, transparent);
+        transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+        position: relative;
+    }
+    .voice-mic:hover { transform: translateY(-1px); }
+    .voice-mic:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--voice-accent) 40%, transparent),
+                    0 6px 22px color-mix(in srgb, var(--voice-accent) 28%, transparent);
+    }
+    .voice-mic-icon { font-size: 1.85rem; line-height: 1; }
+    .voice-mic-label { font-size: 0.78rem; letter-spacing: 0.04em; }
+    .voice-mic.listening {
+        background:
+            radial-gradient(circle at 50% 35%, #ff5a8a 0%, #b42463 70%);
+        animation: voice-mic-pulse 1.4s ease-in-out infinite;
+    }
+    .voice-mic.speaking {
+        background:
+            radial-gradient(circle at 50% 35%, #6ee7b7 0%, #047857 70%);
+        border-color: rgba(110, 231, 183, 0.55);
+        box-shadow: 0 6px 22px rgba(110, 231, 183, 0.28);
+    }
+    .voice-mic.disabled, .voice-mic[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+    @@keyframes voice-mic-pulse {
+        0%, 100% { box-shadow: 0 6px 22px color-mix(in srgb, var(--voice-accent) 28%, transparent); }
+        50%      { box-shadow: 0 6px 22px color-mix(in srgb, var(--voice-accent) 60%, transparent),
+                               0 0 0 8px color-mix(in srgb, var(--voice-accent) 18%, transparent); }
+    }
+
+    .voice-wave {
+        display: flex; align-items: center; gap: 4px;
+        height: 56px;
+        width: 100%; max-width: 420px;
+        justify-content: center;
+    }
+    .voice-wave span {
+        display: block;
+        width: 5px;
+        height: 8px;
+        border-radius: 3px;
+        background: linear-gradient(180deg,
+            color-mix(in srgb, var(--voice-accent) 90%, #fff),
+            color-mix(in srgb, var(--voice-accent) 50%, #f2f4f7));
+        opacity: 0.55;
+        transform-origin: center;
+        transition: height 0.08s ease;
+    }
+    .voice-wave.active span { animation: voice-wave-bounce 1s ease-in-out infinite; opacity: 0.9; }
+    .voice-wave.active span:nth-child(odd)  { animation-duration: 0.9s; }
+    .voice-wave.active span:nth-child(even) { animation-duration: 1.15s; }
+    .voice-wave.active span:nth-child(3n)   { animation-delay: 0.15s; }
+    .voice-wave.active span:nth-child(4n)   { animation-delay: 0.3s; }
+    .voice-wave.active span:nth-child(5n)   { animation-delay: 0.45s; }
+    .voice-wave.speaking span {
+        background: linear-gradient(180deg, #6ee7b7, #047857);
+    }
+
+    @@keyframes voice-wave-bounce {
+        0%, 100% { height: 8px; }
+        50%      { height: 46px; }
+    }
+
+    .voice-status {
+        font-size: 0.88rem;
+        color: #344054;
+        text-align: center;
+        min-height: 1.2em;
+    }
+    .voice-status.error { color: #c11818; }
+
+    .voice-text-row {
+        display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center;
+        margin-top: 0.9rem;
+    }
+    .voice-text-input {
+        flex: 1 1 280px;
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.174);
+        color: #0b1f3a;
+        font-size: 0.9rem;
+        padding: 0.55rem 0.75rem;
+        border-radius: 6px;
+        font-family: inherit;
+    }
+    .voice-text-input:focus {
+        outline: none;
+        border-color: var(--voice-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--voice-accent) 25%, transparent);
+    }
+    .voice-text-send {
+        background: var(--cw-primary);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .voice-text-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .voice-toggle {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        font-size: 0.82rem;
+        color: #344054;
+        cursor: pointer;
+    }
+    .voice-toggle input { accent-color: var(--voice-accent); }
+
+    .voice-transcript {
+        margin-top: 1rem;
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 10px;
+        padding: 0.75rem 0.85rem;
+        max-height: 320px;
+        overflow-y: auto;
+        display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .voice-transcript .voice-empty {
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.85rem;
+        font-style: italic;
+        text-align: center;
+        padding: 0.8rem 0;
+    }
+    .voice-msg {
+        max-width: 82%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        color: #1d2939;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        background: #f6f7f9;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .voice-msg.user {
+        align-self: flex-end;
+        background: color-mix(in srgb, var(--voice-accent) 18%, #f2f4f7);
+        border-color: color-mix(in srgb, var(--voice-accent) 40%, transparent);
+        color: #0b1f3a;
+    }
+    .voice-msg.cara {
+        align-self: flex-start;
+        background: #f2f4f7;
+    }
+    .voice-msg.interim {
+        opacity: 0.65;
+        font-style: italic;
+    }
+    .voice-msg.system {
+        align-self: center;
+        max-width: 92%;
+        background: transparent;
+        border-style: dashed;
+        color: var(--cw-muted, #5d6b7e);
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+    .voice-msg-role {
+        display: block;
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        color: var(--cw-muted, #5d6b7e);
+        margin-bottom: 0.2rem;
+    }
+    .voice-msg.user .voice-msg-role { color: #ba1763; }
+</style>
