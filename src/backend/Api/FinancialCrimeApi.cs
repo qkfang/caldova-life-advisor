@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Models;
-using CaldovaSuper.App.Services;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Models;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 record FinCrimeVerifyRequest(string CaseNumber, List<string>? DocumentIds);
 record FinCrimeProcessRequest(string CaseNumber, List<string>? DocumentIds);
@@ -17,42 +17,52 @@ record FinCrimeProcessRequest(string CaseNumber, List<string>? DocumentIds);
 /// <param name="Severity"><c>high</c>, <c>medium</c>, <c>low</c> or <c>info</c> (watch-point).</param>
 public record FinCrimeRiskIndicator(string Key, string Title, string Evidence, string Source, int Points, string Severity);
 
-/// <summary>A recommended control for the human investigator.</summary>
-public record FinCrimeRecommendedAction(string Action, string Detail, bool RequiresApproval);
+/// <summary>
+/// A recommended control for the people on the case. When
+/// <paramref name="RequiresApproval"/> is true nothing happens until
+/// <paramref name="Approver"/> approves it.
+/// </summary>
+public record FinCrimeRecommendedAction(string Action, string Detail, bool RequiresApproval, string? Approver = null);
 
 /// <summary>
 /// HTTP endpoints behind the "Try it out" tab on the Financial Crime Agent page
 /// (<c>/agents/financial-crime</c>):
 ///
-/// 1. <c>GET /fincrime/cases</c> — Member Cases held in memory (the five
-///    scenario cases plus any opened live by the Onboarding demo).
-/// 2. <c>GET /fincrime/cases/{caseNumber}/activity</c> — the account-activity
-///    timeline, parties and screening / SVS results for the case.
+/// 1. <c>GET /fincrime/cases</c> — Client Cases held in memory (the five
+///    scenario cases plus any opened live with the Onboarding Agent).
+/// 2. <c>GET /fincrime/cases/{caseNumber}/activity</c> — the client activity
+///    timeline, the people on the case, KYC / PEP / sanctions screening and the
+///    knowledge documents to cite.
 /// 3. <c>GET /fincrime/samples</c> and <c>GET /fincrime/cases/{caseNumber}/documents</c>
 ///    — the specimen documents and the ones attached to the case.
 /// 4. <c>POST /fincrime/documents/verify</c> — document authenticity (Azure
-///    Content Understanding + deterministic checks layer).
+///    Content Understanding plus a deterministic checks layer).
 /// 5. <c>POST /fincrime/process</c> — engage Felix's Financial Crime Agent with
-///    the case, timeline, screening results and document findings; returns an
-///    explainable risk score, indicators and recommended controls (streamed
-///    over SSE when the client sends <c>Accept: text/event-stream</c>).
+///    the case, timeline, screening and document findings; returns an
+///    explainable risk score, the indicators and the recommended actions, each
+///    marked when it needs human approval (streamed over SSE when the client
+///    sends <c>Accept: text/event-stream</c>).
 ///
-/// When Foundry or Content Understanding isn't configured, a deterministic
-/// assessment built from the scenario data keeps the demo complete.
+/// When Foundry or Content Understanding isn't configured (or can't be
+/// reached), a deterministic assessment built from the scenario data keeps the
+/// page working offline.
 /// </summary>
 public static class FinancialCrimeApi
 {
     private const int Baseline = 5;
+    private const string Theo = "Theo, Practice Team Leader";
 
-    // Victorian public holidays near the demo dates (business-day maths for SMRs).
-    private static readonly HashSet<DateTime> PublicHolidays =
-    [
-        new(2026, 11, 3), new(2026, 12, 25), new(2026, 12, 28), new(2027, 1, 1), new(2027, 1, 26),
-    ];
+    private static readonly TimeSpan AgentCreateWait = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan AgentRunWait = TimeSpan.FromSeconds(120);
+    private static readonly TimeSpan FoundryRetryAfter = TimeSpan.FromMinutes(2);
 
-    private static readonly Regex PressureRegex = new(
-        @"\burgent\b|as (?:soon|urgently|quickly) as possible|investment opportunity that closes next week|closes next week|(?:please )?(?:do not|don't) call my old number|can only be contacted on my new (?:mobile|number|email)",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    // After Foundry fails, skip it for a short while so the page answers
+    // straight away from the offline assessment (UTC ticks).
+    private static long _skipFoundryUntilTicks;
+
+    private static readonly Regex InsurerRegex = new(@"\b(Harbourline|Corella|Lyrebird|Northbank) Life\b", RegexOptions.Compiled);
+    private static readonly Regex MobileRegex = new(@"\b04\d{2} \d{3} \d{3}\b", RegexOptions.Compiled);
+    private static readonly Regex EmailRegex = new(@"[\w.+-]+@[\w-]+(\.[\w-]+)+", RegexOptions.Compiled);
 
     public static void MapFinancialCrimeEndpoints(
         this WebApplication app,
@@ -67,7 +77,8 @@ public static class FinancialCrimeApi
         {
             var cases = store.All().Select(r =>
             {
-                docStore.EnsureCaseAttachments(r.CaseNumber, r.SampleId);
+                docStore.EnsureCaseAttachments(r);
+                var profile = docStore.ProfileFor(r);
                 return new
                 {
                     caseNumber = r.CaseNumber,
@@ -75,25 +86,28 @@ public static class FinancialCrimeApi
                     clientName = r.ClientName,
                     clientEmail = r.ClientEmail,
                     clientPhone = r.ClientPhone,
-                    memberNumber = r.MemberNumber,
-                    product = r.Product,
+                    clientNumber = r.ClientNumber,
+                    cover = r.Cover,
                     requestType = r.RequestType,
                     receivedDate = r.ReceivedDate,
                     adviserName = r.AdviserName,
-                    adviserPractice = r.AdviserPractice,
+                    referredBy = r.ReferredBy,
                     requestSummary = r.RequestSummary,
                     amount = r.Amount,
                     preferredContact = r.PreferredContact,
                     priority = r.Priority,
                     priorityReason = r.PriorityReason,
                     createdAt = r.CreatedAt.ToString("u"),
+                    isScenario = profile.IsScenario,
+                    scenarioKey = profile.ScenarioKey,
+                    focus = profile.Focus,
                     documentCount = docStore.DocumentsForCase(r.CaseNumber).Count,
                 };
             });
             return Results.Ok(cases);
         });
 
-        // Account-activity timeline, parties and screening results for a case.
+        // Client activity timeline, people, screening and knowledge documents for a case.
         app.MapGet("/fincrime/cases/{caseNumber}/activity", (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
@@ -105,20 +119,19 @@ public static class FinancialCrimeApi
             {
                 caseNumber = record.CaseNumber,
                 isScenario = profile.IsScenario,
+                scenarioKey = profile.ScenarioKey,
+                focus = profile.Focus,
                 verifiedContact = profile.VerifiedContact,
-                parties = profile.Parties.Select(p => new
-                {
-                    name = p.Name,
-                    role = p.Role,
-                    dateOfBirth = FormatDate(p.DateOfBirth),
-                }),
-                receivingSmsf = profile.ReceivingSmsf,
-                timeline = profile.Timeline,
+                travelNotice = TravelNoticeView(profile.TravelNotice),
+                parties = PartiesView(profile),
+                timeline = TimelineView(profile),
                 screening = profile.Screening,
+                references = profile.References,
+                nextStep = profile.NextStep,
             });
         });
 
-        // Static manifest of specimen documents (drives the "Add sample docs" popover).
+        // Specimen documents (drives the "Add specimen documents" popover).
         app.MapGet("/fincrime/samples", () =>
             Results.Ok(docStore.AllSamples().Select(s => new
             {
@@ -128,16 +141,18 @@ public static class FinancialCrimeApi
                 src = s.Src,
                 expected = s.Expected,
                 description = s.Description,
+                owner = s.Owner,
+                ownerName = string.IsNullOrWhiteSpace(s.Owner) ? null : FinCrimeCaseDocumentStore.ClientNameFor(s.Owner),
             })));
 
-        // Documents attached to a case (seeded per scenario — see FinCrimeCaseDocumentStore).
+        // Documents attached to a case (seeded per scenario from the manifest).
         app.MapGet("/fincrime/cases/{caseNumber}/documents", (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
             if (record is null)
                 return Results.NotFound(new { error = $"case '{caseNumber}' not found" });
 
-            docStore.EnsureCaseAttachments(record.CaseNumber, record.SampleId);
+            docStore.EnsureCaseAttachments(record);
             return Results.Ok(docStore.DocumentsForCase(record.CaseNumber));
         });
 
@@ -151,7 +166,7 @@ public static class FinancialCrimeApi
             if (record is null)
                 return Results.NotFound(new { error = $"case '{request.CaseNumber}' not found" });
 
-            docStore.EnsureCaseAttachments(record.CaseNumber, record.SampleId);
+            docStore.EnsureCaseAttachments(record);
             var ids = request.DocumentIds ?? docStore.DocumentsForCase(record.CaseNumber).Select(d => d.Id).ToList();
             var samples = docStore.ResolveSamples(ids);
             var documents = await verifier.VerifyAsync(record, samples, useCache: false, ctx.RequestAborted);
@@ -179,13 +194,15 @@ public static class FinancialCrimeApi
 
             // Reuse the documents scanned in step 3 when available; default to the
             // documents attached to the case when the page sends none.
-            docStore.EnsureCaseAttachments(record.CaseNumber, record.SampleId);
+            docStore.EnsureCaseAttachments(record);
             var ids = request.DocumentIds ?? docStore.DocumentsForCase(record.CaseNumber).Select(d => d.Id).ToList();
             var samples = docStore.ResolveSamples(ids);
             var documents = await verifier.VerifyAsync(record, samples, useCache: true, httpContext.RequestAborted);
 
             var profile = docStore.ProfileFor(record);
-            var assessment = Assess(record, profile, documents);
+            var seededCount = docStore.AllSamples().Count(s =>
+                profile.ScenarioKey.Length > 0 && string.Equals(s.Owner, profile.ScenarioKey, StringComparison.OrdinalIgnoreCase));
+            var assessment = Assess(record, profile, documents, seededCount);
             var prompt = BuildAgentPrompt(record, profile, documents);
             string? agentCreateError = null;
 
@@ -193,17 +210,24 @@ public static class FinancialCrimeApi
             {
                 caseNumber = record.CaseNumber,
                 clientName = record.ClientName,
+                focus = profile.Focus,
                 riskLevel = assessment.Level,
                 riskScore = assessment.Score,
+                scoreNote = assessment.ScoreNote,
+                baseline = Baseline,
                 riskSummary = assessment.Summary,
                 indicators = assessment.Indicators,
                 checksClear = assessment.ChecksClear,
                 actions = assessment.Actions,
                 approvalRequired = assessment.ApprovalRequired,
-                smrNote = assessment.SmrNote,
+                reportingNote = assessment.ReportingNote,
+                amountAtRisk = profile.AmountAtRisk is { } atRisk ? Money(atRisk) : null,
+                nextStep = profile.NextStep,
+                outcome = profile.Outcome,
                 verifiedContact = profile.VerifiedContact,
-                timeline = profile.Timeline,
+                timeline = TimelineView(profile),
                 screening = profile.Screening,
+                references = profile.References,
                 documents,
                 checkNames = verifier.CheckNames,
                 contentUnderstandingConfigured = verifier.ContentUnderstandingConfigured,
@@ -225,20 +249,13 @@ public static class FinancialCrimeApi
 
             if (AgentSseStreaming.WantsEventStream(httpContext))
             {
-                // Creating the agent registers it with Foundry, so it can fail too;
-                // the stream then still ends with the deterministic assessment.
+                // Creating the agent registers it with Foundry, so it can fail
+                // (or stall) too; the stream then still ends with the
+                // deterministic assessment.
                 CaldovaAgent? streamingAgent = null;
                 if (factory.IsConfigured)
                 {
-                    try
-                    {
-                        streamingAgent = factory.Create("fincrime");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Financial Crime Agent could not be created; streaming the deterministic assessment only");
-                        agentCreateError = ex.Message;
-                    }
+                    (streamingAgent, agentCreateError) = await TryCreateAgentAsync(factory, logger, httpContext.RequestAborted);
                 }
                 await AgentSseStreaming.StreamAsync(httpContext, streamingAgent, prompt, BuildEnvelope, logger, "Financial Crime Agent");
                 return Results.Empty;
@@ -248,14 +265,22 @@ public static class FinancialCrimeApi
             string? agentInvocationError = null;
             if (factory.IsConfigured)
             {
-                try
+                var (agent, createError) = await TryCreateAgentAsync(factory, logger, httpContext.RequestAborted);
+                agentInvocationError = createError;
+                if (agent is not null)
                 {
-                    traceResult = await factory.Create("fincrime").RunWithTraceAsync(prompt);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Financial Crime Agent invocation failed; using the deterministic assessment only");
-                    agentInvocationError = ex.Message;
+                    try
+                    {
+                        traceResult = await agent.RunWithTraceAsync(prompt).WaitAsync(AgentRunWait, httpContext.RequestAborted);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException || !httpContext.RequestAborted.IsCancellationRequested)
+                    {
+                        logger.LogWarning(ex, "Financial Crime Agent invocation failed; using the deterministic assessment only");
+                        SkipFoundryForAWhile();
+                        agentInvocationError = ex is TimeoutException
+                            ? $"The agent didn't answer within {AgentRunWait.TotalSeconds:0} seconds."
+                            : ex.Message;
+                    }
                 }
             }
 
@@ -263,13 +288,70 @@ public static class FinancialCrimeApi
         });
     }
 
+    /// <summary>
+    /// Create Felix's agent without letting an unreachable Foundry project hold
+    /// the page: creation registers the agent version, so it can fail or stall.
+    /// After a failure Foundry is skipped for a couple of minutes.
+    /// </summary>
+    private static async Task<(CaldovaAgent? Agent, string? Error)> TryCreateAgentAsync(
+        CaldovaAgentFactory factory, ILogger logger, CancellationToken ct)
+    {
+        if (DateTime.UtcNow.Ticks < Volatile.Read(ref _skipFoundryUntilTicks))
+            return (null, "Foundry wasn't reachable a moment ago, so this is the offline assessment.");
+
+        try
+        {
+            var agent = await Task.Run(() => factory.Create("fincrime"), ct).WaitAsync(AgentCreateWait, ct);
+            return (agent, null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            logger.LogWarning(ex, "Financial Crime Agent could not be created; using the deterministic assessment only");
+            SkipFoundryForAWhile();
+            return (null, ex is TimeoutException
+                ? $"Foundry didn't respond within {AgentCreateWait.TotalSeconds:0} seconds."
+                : ex.Message);
+        }
+    }
+
+    private static void SkipFoundryForAWhile() =>
+        Volatile.Write(ref _skipFoundryUntilTicks, DateTime.UtcNow.Add(FoundryRetryAfter).Ticks);
+
+    // ── Views ───────────────────────────────────────────────────────────────
+
+    private static object? TravelNoticeView(FinCrimeTravelNotice? t) => t is null
+        ? null
+        : new { place = t.Place, from = Dmy(t.From), to = Dmy(t.To), recordedAt = t.RecordedAt };
+
+    private static IEnumerable<object> PartiesView(FinCrimeCaseProfile profile) =>
+        profile.Parties.Select(p => new
+        {
+            name = p.Name,
+            role = p.Role,
+            dateOfBirth = FormatDate(p.DateOfBirth),
+            isCompany = p.IsCompany,
+        });
+
+    private static IEnumerable<object> TimelineView(FinCrimeCaseProfile profile) =>
+        profile.Timeline.Select(e => new
+        {
+            when = e.When,
+            type = e.Type,
+            channel = e.Channel,
+            summary = e.Summary,
+            detail = e.Detail,
+            flag = e.Flag,
+            location = e.Location,
+        });
+
     // ── Prompt ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Build the prompt for Felix's agent: the case, the people on it, the
-    /// account-activity timeline, screening / SVS results, the document
-    /// authenticity findings (numbered so the agent can cite them), the request
-    /// email and the scoring rubric that keeps the risk score explainable.
+    /// Build the prompt for Felix's agent: the Client Case, the people on it,
+    /// the client activity timeline, KYC / PEP / sanctions screening, the
+    /// document authenticity findings (numbered so the agent can cite them),
+    /// the request email, the knowledge documents to cite and the scoring
+    /// rubric that keeps the risk score explainable.
     /// </summary>
     private static string BuildAgentPrompt(
         CaseRecord c,
@@ -277,53 +359,58 @@ public static class FinancialCrimeApi
         IReadOnlyList<FinCrimeDocumentVerification> documents)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("MEMBER CASE FOR FINANCIAL CRIME REVIEW");
+        sb.AppendLine("CLIENT CASE FOR FINANCIAL CRIME REVIEW");
         sb.AppendLine("======================================");
         sb.AppendLine($"Case number: {c.CaseNumber}");
         sb.AppendLine($"Request type: {c.RequestType}");
-        sb.AppendLine($"Received: {c.ReceivedDate} (treat this as today's date for any deadlines)");
-        sb.AppendLine($"Member / client: {c.ClientName} — {c.MemberNumber} — {c.Product}");
-        sb.AppendLine($"Adviser: {(string.IsNullOrWhiteSpace(c.AdviserPractice) ? c.AdviserName : $"{c.AdviserName}, {c.AdviserPractice}")}");
+        sb.AppendLine($"Received: {FormatDate(c.ReceivedDate)} (treat this as today's date)");
+        sb.AppendLine($"Client: {c.ClientName} — {c.ClientNumber}");
+        sb.AppendLine($"Cover: {c.Cover}");
+        sb.AppendLine($"Adviser: {c.AdviserName}{(string.IsNullOrWhiteSpace(c.ReferredBy) ? string.Empty : $" · referred by {c.ReferredBy}")}");
         sb.AppendLine($"Amount: {c.Amount}");
         sb.AppendLine($"Priority at intake: {c.Priority} — {c.PriorityReason}");
+        sb.AppendLine($"What to check: {profile.Focus}");
         sb.AppendLine($"Contact details we trust for call-backs: {profile.VerifiedContact}");
+        if (profile.TravelNotice is { } travel)
+            sb.AppendLine($"Travel notice: {travel.Place}, {Dmy(travel.From)} to {Dmy(travel.To)} (recorded at {travel.RecordedAt})");
+        if (profile.EvidenceRule is { } rule)
+            sb.AppendLine($"Evidence rule: {rule}");
         sb.AppendLine();
         sb.AppendLine("Request summary (as captured by Onboarding):");
         sb.AppendLine(c.RequestSummary);
         sb.AppendLine();
 
-        sb.AppendLine("PEOPLE ON THE CASE");
+        sb.AppendLine("PEOPLE AND COMPANIES ON THE CASE");
         foreach (var p in profile.Parties)
         {
             var dob = FormatDate(p.DateOfBirth);
-            sb.AppendLine($"- {p.Name} — {p.Role}{(dob is null ? "" : $" — DOB on file {dob}")}");
+            sb.AppendLine($"- {p.Name} — {p.Role}{(dob is null ? string.Empty : $" — DOB on file {dob}")}");
         }
+        if (profile.AcceptedPayees.Count > 0)
+            sb.AppendLine($"Benefits may be paid to: {string.Join(", ", profile.AcceptedPayees)}");
+        if (profile.RequestedPayees.Count > 0)
+            sb.AppendLine($"Payment account named on the request: {string.Join(", ", profile.RequestedPayees)}");
         sb.AppendLine();
 
-        sb.AppendLine("ACCOUNT-ACTIVITY TIMELINE (Melbourne time)");
+        sb.AppendLine("CLIENT ACTIVITY TIMELINE (Melbourne time)");
         foreach (var e in profile.Timeline)
             sb.AppendLine($"- {e.When} · {e.Channel} · {e.Summary}. {e.Detail} [{e.Flag}]");
         sb.AppendLine();
 
-        sb.AppendLine("SCREENING & VERIFICATION RESULTS");
+        sb.AppendLine("KYC, PEP / SANCTIONS AND OTHER SCREENING");
         foreach (var s in profile.Screening)
-            sb.AppendLine($"- {s.Check}: {s.Result} [{s.Status}]");
-        if (profile.ReceivingSmsf is { } smsf)
-        {
-            sb.AppendLine($"- SMSF named on the request: {smsf.FundName}, ABN {smsf.Abn}, registered {FormatDate(smsf.RegisteredOn)}, ESA {smsf.Esa}");
-        }
+            sb.AppendLine($"- {s.Group} — {s.Check}: {s.Result} [{s.Status}]");
         sb.AppendLine();
 
         if (documents.Count > 0)
         {
             sb.AppendLine("DOCUMENT AUTHENTICITY FINDINGS");
-            sb.AppendLine("Each document on the case was read by Azure Content Understanding (or from the case-file");
-            sb.AppendLine("record when it isn't configured) and scored by a deterministic checks layer. Cite each");
-            sb.AppendLine("document by its number.");
+            sb.AppendLine("Each document was read by Azure Content Understanding (or from the case-file record when it");
+            sb.AppendLine("isn't available) and scored by a deterministic checks layer. Cite each document by its number.");
             for (var i = 0; i < documents.Count; i++)
             {
                 var d = documents[i];
-                sb.AppendLine($"Document #{i + 1} — {d.Label} ({d.Kind})");
+                sb.AppendLine($"Document #{i + 1} — {d.Label} ({FinCrimeDocumentVerifier.KindLabel(d.Kind)})");
                 sb.AppendLine($"  Verdict: {d.Verdict} · Source: {d.Source}");
                 sb.AppendLine($"  Summary: {d.Summary}");
                 foreach (var check in d.Checks.Where(x => x.Status is "fail" or "warn"))
@@ -331,6 +418,12 @@ public static class FinancialCrimeApi
                 var passed = d.Checks.Where(x => x.Status == "pass").Select(x => x.Name).ToList();
                 if (passed.Count > 0) sb.AppendLine($"  Passed: {string.Join("; ", passed)}");
             }
+            sb.AppendLine();
+        }
+        else
+        {
+            sb.AppendLine("DOCUMENT AUTHENTICITY FINDINGS");
+            sb.AppendLine("No documents were included in this review.");
             sb.AppendLine();
         }
 
@@ -344,25 +437,30 @@ public static class FinancialCrimeApi
             sb.AppendLine();
         }
 
-        sb.AppendLine("SCORING RUBRIC (keep the score explainable)");
-        sb.AppendLine("Start at 5. Add: contact details changed less than 96 hours before a money-out request +20;");
-        sb.AppendLine("new device in a location that contradicts a travel notice +12 (new device elsewhere +6);");
-        sb.AppendLine("one-time code sent to a newly changed number +5; SMSF registered less than 30 days before the");
-        sb.AppendLine("request +10; failed ATO SMSF verification (SVS) +15; first altered document +15 (+5 each extra);");
-        sb.AppendLine("payee name matching neither the member nor the fund +6; urgency or 'don't call my old number'");
-        sb.AppendLine("language +4; other document needing verification +6 each (max 12); watch-points: new member +3,");
-        sb.AppendLine("member in hardship +4, death benefit paid to claimants +2. High 65+, Medium 35–64, Low under 35.");
-        sb.AppendLine("Any altered document puts the case at Medium or above.");
+        sb.AppendLine("KNOWLEDGE DOCUMENTS TO CITE (life_knowledge index)");
+        foreach (var title in profile.References)
+            sb.AppendLine($"- {title}");
+        sb.AppendLine();
+
+        sb.AppendLine("RISK RATING (Guide — financial crime red flags and controls for life insurance)");
+        sb.AppendLine("Level: Low — no red flags, or one that is explained; Medium — one unexplained red flag; High — two or");
+        sb.AppendLine("more unexplained red flags, any document that isn't genuine, or a payment to an account in another");
+        sb.AppendLine("name together with any other flag. High-risk requests are held and escalated to Theo at once.");
+        sb.AppendLine("Score (0–100, keeps the rating explainable): start at 5 and add — contact details changed without");
+        sb.AppendLine("verifying the client +18 (a verified change +8); new device in a place that contradicts a travel");
+        sb.AppendLine("notice +12 (a new device elsewhere +6); claim or payment request within 30 days of a contact change");
+        sb.AppendLine("+15; payment to an account not in the name of the policy owner or nominated beneficiary +12; first");
+        sb.AppendLine("fake or tampered document +15, each further one +10; other document needing a closer look +6 each");
+        sb.AppendLine("(max 12); PEP or sanctions match +20; watch-points: new client +3, client under financial stress +3,");
+        sb.AppendLine("company ownership +2, bereavement +2. A High rating scores at least 65 and a Medium one at least 35.");
         sb.AppendLine();
 
         sb.AppendLine("TASK");
-        sb.AppendLine("Review this case for financial-crime risk — fraud, scams, identity takeover and AML/CTF. Use the");
-        sb.AppendLine("knowledge base (financial-crime red flags & controls guide, rollover and SMSF verification rules,");
-        sb.AppendLine("the member's case files) and cite document titles. Produce your six output sections, refer to");
-        sb.AppendLine("documents by number, and keep the language neutral — never accuse anyone; the member may be the");
-        sb.AppendLine("victim. Only use the trusted contact details above for any call-back. If you recommend an SMR, say");
-        sb.AppendLine("it is due within 3 business days of forming the suspicion, that lodging it is a human decision,");
-        sb.AppendLine("and that nobody may be tipped off.");
+        sb.AppendLine("Review this Client Case for fraud, scams, identity takeover and KYC gaps. Use the knowledge base and");
+        sb.AppendLine("cite the documents above by title. Produce your output sections, refer to documents by number and");
+        sb.AppendLine("keep the language neutral — never accuse anyone; the client may be the victim. Use only the trusted");
+        sb.AppendLine("contact details above for any call-back. Every block, control and referral to an insurer needs");
+        sb.AppendLine("Theo's approval — recommend, don't decide.");
         return sb.ToString();
     }
 
@@ -376,147 +474,117 @@ public static class FinancialCrimeApi
         IReadOnlyList<string> ChecksClear,
         IReadOnlyList<FinCrimeRecommendedAction> Actions,
         string ApprovalRequired,
-        string? SmrNote);
+        string? ReportingNote,
+        string? ScoreNote);
 
     /// <summary>
-    /// Explainable risk assessment from the case profile (timeline, SVS,
-    /// payees), the request email and the document verdicts. Every point on the
-    /// score comes from a named indicator so a human can see exactly why.
+    /// Explainable risk assessment from the case profile (timeline, payees,
+    /// travel notice, screening) and the document verdicts. Every point on the
+    /// score comes from a named indicator so a person can see exactly why.
     /// </summary>
     private static Assessment Assess(
         CaseRecord c,
         FinCrimeCaseProfile p,
-        IReadOnlyList<FinCrimeDocumentVerification> documents)
+        IReadOnlyList<FinCrimeDocumentVerification> documents,
+        int seededDocumentCount)
     {
         var indicators = new List<FinCrimeRiskIndicator>();
         var clear = new List<string>();
-        var received = ParseDate(c.ReceivedDate) ?? c.CreatedAt.Date;
-        var request = p.Timeline.LastOrDefault(e => e.Type == "request");
-        var requestAt = request?.At ?? received;
-        var member = p.Parties.FirstOrDefault()?.Name ?? c.ClientName;
+        var client = p.Parties.FirstOrDefault(x => !x.IsCompany)?.Name ?? c.ClientName;
+        var first = FirstName(client);
+        var insurer = InsurerFor(p);
 
-        // Contact details changed shortly before money out.
-        var change = p.Timeline.LastOrDefault(e => e.Type == "contact-change" && e.At <= requestAt);
-        if (p.MoneyOut && change is not null && (requestAt - change.At).TotalHours <= 96)
+        var change = p.Timeline.FirstOrDefault(e => e.Type == "contact-change");
+        var device = p.Timeline.FirstOrDefault(e => e.Type == "new-device");
+        var bankEvent = p.Timeline.FirstOrDefault(e => e.Type == "bank-account");
+        var claim = p.Timeline.LastOrDefault(e => e.Type == "claim");
+        var policyHistory = p.Timeline.LastOrDefault(e => e.Type == "policy");
+        var travel = p.TravelNotice;
+
+        // Contact details changed without verifying the client.
+        if (change is not null)
         {
-            var hours = (int)Math.Round((requestAt - change.At).TotalHours);
-            indicators.Add(new("contact-change", "Contact details changed shortly before a money-out request",
-                $"{change.Summary} on {change.When} — about {hours} hours before the request ({request?.When ?? FormatDate(c.ReceivedDate)}). {change.Detail}",
-                "Account activity", 20, "high"));
+            var unverified = change.Flag == "red";
+            indicators.Add(new("contact-change",
+                unverified ? "Contact details changed without verifying the client" : "Contact details changed recently",
+                $"{change.When} — {change.Detail}",
+                "Client activity log", unverified ? 18 : 8, unverified ? "high" : "medium"));
         }
 
-        // New device, especially somewhere the member isn't.
-        var device = p.Timeline.FirstOrDefault(e => e.Type == "new-device");
-        var travel = p.Timeline.FirstOrDefault(e => e.Type == "travel-notice");
+        // New device, especially somewhere a travel notice says the client isn't.
         if (device is not null)
         {
-            var unexpected = travel?.Location is { } away && device.Location is { } seenAt &&
-                             !seenAt.Contains(away, StringComparison.OrdinalIgnoreCase);
+            var away = travel is not null && device.Location is { } seenAt &&
+                       !seenAt.Contains(travel.Place, StringComparison.OrdinalIgnoreCase) &&
+                       device.At.Date >= travel.From && device.At.Date <= travel.To
+                ? travel
+                : null;
+            var after = change is not null && device.At >= change.At
+                ? $", {Math.Round((device.At - change.At).TotalMinutes)} minutes after the contact change"
+                : string.Empty;
+            var travelText = away is not null
+                ? $" The travel notice from {away.RecordedAt} puts {first} in {away.Place} from {Dmy(away.From)} to {Dmy(away.To)}."
+                : string.Empty;
             indicators.Add(new("new-device",
-                unexpected ? "New device in an unexpected location" : "Online access from a new device",
-                $"{device.When}: {device.Detail}" + (travel is not null ? $" ({travel.Summary}.)" : string.Empty),
-                "Account activity", unexpected ? 12 : 6, unexpected ? "high" : "medium"));
+                away is not null ? "Login from a new device where the client isn't" : "Online access from a new device",
+                $"{device.When} — {device.Summary}{after}.{travelText}",
+                "Client activity log", away is not null ? 12 : 6, away is not null ? "high" : "medium"));
         }
 
-        var mfa = p.Timeline.FirstOrDefault(e => e.Type == "mfa" && e.Flag == "red");
-        if (mfa is not null)
+        // A claim or payment request within 30 days of a contact change
+        // (the guide holds these and calls back on the verified number).
+        if (claim is not null && change is not null && claim.At >= change.At && (claim.At - change.At).TotalDays <= 30)
         {
-            indicators.Add(new("mfa", "One-time code sent to a newly changed number",
-                $"{mfa.When}: {mfa.Detail}", "Account activity", 5, "medium"));
+            var hours = (int)Math.Round((claim.At - change.At).TotalHours);
+            var urgent = claim.Summary.Contains("urgent", StringComparison.OrdinalIgnoreCase);
+            var full = claim.Summary.Contains("full", StringComparison.OrdinalIgnoreCase);
+            var history = policyHistory is not null && policyHistory.Summary.StartsWith("No claims", StringComparison.OrdinalIgnoreCase)
+                ? $" {policyHistory.Summary}."
+                : string.Empty;
+            indicators.Add(new("claim-pattern",
+                $"{(urgent ? "Urgent claim" : "Claim")}{(full ? " for the full benefit" : string.Empty)}, about {hours} hours after the contact change",
+                $"{claim.When} — {claim.Summary}. {claim.Detail}{history}",
+                "Claim email", 15, "high"));
         }
 
-        // SMSF red flags.
-        if (p.ReceivingSmsf is { } smsf)
-        {
-            if (ParseDate(smsf.RegisteredOn) is { } registered)
-            {
-                var days = (requestAt.Date - registered).Days;
-                if (days is >= 0 and <= 30)
-                {
-                    indicators.Add(new("new-smsf", "Rollover to a newly registered SMSF",
-                        $"'{smsf.FundName}' (ABN {smsf.Abn}) was registered on {Dmy(registered)} — {days} days before the request. Setting up an SMSF to receive someone else's benefits is a known AUSTRAC / ATO indicator.",
-                        "Request & SMSF details", 10, "high"));
-                }
-            }
-
-            var failed = new List<string>();
-            if (!smsf.AbnIsRegisteredSmsf) failed.Add("the ABN is not a registered SMSF");
-            if (!smsf.MemberTfnLinked) failed.Add($"{FirstName(member)}'s TFN is not linked to the fund");
-            if (!smsf.BankDetailsMatch) failed.Add("the bank details don't match");
-            if (!smsf.EsaMatches) failed.Add("the ESA doesn't match");
-            if (failed.Count > 0)
-            {
-                indicators.Add(new("svs", "ATO SMSF verification (SVS) failed",
-                    $"{Capitalise(string.Join(", ", failed))}. A rollover to an SMSF can't proceed until SVS passes (SIS reg 6.33E).",
-                    "ATO SVS result", 15, "high"));
-            }
-            else
-            {
-                clear.Add("ATO SMSF verification (SVS) passed.");
-            }
-        }
-        else if (string.Equals(c.RequestType, RequestTypes.RolloverOutSmsf, StringComparison.OrdinalIgnoreCase))
-        {
-            indicators.Add(new("svs-pending", "Rollover to an SMSF — verification not yet run",
-                "No ATO SMSF verification (SVS) result is on this case. It must pass — member's TFN linked, bank details and ESA matching — before any money moves.",
-                "Request type", 15, "medium"));
-        }
-
-        // Payee names.
+        // Payment to an account that isn't in the policy owner's or beneficiary's name.
         var mismatched = p.RequestedPayees
-            .Where(n => !p.AcceptedAccountNames.Any(a => NamesMatch(n, a)))
+            .Where(n => !p.AcceptedPayees.Any(a => NamesMatch(n, a)))
             .ToList();
         if (mismatched.Count > 0)
         {
-            var fund = p.ReceivingSmsf is { } s ? $" or the SMSF ('{s.FundName}')" : string.Empty;
-            indicators.Add(new("payee", "Payee name doesn't match the member or the fund",
-                $"The request pays an account named '{string.Join("', '", mismatched)}' — not {member}{fund}.",
-                "Request", 6, "medium"));
-        }
-
-        // Pressure / channel-steering language in the request email.
-        var email = RequestSampleCatalog.FindById(c.SampleId);
-        if (p.MoneyOut && email is not null)
-        {
-            var phrases = PressureRegex.Matches($"{email.EmailSubject}\n{email.EmailBody}")
-                .Select(m => m.Value.Trim().TrimEnd(',', '-', ' '))
-                .Where(v => v.Length > 0)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Take(4)
-                .ToList();
-            if (phrases.Count > 0)
-            {
-                indicators.Add(new("pressure", "Urgency and 'don't use my old details' language",
-                    $"The request email says {string.Join(", ", phrases.Select(x => $"'{x}'"))} — pressure to act fast and steering away from known contact details are common scam indicators.",
-                    "Request email", 4, "low"));
-            }
+            var opened = bankEvent is not null
+                ? $" The account (ending {LastDigits(bankEvent.Summary) ?? "—"}) was opened on {Dmy(bankEvent.At)}" +
+                  (change is not null && bankEvent.At.Date >= change.At.Date
+                      ? $", {(bankEvent.At.Date - change.At.Date).Days} day{((bankEvent.At.Date - change.At.Date).Days == 1 ? "" : "s")} after the contact change."
+                      : ".")
+                : string.Empty;
+            var owner = p.AcceptedPayees.FirstOrDefault() ?? client;
+            indicators.Add(new("payee",
+                "Benefit to be paid into a new account in another name",
+                $"The request asks Caldova to pay '{string.Join("', '", mismatched)}' — not {owner}, the policy owner.{opened} {(insurer ?? "The insurer")} pays benefits to the policy owner, so an account in another name can't be used.",
+                "Claim email", 12, "high"));
         }
 
         // Documents.
         var numbered = documents.Select((d, i) => (Doc: d, No: i + 1)).ToList();
-        var fakes = numbered.Where(x => x.Doc.Verdict == "fake").ToList();
-        if (fakes.Count > 0)
+        var altered = numbered.Where(x => x.Doc.Verdict is "fake" or "tampered").ToList();
+        for (var i = 0; i < altered.Count; i++)
         {
-            indicators.Add(new("document-altered",
-                fakes.Count == 1
-                    ? $"Altered {KindLabel(fakes[0].Doc.Kind)} (Document #{fakes[0].No})"
-                    : $"{fakes.Count} documents show signs of alteration",
-                string.Join(" ", fakes.Select(x => $"Document #{x.No} ({x.Doc.Label}): {x.Doc.Summary}")),
-                string.Join(", ", fakes.Select(x => $"Document #{x.No}")),
-                15 + 5 * (fakes.Count - 1), "high"));
+            var (doc, no) = altered[i];
+            var concerns = doc.Checks.Where(x => x.Status is "fail" or "warn").Select(x => x.Detail).ToList();
+            indicators.Add(new($"document-{no}",
+                doc.Verdict == "fake"
+                    ? $"Document #{no} looks fake: {ShortLabel(doc.Label)}"
+                    : $"Document #{no} has been tampered with: {ShortLabel(doc.Label)}",
+                $"{doc.Summary} {string.Join(" ", concerns)}".Trim(),
+                $"Document #{no}", i == 0 ? 15 : 10, "high"));
         }
 
         var extraDocPoints = 0;
         foreach (var (doc, no) in numbered.Where(x => x.Doc.Verdict == "suspicious"))
         {
-            var target = doc.Kind switch
-            {
-                "bank-statement" => "payee",
-                "smsf-registration" => "new-smsf",
-                _ => null,
-            };
-            var index = target is null ? -1 : indicators.FindIndex(x => x.Key == target);
-            if (index < 0 && doc.Kind == "smsf-registration") index = indicators.FindIndex(x => x.Key == "svs");
+            var index = doc.Kind == "bank-statement" ? indicators.FindIndex(x => x.Key == "payee") : -1;
             if (index >= 0)
             {
                 var existing = indicators[index];
@@ -530,39 +598,18 @@ public static class FinancialCrimeApi
             {
                 var points = Math.Min(6, 12 - extraDocPoints);
                 extraDocPoints += points;
-                indicators.Add(new($"document-review-{no}", $"Document needs verification — {doc.Label}",
-                    $"Document #{no}: {doc.Summary}", $"Document #{no}", points, "medium"));
+                indicators.Add(new($"document-review-{no}", $"Document #{no} needs verification: {ShortLabel(doc.Label)}",
+                    doc.Summary, $"Document #{no}", points, "medium"));
             }
         }
         foreach (var (doc, no) in numbered.Where(x => x.Doc.Verdict == "legit"))
-            clear.Add($"Document #{no} ({doc.Label}) — consistent with a genuine document.");
+            clear.Add($"Document #{no} ({ShortLabel(doc.Label)}) — consistent with a genuine document.");
 
-        // Watch-points by request type.
-        switch (c.RequestType)
-        {
-            case RequestTypes.NewAccount:
-                indicators.Add(new("new-member", "Watch-point: new relationship, no account history yet",
-                    "Normal for a new member — there's no behaviour to compare against, so identity verification and PEP / sanctions screening carry the weight.",
-                    "Request type", 3, "info"));
-                break;
-            case RequestTypes.FinancialHardship:
-                indicators.Add(new("hardship", "Watch-point: member in financial hardship",
-                    "Not a concern about the member. People in hardship are targeted by illegal early-release promoters, so include scam-awareness information and watch for a follow-up rollover to an SMSF (an AUSTRAC indicator).",
-                    "Request type", 4, "info"));
-                break;
-            case RequestTypes.DeathBenefit:
-                indicators.Add(new("claimants", "Watch-point: benefit paid to claimants, not the member",
-                    "Death benefits can attract impersonation, so the death certificate, the claimants' IDs and their payment accounts are checked before payment.",
-                    "Request type", 2, "info"));
-                break;
-        }
-
-        // Screening hits (SVS is scored above) and the clear results.
+        // PEP / sanctions matches (other screening rows are shown in the review step).
         foreach (var s in p.Screening)
         {
-            if (s.Check.StartsWith("SVS", StringComparison.OrdinalIgnoreCase)) continue;
-            if (s.Status == "fail")
-                indicators.Add(new("screening", $"Screening match — {s.Check}", s.Result, "Screening", 20, "high"));
+            if (s.Group.Contains("sanctions", StringComparison.OrdinalIgnoreCase) && s.Status == "fail")
+                indicators.Add(new("screening", $"Screening match — {s.Check}", s.Result, "PEP and sanctions screening", 20, "high"));
             else if (s.Status == "pass")
                 clear.Add($"{s.Check}: {s.Result}.");
         }
@@ -572,57 +619,126 @@ public static class FinancialCrimeApi
             if (!clear.Contains(line)) clear.Add(line);
         }
 
-        var score = Math.Clamp(Baseline + indicators.Sum(x => x.Points), 1, 99);
-        if (fakes.Count > 0 && score < 40) score = 40;
-        var level = score >= 65 ? "High" : score >= 35 ? "Medium" : "Low";
+        // Watch-points by scenario.
+        var watchPoint = WatchPoint(p, first);
+        if (watchPoint is not null) indicators.Add(watchPoint);
 
-        var first = FirstName(member);
-        var smrDue = AddBusinessDays(received, 3);
-        var concerns = indicators.Where(x => x.Severity is not "info").ToList();
-        var strongest = concerns.OrderByDescending(x => x.Points).Take(5).Select(x => LowerFirst(x.Title));
+        // Level follows 'Guide — financial crime red flags and controls for life
+        // insurance': High for two or more unexplained red flags or any document
+        // that isn't genuine (a payment to an account in another name plus any
+        // other flag is already two); Medium for one; Low for none. The score
+        // explains the level and is lifted into the level's band when needed.
+        var redFlags = indicators.Where(x => x.Severity is not "info").ToList();
+        var level = redFlags.Count >= 2 || altered.Count > 0 ? "High"
+                  : redFlags.Count == 1 ? "Medium"
+                  : "Low";
+        var raw = Math.Clamp(Baseline + indicators.Sum(x => x.Points), 1, 99);
+        var score = level switch
+        {
+            "High" => Math.Max(raw, 65),
+            "Medium" => Math.Clamp(raw, 35, 64),
+            _ => raw,
+        };
+        string? scoreNote = score == raw ? null : level switch
+        {
+            "High" => $"Raised to {score}: the red-flags guide rates {(altered.Count > 0 ? "any document that isn't genuine" : "two or more unexplained red flags")} as High.",
+            _ => $"Set to {score}: the red-flags guide rates one unexplained red flag as Medium.",
+        };
+
+        var strongest = redFlags.OrderByDescending(x => x.Points).Take(4).Select(x => LowerFirst(x.Title));
+        var allSeededLegit = seededDocumentCount > 0 && documents.Count >= seededDocumentCount && documents.All(d => d.Verdict == "legit");
+        var takeover = indicators.Any(x => x.Key == "contact-change");
         var summary = level switch
         {
             "High" =>
-                $"High risk ({score}/100). {concerns.Count} indicators match patterns AUSTRAC and the ATO warn super funds about — the strongest: " +
-                string.Join("; ", strongest) +
-                $". Recommend holding the request and contacting {first} only on the details we already trust — {first} is most likely the victim, not a suspect.",
+                $"High risk ({score}/100). {redFlags.Count} red flag{(redFlags.Count == 1 ? " needs" : "s need")} verifying" +
+                (takeover && redFlags.Count > 1 ? " and together they match the pattern of an identity takeover" : string.Empty) +
+                " — the strongest: " + string.Join("; ", strongest) +
+                $". Recommend holding the request and contacting {first} only on the details we already trust. {first} is most likely the victim, not a suspect.",
             "Medium" =>
-                $"Medium risk ({score}/100). Some indicators need verifying before the request continues — " +
-                string.Join("; ", strongest.Take(4)) +
-                $". Verify with {first} on the contact details already on file; other checks can continue in parallel.",
-            _ => $"Low risk ({score}/100). " + LowRiskSummary(c, p),
+                $"Medium risk ({score}/100). One finding needs verifying before the request continues — " +
+                string.Join("; ", strongest.Take(1)) +
+                $". Verify with {first} on the contact details already on file; other work can continue in parallel.",
+            _ => $"Low risk ({score}/100). " + LowRiskSummary(p, documents, allSeededLegit),
         };
 
-        var actions = BuildActions(level, c, p, change, smrDue, received);
+        var actions = BuildActions(level, c, p, change, device, first, insurer);
         var approval = level switch
         {
-            "High" => "Yes — holding or blocking the request, locking online access, contacting the member about suspected fraud and lodging an SMR are human decisions. Felix reviews the evidence; the Team Leader approves the block.",
-            "Medium" => "Yes — delaying the request on financial-crime grounds needs human approval. Verification calls on the trusted contact details and document requests can go ahead.",
-            _ => "No financial-crime decision needed — the result is recorded on the case. Other approvals on this case stay with the relevant team.",
-        };
-        var smrNote = level switch
-        {
-            "High" => $"SMR consideration: if a suspicion is formed, a suspicious matter report to AUSTRAC is due within 3 business days — by {LongDate(smrDue)} if formed on {LongDate(received)}. Lodging it is a human decision, and nobody may be tipped off.",
-            "Medium" => "No SMR at this stage — reassess once the member has been verified.",
-            _ => null,
+            "High" =>
+                $"Yes — Theo, the Practice Team Leader, must approve each control before it happens: blocking the request on financial-crime grounds, restoring the contact details, locking portal access, contacting {first} and referring the suspected fraud to {insurer ?? "the insurer"}. Felix's agent recommends; people decide.",
+            "Medium" =>
+                "Yes — delaying the request on financial-crime grounds needs Theo's approval. Verification calls on the trusted contact details can go ahead.",
+            _ => "No financial-crime decision needed — the result is recorded on the Client Case." + LowRiskApprovalNote(p),
         };
 
-        return new Assessment(level, score, summary, indicators, clear, actions, approval, smrNote);
+        return new Assessment(level, score, summary, indicators, clear, actions, approval, ReportingNote(level, p, insurer, first), scoreNote);
     }
 
-    private static string LowRiskSummary(CaseRecord c, FinCrimeCaseProfile p) => c.RequestType switch
+    private static FinCrimeRiskIndicator? WatchPoint(FinCrimeCaseProfile p, string first) => p.ScenarioKey switch
     {
-        RequestTypes.NewAccount =>
-            "Identity verified electronically and no PEP or sanctions match — KYC/AML screening is clear.",
-        RequestTypes.DeathBenefit =>
-            "The death certificate and the claimants' IDs are genuine and each payment account is in the claimant's own name — no extra checks, so the family isn't asked for anything more.",
-        RequestTypes.FinancialHardship =>
-            "The hardship documents are genuine and the payment account is in the member's legal name. Include scam-awareness information — people in hardship are targeted by illegal early-release schemes.",
-        RequestTypes.PensionCommencement =>
-            "No financial-crime concerns — pension payments go to the nominated account on file and nothing has changed recently.",
-        _ => p.IsScenario
-            ? "No elevated indicators — continue along the standard path."
-            : "No elevated indicators in the information on this case — continue along the standard path with routine checks.",
+        "priya" => new("new-client", "Watch-point: new client, no history to compare against",
+            "Normal for a new client. Until there's history, identity verification and PEP / sanctions screening carry the weight.",
+            "Request type", 3, "info"),
+        "george" => new("company-ownership", "Watch-point: cover owned by a company",
+            "The company would own the key person policy, so Caldova identifies the company and every person who owns or controls it — George and Harpreet, 50% each.",
+            "Request type", 2, "info"),
+        "tom" => new("financial-stress", "Watch-point: client under financial stress",
+            "Not a concern about Tom. People under financial stress can be targeted by scams, so any request to change where benefits are paid is verified with a call-back on his verified mobile.",
+            "Request type", 3, "info"),
+        "robert" => new("bereavement", "Watch-point: bereavement",
+            "Death claims can attract impersonation, so the death certificate and the beneficiary's ID are checked — and nothing more is asked of the family.",
+            "Request type", 2, "info"),
+        _ => null,
+    };
+
+    private static string LowRiskSummary(FinCrimeCaseProfile p, IReadOnlyList<FinCrimeDocumentVerification> documents, bool allSeededLegit)
+    {
+        if (allSeededLegit)
+        {
+            switch (p.ScenarioKey)
+            {
+                case "priya":
+                    return "Priya's driver licence and payslip are genuine, her identity is verified (DVS) and there's no PEP or sanctions match — KYC is complete.";
+                case "george":
+                    return "The company extract and both partners' IDs are genuine. Northcote Custom Joinery Pty Ltd is registered, George and Harpreet are its directors and 50/50 beneficial owners, and there's no PEP or sanctions match for the company or either owner.";
+                case "tom":
+                    return "The BAS and profit and loss summary (net business income $96,000) and the surgeon's report are genuine, Kylie's support-person authority is on file and nothing about Tom's contact or bank details has changed.";
+                case "robert":
+                    return "The certified death certificate for Mei Chen and Robert's ID are genuine, and Robert is the nominated beneficiary. Nothing more needs to be asked of the family.";
+            }
+        }
+        var legit = documents.Count(d => d.Verdict == "legit");
+        return documents.Count == 0
+            ? "No elevated indicators in the case information. No documents were included in this review."
+            : $"No elevated indicators — {legit} of {documents.Count} document{(documents.Count == 1 ? "" : "s")} consistent with a genuine document.";
+    }
+
+    private static string LowRiskApprovalNote(FinCrimeCaseProfile p) => p.ScenarioKey switch
+    {
+        "george" => " Theo's second review of the $2,800,000 total cover is a separate advice control.",
+        "tom" => " Lodging the claim is a separate approval in Claims.",
+        "robert" => " Lodging the death claim is a separate approval in Claims, and every message to Robert's family needs Theo's approval.",
+        _ => string.Empty,
+    };
+
+    /// <summary>
+    /// Cautious note on referrals and AML/CTF. An advice licensee has AML/CTF
+    /// obligations only when it arranges a designated service (table 1, item
+    /// 54); pure-risk cover without a surrender value generally isn't one, so
+    /// the agent never says a report is or isn't required — compliance decides.
+    /// </summary>
+    private static string? ReportingNote(string level, FinCrimeCaseProfile p, string? insurer, string first) => level switch
+    {
+        "High" =>
+            $"Referral: {insurer ?? "the insurer"}'s fraud team decides whether to investigate the claim. Whether anything must also be reported to AUSTRAC is for Caldova's compliance adviser to decide — an advice licensee has AML/CTF reporting duties only when it arranges a designated service, and pure-risk cover like {first}'s generally isn't one. Keep the suspicion confidential.",
+        "Medium" => "No referral at this stage — reassess once the client has been verified on the trusted contact details.",
+        _ => p.ScenarioKey switch
+        {
+            "priya" => "AML/CTF: arranging the rollover from Riverbend Super that funds Priya's cover inside super may be a designated service Caldova arranges as a licensee (item 54). If so, this KYC is the initial customer due diligence it needs — Caldova's compliance adviser decides.",
+            "george" => "Caldova's KYC standard for business clients: identify the company and every person who owns or controls it. Pure-risk cover generally isn't an AML/CTF designated service — Caldova's compliance adviser decides whether any AML/CTF obligation applies.",
+            _ => null,
+        },
     };
 
     private static List<FinCrimeRecommendedAction> BuildActions(
@@ -630,94 +746,86 @@ public static class FinancialCrimeApi
         CaseRecord c,
         FinCrimeCaseProfile p,
         FinCrimeActivityEvent? change,
-        DateTime smrDue,
-        DateTime received)
+        FinCrimeActivityEvent? device,
+        string first,
+        string? insurer)
     {
-        var first = FirstName(p.Parties.FirstOrDefault()?.Name ?? c.ClientName);
         var actions = new List<FinCrimeRecommendedAction>();
+        var mobile = MobileRegex.Match(p.VerifiedContact) is { Success: true } m ? m.Value : null;
+        var email = EmailRegex.Match(p.VerifiedContact) is { Success: true } e ? e.Value : null;
+        var trusted = string.Join(" and ", new[] { mobile is null ? null : $"mobile {mobile}", email }.Where(x => x is not null));
 
         if (level == "High")
         {
-            actions.Add(new("Hold the request",
-                p.ReceivingSmsf is not null
-                    ? "Don't process the rollover. The 3-business-day SuperStream clock only runs once all required information is received — a failed SMSF verification means it hasn't."
-                    : "Don't release any money until the member has been verified.",
-                true));
-            actions.Add(new("Lock online access",
-                change is not null
-                    ? $"Suspend online access and treat the contact-detail change on {Dmy(change.At)} as unverified until {first} confirms it."
-                    : $"Suspend online access until {first} has been verified.",
-                true));
-            actions.Add(new("Call back on the verified number",
-                $"Contact {first} only on {p.VerifiedContact} — never the number or email supplied after the change.",
-                true));
-            actions.Add(new("Restore and support",
-                $"If {first} didn't make the request: reset the online credentials, restore the verified contact details and offer a referral to IDCARE, Australia's free identity and cyber support service.",
+            actions.Add(new("Hold the claim and the bank-detail change",
+                $"Don't lodge anything with {insurer ?? "the insurer"} and don't change the bank details. Ben confirms no claim has been lodged.",
+                true, Theo));
+            actions.Add(new("Restore the verified contact details",
+                (trusted.Length > 0 ? $"Put back {trusted}" : "Put back the contact details verified before the change") +
+                (change is not null ? $" and treat the change on {Dmy(change.At)} as unverified." : "."),
+                true, Theo));
+            actions.Add(new("Lock client portal access",
+                "Lock the portal and end any active sessions" +
+                (device?.Location is { } where ? $", including the new device seen in {where}" : string.Empty) +
+                $". Reset the login once {first} is verified.",
+                true, Theo));
+            actions.Add(new(mobile is not null ? $"Call {first} on {mobile}" : $"Call {first} on the verified number",
+                $"Only on the verified number held before the change — never the new number or email. Calm, plain English and no accusation: {first} is most likely the victim. Cara's agent drafts the call notes and a reassurance letter with identity-protection steps: change email and portal passwords, turn on multi-factor authentication, watch for unexpected messages or logins, and contact the bank if bank details may have been exposed.",
+                true, Theo));
+            actions.Add(new($"Alert {insurer ?? "the insurer"}'s fraud team",
+                "Refer the suspected fraud with the evidence pack (activity timeline and document findings). The insurer decides on any investigation.",
+                true, Theo));
+            actions.Add(new("Keep it confidential",
+                $"Share the evidence only with the people who need it (Theo, Ben, Cara and {insurer ?? "the insurer"}'s fraud team), and never through the changed contact details.",
                 false));
-            actions.Add(new("Stop the money at every step",
-                "Ask Transfers & Rollovers to cancel the request with the receiving fund and Payments to confirm no money leaves the account.",
-                false));
-            actions.Add(new("Consider an SMR to AUSTRAC",
-                $"If a suspicion is formed, the suspicious matter report is due within 3 business days — by {LongDate(smrDue)} if formed on {LongDate(received)}. Lodging it is a human decision; keep it confidential (no tipping off).",
-                true));
-            actions.Add(new("Prepare reassuring, neutral wording",
-                $"Ask Client Communications to draft the call script and letter — calm, plain English, no accusation. {first} is most likely the victim.",
-                true));
             return actions;
         }
 
         if (level == "Medium")
         {
             actions.Add(new("Verify before continuing",
-                $"Confirm the request with {first} on {p.VerifiedContact} before any money moves.",
+                $"Confirm the request with {first} on {p.VerifiedContact} before anything changes or any money moves.",
                 false));
             actions.Add(new("Resolve the document findings",
-                "Ask for a certified copy or the original of any document flagged for review, and re-check it.",
+                "Ask for a certified copy or the original of any document flagged for review, and check it again.",
                 false));
-            if (string.Equals(c.RequestType, RequestTypes.RolloverOutSmsf, StringComparison.OrdinalIgnoreCase) && p.ReceivingSmsf is null)
-            {
-                actions.Add(new("Run the ATO SMSF verification service",
-                    "Before any rollover to an SMSF, SVS must confirm the member's TFN is linked and the bank details and ESA match.",
-                    false));
-            }
-            actions.Add(new("Re-score after verification",
-                "Update the case with the outcome; hold the request only with human approval.",
-                true));
+            actions.Add(new("Hold only with approval",
+                "If the request can't be verified, recommend a hold — delaying it on financial-crime grounds needs approval.",
+                true, Theo));
             return actions;
         }
 
-        actions.Add(new("Record the result on the case",
-            $"Note the screening and document results on {c.CaseNumber} and release it to the next team.",
-            false));
-        switch (c.RequestType)
+        switch (p.ScenarioKey)
         {
-            case RequestTypes.NewAccount:
-                actions.Add(new("Standard new-member monitoring",
-                    "Alert on contact-detail or bank-account changes in the first 90 days, with step-up (SMS code) verification.",
-                    false));
+            case "priya":
+                actions.Add(new("Record KYC as complete on the Client Case", "Identity, income evidence and PEP / sanctions screening are all clear.", false));
+                actions.Add(new("Release the case to Penny (Paraplanning)", "The needs analysis can start.", false));
+                actions.Add(new("Standard monitoring once cover starts",
+                    $"Verify any change of contact or bank details with a code to {first}'s verified mobile and a call-back.", false));
                 break;
-            case RequestTypes.DeathBenefit:
-                actions.Add(new("Pay only to the claimants' own accounts",
-                    $"Payments go only to accounts in the claimants' own names ({string.Join(" and ", p.RequestedPayees.DefaultIfEmpty("as nominated"))} — confirmed). No call-back or extra documents needed — keep it low-friction for the family.",
-                    false));
+            case "george":
+                actions.Add(new("Record the company KYC on the Client Case", "Northcote Custom Joinery Pty Ltd and both beneficial owners are identified and verified.", false));
+                actions.Add(new("Release the case to Penny (Paraplanning)", "The business protection needs analysis can start.", false));
+                actions.Add(new("Check the key person premium account at application",
+                    "The company would own and pay for the key person policy — Uma confirms the premium account is in the company's name.", false));
                 break;
-            case RequestTypes.FinancialHardship:
-                actions.Add(new("Include scam-awareness information",
-                    "Ask Client Communications to mention that Caldova never charges a fee to release super early and to be wary of 'early access' offers — illegal early-release promoters target people in hardship.",
-                    false));
-                actions.Add(new("Watch for a follow-up SMSF rollover",
-                    "A hardship request followed by a rollover to an SMSF is an AUSTRAC indicator — flag any such request for review.",
-                    false));
+            case "tom":
+                actions.Add(new("Record the document checks on the Client Case", "Earnings evidence and the surgeon's report are genuine.", false));
+                actions.Add(new("Release the claim to Ben (Claims)", "Ben can complete the claim pack and the benefit calculation.", false));
+                actions.Add(new("Pay benefits only to an account in Tom's own name",
+                    $"Verify any request to change it with a call-back on {mobile ?? "his verified number"}.", false));
+                actions.Add(new("Keep the vulnerable-client flag", "Tom is under financial stress — Theo's vulnerable-client review goes ahead.", false));
                 break;
-            case RequestTypes.PensionCommencement:
-                actions.Add(new("Keep the standard payment controls",
-                    "Pension payments go to the nominated account on file; any change of bank details needs step-up verification and a call-back on the number on file.",
-                    false));
+            case "robert":
+                actions.Add(new("Record the checks on the Client Case", "The death certificate and Robert's ID are genuine.", false));
+                actions.Add(new("Release the claim to Ben (Claims)", "Robert is the nominated beneficiary, so the benefit is paid to him directly.", false));
+                actions.Add(new("Pay only to an account in Robert's own name", "No extra documents or call-backs are needed.", false));
+                actions.Add(new("Keep it gentle",
+                    "Amelia stays the family's single contact, and every message to the family goes to Theo for approval.", true, Theo));
                 break;
             default:
-                actions.Add(new("Continue along the standard path",
-                    "No financial-crime action needed beyond routine monitoring.",
-                    false));
+                actions.Add(new("Record the result on the Client Case", $"Note the screening and document results on {c.CaseNumber}.", false));
+                actions.Add(new("Continue along the standard path", "No financial-crime action needed beyond routine checks.", false));
                 break;
         }
         return actions;
@@ -725,18 +833,15 @@ public static class FinancialCrimeApi
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    private static DateTime AddBusinessDays(DateTime start, int days)
-    {
-        var date = start.Date;
-        var added = 0;
-        while (added < days)
-        {
-            date = date.AddDays(1);
-            if (date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday || PublicHolidays.Contains(date)) continue;
-            added++;
-        }
-        return date;
-    }
+    private static string? InsurerFor(FinCrimeCaseProfile p) =>
+        p.Parties.Select(x => InsurerRegex.Match(x.Role)).FirstOrDefault(m => m.Success)?.Value;
+
+    private static string? LastDigits(string text) =>
+        Regex.Match(text, @"ending (\d{3,4})") is { Success: true } m ? m.Groups[1].Value : null;
+
+    /// <summary>Label without a trailing note in brackets, e.g. "(sent with the claim)".</summary>
+    private static string ShortLabel(string label) =>
+        Regex.Replace(label, @"\s*\([^()]*\)\s*$", string.Empty);
 
     private static int? ParseAgentScore(string? text)
     {
@@ -748,7 +853,7 @@ public static class FinancialCrimeApi
     private static string? ParseAgentLevel(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var section = Regex.Match(text, @"Risk Score[^\n]*(\n[^\n]*){0,3}", RegexOptions.IgnoreCase);
+        var section = Regex.Match(text, @"Risk (?:Score|Level)[^\n]*(\n[^\n]*){0,3}", RegexOptions.IgnoreCase);
         var scope = section.Success ? section.Value : text;
         var m = Regex.Match(scope, @"\b(High|Medium|Low)\b", RegexOptions.IgnoreCase);
         return m.Success ? CultureInfo.InvariantCulture.TextInfo.ToTitleCase(m.Value.ToLowerInvariant()) : null;
@@ -764,17 +869,7 @@ public static class FinancialCrimeApi
 
     private static string Dmy(DateTime d) => d.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
 
-    private static string LongDate(DateTime d) => d.ToString("ddd d MMM yyyy", CultureInfo.InvariantCulture);
-
-    private static string KindLabel(string kind) => kind switch
-    {
-        "driver-licence" => "driver licence",
-        "bank-statement" => "bank statement",
-        "smsf-registration" => "SMSF registration extract",
-        "death-certificate" => "death certificate",
-        "income-support-letter" => "income support letter",
-        _ => kind.Replace('-', ' '),
-    };
+    private static string Money(decimal amount) => amount.ToString("$#,##0", CultureInfo.InvariantCulture);
 
     private static bool NamesMatch(string a, string b)
     {
@@ -789,9 +884,6 @@ public static class FinancialCrimeApi
         string.IsNullOrEmpty(s) || (s.Length > 1 && char.IsUpper(s[1]))
             ? s
             : char.ToLowerInvariant(s[0]) + s[1..];
-
-    private static string Capitalise(string s) =>
-        string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
     private static string Sanitize(string value) =>
         value.Replace('\r', ' ').Replace('\n', ' ');

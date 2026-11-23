@@ -303,7 +303,7 @@
         }
     };
 
-    // Streaming hook called by per-page demo scripts from their onDelta
+    // Streaming hook called by per-page scenario scripts from their onDelta
     // callback: mirrors the streamed agent text into the "Agent Narrative"
     // tab so it accumulates live as the agent generates output.
     window.engageTabsStreamNarrative = function (scope, fullText) {

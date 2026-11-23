@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261103-lif001-underwriting-decision",
+  "title": "Case REQ-20261103-LIF001 — underwriting decision",
+  "category": "Case File",
+  "requestType": "New protection advice",
+  "caseNumber": "REQ-20261103-LIF001",
+  "clientNumber": "CL-104582",
+  "content": "Underwriting summary prepared by the Underwriting Agent for Uma (Underwriting & New Business) for Priya Natarajan (CL-104582), case REQ-20261103-LIF001. Insurer: Corella Life.\n\nBefore any health question, Uma's agent explained the duty to take reasonable care in plain English — answer every question carefully, including the asthma and the 2023 back strain, because it protects a claim later — and told Priya she doesn't need to disclose genetic test results, which insurers can't ask for or use from 8 Oct 2026 (see 'Underwriting and the duty to take reasonable care').\n\nRequirements for Priya's age (34) and sums insured: a tele-interview only (Corella's thresholds — see 'Directory — insurers on the approved product list').\nTimeline: Authority to Proceed signed Sat 7 Nov 2026 → application lodged with Corella Life Mon 9 Nov → tele-interview Tue 10 Nov → decision Mon 16 Nov 2026.\n\nDecision:\n• Life $750,000 — standard rates\n• TPD $600,000 (any occupation inside super) and the own-occupation extension — standard rates\n• Trauma $150,000 — standard rates\n• Asthma — accepted at standard rates\n• Income protection $6,125 a month — accepted with an exclusion for back and spine conditions. Corella will review the exclusion after two symptom-free years.\n\nWhat the exclusion means: income protection won't pay for time off work caused by a back or spine condition, but it still covers other illnesses and injuries. After two symptom-free years, Priya can ask Corella Life to review it.\n\nAcceptance: Priya accepted the exclusion with Amelia on Tue 17 Nov 2026 — accepting an exclusion is a human decision.\nPolicy: CR-26118204, in force from Wed 18 Nov 2026. Year-1 premium $3,180 (stepped): $858 inside super and $2,322 outside super.\nCooling-off: 14 days, from the earlier of receiving Corella's confirmation and the end of the fifth business day after issue; it ends if a claim is made (Corporations Act s1019B).\nExisting cover: Priya told Kestrel Retail Super to keep her $50,000 cover before 30 Nov 2026, so it was kept until the new cover started. Any decision about it now is Priya's, with Amelia.\nFinancial Crime: driver licence and payslip legitimate; KYC complete; no PEP or sanctions match.\nCommunications: Cara's welcome letter and plain-English policy summary to Priya; an update to Hannah Lewis that Priya's cover is in place, with no health details (Priya agreed to share the outcome only).\n\nOutcome: ✅ Completed — covered from 18 Nov 2026: life $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month, with a back and spine exclusion on income protection; the old super cover was kept until the new cover started.",
+  "severity": "medium",
+  "department": "Underwriting & New Business",
+  "tags": [
+    "priya-natarajan",
+    "REQ-20261103-LIF001",
+    "CL-104582",
+    "underwriting-decision",
+    "corella-life",
+    "CR-26118204",
+    "duty-to-take-reasonable-care",
+    "tele-interview",
+    "standard-rates",
+    "asthma-standard",
+    "back-and-spine-exclusion",
+    "exclusion-review-two-years",
+    "in-force-18-nov-2026",
+    "cooling-off-14-days",
+    "completed"
+  ],
+  "lastUpdated": "2026-11-18T00:00:00Z"
+}

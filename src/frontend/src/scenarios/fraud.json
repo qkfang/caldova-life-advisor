@@ -1,0 +1,26 @@
+{
+  "id": "fraud",
+  "scenarioNumber": 2,
+  "caseId": "REQ-20261106-LIF002",
+  "clientId": "fraud",
+  "amount": 200000,
+  "outcomeAmount": 0,
+  "outcome": "rejected",
+  "beats": [
+    {"at": "client", "action": "lodge-at-front-desk", "narration": "At 07:52 on Fri 6 Nov 2026, a new email address claims Grace's full $200,000 trauma cover for breast cancer, marked urgent, to be paid into a new account ending 4471 in the name “G Williams Consulting Pty Ltd”."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent extracts a trauma claim, a bank change and a recent contact change: Grace's mobile and email were changed by phone on Mon 2 Nov, about 93 hours before the claim."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261106-LIF002 (CL-100377), sets the priority to Urgent and routes it to Claims."},
+    {"at": "Benefit Claims Advocate", "action": "claims-assess", "narration": "Ben's agent checks Lyrebird Life policy LB-19004417: a cancer claim needs a confirmed specialist diagnosis with histopathology, and benefits are paid to the policy owner, so a new account in another name can't be used. It refers the case to Felix."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix's agent rates the risk HIGH and explains each flag without accusing Grace: the oncologist's report is fake (pasted letterhead, edited dates, no histopathology), the licence photo has been edited, the account opened on 3 Nov is in another name, a new device logged in from Sydney, and Grace's travel notice says she is in Italy until 1 Dec."},
+    {"at": "Practice Team Leader", "action": "team-leader-review", "narration": "Theo approves the block, restores Grace's verified contact details, locks her portal access and approves alerting Lyrebird Life's fraud team: each one a human decision."},
+    {"at": "Benefit Claims Advocate", "action": "claims-confirm", "narration": "Ben confirms that no claim was lodged with Lyrebird Life."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara calls Grace on her verified mobile, 0491 570 157. Grace, in Florence, is well and never asked for anything. A reassurance letter follows, with steps to protect her identity."}
+  ],
+  "result": {
+    "status": "blocked",
+    "headline": "Claim blocked — Grace's cover is safe",
+    "figure": "$200,000 protected",
+    "icon": "🛡️",
+    "summary": "Outcome: BLOCKED — no claim lodged and $200,000 protected. Grace's $500,000 life cover and $200,000 trauma cover are safe."
+  }
+}

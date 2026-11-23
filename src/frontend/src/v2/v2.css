@@ -1,4 +1,4 @@
-/* v2 - The Lakehouse storybook (see docs/storybook.md). Keep this file ASCII-only. */
+/* v2 - Caldova House storybook (see docs/storybook.md). Keep this file ASCII-only. */
 :root {
   --panel: rgba(12, 19, 34, 0.82);
   --panel-strong: rgba(9, 15, 28, 0.92);
@@ -30,7 +30,7 @@ body {
   display: none !important;
 }
 
-/* Sky: a golden-hour gradient behind the transparent canvas; the engine room dims it to dusk. */
+/* Sky: a golden-hour gradient behind the transparent canvas; the vault (engine room) dims it to dusk. */
 .v2-sky,
 .v2-sky::after {
   position: fixed;
@@ -389,7 +389,7 @@ body.inspecting .v2-page .pc-hint {
   display: grid;
   gap: 10px;
 }
-.trace-members {
+.trace-clients {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -862,7 +862,7 @@ body.inspecting .v2-page .pc-hint {
 
 /* ---------------- Across the house: the layer stack in a card ---------------- */
 /* Each level is drawn like its floor slab, with the level's edge strip along the bottom, and the
-   dashed rungs between levels match the beams in the lakehouse. */
+   dashed rungs between levels match the beams in the house. */
 .insp-stack {
   display: grid;
 }

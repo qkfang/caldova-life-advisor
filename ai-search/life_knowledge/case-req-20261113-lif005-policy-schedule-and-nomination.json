@@ -1,0 +1,30 @@
+{
+  "id": "case-req-20261113-lif005-policy-schedule-and-nomination",
+  "title": "Case REQ-20261113-LIF005 — policy schedule and nomination",
+  "category": "Case File",
+  "requestType": "Death claim",
+  "caseNumber": "REQ-20261113-LIF005",
+  "clientNumber": "CL-101935",
+  "content": "Policy schedule and beneficiary nomination — Corella Life policy CR-19033105. Case REQ-20261113-LIF005.\n\nPolicy owner and life insured: Mei Chen (DOB 05/06/1984), client number CL-101934. Held outside super. Advised by Amelia, Senior Risk Adviser, and issued in March 2019.\nCover: life cover of $1,000,000.\nNominated beneficiary: Robert Chen (spouse), 100%.\n\nClaims check by the Claims Agent's Policy & Evidence Check assistant for Ben (Claims):\n✅ policy in force on the date of death, Mon 12 Oct 2026; premiums paid\n✅ no exclusions on the policy\n✅ in force for more than seven years — well past the three-year window in which an insurer can avoid a life policy for a non-fraudulent misrepresentation (Insurance Contracts Act 1984 s29(3); see 'Underwriting and the duty to take reasonable care')\n✅ beneficiary nomination valid, so Corella Life pays the benefit directly to Robert, not through Mei's estate (see 'Corella Life — Protection PDS extract')\n✅ certified death certificate and Robert's certified ID checked by Financial Crime — legitimate\n✅ other cover found: Mei's Riverbend Super account also had default death cover of $180,000 — a separate claim with the fund's trustee (see 'Case REQ-20261113-LIF005 — super fund cover note')\n\nBenefit: $1,000,000, paid to Robert as the nominated beneficiary. Life cover proceeds paid outside super are not taxable (see 'Tax on life insurance — premiums and benefits').\n\nApproval and lodgement: every death claim needs human approval. Theo, the Practice Team Leader, approved the lodgement through the Teams approval card. Ben lodged the claim with Corella Life on Mon 16 Nov 2026. Corella accepted it on Fri 20 Nov 2026 and paid $1,000,000 to Robert on Mon 23 Nov 2026 — well inside the Life Code's 6 months for a lump-sum claim decision (cl 5.49) and the 15 business days for a written decision once all information is received (cl 5.50). Because the accepted benefit is $25,000 or more, Corella's letter suggested Robert consider independent financial advice (cl 5.61); Amelia will offer to meet when Robert is ready.\n\nCare: one named contact for the family (Amelia); Theo approved every message to Robert; Cara's letters are gentle and plain.\n\nOutcome: ✅ Completed — $1,000,000 paid to Robert on 23 Nov 2026, with Mei's $180,000 super claim under way.",
+  "severity": "high",
+  "department": "Claims",
+  "tags": [
+    "robert-chen",
+    "mei-chen",
+    "REQ-20261113-LIF005",
+    "CL-101935",
+    "CL-101934",
+    "CR-19033105",
+    "corella-life",
+    "policy-schedule",
+    "nominated-beneficiary",
+    "robert-100-percent",
+    "life-cover-1000000",
+    "in-force-7-years",
+    "teams-approval",
+    "lodged-16-nov-2026",
+    "accepted-20-nov-2026",
+    "paid-23-nov-2026"
+  ],
+  "lastUpdated": "2026-11-23T00:00:00Z"
+}

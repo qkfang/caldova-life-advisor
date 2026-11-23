@@ -1,8 +1,8 @@
 /**
- * Shared types for the "Lakehouse" storybook (see docs/storybook.md).
+ * Shared types for the Caldova House storybook (see docs/storybook.md).
  */
 import type { Mesh, TransformNode } from "@babylonjs/core";
-import type { InfraId, LevelId } from "./lakehouseData";
+import type { InfraId, LevelId } from "./houseData";
 
 /** A level of the house, plus the roof that lifts off the top floor. */
 export type GroupId = LevelId | "roof";
@@ -23,7 +23,7 @@ export type InspectTarget =
   | { type: "infra"; id: InfraId }
   | { type: "desk" }
   | { type: "visitor" }
-  /** Amelia, the financial adviser at the front desk. */
+  /** Amelia, Caldova's adviser at the front desk. */
   | { type: "adviser" }
   | { type: "party" }
   | { type: "guest"; id: string };
@@ -46,9 +46,9 @@ export interface Anchor {
 export interface Highlights {
   owner: boolean;
   brain: boolean;
-  /** The front desk on the dock. */
+  /** The front desk under the verandah. */
   desk: boolean;
-  /** Amelia, the financial adviser at the front desk. */
+  /** Amelia, the adviser at the front desk. */
   adviser: boolean;
   staff: ReadonlySet<string>;
   /** Agent bays, by staff id. */

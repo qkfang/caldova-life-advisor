@@ -1,0 +1,28 @@
+{
+  "id": "case-req-20261106-lif002-document-checks",
+  "title": "Case REQ-20261106-LIF002 — document checks",
+  "category": "Case Evidence",
+  "requestType": "Trauma claim and bank change",
+  "caseNumber": "REQ-20261106-LIF002",
+  "clientNumber": "CL-100377",
+  "content": "Document checks by the Financial Crime Agent's Document Authenticity assistant (Azure Content Understanding) for Felix (Financial Crime) on 6 Nov 2026, covering the three attachments to the claim email received at 07:52 that day.\n\n1 Oncologist's report — 'Dr A. Moretti, Eastern Oncology Group' — ❌ NOT GENUINE: the letterhead is a pasted image; the dates have been edited; the fonts don't match; the provider number is in the wrong format; and there is no histopathology, which Lyrebird Life's cancer definition needs (see 'Lyrebird Life — Protection PDS extract').\n2 Driver licence — ❌ TAMPERED: the photo region has been edited.\n3 Bank statement, account ending 4471 — ⚠️ SUSPICIOUS: the account was opened on 3 Nov 2026, the day after the contact details changed, and the account name 'G Williams Consulting Pty Ltd' doesn't match the policy owner, Grace Williams.\n\nPolicy check by the Claims Agent for Ben (Claims): Lyrebird Life policy LB-19004417 is in force with trauma cover of $200,000. A cancer claim needs a confirmed diagnosis by a specialist supported by histopathology, and the benefit is paid to the policy owner, so a new account in another name can't be used. The request came from contact details changed four days earlier, so Ben's agent referred it to Financial Crime.\n\nRisk rating: HIGH. Red flags, each explained:\n1 contact details changed by phone about 93 hours before the claim, with no code sent to the verified mobile\n2 portal login from a new device in Sydney while the travel notice on file says Grace is in Italy\n3 an urgent claim for the full sum insured\n4 payment to a brand-new account in a company name that doesn't match the policy owner\n5 a medical report that isn't genuine and has no histopathology\n6 an edited driver licence\nThese are reasons to stop and verify, not an accusation. The request appears not to have come from Grace, who is treated as the likely victim of an identity takeover.\n\nRecommendation for the Practice Team Leader (a human decision): block the claim and the bank-detail change; restore the verified contact details; lock portal access; alert Lyrebird Life's fraud team; contact Grace only on her verified mobile 0491 570 157. Theo approved each step on 6 Nov 2026, and no claim was lodged.",
+  "severity": "high",
+  "department": "Financial Crime",
+  "tags": [
+    "grace-williams",
+    "REQ-20261106-LIF002",
+    "CL-100377",
+    "document-checks",
+    "document-authenticity",
+    "content-understanding",
+    "fake-medical-report",
+    "eastern-oncology-group",
+    "no-histopathology",
+    "tampered-driver-licence",
+    "suspicious-bank-statement",
+    "risk-high",
+    "block-approved",
+    "lyrebird-fraud-team"
+  ],
+  "lastUpdated": "2026-11-06T02:15:00Z"
+}

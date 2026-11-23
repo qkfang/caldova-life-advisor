@@ -3,17 +3,19 @@ using Azure.AI.Projects.Agents;
 using Microsoft.Extensions.Logging;
 using OpenAI.Responses;
 
-namespace CaldovaSuper.Agents;
+namespace CaldovaLife.Agents;
 
 /// <summary>
-/// Shared base for every staff-character agent in the Caldova Wealth client
-/// operations office ("Wealth Team in a Day").
+/// Shared base for every staff-character agent at Caldova Life Advice, the life
+/// insurance advice practice in "Advice Team in a Day".
 ///
 /// Each agent represents one specialist role from <c>docs/foundry_agents.md</c>
 /// and is wired up with the same Foundry tools: Azure AI Search over the
-/// <c>wealth_knowledge</c> index (PDS, trust deed, super rules and member case
-/// files) and Bing grounding for current public context such as ATO rates.
-/// Some roles additionally get an MCP tool surface served by the backend.
+/// <c>life_knowledge</c> index (insurer PDS extracts, Caldova's guides, advice,
+/// underwriting, claims, tax and commission rules, and client case files) and
+/// Bing grounding for current public context. The Insurance Research,
+/// Underwriting and Claims agents also get the MCP tool surface served by the
+/// backend (server label <c>caldova-ops-mcp</c>).
 /// Analogous to <c>QuantAgent</c> in
 /// https://github.com/qkfang/quant-agent/tree/main/src/quantlib/Agents/QuantAgent.cs.
 /// </summary>
@@ -28,7 +30,7 @@ public class CaldovaAgent : BaseAgent
     /// <summary>Staff role (e.g. "Onboarding &amp; Requests Officer").</summary>
     public string Role { get; }
 
-    /// <summary>Department this agent belongs to in the voxel operations office.</summary>
+    /// <summary>Department this agent supports at Caldova House (e.g. "Onboarding &amp; Requests").</summary>
     public string Department { get; }
 
     /// <summary>ANSI console colour used when streaming the agent's output.</summary>

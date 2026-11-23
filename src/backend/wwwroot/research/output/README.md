@@ -1,12 +1,13 @@
-# Investment Solutions — generated client workbooks
+# Insurance Research — generated comparison workbooks
 
-This directory holds the Excel workbooks produced at runtime by the
-`generateClientWorkbook` MCP tool (see `Mcp/InvestmentsMcpTools.cs`) and by
-the deterministic `/investments/process` flow on the Investment Analyst page.
-Each workbook contains the case summary, the model comparison (fees in
-dollars), fact-sheet details and asset allocation, any income or redemption
-plan, and the analyst's recommendations for adviser review.
+This folder holds the Excel workbooks built at runtime by the
+`research_generateComparisonWorkbook` MCP tool (see `Mcp/ResearchMcpTools.cs`)
+and by `POST /research/workbook` on the Insurance Research Agent page. Each
+workbook has four sheets — Summary (the recommendation rationale for Amelia and
+the sources), Comparison (premiums, cash flow, 10-year totals, cover breakdown
+and a premium chart), Definitions (each insurer's result and wording) and
+Projection (10 years of stepped vs level premiums, with a chart).
 
-Files are served from `/investments/download/{fileName}` by the download
-endpoint registered in `Program.cs`. Generated files are intentionally not
+Files are served from `/research/download/{fileName}` by the download endpoint
+in `Program.cs` (`.xlsx` only, path-traversal guarded). Generated files aren't
 tracked (see `.gitignore`); only the newest workbooks are kept.

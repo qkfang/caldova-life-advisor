@@ -1,60 +1,67 @@
-using System.Globalization;
 using System.Text;
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Mcp;
-using CaldovaSuper.App.Services;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Mcp;
+using CaldovaLife.App.Models;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
-record TransfersProcessRequest(string CaseNumber);
+record UnderwritingProcessRequest(string CaseNumber);
 
 /// <summary>
-/// HTTP endpoints behind the "Try it out" tab on the Transfers &amp; Rollovers
-/// agent page (<c>/agents/transfers-rollovers</c>, Rory):
+/// HTTP endpoints behind the "Try it out" flow on the Underwriting &amp; New
+/// Business agent page (<c>/agents/underwriting</c>, Uma):
 ///
-/// 1. <c>GET /transfers/cases</c> and <c>GET /transfers/cases/{caseNumber}</c>
-///    — the Member Cases held in <see cref="CaseStore"/>.
-/// 2. <c>POST /transfers/process</c> — engages the Transfers &amp; Rollovers
-///    agent. The transfer plan (counterparties, insurance-loss warnings, SMSF
-///    verification, SLA tracker, drafted updates) and the rollover / transfer
-///    request PDF are always produced deterministically by
-///    <see cref="FundCatalog"/>, <see cref="FundDirectory"/> and
-///    <see cref="TransferRequestPdfService"/>, so the page completes without a
-///    Foundry connection; when Foundry is configured the agent's streamed
-///    narrative is shown alongside.
-/// 3. <c>GET /transfers/request/{id}.pdf</c> — download the generated PDF
-///    (from <c>/transfers/process</c> or the <c>generateTransferRequestPdf</c>
-///    MCP tool).
+/// 1. <c>GET /underwriting/cases</c> and <c>GET /underwriting/cases/{caseNumber}</c>
+///    — the Client Cases held in <see cref="CaseStore"/>.
+/// 2. <c>GET /underwriting/plan/{caseNumber}</c> — the insurer, the evidence
+///    needed for each life insured and the disclosure checklist, shown
+///    before the agent is engaged.
+/// 3. <c>POST /underwriting/process</c> — engages the Underwriting Agent and
+///    generates the application and disclosure summary PDF. The plan
+///    (<see cref="InsurerProductCatalog"/>, <see cref="InsurerDirectory"/>)
+///    and the PDF (<see cref="ApplicationPdfService"/>) are always produced
+///    deterministically, so the page completes without a Foundry connection;
+///    when Foundry is configured the agent's streamed narrative is shown
+///    alongside.
+/// 4. <c>GET /underwriting/application/{id}.pdf</c> — download the PDF
+///    (from <c>/underwriting/process</c> or the
+///    <c>underwriting_generateApplicationSummaryPdf</c> MCP tool).
 /// </summary>
-public static class TransfersApi
+public static class UnderwritingApi
 {
-    public static void MapTransfersEndpoints(
+    public static void MapUnderwritingEndpoints(
         this WebApplication app,
         CaseStore store,
         CaldovaAgentFactory factory,
         ILogger logger)
     {
-        var pdfService = app.Services.GetRequiredService<TransferRequestPdfService>();
+        var pdfService = app.Services.GetRequiredService<ApplicationPdfService>();
         var agentOptions = app.Services.GetRequiredService<CaldovaAgentOptions>();
         var mcpEnabled = !string.IsNullOrWhiteSpace(agentOptions.AppMcpUrl);
 
-        // Cases available to Rory — every Member Case in the shared store.
-        app.MapGet("/transfers/cases", () =>
-            Results.Ok(store.All().Select(c => new
+        // Every Client Case in the shared store; claim cases are flagged so
+        // the page can point them to the Claims Agent.
+        app.MapGet("/underwriting/cases", () =>
+            Results.Ok(store.All().Select(c =>
             {
-                caseNumber = c.CaseNumber,
-                clientName = c.ClientName,
-                memberNumber = c.MemberNumber,
-                product = c.Product,
-                requestType = c.RequestType,
-                receivedDate = c.ReceivedDate,
-                amount = c.Amount,
-                priority = c.Priority,
-                createdAt = c.CreatedAt
+                var plan = InsurerProductCatalog.Build(c);
+                return new
+                {
+                    caseNumber = c.CaseNumber,
+                    clientName = c.ClientName,
+                    clientNumber = c.ClientNumber,
+                    cover = c.Cover,
+                    requestType = c.RequestType,
+                    receivedDate = c.ReceivedDate,
+                    amount = c.Amount,
+                    priority = c.Priority,
+                    applicable = plan.Applicable,
+                    createdAt = c.CreatedAt
+                };
             })));
 
-        // Single-case lookup for the summary card shown before engaging the agent.
-        app.MapGet("/transfers/cases/{caseNumber}", (string caseNumber) =>
+        app.MapGet("/underwriting/cases/{caseNumber}", (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
             return record is null
@@ -62,11 +69,25 @@ public static class TransfersApi
                 : Results.Ok(record);
         });
 
-        // Engage the Transfers & Rollovers agent on a case. A deterministic plan
-        // and PDF are always returned; with Foundry configured the live agent's
+        // The APL directory (diagnostics and the page's insurer card).
+        app.MapGet("/underwriting/insurers", (string? query) =>
+            Results.Ok(UnderwritingMcpTools.LookupInsurerResult(query)));
+
+        // Deterministic plan for a case — insurer, requirements, disclosure
+        // checklist, timeline and decision — without engaging the agent.
+        app.MapGet("/underwriting/plan/{caseNumber}", (string caseNumber) =>
+        {
+            var record = store.Get(caseNumber);
+            if (record is null)
+                return Results.NotFound(new { error = $"case '{caseNumber}' not found" });
+            return Results.Ok(PlanView(InsurerProductCatalog.Build(record)));
+        });
+
+        // Engage the Underwriting Agent on a case. A deterministic plan and
+        // PDF are always returned; with Foundry configured the live agent's
         // narrative is streamed (`Accept: text/event-stream`) or returned in
-        // `agentNotes`.
-        app.MapPost("/transfers/process", async (HttpContext httpContext, TransfersProcessRequest request) =>
+        // `agentNotes`. Claim cases get a short note pointing to Claims.
+        app.MapPost("/underwriting/process", async (HttpContext httpContext, UnderwritingProcessRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request?.CaseNumber))
                 return Results.BadRequest(new { error = "caseNumber is required" });
@@ -75,21 +96,24 @@ public static class TransfersApi
             if (record is null)
                 return Results.NotFound(new { error = $"case '{request.CaseNumber}' not found" });
 
-            logger.LogInformation("Transfers process: caseNumber={CaseNumber} sample={SampleId} mcp={Mcp}",
-                Sanitize(record.CaseNumber), Sanitize(record.SampleId), mcpEnabled);
+            var plan = InsurerProductCatalog.Build(record);
+            logger.LogInformation("Underwriting process: caseNumber={CaseNumber} scenario={Scenario} applicable={Applicable} mcp={Mcp}",
+                Sanitize(record.CaseNumber), plan.ScenarioKey, plan.Applicable, mcpEnabled);
 
-            var plan = FundCatalog.Build(record);
-            var pdf = pdfService.Generate(ToPdfInput(record, plan));
-            var pdfUrl = $"/transfers/request/{pdf.Id}.pdf";
+            if (!plan.Applicable)
+            {
+                var envelope = NotApplicableEnvelope(record, plan, factory.IsConfigured);
+                if (AgentSseStreaming.WantsEventStream(httpContext))
+                {
+                    await AgentSseStreaming.StreamAsync(httpContext, null, string.Empty, (_, _) => envelope, logger, "Underwriting Agent");
+                    return Results.Empty;
+                }
+                return Results.Ok(envelope);
+            }
 
-            // Pre-resolve the MCP tool calls in-process so the prompt can carry
-            // their results when APP_MCP_URL isn't set (no MCP transport wired
-            // up). They are identical to what the TransfersMcpTools return.
-            var baseUrl = TransfersMcpTools.BaseUrl(app.Configuration);
-            var lookupJson = TransfersMcpTools.Serialize(TransfersMcpTools.LookupFundsResult(plan.CounterpartyQuery));
-            var svsJson = plan.Svs is null ? null : TransfersMcpTools.Serialize(plan.Svs);
-            var pdfJson = TransfersMcpTools.Serialize(TransfersMcpTools.DownloadPayload(pdf, baseUrl));
-            var prompt = BuildPrompt(record, plan, mcpEnabled, lookupJson, svsJson, pdfJson, pdf, pdfUrl);
+            var pdf = pdfService.Generate(InsurerProductCatalog.ToPdfInput(record, plan));
+            var pdfUrl = UnderwritingMcpTools.RelativeUrl(pdf);
+            var prompt = BuildPrompt(record, plan, mcpEnabled, pdf, UnderwritingMcpTools.BaseUrl(app.Configuration));
 
             string? createError = null;
 
@@ -97,20 +121,26 @@ public static class TransfersApi
             {
                 var error = agentError ?? createError;
                 var notes = trace?.Text;
+                var narrativeSource = "agent";
                 if (string.IsNullOrWhiteSpace(notes))
+                {
                     notes = BuildFallbackNarrative(record, plan, pdfUrl, pdf.FileName, error, factory.IsConfigured);
+                    narrativeSource = "deterministic";
+                }
 
                 return new
                 {
                     caseNumber = record.CaseNumber,
                     clientName = record.ClientName,
-                    memberNumber = record.MemberNumber,
                     requestType = record.RequestType,
+                    applicable = true,
                     plan = PlanView(plan),
-                    transferRequestPdfUrl = pdfUrl,
-                    transferRequestPdfFileName = pdf.FileName,
+                    applicationPdfUrl = pdfUrl,
+                    applicationPdfFileName = pdf.FileName,
+                    applicationPdfBytes = pdf.Content.Length,
                     mcpEnabled,
                     agentNotes = notes,
+                    narrativeSource,
                     agentConfigured = factory.IsConfigured,
                     agentError = error,
                     agentInput = trace?.Input,
@@ -130,18 +160,18 @@ public static class TransfersApi
             {
                 try
                 {
-                    agent = factory.Create("transfers");
+                    agent = factory.Create("underwriting");
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Transfers & Rollovers Agent could not be created; using the deterministic plan");
+                    logger.LogWarning(ex, "Underwriting Agent could not be created; using the deterministic plan");
                     createError = ex.Message;
                 }
             }
 
             if (AgentSseStreaming.WantsEventStream(httpContext))
             {
-                await AgentSseStreaming.StreamAsync(httpContext, agent, prompt, BuildEnvelope, logger, "Transfers & Rollovers Agent");
+                await AgentSseStreaming.StreamAsync(httpContext, agent, prompt, BuildEnvelope, logger, "Underwriting Agent");
                 return Results.Empty;
             }
 
@@ -155,7 +185,7 @@ public static class TransfersApi
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Transfers & Rollovers Agent invocation failed; using the deterministic plan");
+                    logger.LogWarning(ex, "Underwriting Agent invocation failed; using the deterministic plan");
                     invocationError = ex.Message;
                 }
             }
@@ -163,260 +193,268 @@ public static class TransfersApi
             return Results.Ok(BuildEnvelope(traceResult, invocationError));
         });
 
-        // Download the transfer request PDF generated by /transfers/process or
-        // by the generateTransferRequestPdf MCP tool.
-        app.MapGet("/transfers/request/{id}.pdf", (string id) =>
+        // Download the application and disclosure summary generated by
+        // /underwriting/process or the underwriting_generateApplicationSummaryPdf MCP tool.
+        app.MapGet("/underwriting/application/{id}.pdf", (string id) =>
         {
             var pdf = pdfService.Get(id);
             return pdf is null
-                ? Results.NotFound(new { error = $"transfer request '{id}' not found" })
+                ? Results.NotFound(new { error = $"application summary '{id}' not found" })
                 : Results.File(pdf.Content, "application/pdf", pdf.FileName);
         });
     }
 
-    private static TransferRequestPdfInput ToPdfInput(CaseRecord c, TransferPlan plan) => new(
-        CaseNumber: c.CaseNumber,
-        MemberName: c.RequestType == RequestTypes.DeathBenefit ? $"{c.ClientName} (claimant)" : c.ClientName,
-        MemberNumber: c.MemberNumber,
-        Product: c.Product,
-        RequestType: c.RequestType,
-        Adviser: TransfersMcpTools.AdviserText(c),
-        AsAt: plan.AsAtLabel,
-        RequestStatus: plan.RequestStatus,
-        Legs: plan.Legs.Select(l => new TransferRequestPdfLeg(
-            Counterparty: l.Counterparty,
-            CounterpartyId: l.CounterpartyId ?? string.Empty,
-            Direction: l.Direction,
-            TransferType: l.TransferType,
-            Amount: l.AmountLabel,
-            Status: l.Status,
-            Detail: $"{l.Reason}{(l.Reference is null ? string.Empty : $" Ref {l.Reference}.")} Due: {l.Due}.")).ToList(),
-        InsuranceWarnings: plan.InsuranceWarnings.Select(w => $"{w.Fund} — {w.Message} {w.Action}").ToList(),
-        SvsSummary: plan.Svs is null
-            ? null
-            : $"{plan.Svs.FundName ?? "SMSF"} (ABN {plan.Svs.Abn}) — {plan.Svs.Outcome}. {plan.Svs.Recommendation}",
-        SvsChecks: plan.Svs is null
-            ? Array.Empty<TransferRequestPdfCheck>()
-            : plan.Svs.Checks.Select(ch => new TransferRequestPdfCheck(ch.Check, ch.Passed, ch.Detail)).ToList(),
-        SlaLines: plan.Sla.Select(s => $"{s.Item}: {s.Status}{(s.Due is "—" ? string.Empty : $" (due {s.Due})")}. {s.Note}").ToList(),
-        Notes: plan.Notes);
+    private static object NotApplicableEnvelope(CaseRecord c, UnderwritingPlan plan, bool agentConfigured) => new
+    {
+        caseNumber = c.CaseNumber,
+        clientName = c.ClientName,
+        requestType = c.RequestType,
+        applicable = false,
+        note = plan.NotApplicableNote,
+        redirects = plan.Redirects,
+        plan = PlanView(plan),
+        agentNotes = $"**Not an underwriting case.** {plan.NotApplicableNote}",
+        narrativeSource = "deterministic",
+        agentConfigured,
+        agentError = (string?)null,
+        agentInput = (string?)null,
+        agentRawOutput = (object?)null
+    };
 
     // ─────────────────────────────────────────────────────────────────────
     // Prompt
     // ─────────────────────────────────────────────────────────────────────
 
-    private static string BuildPrompt(
-        CaseRecord c, TransferPlan plan, bool mcpEnabled, string lookupJson, string? svsJson, string pdfJson,
-        TransferRequestPdfRecord pdf, string pdfRelativeUrl)
+    private static string BuildPrompt(CaseRecord c, UnderwritingPlan plan, bool mcpEnabled, ApplicationPdfRecord pdf, string baseUrl)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("MEMBER CASE FOR TRANSFERS & ROLLOVERS");
-        sb.AppendLine("=====================================");
-        sb.AppendLine($"Case number      : {c.CaseNumber}");
-        sb.AppendLine($"Client           : {c.ClientName} ({c.ClientEmail}, {c.ClientPhone})");
-        sb.AppendLine($"Member number    : {c.MemberNumber}");
-        sb.AppendLine($"Product          : {c.Product}");
-        sb.AppendLine($"Request type     : {c.RequestType}");
-        sb.AppendLine($"Received         : {c.ReceivedDate}");
-        sb.AppendLine($"Adviser          : {TransfersMcpTools.AdviserText(c)}");
-        sb.AppendLine($"Amount           : {c.Amount}");
-        sb.AppendLine($"Priority         : {c.Priority} — {c.PriorityReason}");
-        sb.AppendLine($"Preferred contact: {c.PreferredContact}");
+        sb.AppendLine("CLIENT CASE FOR UNDERWRITING & NEW BUSINESS");
+        sb.AppendLine("===========================================");
+        sb.AppendLine($"Case number   : {c.CaseNumber}");
+        sb.AppendLine($"Client        : {c.ClientName}");
+        sb.AppendLine($"Client number : {c.ClientNumber}");
+        sb.AppendLine($"Request type  : {c.RequestType}");
+        sb.AppendLine($"Received      : {c.ReceivedDate}");
+        sb.AppendLine($"Adviser       : {LifeAdviceFacts.Adviser}");
+        sb.AppendLine($"Referred by   : {plan.ReferredBy}");
+        sb.AppendLine($"Priority      : {c.Priority} — {c.PriorityReason}");
         sb.AppendLine();
         sb.AppendLine("REQUEST SUMMARY");
         sb.AppendLine("---------------");
         sb.AppendLine(c.RequestSummary);
         sb.AppendLine();
-        sb.AppendLine($"WORKING PLAN PREPARED BY THE TRANSFERS SERVICE (as at {plan.AsAtLabel}) — verify it and explain it");
-        sb.AppendLine("------------------------------------------------------------------------------------------");
-        sb.AppendLine($"Overall: {plan.OverallStatus} — {plan.Headline}");
-        if (plan.Legs.Count == 0)
-            sb.AppendLine("Transfers: none.");
-        foreach (var l in plan.Legs)
-        {
-            sb.AppendLine($"- {l.Id} {l.Direction}: {l.Counterparty}{(l.CounterpartyId is null ? string.Empty : $" ({l.CounterpartyId})")} — " +
-                          $"{l.AmountLabel} — {l.TransferType} — status {l.Status.ToUpperInvariant()}. {l.Reason} Due: {l.Due}.");
-        }
-        foreach (var w in plan.InsuranceWarnings)
-            sb.AppendLine($"- Insurance-loss warning — {w.Fund}: {w.Cover} cover of ${w.Amount.ToString("N0", CultureInfo.InvariantCulture)}. {w.Message} {w.Action}");
-        if (plan.SmsfRequest is { } smsf)
-            sb.AppendLine($"- SMSF details on the request: ABN {smsf.Abn}, member {smsf.MemberName}, BSB {smsf.Bsb}, account name \"{smsf.AccountName}\", ESA \"{smsf.Esa}\".");
-        foreach (var n in plan.Notes)
-            sb.AppendLine($"- {n}");
-        sb.AppendLine($"- Human approval: {plan.HumanApprovalReason}");
+        sb.AppendLine($"APPLICATION ON FILE (as at {plan.AsAtLabel}) — verify it, then explain it");
+        sb.AppendLine("------------------------------------------------------------------");
+        sb.AppendLine($"Status: {plan.OverallStatus}");
+        sb.AppendLine($"Insurer: {plan.Insurer?.Name ?? "to be confirmed from the signed SoA"}; lodged: {plan.LodgedOn}");
+        foreach (var l in plan.LivesInsured)
+            sb.AppendLine($"- Life insured: {l.Name} ({l.ClientNumber}), age {l.Age}, {l.Occupation}{(l.Smoker is null ? string.Empty : $", {l.Smoker}")}.");
+        foreach (var cv in plan.Covers)
+            sb.AppendLine($"- Cover: {cv.LifeInsured} — {cv.Cover} {cv.SumInsured}; {cv.Ownership}; premium {InsurerProductCatalog.Money(cv.PremiumStandard)} quoted" +
+                          (cv.PremiumFinal != cv.PremiumStandard ? $", {InsurerProductCatalog.Money(cv.PremiumFinal)} after terms" : string.Empty) +
+                          $"; terms: {cv.Terms}{(cv.PolicyNumber is null ? string.Empty : $"; policy {cv.PolicyNumber}")}.");
+        if (!string.IsNullOrWhiteSpace(plan.PremiumNote))
+            sb.AppendLine($"- Premiums: {plan.PremiumNote}");
+        foreach (var d in plan.Disclosures)
+            sb.AppendLine($"- Disclosure [{d.Status}] {d.Label}: {d.Detail}");
+        foreach (var e in plan.Timeline)
+            sb.AppendLine($"- Timeline {e.Date}: {e.Event} ({e.Who}){(e.HumanDecision ? " — human decision" : string.Empty)}");
+        if (plan.Decisions.Count > 0)
+            sb.AppendLine($"- Insurer decision: {plan.DecisionSummary}");
+        foreach (var d in plan.Decisions)
+            sb.AppendLine($"  · {d.LifeInsured} — {d.Cover}: {d.Decision}.");
+        sb.AppendLine($"- Client decision: {plan.ClientDecision.Status} — {plan.ClientDecision.Who}{(plan.ClientDecision.Date is null ? string.Empty : $", {plan.ClientDecision.Date}")}.");
+        sb.AppendLine($"- {plan.ClientDecision.CoolingOff}");
         sb.AppendLine();
 
+        var lookupQuery = plan.Insurer?.Name ?? "all";
         if (mcpEnabled)
         {
             sb.AppendLine("TASK (use your MCP tools)");
             sb.AppendLine("-------------------------");
-            var step = 1;
-            if (!string.IsNullOrWhiteSpace(plan.CounterpartyQuery))
-                sb.AppendLine($"{step++}. Call lookupFunds(\"{plan.CounterpartyQuery}\") to identify the counterparties and any insurance held.");
-            if (plan.SmsfRequest is { } s)
-                sb.AppendLine($"{step++}. Call verifySmsf(abn: \"{s.Abn}\", memberName: \"{s.MemberName}\", bsb: \"{s.Bsb}\", accountName: \"{s.AccountName}\", esa: \"{s.Esa}\") before deciding anything about the SMSF rollover.");
-            sb.AppendLine($"{step++}. Call generateTransferRequestPdf for this case with the transfers you settle on (use [] if none) and include the returned downloadUrl in section 3.");
+            sb.AppendLine($"1. Call underwriting_lookupInsurer(query: \"{lookupQuery}\") for the insurer's contacts, service levels and thresholds.");
+            var step = 2;
+            foreach (var l in plan.LivesInsured)
+            {
+                sb.AppendLine($"{step++}. Call underwriting_checkRequirements(insurer: \"{plan.Insurer?.Name}\", age: {l.Age}, lifeSumInsured: {UnderwritingMcpTools.Amount(l.LifeSumInsured)}, " +
+                              $"tpdSumInsured: {UnderwritingMcpTools.Amount(l.TpdSumInsured)}, traumaSumInsured: {UnderwritingMcpTools.Amount(l.TraumaSumInsured)}, " +
+                              $"incomeProtectionMonthly: {UnderwritingMcpTools.Amount(l.IncomeProtectionMonthly)}, businessCover: \"{l.BusinessCover ?? string.Empty}\", " +
+                              $"selfEmployed: {(l.SelfEmployed ? "true" : "false")}, lifeInsured: \"{l.Name}\").");
+            }
+            sb.AppendLine($"{step++}. Call underwriting_generateApplicationSummaryPdf(caseNumber: \"{c.CaseNumber}\") and put its downloadUrl in section 5.");
             sb.AppendLine($"{step}. Write your report in the required output format.");
             sb.AppendLine();
-            sb.AppendLine($"The service has already generated a request PDF for this app's case file ({pdf.FileName}, link {pdfRelativeUrl}).");
-            sb.AppendLine("Use the downloadUrl returned by your own generateTransferRequestPdf call in section 3.");
+            sb.AppendLine($"(This app has already generated a summary for its own case file: {pdf.FileName}. Use the downloadUrl from your own tool call.)");
         }
         else
         {
-            sb.AppendLine("MCP TOOL RESULTS (pre-resolved for you in this session)");
-            sb.AppendLine("=======================================================");
-            sb.AppendLine("The Transfers & Rollovers service has already run these tools on your behalf — do NOT call them again.");
+            sb.AppendLine("MCP TOOL RESULTS (pre-resolved for you in this session — do NOT call the tools again)");
+            sb.AppendLine("=====================================================================================");
+            sb.AppendLine($"▶ underwriting_lookupInsurer(\"{lookupQuery}\") result:");
+            sb.AppendLine(UnderwritingMcpTools.Serialize(UnderwritingMcpTools.LookupInsurerResult(lookupQuery)));
             sb.AppendLine();
-            if (!string.IsNullOrWhiteSpace(plan.CounterpartyQuery))
+            foreach (var check in InsurerProductCatalog.RequirementChecks(plan))
             {
-                sb.AppendLine($"▶ lookupFunds(\"{plan.CounterpartyQuery}\") result:");
-                sb.AppendLine(lookupJson);
+                sb.AppendLine($"▶ underwriting_checkRequirements(\"{check.Insurer}\", age {check.Age}, life {UnderwritingMcpTools.Amount(check.LifeSumInsured)}, …) for {check.LifeInsured}:");
+                sb.AppendLine(UnderwritingMcpTools.Serialize(check));
                 sb.AppendLine();
             }
-            if (svsJson is not null && plan.SmsfRequest is { } s)
-            {
-                sb.AppendLine($"▶ verifySmsf(\"{s.Abn}\", \"{s.MemberName}\", \"{s.Bsb}\", \"{s.AccountName}\", \"{s.Esa}\") result:");
-                sb.AppendLine(svsJson);
-                sb.AppendLine();
-            }
-            sb.AppendLine("▶ generateTransferRequestPdf(...) result:");
-            sb.AppendLine(pdfJson);
+            sb.AppendLine("▶ underwriting_generateApplicationSummaryPdf(...) result:");
+            sb.AppendLine(UnderwritingMcpTools.Serialize(UnderwritingMcpTools.DownloadPayload(pdf, baseUrl)));
             sb.AppendLine();
             sb.AppendLine("TASK");
             sb.AppendLine("----");
-            sb.AppendLine("Using the working plan and the tool results above, write your report in the required output format.");
-            sb.AppendLine("Put the PDF's relativeUrl in section 3 as a markdown link: [Download the transfer request PDF](<relativeUrl>).");
+            sb.AppendLine("Using the application on file and the tool results above, write your report in the required output format.");
+            sb.AppendLine("Put the PDF's relativeUrl in section 5 as a markdown link: [Download the application and disclosure summary](<relativeUrl>).");
         }
 
         sb.AppendLine();
-        sb.AppendLine("Reminders: never release funds yourself (Payments does, after approval); never contact a member on changed or");
-        sb.AppendLine("unverified details; never accuse a member of fraud; plain English; cite \"SuperStream rollovers, insurance-loss");
-        sb.AppendLine("warnings & SMSF verification\" where relevant.");
+        sb.AppendLine("Reminders: explain the duty to take reasonable care before any health question; never accept terms for the client");
+        sb.AppendLine("(the client decides with Amelia); never cancel or reduce existing cover before the new cover is accepted and in force;");
+        sb.AppendLine("keep health detail out of anything shared with referral partners; plain English; cite \"Underwriting and the duty to");
+        sb.AppendLine("take reasonable care\" and the insurer's PDS extract by title.");
         return sb.ToString();
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Deterministic narrative (used when the live agent isn't available)
+    // Offline narrative (used when the live agent isn't available)
     // ─────────────────────────────────────────────────────────────────────
 
     private static string BuildFallbackNarrative(
-        CaseRecord c, TransferPlan plan, string pdfUrl, string pdfFileName, string? agentError, bool agentConfigured)
+        CaseRecord c, UnderwritingPlan plan, string pdfUrl, string pdfFileName, string? agentError, bool agentConfigured)
     {
         var preface = !agentConfigured
-            ? "_Foundry agent is not configured in this environment, so this is Rory's deterministic transfer plan — the same fund directory, SMSF verification and PDF the MCP tools use._"
+            ? "_Foundry isn't configured here, so this is Uma's offline underwriting plan — the same APL directory, requirement checks and PDF the MCP tools use._"
             : !string.IsNullOrWhiteSpace(agentError)
-                ? $"_The Transfers & Rollovers Agent did not return a report ({agentError}). Showing Rory's deterministic transfer plan instead._"
-                : "_The Transfers & Rollovers Agent finished without narrative text (it may only have called tools). Showing Rory's deterministic transfer plan instead._";
+                ? $"_The Underwriting Agent didn't return a report ({agentError}). Showing Uma's offline underwriting plan instead._"
+                : "_The Underwriting Agent finished without narrative text (it may only have called tools). Showing Uma's offline underwriting plan instead._";
 
         var sb = new StringBuilder();
         sb.AppendLine(preface);
         sb.AppendLine();
-        sb.AppendLine($"### Transfers & rollovers — {c.CaseNumber} · {c.ClientName}");
+        sb.AppendLine($"### Underwriting & new business — {c.CaseNumber} · {string.Join(" and ", plan.LivesInsured.Select(l => l.Name).DefaultIfEmpty(c.ClientName))}");
         sb.AppendLine();
         sb.AppendLine($"**{plan.OverallStatus}.** {plan.Headline}");
         sb.AppendLine();
 
-        sb.AppendLine("#### 1. Transfer Plan");
-        if (plan.Legs.Count == 0)
+        sb.AppendLine("#### 1. Application");
+        if (plan.Insurer is null)
         {
-            sb.AppendLine("No transfer or rollover is required for this case.");
+            sb.AppendLine("The insurer, covers and sums insured come from the signed Statement of Advice — not lodged yet.");
         }
         else
         {
-            sb.AppendLine("| Counterparty | Direction | Amount | Status | Why |");
-            sb.AppendLine("|---|---|--:|---|---|");
-            foreach (var l in plan.Legs)
+            sb.AppendLine($"**{plan.Insurer.Name}** ({plan.Insurer.PolicyPrefix}, on Caldova's APL) — lodged {plan.LodgedOn}.");
+            sb.AppendLine();
+            sb.AppendLine("| Life insured | Cover | Sum insured | Ownership | Premium (yr 1) |");
+            sb.AppendLine("|---|---|--:|---|--:|");
+            foreach (var cv in plan.Covers)
             {
-                sb.AppendLine($"| {Md(l.Counterparty)}{(l.CounterpartyId is null ? string.Empty : $" ({Md(l.CounterpartyId)})")} | {Md(l.Direction)} | " +
-                              $"{Md(l.AmountLabel)} | **{Md(l.Status)}** | {Md(l.Reason)} |");
+                var premium = cv.PremiumFinal == cv.PremiumStandard
+                    ? InsurerProductCatalog.Money(cv.PremiumFinal)
+                    : $"{InsurerProductCatalog.Money(cv.PremiumFinal)} (quoted {InsurerProductCatalog.Money(cv.PremiumStandard)})";
+                sb.AppendLine($"| {Md(cv.LifeInsured)} | {Md(cv.Cover)} | {Md(cv.SumInsured)} | {Md(cv.Ownership)} | {premium} |");
             }
+            sb.AppendLine();
+            sb.AppendLine(plan.PremiumNote);
         }
         sb.AppendLine();
 
-        sb.AppendLine("#### 2. Counterparty Checks");
-        if (plan.Counterparties.Count == 0)
-        {
-            sb.AppendLine("- No counterparty to look up — nothing moves to or from another fund.");
-        }
-        foreach (var cp in plan.Counterparties)
-        {
-            var id = cp.Usi is not null ? $"USI {cp.Usi}" : cp.Abn is not null ? $"ABN {cp.Abn}" : cp.Type;
-            sb.AppendLine($"- **{cp.Name}** ({id}) — {cp.Type}. {cp.TurnaroundNote}" +
-                          (cp.InsuranceHeld is null ? string.Empty : $" Insurance held: {cp.InsuranceHeld}."));
-        }
-        foreach (var w in plan.InsuranceWarnings)
-            sb.AppendLine($"- ⚠️ **Insurance-loss warning — {w.Fund}:** {w.Message} {w.Action}");
-        if (plan.Svs is { } svs)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"**SMSF verification — {svs.FundName ?? "SMSF"} (ABN {svs.Abn}): {svs.Outcome}**");
-            sb.AppendLine();
-            sb.AppendLine("| Check | Result | Detail |");
-            sb.AppendLine("|---|:-:|---|");
-            foreach (var ch in svs.Checks)
-                sb.AppendLine($"| {Md(ch.Check)} | {(ch.Passed ? "✅ Pass" : "❌ Fail")} | {Md(ch.Detail)} |");
-            sb.AppendLine();
-            sb.AppendLine(svs.Recommendation);
-        }
-        foreach (var n in plan.Notes)
-            sb.AppendLine($"- {n}");
+        sb.AppendLine("#### 2. Duty to take reasonable care");
+        sb.AppendLine($"> {plan.DutyOfCareScript}");
+        sb.AppendLine();
+        sb.AppendLine($"{plan.DutyAcknowledgement} _(Underwriting and the duty to take reasonable care)_");
         sb.AppendLine();
 
-        sb.AppendLine("#### 3. Transfer Request PDF");
-        sb.AppendLine($"[Download the transfer request PDF]({pdfUrl}) — `{pdfFileName}` · status **{plan.RequestStatus}**.");
-        sb.AppendLine();
-
-        sb.AppendLine("#### 4. SLA Tracker");
-        if (plan.Sla.Count == 0)
+        sb.AppendLine("#### 3. Requirements");
+        if (plan.Requirements.Count == 0)
         {
-            sb.AppendLine("No service-level clock applies.");
+            sb.AppendLine("Checked with the insurer once the application is prepared from the signed SoA.");
         }
         else
         {
-            sb.AppendLine("| Item | Started | Due | Status |");
+            sb.AppendLine("| Life insured | Requirement | Why | Status |");
             sb.AppendLine("|---|---|---|---|");
-            foreach (var s in plan.Sla)
-                sb.AppendLine($"| {Md(s.Item)} | {Md(s.Start)} | {Md(s.Due)} | {Md(s.Status)} |");
-            sb.AppendLine();
-            sb.AppendLine("_Rollovers must be completed within 3 business days of receiving all required information (SIS reg 6.34A)._");
+            foreach (var r in plan.Requirements)
+                sb.AppendLine($"| {Md(r.LifeInsured)} | {Md(r.Requirement)} | {Md(r.Reason)} | **{Md(r.Status)}**{(r.Date is null ? string.Empty : $" {Md(r.Date)}")} |");
         }
         sb.AppendLine();
 
-        sb.AppendLine("#### 5. Member / Adviser Update Draft");
-        if (plan.Updates.Count == 0)
-            sb.AppendLine("No update is needed from Transfers & Rollovers.");
-        foreach (var u in plan.Updates)
+        sb.AppendLine("#### 4. Disclosure checklist");
+        foreach (var d in plan.Disclosures)
         {
-            sb.AppendLine($"**{u.Audience}** ({u.Channel}){(u.Note is null ? string.Empty : $" — _{u.Note}_")}");
-            sb.AppendLine();
-            foreach (var line in u.Body.Split('\n'))
-                sb.AppendLine(string.IsNullOrWhiteSpace(line) ? ">" : $"> {line}");
-            sb.AppendLine();
+            var icon = d.Status switch { "done" => "✅", "disclosed" => "📝", "action" => "⚠️", _ => "ℹ️" };
+            sb.AppendLine($"- {icon} **{d.Label}** — {d.Detail}");
         }
+        sb.AppendLine();
 
-        sb.AppendLine("#### 6. Human Approval Required");
+        sb.AppendLine("#### 5. Application summary PDF");
+        sb.AppendLine($"[Download the application and disclosure summary]({pdfUrl}) — `{pdfFileName}` · status **{plan.ApplicationStatus}**.");
+        sb.AppendLine();
+
+        sb.AppendLine("#### 6. Underwriting timeline");
+        foreach (var e in plan.Timeline)
+            sb.AppendLine($"- **{e.Date}** — {e.Event}{(e.HumanDecision ? " _(human decision)_" : string.Empty)}");
+        if (plan.Insurer is not null)
+            sb.AppendLine($"- _{plan.Insurer.Name} service levels: {string.Join(" ", plan.Insurer.ServiceLevels)}_");
+        sb.AppendLine();
+
+        sb.AppendLine("#### 7. Decision in plain English");
+        if (plan.Decisions.Count == 0)
+            sb.AppendLine(plan.DecisionSummary);
+        foreach (var d in plan.Decisions)
+            sb.AppendLine($"- **{d.LifeInsured} — {d.Cover}: {d.Decision}.** {d.PlainEnglish}");
+        sb.AppendLine();
+
+        sb.AppendLine("#### 8. Client decision");
+        var cd = plan.ClientDecision;
+        sb.AppendLine($"**{cd.Status}** — {cd.Who}{(cd.Date is null ? string.Empty : $", {cd.Date}")}. {cd.Summary}");
+        foreach (var p in cd.Points)
+            sb.AppendLine($"- {p}");
+        if (!string.IsNullOrWhiteSpace(cd.CoolingOff))
+            sb.AppendLine($"- {cd.CoolingOff}");
+        if (!string.IsNullOrWhiteSpace(cd.ExistingCoverNote))
+            sb.AppendLine($"- {cd.ExistingCoverNote}");
+        sb.AppendLine();
+
+        sb.AppendLine("#### 9. Human Approval Required");
         sb.AppendLine(plan.HumanApprovalReason);
         sb.AppendLine();
-        sb.Append("_Source: SuperStream rollovers, insurance-loss warnings & SMSF verification; Caldova fund directory._");
+        var pds = plan.Insurer is null ? null : ProductDocumentCatalog.PdsTitleFor(plan.Insurer.Name);
+        sb.Append($"_Sources: Underwriting and the duty to take reasonable care{(pds is null ? string.Empty : $"; {pds}")}; Directory — insurers on the approved product list._");
         return sb.ToString();
     }
 
-    private static object PlanView(TransferPlan plan) => new
+    private static object PlanView(UnderwritingPlan plan) => new
     {
-        asAt = plan.AsAt,
+        caseNumber = plan.CaseNumber,
+        scenarioKey = plan.ScenarioKey,
+        applicable = plan.Applicable,
+        notApplicableNote = plan.NotApplicableNote,
+        redirects = plan.Redirects,
         asAtLabel = plan.AsAtLabel,
         overallStatus = plan.OverallStatus,
         statusTone = plan.StatusTone,
         headline = plan.Headline,
-        requestStatus = plan.RequestStatus,
-        legs = plan.Legs,
-        counterparties = plan.Counterparties.Select(FundDirectory.ToView),
-        insuranceWarnings = plan.InsuranceWarnings,
-        smsfRequest = plan.SmsfRequest,
-        svs = plan.Svs,
-        sla = plan.Sla,
+        referredBy = plan.ReferredBy,
+        lodgedOn = plan.LodgedOn,
+        insurer = plan.Insurer is null ? null : InsurerDirectory.ToView(plan.Insurer),
+        livesInsured = plan.LivesInsured,
+        covers = plan.Covers,
+        annualPremiumStandard = plan.AnnualPremiumStandard,
+        annualPremiumFinal = plan.AnnualPremiumFinal,
+        premiumNote = plan.PremiumNote,
+        requirementChecks = InsurerProductCatalog.RequirementChecks(plan),
+        requirements = plan.Requirements,
+        dutyOfCareScript = plan.DutyOfCareScript,
+        dutyAcknowledgement = plan.DutyAcknowledgement,
+        disclosures = plan.Disclosures,
+        timeline = plan.Timeline,
+        decisions = plan.Decisions,
+        decisionSummary = plan.DecisionSummary,
+        clientDecision = plan.ClientDecision,
+        applicationStatus = plan.ApplicationStatus,
         notes = plan.Notes,
-        updates = plan.Updates,
         humanApprovalRequired = plan.HumanApprovalRequired,
         humanApprovalReason = plan.HumanApprovalReason
     };

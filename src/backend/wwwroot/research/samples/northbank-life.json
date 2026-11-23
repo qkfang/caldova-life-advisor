@@ -1,0 +1,293 @@
+{
+  "documentType": "Insurer product sheet",
+  "insurer": "Northbank Life",
+  "shortName": "Northbank",
+  "code": "NB",
+  "policyPrefix": "NB-",
+  "productName": "Northbank Business Protection",
+  "pdsTitle": "Northbank Life — Business Protection PDS extract",
+  "asAt": "2026-07-01",
+  "aplListing": "Business protection",
+  "fictionNote": "Summary of the Northbank Life — Business Protection PDS extract (PDS dated 1 July 2026) for Caldova's research. Read the PDS extract before relying on any wording.",
+  "summary": "Buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting based on the accountant's valuation and two years' financial statements. On Caldova's APL for business protection; Northbank's personal covers are in a separate PDS.",
+  "strengths": [
+    "Buy-sell cover sized to each owner's share of the business value, with self-ownership or cross-ownership",
+    "Key person cover with the purpose recorded at application and the sum insured supported by the accountant's estimate of the loss",
+    "Fast financial underwriting: accepts the accountant's valuation and the last two years' financial statements, and usually decides within 5 business days",
+    "Loadings and exclusions reviewed on request after two years if the life insured's health results improve"
+  ],
+  "watchPoints": [
+    "Own-occupation TPD on business cover only works if the buy-sell agreement's TPD trigger uses the same definition — the lawyer needs to match it",
+    "Northbank requires a buy-sell agreement prepared by the owners' lawyer, and doesn't draft or review legal agreements",
+    "Northbank doesn't give tax or legal advice — the business confirms the tax treatment with its accountant"
+  ],
+  "premiumStyles": {
+    "stepped": "Stepped premiums rise with age.",
+    "level": "Level premiums start higher and rise more slowly.",
+    "indexation": "The business pays key person premiums; under self-ownership each owner pays the premiums for their own buy-sell policy."
+  },
+  "coverTypes": [
+    {
+      "cover": "Buy-sell cover — life and TPD (trauma optional)",
+      "key": "buy-sell",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "On each business owner, sized to that owner's share of the business value."
+    },
+    {
+      "cover": "Key person cover — life and TPD (trauma optional)",
+      "key": "key-person",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Owned by the business, for a revenue or capital purpose."
+    }
+  ],
+  "definitions": [
+    {
+      "key": "business-buy-sell",
+      "title": "Buy-sell cover",
+      "cover": "Business protection",
+      "wording": "Life and TPD cover (trauma optional) on each business owner, sized to that owner's share of the business value, so the remaining owners can buy the share and the departing owner or their family receives its value. Self-ownership: each owner owns the policy on their own life and the benefit is paid to them, their nominated beneficiaries or their estate, with the buy-sell agreement setting out how the share is transferred. Cross-ownership: each owner owns a policy on the other owners' lives. Northbank requires a buy-sell agreement prepared by the owners' lawyer, and doesn't draft or review legal agreements.",
+      "plainEnglish": "Each owner is insured so the remaining owner can buy their share and the family receives its value."
+    },
+    {
+      "key": "business-key-person",
+      "title": "Key person cover",
+      "cover": "Business protection",
+      "wording": "Life and TPD cover (trauma optional) on a person whose death or disability would cost the business money. The business owns the policy and receives the benefit. The purpose is recorded at application: revenue (to replace lost profit while a replacement is found and trained) or capital (for example to repay business debt). The sum insured is supported by the accountant's estimate of the loss.",
+      "plainEnglish": "The business insures a key person and receives the benefit."
+    },
+    {
+      "key": "financial-underwriting",
+      "title": "Fast financial underwriting",
+      "cover": "Business protection",
+      "wording": "Northbank accepts the business valuation and the last two years' financial statements prepared by the business's accountant as financial evidence, and usually decides within 5 business days.",
+      "plainEnglish": "The accountant's valuation and two years of accounts are enough — usually a decision within a week."
+    },
+    {
+      "key": "tpd-business-cover",
+      "title": "TPD on business cover",
+      "cover": "Business protection",
+      "wording": "Buy-sell and key person cover include TPD cover on the life insured (trauma optional). TPD is assessed on an own-occupation basis: the life insured is unlikely ever to work in their own occupation again because of illness or injury. The buy-sell agreement's TPD trigger should use the same definition.",
+      "plainEnglish": "TPD is included and pays if the owner can never work in their own occupation again."
+    },
+    {
+      "key": "medical-underwriting",
+      "title": "Medical underwriting",
+      "cover": "Business protection",
+      "wording": "Total life or TPD cover on one life: tele-interview for every application; blood profile from age 46 above $1,000,000; blood profile and medical examination from age 51 above $1,500,000.",
+      "plainEnglish": "The medical evidence depends on age and the total cover on each life."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Loading and exclusion review",
+      "cover": "All covers",
+      "wording": "Underwriting outcomes are standard rates, a loading (a percentage added to the premium, for example +25%), an exclusion, or a decline. Northbank reviews a loading or exclusion on request after two years if the life insured's health results improve.",
+      "plainEnglish": "A loading can be reviewed after two years if health results improve."
+    },
+    {
+      "key": "benefit-payment",
+      "title": "How benefits are paid",
+      "cover": "All covers",
+      "wording": "Benefits are paid only into an account in the policy owner's name (the business, for key person cover).",
+      "plainEnglish": "The business receives key person benefits; buy-sell benefits go to the owner, their nominated beneficiaries or their estate."
+    },
+    {
+      "key": "tax",
+      "title": "Tax",
+      "cover": "All covers",
+      "wording": "The tax treatment of premiums and benefits depends on who owns the policy and why it was taken out. Northbank recommends that the business confirm it with its accountant.",
+      "plainEnglish": "Tax depends on ownership and purpose — the accountant confirms it."
+    }
+  ],
+  "features": [
+    {
+      "key": "financial-underwriting",
+      "title": "Fast financial underwriting",
+      "detail": "Accountant's valuation and two years' financial statements; usually a decision within 5 business days."
+    },
+    {
+      "key": "ownership",
+      "title": "Self- or cross-ownership",
+      "detail": "Buy-sell cover owned by each owner on their own life, or cross-owned."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Loading review",
+      "detail": "Loadings and exclusions reviewed on request after two years if health results improve."
+    },
+    {
+      "key": "cooling-off",
+      "title": "Cooling-off",
+      "detail": "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made."
+    },
+    {
+      "key": "genetic",
+      "title": "No genetic test results",
+      "detail": "The insurer won't ask for or use genetic test results."
+    },
+    {
+      "key": "remuneration",
+      "title": "Adviser remuneration",
+      "detail": "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent."
+    }
+  ],
+  "exclusions": [
+    {
+      "cover": "Buy-sell cover",
+      "detail": "Sums insured can't exceed the owner's share of the business value supported by the financial evidence."
+    },
+    {
+      "cover": "Key person cover",
+      "detail": "Sums insured can't exceed the loss estimated by the business's accountant."
+    },
+    {
+      "cover": "All covers",
+      "detail": "Business protection isn't available inside super."
+    },
+    {
+      "cover": "All covers",
+      "detail": "Northbank doesn't draft buy-sell agreements and doesn't give tax or legal advice."
+    }
+  ],
+  "quotes": [
+    {
+      "scenario": "business-protection",
+      "caseNumber": "REQ-20261109-LIF003",
+      "quoteReference": "NB-Q-261110-0058",
+      "quotedOn": "2026-11-10",
+      "livesInsured": "George Papadopoulos, 52, male, non-smoker, master joiner; Harpreet Kaur, 47, female, non-smoker, operations and finance director",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 8620,
+      "structure": "Buy-sell life and TPD owned by each owner on their own life; key person life and TPD owned by Northcote Custom Joinery Pty Ltd for a revenue purpose. All outside super.",
+      "covers": [
+        {
+          "cover": "Buy-sell — life and TPD on George (owned by George)",
+          "sumInsured": "$1,200,000",
+          "ownership": "George",
+          "year1Premium": 4140,
+          "levelYear1Premium": 6420
+        },
+        {
+          "cover": "Key person — life and TPD on George (revenue purpose)",
+          "sumInsured": "$400,000",
+          "ownership": "Northcote Custom Joinery Pty Ltd",
+          "year1Premium": 1380,
+          "levelYear1Premium": 2140
+        },
+        {
+          "cover": "Buy-sell — life and TPD on Harpreet (owned by Harpreet)",
+          "sumInsured": "$1,200,000",
+          "ownership": "Harpreet",
+          "year1Premium": 3100,
+          "levelYear1Premium": 4630
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 13190,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "business-buy-sell",
+          "result": "meets",
+          "note": "Buy-sell life and TPD on each owner, sized to their share of the business value; self-ownership; needs a buy-sell agreement prepared by the owners' lawyer."
+        },
+        {
+          "key": "business-key-person",
+          "result": "meets",
+          "note": "Owned by the business, with the revenue purpose recorded at application and the sum insured supported by Marcus's estimate of the loss."
+        },
+        {
+          "key": "financial-underwriting",
+          "result": "meets",
+          "note": "Accepts Marcus's valuation and the last two years' financial statements, and usually decides within 5 business days."
+        },
+        {
+          "key": "tpd-business-cover",
+          "result": "meets",
+          "note": "Own-occupation TPD on both the buy-sell and the key person cover — it pays if George can no longer work as a joiner. The lawyer should use the same definition as the buy-sell agreement's TPD trigger."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "meets",
+          "note": "Loadings and exclusions reviewed on request after two years if health results improve."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Northbank's actual future premiums can change.",
+        "agesLabel": "George / Harpreet",
+        "years": [
+          {
+            "year": 1,
+            "ages": "52 / 47",
+            "stepped": 8620,
+            "level": 13190
+          },
+          {
+            "year": 2,
+            "ages": "53 / 48",
+            "stepped": 9275,
+            "level": 13322
+          },
+          {
+            "year": 3,
+            "ages": "54 / 49",
+            "stepped": 10008,
+            "level": 13455
+          },
+          {
+            "year": 4,
+            "ages": "55 / 50",
+            "stepped": 10829,
+            "level": 13590
+          },
+          {
+            "year": 5,
+            "ages": "56 / 51",
+            "stepped": 11749,
+            "level": 13726
+          },
+          {
+            "year": 6,
+            "ages": "57 / 52",
+            "stepped": 12783,
+            "level": 13863
+          },
+          {
+            "year": 7,
+            "ages": "58 / 53",
+            "stepped": 13946,
+            "level": 14002
+          },
+          {
+            "year": 8,
+            "ages": "59 / 54",
+            "stepped": 15257,
+            "level": 14142
+          },
+          {
+            "year": 9,
+            "ages": "60 / 55",
+            "stepped": 16737,
+            "level": 14283
+          },
+          {
+            "year": 10,
+            "ages": "61 / 56",
+            "stepped": 18411,
+            "level": 14426
+          }
+        ]
+      }
+    }
+  ],
+  "notQuoted": [
+    {
+      "scenario": "family-protection",
+      "caseNumber": "REQ-20261103-LIF001",
+      "reason": "Northbank Life is on Caldova's APL for business protection only — its personal covers are in a separate PDS that isn't on the APL."
+    }
+  ]
+}

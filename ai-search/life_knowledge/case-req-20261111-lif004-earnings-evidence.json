@@ -1,0 +1,26 @@
+{
+  "id": "case-req-20261111-lif004-earnings-evidence",
+  "title": "Case REQ-20261111-LIF004 — earnings evidence",
+  "category": "Case Evidence",
+  "requestType": "Income protection claim",
+  "caseNumber": "REQ-20261111-LIF004",
+  "clientNumber": "CL-102265",
+  "content": "Earnings evidence for Tom Bradley (CL-102265), trading as Bradley Electrical (sole trader), collected by the Claims Agent's Policy & Evidence Check assistant for Ben (Claims) and checked by the Financial Crime Agent for Felix (Financial Crime). Case REQ-20261111-LIF004.\n\nPeriod: the 12 months to 30 Sep 2026 — the last four BAS quarters before the injury on 14 Oct 2026.\nDocuments: business activity statements (BAS) for the four quarters to 30 Sep 2026, and the profit and loss statement for the same 12 months.\nNet business income for the 12 months: $96,000 — an average of $8,000 a month.\n\nDocument checks (Felix's agent): the BAS, the profit and loss statement and the surgeon's report are legitimate; the figures are consistent across the documents. ✅\n\nComparison: when Tom applied in 2023, his income was $120,000 a year, which set the insured benefit of $7,000 a month. His net business income in the 12 months before the injury was $96,000, so the benefit is based on the lower figure (see 'Case REQ-20261111-LIF004 — benefit calculation').",
+  "severity": "medium",
+  "department": "Claims",
+  "tags": [
+    "tom-bradley",
+    "REQ-20261111-LIF004",
+    "CL-102265",
+    "earnings-evidence",
+    "bas",
+    "profit-and-loss",
+    "net-business-income-96000",
+    "8000-a-month",
+    "12-months-to-30-sep-2026",
+    "document-checks",
+    "legitimate",
+    "bradley-electrical"
+  ],
+  "lastUpdated": "2026-11-12T00:00:00Z"
+}

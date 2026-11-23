@@ -1,6 +1,6 @@
 using PdfSharp.Fonts;
 
-namespace CaldovaSuper.App.Services;
+namespace CaldovaLife.App.Services;
 
 /// <summary>
 /// PDFsharp 6.x ships no cross-platform font resolver. On native Linux

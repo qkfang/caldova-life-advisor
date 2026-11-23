@@ -1,0 +1,28 @@
+{
+  "id": "case-req-20261111-lif004-policy-schedule",
+  "title": "Case REQ-20261111-LIF004 — policy schedule",
+  "category": "Case Evidence",
+  "requestType": "Income protection claim",
+  "caseNumber": "REQ-20261111-LIF004",
+  "clientNumber": "CL-102265",
+  "content": "Policy schedule — Harbourline Life income protection, policy HL-23051877. Case REQ-20261111-LIF004.\n\nPolicy owner and life insured: Tom Bradley (DOB 03/03/1985), client number CL-102265. Held outside super. Advised by Amelia, Senior Risk Adviser.\nStart date: 15 Mar 2023. Occupation at application: electrician, self-employed sole trader (Bradley Electrical).\nInsured monthly benefit: $7,000 — set at application from his income of $120,000 a year (70% × $120,000 ÷ 12 = $7,000).\nWaiting period: 30 days. Benefit period: to age 65.\nPremium: $2,880 a year, paid by Tom (tax-deductible — see 'Tax on life insurance — premiums and benefits').\nStatus at 11 Nov 2026: in force; premiums paid.\n\nBenefit basis: the policy was issued after APRA's changes to individual disability income insurance took effect for new policies on 1 Oct 2021, so benefits are based on income at the time of the claim, not the income at application. Harbourline pays the lesser of (a) the insured monthly benefit and (b) 70% of the life insured's average monthly earnings in the 12 months before the disability. For a self-employed person, earnings are the net income the business generates from their personal exertion, after business expenses. This basis is within APRA's limit (all benefits no more than 90% of earnings for the first 6 months of a claim and 70% after that). See 'Harbourline Life — Protection PDS extract' and 'Claims rules — Life Insurance Code of Practice and income protection benefits'.\n\nPayment: benefits accrue from the end of the waiting period and are paid monthly in arrears into an account in Tom's own name. Income protection benefits that replace income are taxable income.",
+  "severity": "medium",
+  "department": "Claims",
+  "tags": [
+    "tom-bradley",
+    "REQ-20261111-LIF004",
+    "CL-102265",
+    "HL-23051877",
+    "harbourline-life",
+    "policy-schedule",
+    "income-protection",
+    "insured-benefit-7000",
+    "30-day-waiting-period",
+    "benefit-period-age-65",
+    "premium-2880",
+    "benefit-basis",
+    "70-percent-of-earnings",
+    "12-months-before-disability"
+  ],
+  "lastUpdated": "2026-11-11T03:00:00Z"
+}

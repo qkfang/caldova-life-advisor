@@ -1,0 +1,26 @@
+{
+  "id": "income",
+  "scenarioNumber": 4,
+  "caseId": "REQ-20261111-LIF004",
+  "clientId": "income",
+  "amount": 7000,
+  "outcomeAmount": 5600,
+  "outcome": "partial",
+  "beats": [
+    {"at": "client", "action": "lodge-at-front-desk", "narration": "On Wed 11 Nov 2026, Tom Bradley calls to claim on his income protection. He fell from a ladder on 14 Oct, tore his rotator cuff and had surgery on 21 Oct. Kylie joins as his support person, with his written authority."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent extracts the claim notification and Kylie's authority, and flags financial stress: Tom is self-employed, and his surgeon expects four to six months off work."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261111-LIF004 (CL-102265) and routes it to Claims."},
+    {"at": "Benefit Claims Advocate", "action": "claims-assess", "narration": "Ben's agent checks Harbourline Life policy HL-23051877: $7,000 a month insured, a 30-day waiting period, benefits to age 65. It pays the lesser of the insured benefit and 70% of Tom's average monthly earnings in the 12 months before the injury: $96,000 a year is $8,000 a month, and 70% is $5,600. It explains why it isn't $7,000."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix's agent checks the BAS, the profit and loss statement and the surgeon's report: all legit."},
+    {"at": "Practice Team Leader", "action": "team-leader-review", "narration": "Theo reviews the case for a vulnerable client, approves lodging the claim and asks Amelia to call Tom personally before the letter. A note for Amelia, not advice: Tom's $7,000 is more than his recent income supports, which she may look at in his next review."},
+    {"at": "Benefit Claims Advocate", "action": "claims-lodge", "narration": "Ben's agent raises the Teams approval and lodges the claim with Harbourline Life on 12 Nov. Harbourline accepts it on 19 Nov at $5,600 a month, from 13 Nov 2026 after the waiting period, paid monthly in arrears: the first payment is about 13 Dec."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara's agent sends Tom a plain-English letter: why the benefit is $5,600 and not $7,000, when it is paid, and that it is taxable income."}
+  ],
+  "result": {
+    "status": "partially approved",
+    "headline": "Claim accepted at $5,600 a month",
+    "figure": "$5,600 a month",
+    "icon": "🟡",
+    "summary": "Outcome: PARTIALLY APPROVED — claim accepted at $5,600 a month, not the $7,000 insured, because the benefit follows his earnings in the 12 months before the injury."
+  }
+}

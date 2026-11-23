@@ -35,7 +35,7 @@ param backendLinuxFxVersion string = 'DOTNETCORE|10.0'
 param frontendAppCommandLine string = 'pm2 serve /home/site/wwwroot --no-daemon --spa'
 
 @description('Startup command for the backend Web App (.NET self-contained app entry)')
-param backendAppCommandLine string = 'dotnet cs-backend.dll'
+param backendAppCommandLine string = 'dotnet cl-backend.dll'
 
 @description('Microsoft Foundry project endpoint URL consumed by the backend CaldovaAgentFactory')
 param projectEndpoint string
@@ -46,11 +46,11 @@ param modelDeploymentName string
 @description('Tenant ID used by DefaultAzureCredential in the backend')
 param tenantId string = tenant().tenantId
 
-@description('Foundry connection ID for the wealth knowledge Azure AI Search index (optional)')
+@description('Foundry connection ID for the life knowledge Azure AI Search index (optional)')
 param searchConnectionId string = ''
 
-@description('Azure AI Search index name for the Caldova wealth knowledge base')
-param searchIndexName string = 'wealth_knowledge'
+@description('Azure AI Search index name for the Caldova Life Advice knowledge base')
+param searchIndexName string = 'life_knowledge'
 
 @description('Foundry project Bing grounding connection ID')
 param bingConnectionId string

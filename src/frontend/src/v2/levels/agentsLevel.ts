@@ -1,24 +1,26 @@
 /**
- * Level 1 · The Agents — one group of Microsoft Foundry agents that
- * supports both teams, shown role by role.
+ * Level 1 · The Agents — one group of Microsoft Foundry agents that supports
+ * both teams, in the old banking chamber at street level: tall ceilings, a
+ * colonnade along the cut, arched windows, and the old teller counter at the
+ * front, now the Client Case hub.
  *
- * The floor is split into zones: agents dedicated to the Wealth Management
- * side, agents shared by both sides, and agents dedicated to the
- * Superannuation side. Each person's agent has a bay directly under their
- * desk on Level 2 and works there with its two specialised assistants
- * (named in agentStages.ts); Cara's bay also has her voice agent. Every role
- * is its own small voxel robot, carrying something that says what it does,
- * and the bay's frame glows in the colour of its side.
+ * The floor is split into three tinted zones: agents dedicated to Claims &
+ * Care, agents shared by both sides, and agents dedicated to Protection
+ * Advice. Each person's agent has a bay directly under their desk on Level 2
+ * and works there with its two specialised assistants (named in
+ * agentStages.ts); Cara's bay also has her voice agent. Every role is its own
+ * small voxel robot, carrying something that says what it does, and the
+ * bay's frame glows in the colour of its side.
  *
- * The roles move about the floor: to the Member Case at the front of the
- * shared zone, to the Foundry uplink (their line down to Microsoft Foundry
- * and Microsoft IQ), to the shared MCP tool bench, and to the next agent's
- * bay to hand work on. Olivia's Form Extraction agent also walks out to the
- * front desk on the dock whenever a visitor signs.
+ * The roles move about the floor: to the Client Case at the teller counter,
+ * to the Foundry uplink (their line down to Microsoft Foundry and Microsoft
+ * IQ), to the MCP tool bench, and to the next agent's bay to hand work on.
+ * Olivia's Fact Find Extraction agent also walks out to the front desk under
+ * the verandah whenever a visitor signs.
  */
 import { Color3, Mesh, MeshBuilder, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
 import { STAFF_PERSONAS, findStaffById } from "../../personaData";
-import { Batch, type Kit, rng } from "../kit";
+import { heritageMats } from "../heritage";
 import {
   AGENTS,
   DESK_ROLE,
@@ -30,33 +32,33 @@ import {
   type AgentRole,
   type RoleProp,
   type SideId,
-} from "../lakehouseData";
-import { CENTRE_CELL, DOCK_DESK, FLOOR_Y, SLABS, STATIONS, WALLS, ZONES } from "../layout";
-import { buildShell } from "../shell";
+} from "../houseData";
+import { Batch, type Kit, rng } from "../kit";
+import { FLOOR_Y, FRONT_DESK, HOUSE, HUB, INSIDE, SPARE_CELLS, STATIONS, STOREY, ZONES } from "../layout";
+import { SIDE_BAYS, buildShell } from "../shell";
 import type { Anchor, Highlights, LevelBuild } from "../types";
 import { SpotBook, Wanderer, type Outing, type Pt, type Spot } from "../wander";
 
-const HUB = { x: CENTRE_CELL.x, z: CENTRE_CELL.z + 0.2 };
-const HUB_R = 1.3;
 const BUS_Z = -1.25;
 /** The line the robots walk along between the two rows of bays. */
 const CZ = -1.0;
 const POD_W = 5.6;
 const POD_D = 4.6;
-/** The robots' line down to Microsoft Foundry and Microsoft IQ, right above Foundry's core. */
-const UPLINK = { x: 0, z: -2.5 };
-/** The MCP tool bench in the back-left corner: Investments, Transfers, Payments and Teams. */
-const BENCH_Z = 6.9;
-const BENCH_XS = [-16.2, -14.8, -13.4, -12.0];
-const BENCH_COLORS = ["#f59e0b", "#10b981", "#a855f7", "#818cf8"];
-/** Where the left column splits: Ivy's dedicated bay in front, the shared tool bench behind. */
-const SPLIT_Z = 0.6;
+/** The robots' line down to Microsoft Foundry and Microsoft IQ, where the hub's trunk meets the bus. */
+const UPLINK = { x: 0, z: BUS_Z };
+/** The MCP tool bench in the back-right cell: Insurance Research, Underwriting, Claims and Teams. */
+const BENCH_Z = 7.0;
+const BENCH_XS = [13.2, 14.6, 16.0, 17.4];
+const BENCH_COLORS = ["#f59e0b", "#10b981", "#6366f1", "#818cf8"];
+/** The colonnade along the cut, one column in front of each outer bay. */
+const COLUMNS_X = [-15, -7.5, 7.5, 15];
+const COLUMN_Z = HOUSE.z0 + 0.55;
 
-/** Floor lettering for each zone, in a lighter tint of the side colour so it reads on the dark grid. */
+/** Lettering for each zone, in a lighter tint of the side colour so it reads on the dark floor. */
 const ZONE_TEXT: Record<SideId, { text: string; color: string }> = {
-  wealth: { text: "DEDICATED · WEALTH", color: "#e9c877" },
+  claims: { text: "DEDICATED · CLAIMS & CARE", color: "#e9c877" },
   shared: { text: "SHARED BY BOTH SIDES", color: "#b9c3ff" },
-  super: { text: "DEDICATED · SUPER", color: "#5eead4" },
+  protection: { text: "DEDICATED · PROTECTION ADVICE", color: "#5eead4" },
 };
 
 /** Where each role stands in its bay: the agent behind, its assistants in front. */
@@ -76,9 +78,9 @@ const HOME_OFFSETS: Record<number, Array<[number, number]>> = {
 
 /** What each agent does at the MCP tool bench (the tool families in caldova-ops-mcp). */
 const TOOL_WORK: Record<string, { bench: number; tasks: string[] }> = {
-  "investments-1": { bench: 0, tasks: ["Analysing a fact sheet", "Comparing two models", "Building the client workbook"] },
-  "transfers-1": { bench: 1, tasks: ["Looking up a fund by USI", "Verifying an SMSF", "Generating the rollover PDF"] },
-  "payments-1": { bench: 2, tasks: ["Calculating a benefit", "Checking authority limits", "Sending a Teams approval card"] },
+  "research-1": { bench: 0, tasks: ["Reading a product sheet", "Comparing the APL insurers", "Building the comparison workbook"] },
+  "underwriting-1": { bench: 1, tasks: ["Looking up an insurer", "Checking the evidence needed", "Generating the application summary"] },
+  "claims-1": { bench: 2, tasks: ["Checking a policy", "Calculating a benefit", "Sending a Teams approval card"] },
 };
 
 interface Robot {
@@ -110,10 +112,10 @@ interface Packet {
 }
 
 export interface AgentsLevelBuild extends LevelBuild {
-  /** Send Olivia's Form Extraction agent out to the front desk. */
+  /** Send Olivia's Fact Find Extraction agent out to the front desk. */
   callToDesk(): void;
   releaseDesk(): void;
-  /** The Form Extraction agent is standing at the front desk, ready to read. */
+  /** The Fact Find Extraction agent is standing at the front desk, ready to read. */
   deskReady(): boolean;
   /** What a role is doing right now, for the inspector. */
   roleTask(id: string): string | null;
@@ -148,18 +150,22 @@ function addProp(kit: Kit, node: TransformNode, prop: RoleProp): void {
       b(-0.08, 0.72, z - 0.05, 0.1, 0.05, 0.02, "#16a34a");
       b(-0.08, 0.56, z - 0.05, 0.1, 0.05, 0.02, "#16a34a");
       break;
+    case "calculator":
+      b(0, 0.34, z, 0.42, 0.58, 0.08, "#334155");
+      b(0, 0.76, z - 0.05, 0.32, 0.1, 0.02, "#86efac", true);
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) b(-0.12 + i * 0.12, 0.42 + j * 0.1, z - 0.05, 0.08, 0.06, 0.02, "#e2e8f0");
+      break;
+    case "quill":
+      // A signed document and a quill: the Statement of Advice.
+      b(0, 0.36, z, 0.48, 0.62, 0.04, "#fffaf0");
+      b(-0.06, 0.82, z - 0.03, 0.3, 0.04, 0.02, "#94a3b8");
+      b(-0.06, 0.7, z - 0.03, 0.3, 0.04, 0.02, "#94a3b8");
+      b(-0.04, 0.5, z - 0.03, 0.26, 0.03, 0.02, "#1d4ed8");
+      b(0.24, 0.5, z - 0.08, 0.06, 0.62, 0.04, "#f8fafc").rotation.z = -0.5;
+      break;
     case "book":
-      b(0, 0.38, z, 0.52, 0.64, 0.2, "#2563eb");
+      b(0, 0.38, z, 0.52, 0.64, 0.2, "#0d9488");
       b(0, 0.84, z - 0.11, 0.3, 0.06, 0.02, "#fcd34d");
-      break;
-    case "stamp":
-      b(0, 0.4, z, 0.4, 0.12, 0.34, "#334155");
-      b(0, 0.52, z, 0.14, 0.32, 0.14, "#dc2626");
-      b(0, 0.84, z, 0.26, 0.12, 0.26, "#dc2626");
-      break;
-    case "pie":
-      disc(0.62, 0.58, "#f59e0b");
-      b(0.08, 0.68, z - 0.05, 0.2, 0.2, 0.02, "#0d9488");
       break;
     case "chart":
       b(0, 0.32, z, 0.5, 0.05, 0.2, "#334155");
@@ -178,15 +184,48 @@ function addProp(kit: Kit, node: TransformNode, prop: RoleProp): void {
       b(0, 0.66, z, 0.64, 0.06, 0.04, "#e2e8f0");
       ["#22c55e", "#f59e0b", "#ef4444"].forEach((hex, i) => b(-0.22 + i * 0.22, 0.62, z - 0.03, 0.12, 0.14, 0.04, hex));
       break;
-    case "globe":
-      b(0, 0.42, z, 0.46, 0.46, 0.46, "#2563eb");
-      b(-0.08, 0.62, z - 0.24, 0.2, 0.14, 0.02, "#22c55e");
-      b(0.1, 0.48, z - 0.24, 0.14, 0.12, 0.02, "#22c55e");
+    case "form":
+      // An application and a pen.
+      b(0, 0.34, z, 0.46, 0.64, 0.04, "#ffffff");
+      for (let i = 0; i < 4; i++) {
+        b(-0.12, 0.84 - i * 0.13, z - 0.03, 0.08, 0.06, 0.02, "#10b981");
+        b(0.08, 0.84 - i * 0.13, z - 0.03, 0.22, 0.04, 0.02, "#94a3b8");
+      }
+      b(0.26, 0.4, z - 0.06, 0.05, 0.44, 0.05, "#1e293b").rotation.z = 0.4;
       break;
-    case "parcel":
-      b(0, 0.4, z, 0.52, 0.4, 0.34, "#b7824a");
-      b(0, 0.4, z - 0.18, 0.08, 0.4, 0.02, "#f8fafc");
-      b(0, 0.8, z, 0.52, 0.04, 0.1, "#f8fafc");
+    case "stethoscope": {
+      // A heartbeat on a little monitor: the medical evidence.
+      b(0, 0.34, z, 0.56, 0.42, 0.08, "#1f2937");
+      b(-0.18, 0.5, z - 0.05, 0.1, 0.04, 0.02, "#34d399", true);
+      b(-0.06, 0.48, z - 0.05, 0.05, 0.18, 0.02, "#34d399", true);
+      b(0.04, 0.5, z - 0.05, 0.1, 0.04, 0.02, "#34d399", true);
+      b(0.16, 0.54, z - 0.05, 0.05, 0.1, 0.02, "#34d399", true);
+      const tube = MeshBuilder.CreateTorus("v2_propTube", { diameter: 0.4, thickness: 0.05, tessellation: 14 }, kit.scene);
+      tube.position.set(0, 0.88, z);
+      kit.finish(tube, node, kit.mat("#94a3b8"));
+      break;
+    }
+    case "folder":
+      // A claim pack: a folder with tabs.
+      b(0, 0.34, z, 0.56, 0.62, 0.08, "#6366f1");
+      b(-0.16, 0.96, z, 0.18, 0.08, 0.06, "#facc15");
+      b(0.06, 0.96, z, 0.18, 0.08, 0.06, "#34d399");
+      b(0, 0.5, z - 0.05, 0.3, 0.14, 0.02, "#e0e7ff");
+      break;
+    case "stamp":
+      b(0, 0.4, z, 0.4, 0.12, 0.34, "#334155");
+      b(0, 0.52, z, 0.14, 0.32, 0.14, "#dc2626");
+      b(0, 0.84, z, 0.26, 0.12, 0.26, "#dc2626");
+      break;
+    case "envelope":
+      b(0, 0.42, z, 0.52, 0.36, 0.04, "#ffffff");
+      b(-0.12, 0.64, z - 0.03, 0.3, 0.04, 0.02, "#ec4899").rotation.z = -0.55;
+      b(0.12, 0.64, z - 0.03, 0.3, 0.04, 0.02, "#ec4899").rotation.z = 0.55;
+      break;
+    case "heart":
+      b(0, 0.46, z, 0.5, 0.36, 0.06, "#f9a8d4");
+      b(-0.14, 0.38, z, 0.1, 0.1, 0.06, "#f9a8d4");
+      for (const x of [-0.12, 0, 0.12]) b(x, 0.6, z - 0.04, 0.06, 0.06, 0.02, "#be185d");
       break;
     case "clock":
       disc(0.66, 0.5, "#f8fafc");
@@ -197,30 +236,6 @@ function addProp(kit: Kit, node: TransformNode, prop: RoleProp): void {
       disc(0.66, 0.48, "#16a34a");
       b(-0.07, 0.63, z - 0.05, 0.12, 0.05, 0.02, "#ffffff").rotation.z = -0.8;
       b(0.05, 0.67, z - 0.05, 0.2, 0.05, 0.02, "#ffffff").rotation.z = 0.9;
-      break;
-    case "calculator":
-      b(0, 0.34, z, 0.42, 0.58, 0.08, "#334155");
-      b(0, 0.76, z - 0.05, 0.32, 0.1, 0.02, "#86efac", true);
-      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) b(-0.12 + i * 0.12, 0.42 + j * 0.1, z - 0.05, 0.08, 0.06, 0.02, "#e2e8f0");
-      break;
-    case "lock": {
-      b(0, 0.4, z, 0.38, 0.32, 0.16, "#f59e0b");
-      const shackle = MeshBuilder.CreateTorus("v2_propShackle", { diameter: 0.26, thickness: 0.05, tessellation: 16 }, kit.scene);
-      shackle.rotation.x = Math.PI / 2;
-      shackle.position.set(0, 0.74, z);
-      kit.finish(shackle, node, kit.mat("#94a3b8", { specular: 0.5 }));
-      b(0, 0.5, z - 0.09, 0.06, 0.1, 0.02, "#1f2937");
-      break;
-    }
-    case "envelope":
-      b(0, 0.42, z, 0.52, 0.36, 0.04, "#ffffff");
-      b(-0.12, 0.64, z - 0.03, 0.3, 0.04, 0.02, "#ec4899").rotation.z = -0.55;
-      b(0.12, 0.64, z - 0.03, 0.3, 0.04, 0.02, "#ec4899").rotation.z = 0.55;
-      break;
-    case "heart":
-      b(0, 0.46, z, 0.5, 0.36, 0.06, "#f9a8d4");
-      b(-0.14, 0.38, z, 0.1, 0.1, 0.06, "#f9a8d4");
-      for (const x of [-0.12, 0, 0.12]) b(x, 0.6, z - 0.04, 0.06, 0.06, 0.02, "#be185d");
       break;
     case "headset":
       for (const x of [-0.37, 0.37]) b(x, 1.32, 0, 0.12, 0.26, 0.28, "#ec4899");
@@ -280,18 +295,20 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   const batch = new Batch(root, "agents");
   kit.useBatch(batch);
   const y = FLOOR_Y.agents;
+  const h = STOREY.agents;
   const info = levelInfo("agents");
   const r = rng(29);
   const pick = <T>(list: readonly T[]): T => list[Math.floor(r() * list.length)];
   const between = (a: number, b: number): number => a + (b - a) * r();
+  const hm = heritageMats(kit);
 
-  // Glowing grid floor, one cell every two units.
-  const gridTex = kit.canvas("v2_agentGrid", 128, 128, (ctx, w, h) => {
+  // Glowing grid floor, one cell every two units: the new floor laid in the old banking chamber.
+  const gridTex = kit.canvas("v2_agentGrid", 128, 128, (ctx, w, hh) => {
     ctx.fillStyle = "#13233f";
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(0, 0, w, hh);
     ctx.strokeStyle = "rgba(110,193,255,0.55)";
     ctx.lineWidth = 3;
-    ctx.strokeRect(0, 0, w, h);
+    ctx.strokeRect(0, 0, w, hh);
   });
   gridTex.wrapU = Texture.WRAP_ADDRESSMODE;
   gridTex.wrapV = Texture.WRAP_ADDRESSMODE;
@@ -303,56 +320,70 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     root,
     level: info,
     floorY: y,
-    slab: SLABS.agents,
-    walls: WALLS.agents,
+    storey: "ground",
     floor: gridMat,
-    back: kit.mat("#1b2740"),
+    inner: hm.render,
+    windows: { left: [-10.6, -6.2], right: SIDE_BAYS },
+    cove: true,
   });
 
-  /* ---------------- The zones ---------------- */
-  const walls = WALLS.agents;
-  const z0 = walls.z0 + 0.4;
-  const z1 = walls.z1 - 0.4;
-  const zoneRects: Array<{ side: SideId; x0: number; x1: number; z0: number; z1: number }> = [
-    { side: "wealth", x0: ZONES.wealth.x0, x1: ZONES.wealth.x1, z0, z1: SPLIT_Z },
-    { side: "shared", x0: ZONES.wealth.x0, x1: ZONES.wealth.x1, z0: SPLIT_Z, z1 },
-    { side: "shared", x0: ZONES.shared.x0, x1: ZONES.shared.x1, z0, z1 },
-    { side: "super", x0: ZONES.super.x0, x1: ZONES.super.x1, z0, z1 },
-  ];
-  for (const z of zoneRects) {
-    kit.block(root, (z.x0 + z.x1) / 2, y + 0.004, (z.z0 + z.z1) / 2, z.x1 - z.x0 - 0.3, 0.012, z.z1 - z.z0, kit.mat(SIDES[z.side].color, { unlit: true, alpha: 0.28 }));
+  /* ---------------- The banking chamber: columns and pilasters ---------------- */
+  const neon = kit.mat("#5ce1ff", { unlit: true });
+  const column = (x: number, z: number): void => {
+    kit.block(root, x, y, z, 1.0, 0.5, 1.0, hm.stone);
+    kit.cyl(root, x, y + 0.5, z, 0.66, h - 1.2, hm.render, { tess: 12 });
+    kit.cyl(root, x, y + 2.2, z, 0.72, 0.1, neon, { tess: 12 });
+    kit.block(root, x, y + h - 0.7, z, 0.95, 0.3, 0.95, hm.stone);
+    kit.block(root, x, y + h - 0.4, z, 1.15, 0.4, 1.15, hm.render);
+  };
+  for (const x of COLUMNS_X) column(x, COLUMN_Z);
+  // Engaged pilasters on the back wall, at the edges of the bays.
+  for (const x of [-11.25, -3.75, 3.75, 11.25]) {
+    kit.block(root, x, y, INSIDE.z1 - 0.15, 0.8, h, 0.3, hm.render);
+    kit.block(root, x, y + h - 0.6, INSIDE.z1 - 0.25, 1.1, 0.5, 0.5, hm.stone);
+    kit.block(root, x, y + 2.2, INSIDE.z1 - 0.31, 0.82, 0.08, 0.04, neon);
   }
-  for (const side of ["wealth", "shared", "super"] as const) {
+
+  /* ---------------- The zones ---------------- */
+  const z0 = HOUSE.z0 + 0.1;
+  const z1 = INSIDE.z1 - 0.3;
+  for (const side of ["claims", "shared", "protection"] as const) {
     const zone = ZONES[side];
     const cx = (zone.x0 + zone.x1) / 2;
     const w = zone.x1 - zone.x0 - 0.3;
-    kit.block(root, cx, y + 0.01, z0 + 0.1, w, 0.04, 0.16, kit.mat(SIDES[side].color, { unlit: true }));
-    const decal = kit.label(root, {
+    kit.block(root, cx, y + 0.004, (z0 + z1) / 2, w, 0.012, z1 - z0, kit.mat(SIDES[side].color, { unlit: true, alpha: 0.26 }));
+    kit.block(root, cx, y + 0.01, z0 + 0.12, w, 0.04, 0.16, kit.mat(SIDES[side].color, { unlit: true }));
+    // A sign for each zone along the top of the colonnade, like the old bank's counter signs, so
+    // it reads from the street and is never hidden behind the agents' cards.
+    const banner = kit.label(root, {
       lines: [{ text: ZONE_TEXT[side].text, size: 60, weight: 800, color: ZONE_TEXT[side].color }],
-      width: Math.min(w - 1, 10.5),
-      px: 1024,
-      pxHeight: 100,
+      width: 8.6,
+      px: 1100,
+      pxHeight: 110,
+      bg: "rgba(10,20,40,0.95)",
+      accent: SIDES[side].color,
+      bar: "left",
     });
-    decal.rotation.x = Math.PI / 2;
-    decal.position.set(cx, y + 0.07, -10.5);
+    banner.position.set(cx, y + h - 0.75, HOUSE.z0 - 0.08);
   }
   // Dashed lines where the zones meet.
   const dash = kit.mat("#c7d2fe", { unlit: true });
-  for (let z = z0 + 0.6; z < SPLIT_Z - 0.4; z += 1.5) kit.block(root, ZONES.wealth.x1, y + 0.01, z + 0.4, 0.12, 0.04, 0.8, dash);
-  for (let x = ZONES.wealth.x0 + 0.6; x < ZONES.wealth.x1 - 0.4; x += 1.5) kit.block(root, x + 0.4, y + 0.01, SPLIT_Z, 0.8, 0.04, 0.12, dash);
-  for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.5) kit.block(root, ZONES.super.x0, y + 0.01, z + 0.4, 0.12, 0.04, 0.8, dash);
+  for (const x of [ZONES.claims.x1, ZONES.protection.x0]) {
+    for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.5) kit.block(root, x, y + 0.01, z + 0.4, 0.12, 0.04, 0.8, dash);
+  }
 
-  // The floor's sign, on the back wall above the tool bench.
+  // The floor's sign, on the laneway wall.
   const back = kit.label(root, {
     lines: [
       { text: "ONE GROUP OF AGENTS", size: 60, weight: 800, color: "#5ce1ff" },
       { text: "Each agent with its specialised roles", size: 30, weight: 500, color: "#c6d2e6" },
     ],
-    width: 6.4,
+    width: 6.0,
     px: 768,
     bg: "rgba(10,20,40,0.94)",
   });
-  back.position.set(-13.4, y + 3.3, walls.z1 - 0.32);
+  back.rotation.y = -Math.PI / 2;
+  back.position.set(INSIDE.x0 + 0.08, y + 3.9, 0.9);
 
   const traceMat = kit.mat("#2e7fbf", { emissive: 0.6 });
   const darkSteel = kit.mat("#1e2433", { specular: 0.3 });
@@ -363,23 +394,22 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
 
   /* ---------------- Places the roles visit ---------------- */
   const hubSpots: Spot[] = [
-    { at: [-2.1, -4.9], face: Math.atan2(2.1, -0.9), via: [[-2.1, CZ]], key: "hub:w" },
-    { at: [2.1, -4.9], face: Math.atan2(-2.1, -0.9), via: [[2.1, CZ]], key: "hub:e" },
-    { at: [0, -3.6], face: Math.PI, via: [[0, CZ]], key: "hub:n" },
+    { at: [HUB.x - 3.2, HUB.z + 0.2], face: Math.PI / 2, via: [[-3.75, CZ], [-3.75, HUB.z + 0.2]], key: "hub:w" },
+    { at: [HUB.x + 3.2, HUB.z + 0.2], face: -Math.PI / 2, via: [[3.75, CZ], [3.75, HUB.z + 0.2]], key: "hub:e" },
   ];
   const uplinkSpots: Spot[] = [
-    { at: [-1.5, -2.3], face: Math.PI / 2, via: [[-1.5, CZ]], key: "uplink:w" },
-    { at: [1.5, -2.3], face: -Math.PI / 2, via: [[1.5, CZ]], key: "uplink:e" },
+    { at: [UPLINK.x - 1.5, UPLINK.z - 0.3], face: Math.PI / 2, via: [[UPLINK.x - 1.5, CZ]], key: "uplink:w" },
+    { at: [UPLINK.x + 1.5, UPLINK.z - 0.3], face: -Math.PI / 2, via: [[UPLINK.x + 1.5, CZ]], key: "uplink:e" },
   ];
   const benchSpots: Spot[] = BENCH_XS.map((x, i) => ({
-    at: [x, 5.75] as Pt,
+    at: [x, BENCH_Z - 1.15] as Pt,
     face: 0,
-    via: [[ZONES.wealth.x1, CZ], [ZONES.wealth.x1, 4.7], [x, 4.7]] as Pt[],
+    via: [[11.25, CZ], [11.25, BENCH_Z - 2.2], [x, BENCH_Z - 2.2]] as Pt[],
     key: `bench:${i}`,
   }));
   const lookoutSpots: Spot[] = [
-    { at: [-11.25, -11.5], face: Math.PI, via: [[-11.25, CZ]], key: "look:w" },
-    { at: [11.25, -11.5], face: Math.PI, via: [[11.25, CZ]], key: "look:e" },
+    { at: [-11.25, HOUSE.z0 + 1.1], face: Math.PI, via: [[-11.25, CZ]], key: "look:w" },
+    { at: [19.0, HOUSE.z0 + 1.1], face: Math.PI, via: [[19.0, CZ]], key: "look:e" },
   ];
   const handoffSpot = (staffId: string): Spot => {
     const st = STATIONS[staffId];
@@ -387,13 +417,15 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
       ? { at: [st.x + 1.2, -3.0], face: Math.PI, via: [[st.x + 1.2, CZ]], key: `handoff:${staffId}` }
       : { at: [st.x - 1.2, 0.9], face: 0, via: [[st.x - 1.2, CZ]], key: `handoff:${staffId}` };
   };
+  // Out through the colonnade and under the verandah, to the end of the front desk.
   const deskSpot: Spot = {
-    at: [DOCK_DESK.x + 2.3, DOCK_DESK.z - 0.2],
-    face: -Math.PI / 2,
+    at: [FRONT_DESK.x - 2.0, FRONT_DESK.z - 0.1],
+    face: Math.PI / 2,
     via: [
-      [ZONES.super.x0, CZ],
-      [ZONES.super.x0, -11.6],
-      [DOCK_DESK.x + 2.3, -13.4],
+      [3.75, CZ],
+      [3.75, HOUSE.z0 + 0.4],
+      [6.4, HOUSE.z0 + 0.4],
+      [6.4, FRONT_DESK.z - 0.1],
     ],
   };
   const freeOf = (spots: Spot[]): Spot | null => {
@@ -439,7 +471,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
         { text: p.agent_name, size: 50, weight: 800, color: p.color },
         { text: sideBadge(agent.side).toUpperCase(), size: 30, weight: 800, color: ZONE_TEXT[agent.side].color },
         { text: agent.foundryId, size: 34, weight: 600, color: "#9fd4ff" },
-        { text: `+ ${assistants.join(" · ")}`, size: 30, weight: 600, color: "#e2e8f0" },
+        { text: `+ ${assistants.join(" · ")}`, size: 28, weight: 600, color: "#e2e8f0" },
         { text: `works for ${p.name}`, size: 30, weight: 500, color: "#c6d2e6" },
       ],
       width: 5.2,
@@ -478,8 +510,8 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
       const outing = (spot: Spot | null, task: string, where: string, dwell: [number, number]): Outing | null =>
         spot ? { spot, task, where, dwell: between(...dwell) } : null;
       const choices: Array<[number, () => Outing | null]> = [
-        [voice ? 1 : 3, () => outing(freeOf(hubSpots), pick(["Updating the Member Case", "Reading the Member Case"]), "the Member Case", [4, 7])],
-        [2, () => outing(freeOf(uplinkSpots), pick(["Grounding in Foundry IQ", "Checking the PDS", "Looking up a rule"]), "the Foundry uplink", [3, 5])],
+        [voice ? 1 : 3, () => outing(freeOf(hubSpots), pick(["Updating the Client Case", "Reading the Client Case"]), "the Client Case", [4, 7])],
+        [2, () => outing(freeOf(uplinkSpots), pick(["Grounding in Foundry IQ", "Checking a PDS extract", "Looking up a rule"]), "the Foundry uplink", [3, 5])],
         [
           voice ? 0 : 2,
           () => {
@@ -489,8 +521,8 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
           },
         ],
         [tools ? 2 : 0, () => (tools ? outing(book.free(benchSpots[tools.bench].key) ? benchSpots[tools.bench] : null, pick(tools.tasks), "the MCP tool bench", [4, 7]) : null)],
-        // The lakeside is out on the deck, so only while this floor is in place.
-        [0.4, () => (Math.abs(root.position.y) > 0.5 ? null : outing(freeOf(lookoutSpots), "Watching the boats", "the lakeside", [4, 6]))],
+        // The front of the chamber looks onto the street, so only while this floor is in place.
+        [0.4, () => (Math.abs(root.position.y) > 0.5 ? null : outing(freeOf(lookoutSpots), "Watching the trams go by", "the colonnade", [4, 6]))],
       ];
       const total = choices.reduce((s, [w]) => s + w, 0);
       robot.wanderer = new Wanderer({
@@ -523,20 +555,21 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     });
   }
 
-  // The bus that links every bay to the Member Case.
+  // The bus that links every bay to the Client Case, and the trunk out to the teller counter.
   const xs = Object.values(STATIONS).map((s) => s.x);
   const busX0 = Math.min(...xs);
   const busX1 = Math.max(...xs);
   kit.block(root, (busX0 + busX1) / 2, y + 0.01, BUS_Z, busX1 - busX0 + 0.14, 0.04, 0.14, traceMat);
-  kit.block(root, HUB.x, y + 0.01, (BUS_Z + HUB.z + HUB_R) / 2, 0.14, 0.04, BUS_Z - HUB.z - HUB_R, traceMat);
+  const hubBack = HUB.z + 0.7;
+  kit.block(root, HUB.x, y + 0.01, (BUS_Z + hubBack) / 2, 0.14, 0.04, BUS_Z - hubBack, traceMat);
 
   /* ---------------- The Foundry uplink ---------------- */
-  kit.cyl(root, UPLINK.x, y, UPLINK.z, 2.5, 0.04, kit.mat("#141a30"), { tess: 32 });
-  kit.cyl(root, UPLINK.x, y + 0.01, UPLINK.z, 1.5, 0.05, kit.mat("#4c3a99", { unlit: true }), { tess: 24 });
-  const uplinkRing = MeshBuilder.CreateTorus("v2_uplinkRing", { diameter: 2.3, thickness: 0.1, tessellation: 40 }, scene);
+  kit.cyl(root, UPLINK.x, y, UPLINK.z, 2.3, 0.04, kit.mat("#141a30"), { tess: 32 });
+  kit.cyl(root, UPLINK.x, y + 0.01, UPLINK.z, 1.4, 0.05, kit.mat("#4c3a99", { unlit: true }), { tess: 24 });
+  const uplinkRing = MeshBuilder.CreateTorus("v2_uplinkRing", { diameter: 2.1, thickness: 0.1, tessellation: 40 }, scene);
   uplinkRing.position.set(UPLINK.x, y + 0.06, UPLINK.z);
   kit.finish(uplinkRing, root, kit.mat("#a78bfa", { unlit: true }));
-  const uplinkBeam = kit.cyl(root, UPLINK.x, y + 0.05, UPLINK.z, 1.2, 3.0, kit.mat("#c4b5fd", { unlit: true, alpha: 0.22 }), {
+  const uplinkBeam = kit.cyl(root, UPLINK.x, y + 0.05, UPLINK.z, 1.1, 3.0, kit.mat("#c4b5fd", { unlit: true, alpha: 0.22 }), {
     top: 0.5,
     tess: 20,
     dynamic: true,
@@ -549,8 +582,8 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     pxHeight: 96,
   });
   uplinkText.rotation.x = Math.PI / 2;
-  uplinkText.position.set(UPLINK.x, y + 0.07, UPLINK.z - 1.55);
-  kit.hitbox(root, UPLINK.x, y, UPLINK.z, 2.4, 0.4, 2.4, { type: "infra", id: "foundry" });
+  uplinkText.position.set(UPLINK.x, y + 0.07, UPLINK.z + 1.5);
+  kit.hitbox(root, UPLINK.x, y, UPLINK.z, 2.2, 0.4, 2.2, { type: "infra", id: "foundry" });
 
   /* ---------------- The MCP tool bench ---------------- */
   BENCH_XS.forEach((x, i) => {
@@ -565,8 +598,34 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     pxHeight: 96,
   });
   benchText.rotation.x = Math.PI / 2;
-  benchText.position.set((BENCH_XS[0] + BENCH_XS[3]) / 2, y + 0.07, 3.6);
+  benchText.position.set((BENCH_XS[0] + BENCH_XS[3]) / 2, y + 0.07, SPARE_CELLS.right.z - 0.4);
   kit.hitbox(root, (BENCH_XS[0] + BENCH_XS[3]) / 2, y, BENCH_Z, 5.2, 1.7, 1.0, { type: "infra", id: "mcp" });
+
+  /* ---------------- The old safe, from 1889 ---------------- */
+  {
+    const s = SPARE_CELLS.left;
+    const sx = s.x;
+    const sz = s.z + 2.0;
+    const safeGreen = kit.mat("#1f4a3a", { specular: 0.4 });
+    kit.block(root, sx, y, sz, 3.0, 0.3, 2.0, hm.iron);
+    kit.block(root, sx, y + 0.3, sz, 2.8, 3.2, 1.8, safeGreen);
+    kit.block(root, sx, y + 0.5, sz - 0.92, 2.4, 2.8, 0.06, hm.gold);
+    kit.block(root, sx, y + 0.62, sz - 0.96, 2.2, 2.56, 0.04, safeGreen);
+    const dial = kit.cyl(root, sx - 0.4, y + 2.0, sz - 1.02, 0.7, 0.1, hm.gold, { tess: 18 });
+    dial.rotation.x = Math.PI / 2;
+    kit.block(root, sx + 0.5, y + 1.6, sz - 1.04, 0.5, 0.12, 0.12, hm.gold);
+    kit.block(root, sx + 0.5, y + 1.3, sz - 1.04, 0.12, 0.6, 0.12, hm.gold);
+    const plate = kit.label(root, {
+      lines: [
+        { text: "THE OLD SAFE", size: 40, weight: 800, color: "#7a5a12", serif: true },
+        { text: "Caldova House · 1889", size: 28, weight: 600, color: "#5b6476" },
+      ],
+      width: 2.0,
+      px: 420,
+      bg: "rgba(255,251,242,0.97)",
+    });
+    plate.position.set(sx, y + 3.95, sz - 0.95);
+  }
 
   /* ---------------- Cara's voice agent and Theo's group chat ---------------- */
   const cara = STATIONS["comms-1"];
@@ -589,9 +648,9 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   const theo = STATIONS["lead-1"];
   const chatRing = MeshBuilder.CreateTorus("v2_groupChat", { diameter: 5.4, thickness: 0.08, tessellation: 40 }, scene);
   chatRing.position.set(theo.x, y + 3.2, theo.z + 0.2);
-  kit.finish(chatRing, root, kit.mat("#14b8a6", { unlit: true }), true);
+  kit.finish(chatRing, root, kit.mat(SIDES.shared.color, { unlit: true }), true);
   const chatTag = kit.label(root, {
-    lines: [{ text: "group chat", size: 40, weight: 700, color: "#99f6e4" }],
+    lines: [{ text: "group chat", size: 40, weight: 700, color: "#c7d2fe" }],
     width: 1.9,
     px: 320,
     pxHeight: 70,
@@ -600,26 +659,36 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   chatTag.billboardMode = Mesh.BILLBOARDMODE_Y;
   chatTag.position.set(theo.x - 2.5, y + 3.4, theo.z + 0.2);
 
-  /* ---------------- The Member Case hub ---------------- */
-  kit.cyl(root, HUB.x, y, HUB.z, HUB_R * 2, 0.7, darkSteel, { tess: 24 });
-  const hubRingFloor = MeshBuilder.CreateTorus("v2_hubFloorRing", { diameter: 2.4, thickness: 0.1, tessellation: 32 }, scene);
-  hubRingFloor.position.set(HUB.x, y + 0.72, HUB.z);
+  /* ---------------- The Client Case hub: the old teller counter ---------------- */
+  const walnut = kit.mat("#ffffff", { texture: "walnut" });
+  const marble = kit.mat("#f1eee6", { specular: 0.3 });
+  kit.block(root, HUB.x, y, HUB.z, 4.8, 1.15, 1.1, walnut);
+  kit.block(root, HUB.x, y + 1.15, HUB.z, 5.0, 0.1, 1.3, marble);
+  kit.block(root, HUB.x, y + 0.9, HUB.z - 0.56, 4.4, 0.06, 0.02, kit.mat("#c9a14a", { unlit: true }));
+  // The old brass teller grilles, now framing the case.
+  for (const dx of [-1.6, 1.6]) {
+    kit.block(root, HUB.x + dx, y + 1.25, HUB.z + 0.2, 1.2, 0.08, 0.08, hm.gold);
+    for (let i = 0; i < 5; i++) kit.block(root, HUB.x + dx - 0.48 + i * 0.24, y + 1.25, HUB.z + 0.2, 0.05, 1.0, 0.05, hm.gold);
+    kit.block(root, HUB.x + dx, y + 2.25, HUB.z + 0.2, 1.2, 0.1, 0.1, hm.gold);
+  }
+  const hubRingFloor = MeshBuilder.CreateTorus("v2_hubFloorRing", { diameter: 2.0, thickness: 0.08, tessellation: 32 }, scene);
+  hubRingFloor.position.set(HUB.x, y + 1.25, HUB.z);
   kit.finish(hubRingFloor, root, kit.mat("#ffc35a", { unlit: true }));
-  const hub = new TransformNode("v2_memberCase", scene);
+  const hub = new TransformNode("v2_clientCase", scene);
   hub.parent = root;
-  hub.position.set(HUB.x, y + 1.9, HUB.z);
-  const caseCube = kit.block(hub, 0, -0.55, 0, 1.1, 1.1, 1.1, kit.mat("#ffc35a", { emissive: 0.55 }), {
+  hub.position.set(HUB.x, y + 2.6, HUB.z);
+  const caseCube = kit.block(hub, 0, -0.5, 0, 1.0, 1.0, 1.0, kit.mat("#ffc35a", { emissive: 0.55 }), {
     dynamic: true,
   });
-  kit.block(caseCube, 0.22, 0.55, 0, 0.5, 0.14, 0.9, kit.mat("#fff1c9", { emissive: 0.6 }), { dynamic: true });
-  const hubRings = [1.9, 2.5].map((d, i) => {
+  kit.block(caseCube, 0.2, 0.5, 0, 0.45, 0.14, 0.8, kit.mat("#fff1c9", { emissive: 0.6 }), { dynamic: true });
+  const hubRings = [1.8, 2.4].map((d, i) => {
     const ring = MeshBuilder.CreateTorus(`v2_hubRing${i}`, { diameter: d, thickness: 0.07, tessellation: 40 }, scene);
     kit.finish(ring, hub, kit.mat("#5ce1ff", { unlit: true }), true);
     return ring;
   });
   const hubTag = kit.label(root, {
     lines: [
-      { text: "MEMBER CASE", size: 52, weight: 800, color: "#ffd98a" },
+      { text: "CLIENT CASE", size: 52, weight: 800, color: "#ffd98a" },
       { text: "the one record every agent shares", size: 30, weight: 500, color: "#c6d2e6" },
     ],
     width: 4.2,
@@ -627,7 +696,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     bg: "rgba(10,20,40,0.94)",
   });
   hubTag.billboardMode = Mesh.BILLBOARDMODE_Y;
-  hubTag.position.set(HUB.x, y + 3.75, HUB.z);
+  hubTag.position.set(HUB.x, y + 4.35, HUB.z);
   anchors.set("hub", { node: hub, group: "agents", dy: 0 });
 
   /* ---------------- Data packets ---------------- */
@@ -639,7 +708,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     const edge = st.z < 0 ? cz + POD_D / 2 : cz - POD_D / 2;
     const py = y + 0.2;
     const path = dedupe([
-      new Vector3(HUB.x, py, HUB.z + HUB_R),
+      new Vector3(HUB.x, py, hubBack),
       new Vector3(HUB.x, py, BUS_Z),
       new Vector3(st.x, py, BUS_Z),
       new Vector3(st.x, py, edge),
@@ -675,7 +744,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   const tmp = new Vector3();
   const deskRobot = robots.find((rb) => rb.role.id === DESK_ROLE);
   const byRole = new Map(robots.map((rb) => [rb.role.id, rb]));
-  // The front desk wants the Form Extraction agent; `deskPinned` says whether it has been sent.
+  // The front desk wants the Fact Find Extraction agent; `deskPinned` says whether it has been sent.
   let deskCalled = false;
   let deskPinned = false;
   const sendToDesk = (): void => {
@@ -704,24 +773,26 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
       if (introT > 3) introT = -1;
       let uplinkBusy = false;
       for (const rb of robots) {
-        // A level moved out of the way takes its robots with it, so call in any that are out on the deck.
-        if (lifted && rb.node.position.z < walls.z0 - 0.2) {
+        // A level moved out of the way takes its robots with it, so call in any that are out front.
+        if (lifted && rb.node.position.z < HOUSE.z0 - 0.2) {
           rb.wanderer.snapHome();
           if (rb === deskRobot) deskPinned = false;
         }
         rb.wanderer.update(dt);
         const working = selected.has(rb.role.staffId) && rb.wanderer.isHome;
+        // Out under the verandah, the robot stands on the footpath, a step down from the floor.
+        const ground = rb.node.position.z < HOUSE.z0 ? 0.15 : y;
         if (rb.walking) {
-          rb.node.position.y = y + 0.14 + Math.sin(t * 11 + rb.phase) * 0.04;
+          rb.node.position.y = ground + 0.14 + Math.sin(t * 11 + rb.phase) * 0.04;
           rb.node.rotation.x = -0.1;
         } else {
           const amp = working ? 0.3 : 0.05;
-          rb.node.position.y = y + Math.abs(Math.sin(t * (working ? 5 : 1.8) + rb.phase)) * amp;
+          rb.node.position.y = ground + Math.abs(Math.sin(t * (working ? 5 : 1.8) + rb.phase)) * amp;
           rb.node.rotation.x = 0;
         }
         rb.tip.scaling.setAll(1 + 0.35 * Math.sin(t * 5 + rb.phase));
         if (rb.ring.isEnabled()) rb.ring.scaling.setAll(1 + Math.sin(t * 5) * 0.06);
-        if (!rb.walking && Math.abs(rb.node.position.z - UPLINK.z) < 0.4 && Math.abs(Math.abs(rb.node.position.x) - 1.5) < 0.2) {
+        if (!rb.walking && Math.abs(rb.node.position.z - (UPLINK.z - 0.3)) < 0.4 && Math.abs(Math.abs(rb.node.position.x - UPLINK.x) - 1.5) < 0.2) {
           uplinkBusy = true;
         }
       }
@@ -745,11 +816,11 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
       chatRing.rotation.y = t * 0.6;
       chatRing.position.y = y + 3.2 + Math.sin(t * 1.5) * 0.1;
     },
-    setHighlights(h: Highlights): void {
-      selected = h.agents;
+    setHighlights(hl: Highlights): void {
+      selected = hl.agents;
       for (const pod of pods) pod.ring.setEnabled(lit(pod.id));
       for (const rb of robots) {
-        rb.ring.setEnabled(h.roles.has(rb.role.id));
+        rb.ring.setEnabled(hl.roles.has(rb.role.id));
         // A bay that is selected, or working on the finale's request, calls its team home to work.
         rb.wanderer.hold(selected.has(rb.role.staffId));
       }

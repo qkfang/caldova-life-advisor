@@ -1,0 +1,30 @@
+{
+  "id": "case-req-20261103-lif001-insurer-quotes",
+  "title": "Case REQ-20261103-LIF001 — insurer quotes",
+  "category": "Case File",
+  "requestType": "New protection advice",
+  "caseNumber": "REQ-20261103-LIF001",
+  "clientNumber": "CL-104582",
+  "content": "Insurer comparison prepared by the Insurance Research Agent for Ivy (Insurance Research) for Priya Natarajan (CL-104582), case REQ-20261103-LIF001, for the Statement of Advice. Insurers compared: the APL insurers that offer this package (see 'Caldova Life Advice — Approved product list and research method').\n\nCover quoted (Priya, 34, non-smoker, physiotherapist, standard rates): life $750,000 and any-occupation TPD $600,000 inside super, an own-occupation TPD extension outside super, trauma $150,000, and income protection of $6,125 a month with a 90-day waiting period and a benefit period to age 65.\n\nYear-1 stepped premiums for the full package:\n• Corella Life — $3,180 — recommended for Amelia's consideration: lowest cost, and own-occupation TPD for physiotherapists through the super-linked extension\n• Harbourline Life — $3,412 ($232 more)\n• Lyrebird Life — $3,690 ($510 more)\n\nCorella Life split (stepped, year 1):\nInside super, paid from Corella's super plan (funded by a rollover from Riverbend Super): life $468 + TPD (any occupation) $390 = $858 a year.\nOutside super, paid by Priya: own-occupation TPD extension $222 + trauma $640 + income protection $1,460 = $2,322 a year, or $193.50 a month — within her budget of $300 a month.\nTotal: $3,180.\n\nCorella Life level-premium option: $4,050 in year 1. Stepped premiums start lower and rise with age; level premiums start higher and rise more slowly. Moneysmart now calls them 'variable age-stepped' and 'variable' premiums; the Life Insurance Code of Practice still says 'stepped' and 'level'. The workbook shows both over time.\n\nDefinitions that matter for Priya (from the PDS extracts): Corella Life offers an own-occupation TPD extension outside super linked to the any-occupation TPD cover inside super, and reviews income protection exclusions after two symptom-free years ('Corella Life — Protection PDS extract'). Harbourline Life offers own-occupation TPD only on a policy held outside super ('Harbourline Life — Protection PDS extract'). Lyrebird Life's package was the most expensive ('Lyrebird Life — Protection PDS extract').\n\nIvy's rule of thumb: cheapest isn't best if the definition won't pay. The comparison workbook with a premium chart is on the case. Ivy's agent compares; Amelia decides what to recommend.",
+  "severity": "low",
+  "department": "Insurance Research",
+  "tags": [
+    "priya-natarajan",
+    "REQ-20261103-LIF001",
+    "CL-104582",
+    "insurer-quotes",
+    "premium-comparison",
+    "corella-life",
+    "harbourline-life",
+    "lyrebird-life",
+    "stepped-premium",
+    "level-premium",
+    "3180",
+    "3412",
+    "3690",
+    "4050",
+    "super-linked",
+    "own-occupation-tpd"
+  ],
+  "lastUpdated": "2026-11-05T00:00:00Z"
+}

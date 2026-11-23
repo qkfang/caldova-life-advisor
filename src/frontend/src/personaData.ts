@@ -1,12 +1,12 @@
 /**
  * Single source of truth for staff and client persona data.
  *
- * All persona-level facts (name, role/situation, personality, typical line,
- * scenario palette, request type & amount range) live here so that the
- * lakehouse's cast, its cards and the finale never disagree.
+ * All persona-level facts (name, role or situation, personality, typical
+ * line, palette, request type) live here so that Caldova House's cast, its
+ * cards and the finale never disagree.
  *
- * Mirrors the Caldova Wealth canon (team in docs/foundry_agents.md and
- * docs/characters.md) and matches the palette keys defined in
+ * Mirrors the Caldova Life Advice canon (AGENTS.md, docs/characters.md and
+ * docs/foundry_agents.md) and matches the palette keys defined in
  * `characterPalettes.ts`.
  */
 import type { PALETTES } from "./characterPalettes";
@@ -15,35 +15,32 @@ export type PaletteKey = keyof typeof PALETTES;
 
 export type StaffRole =
   | "Onboarding & Requests Officer"
-  | "Benefits & Eligibility Assessor"
-  | "Investment Analyst"
+  | "Paraplanner"
+  | "Insurance Research Analyst"
   | "Financial Crime Investigator"
-  | "Transfers & Rollovers Coordinator"
-  | "Payments Officer"
+  | "Underwriting Coordinator"
+  | "Benefit Claims Advocate"
   | "Client Communications Specialist"
-  | "Client Operations Team Leader";
+  | "Practice Team Leader";
 
 /**
- * The two product teams that make up Caldova Client Operations, plus the
- * leadership that runs both. Level 2 of the lakehouse is organised by these
- * teams: the Wealth Management wing on the left, the Superannuation wing on
- * the right, and Theo between them.
+ * The two small teams of Caldova Life Advice, one for each side of the
+ * practice, plus the leadership that runs both. Olivia is listed with the
+ * Protection Advice Team, but every request from both sides comes in through
+ * her, so she sits at the front door in the middle of Level 2.
  */
-export type StaffTeam =
-  | "Superannuation Team"
-  | "Wealth Management Team"
-  | "Client Operations Leadership";
+export type StaffTeam = "Protection Advice Team" | "Claims & Care Team" | "Practice Leadership";
 
 export interface StaffPersona {
-  /** Stable id used for click hitboxes and the lakehouse's anchors. */
+  /** Stable id used for click hitboxes and the house's anchors. */
   id: string;
   name: string;
   role: StaffRole;
-  /** Team the staff member belongs to (decides their side of the business and their wing on Level 2). */
+  /** Team the staff member belongs to. */
   team: StaffTeam;
-  /** Department name shown in the UI (e.g. "Benefits & Eligibility"). */
+  /** Department name shown in the UI (e.g. "Paraplanning"). */
   department: string;
-  /** Human-readable role/duties summary (one line). */
+  /** Human-readable role and duties summary (one line). */
   role_short: string;
   /** The role in one short sentence, as in docs/characters.md ("**Role:**"), for compact cards. */
   role_line: string;
@@ -55,12 +52,12 @@ export interface StaffPersona {
   responsibilities: string[];
   /** Their signature line, as in docs/characters.md. */
   typical_line: string;
-  /** Rotating status lines shown while the staff member is idle at their desk. */
+  /** Rotating status lines shown while the staff member is at their desk. */
   ambient: string[];
   /**
-   * Id of the matching agent walkthrough page in the companion `src/backend`
-   * Blazor site. Mirrors an Id in `src/backend/Models/AgentCatalog.cs` and is
-   * used to link to `/agents/{app_agent_id}`.
+   * Id of the matching agent page in the companion `src/backend` Blazor site.
+   * Mirrors an Id in `src/backend/Models/AgentCatalog.cs` and is used to link
+   * to `/agents/{app_agent_id}`.
    */
   app_agent_id: string;
   /** Name of the AI agent working behind this staff member (as in the backend catalogue). */
@@ -70,15 +67,10 @@ export interface StaffPersona {
 }
 
 // Order matches docs/scenario-N-*.md:
-//   1 onboarding, 2 protection, 3 retirement, 4 hardship, 5 bereavement.
-export type ScenarioId =
-  | "onboarding"
-  | "protection"
-  | "retirement"
-  | "hardship"
-  | "bereavement";
+//   1 family, 2 fraud, 3 business, 4 income, 5 bereavement.
+export type ScenarioId = "family" | "fraud" | "business" | "income" | "bereavement";
 
-export interface CustomerPersona {
+export interface ClientPersona {
   id: ScenarioId;
   name: string;
   /** Short summary for cards. */
@@ -90,14 +82,14 @@ export interface CustomerPersona {
   personality: string;
   typical_line: string;
   palette: PaletteKey;
-  /** Headline request type (matches the backend RequestType values). */
+  /** Headline request type (matches the backend RequestTypes values). */
   request_type: string;
-  /** Scenario colour, used for the member's chip in the finale. */
+  /** Scenario colour, used for the client's chip in the finale. */
   color: string;
 }
 
 /* ------------------------------------------------------------------------ */
-/* Staff cast — Caldova Client Operations                                   */
+/* Staff cast — the Caldova Life Advice practice team                        */
 /* ------------------------------------------------------------------------ */
 
 export const STAFF_PERSONAS: StaffPersona[] = [
@@ -105,370 +97,352 @@ export const STAFF_PERSONAS: StaffPersona[] = [
     id: "onboarding-1",
     name: "Olivia",
     role: "Onboarding & Requests Officer",
-    team: "Superannuation Team",
+    team: "Protection Advice Team",
     department: "Onboarding & Requests",
     role_short:
-      "The front door of the Superannuation Team — every new account, pension, withdrawal, rollover and death notification starts with Olivia, whether it comes from a member or an adviser.",
-    role_line: "The front door for every application and member request.",
+      "The front door of the practice: every enquiry, referral, review and claim notification starts with Olivia, from both sides of Caldova.",
+    role_line: "The front door for every request, from both sides of the practice.",
     palette: "onboardingOfficer",
     color: "#0ea5e9",
     personality: "Calm, meticulous and welcoming.",
     responsibilities: [
-      "Reads adviser submissions, application forms and member requests",
-      "Extracts every field and runs the NIGO (not in good order) checklist",
-      "Checks ID verification, TFN, signatures, adviser fee consent, nominations and investment choices",
-      "Opens the Member Case and sets its priority",
-      "Routes the case to the Superannuation or Wealth Management specialists",
+      "Reads referral emails, enquiries, fact-find questionnaires and claim notifications",
+      "Extracts the fact find into the Client Case",
+      "Runs the in-good-order checklist: FSG, privacy and health-information consent, ID and authorities",
+      "Opens the Client Case, sets its priority and flags vulnerable clients",
+      "Routes the case to Paraplanning, Claims or Financial Crime",
     ],
-    typical_line:
-      "I’ll get this set up properly first time — let me check nothing’s missing.",
+    typical_line: "Let’s get your details right the first time.",
     ambient: [
-      "Awaiting next request",
-      "Checking NIGO items",
-      "Chasing a missing TFN declaration",
-      "Logging adviser application packs",
-      "Opening new Member Cases",
+      "Waiting for the next request",
+      "Checking a privacy consent",
+      "Logging a new referral",
+      "Opening a Client Case",
+      "Reading a fact-find questionnaire",
     ],
     app_agent_id: "onboarding",
     agent_name: "Onboarding Agent",
-    agent_tagline: "Every application and request, set up right first time.",
+    agent_tagline: "Every request set up right the first time, from the fact find to the Client Case.",
   },
   {
-    id: "benefits-1",
-    name: "Ben",
-    role: "Benefits & Eligibility Assessor",
-    team: "Superannuation Team",
-    department: "Benefits & Eligibility",
+    id: "paraplanning-1",
+    name: "Penny",
+    role: "Paraplanner",
+    team: "Protection Advice Team",
+    department: "Paraplanning",
     role_short:
-      "The Superannuation Team’s technical specialist — applies the trust deed, PDS and super law to every request, and recommends approve, partial or decline.",
-    role_line: "Applies the trust deed, PDS and super law to each request.",
-    palette: "benefitsAssessor",
-    color: "#6366f1",
-    personality: "Analytical, fair and precise.",
+      "Works out how much cover each client needs and how to hold it, and drafts the Statement of Advice for Amelia to review and sign.",
+    role_line: "Works out the cover each client needs and drafts the Statement of Advice.",
+    palette: "paraplanner",
+    color: "#a855f7",
+    personality: "Precise, thoughtful and explains numbers simply.",
     responsibilities: [
-      "Checks conditions of release and preservation",
-      "Applies financial-hardship criteria and payment limits",
-      "Tests transfer balance cap space and minimum pension drawdowns",
-      "Confirms BDBN validity and SIS dependants",
-      "Verifies adviser fee consent (s99FA) and TMD fit — always citing the clause",
+      "Runs the needs analysis for life, TPD, trauma and income protection",
+      "Works out how to hold the cover, inside or outside super",
+      "Drafts the Statement of Advice, citing each rule",
+      "Shows premiums and commission in dollars",
+      "Hands the Authority to Proceed to Underwriting",
     ],
-    typical_line:
-      "You’re eligible — here’s the rule that says so, and here’s what we still need.",
+    typical_line: "Let’s work out what your family actually needs, then check it twice.",
     ambient: [
-      "Awaiting next request",
-      "Reviewing BDBN witness declarations",
-      "Checking a condition of release",
-      "Calculating minimum drawdowns",
-      "Testing transfer balance cap space",
+      "Running a needs analysis",
+      "Checking a cover shortfall",
+      "Drafting a Statement of Advice",
+      "Comparing inside and outside super",
+      "Checking the working twice",
     ],
-    app_agent_id: "benefits-eligibility",
-    agent_name: "Benefits & Eligibility Agent",
-    agent_tagline: "Applies the trust deed, PDS and super law — and cites every rule.",
+    app_agent_id: "paraplanning",
+    agent_name: "Paraplanning Agent",
+    agent_tagline: "Works out how much cover is needed, shows the working and drafts the SoA.",
   },
   {
-    id: "investments-1",
+    id: "research-1",
     name: "Ivy",
-    role: "Investment Analyst",
-    team: "Wealth Management Team",
-    department: "Investment Solutions",
+    role: "Insurance Research Analyst",
+    team: "Protection Advice Team",
+    department: "Insurance Research",
     role_short:
-      "The Wealth Management Team’s portfolio specialist — owns the model-portfolio menu and makes sure every portfolio still fits the client’s Statement of Advice.",
-    role_line: "Works in the Investment Solutions team and owns the model portfolio menu.",
-    palette: "investmentAnalyst",
+      "Compares the insurers on Caldova’s approved product list on definitions, features, exclusions and premiums, so the advice rests on the fine print.",
+    role_line: "Compares the insurers on the approved product list.",
+    palette: "researchAnalyst",
     color: "#f59e0b",
-    personality: "Curious, data-driven and plain-speaking.",
+    personality: "Curious, analytical and loves the fine print.",
     responsibilities: [
-      "Checks model fit against the risk profile and Statement of Advice",
-      "Compares model portfolios on fees ($ p.a.), returns and risk",
-      "Builds income and cash-bucket strategies for pensions",
-      "Plans redemptions and switches",
-      "Produces the client workbook and charts",
+      "Reads each insurer’s PDS extract: definitions, features and exclusions",
+      "Compares the APL insurers for each client’s cover",
+      "Compares stepped and level premiums over time",
+      "Builds the comparison workbook and chart",
+      "Keeps the approved product list research current",
     ],
-    typical_line:
-      "Let’s make sure the portfolio still fits the plan — and show the fees in dollars, not just percentages.",
+    typical_line: "Cheapest isn’t best if the definition won’t pay.",
     ambient: [
-      "Comparing model portfolios",
-      "Reviewing the Growth model fact sheet",
-      "Building a pension cash bucket",
-      "Checking buy/sell spreads",
-      "Updating the fee comparison workbook",
+      "Reading a PDS extract",
+      "Comparing TPD definitions",
+      "Charting stepped and level premiums",
+      "Checking a trauma definition",
+      "Updating the comparison workbook",
     ],
-    app_agent_id: "investment-analyst",
-    agent_name: "Investment Analyst Agent",
-    agent_tagline: "Keeps portfolios on plan — and shows the fees in dollars.",
+    app_agent_id: "insurance-research",
+    agent_name: "Insurance Research Agent",
+    agent_tagline: "Compares the insurers on the APL, definitions first and premiums second.",
   },
   {
     id: "fincrime-1",
     name: "Felix",
     role: "Financial Crime Investigator",
-    team: "Wealth Management Team",
+    team: "Claims & Care Team",
     department: "Financial Crime",
     role_short:
-      "The risk and compliance partner for both teams — protects members and clients from fraud, scams and identity takeover, and runs AML/CTF checks.",
-    role_line: "Protects members from fraud, scams and identity takeover, and looks after AML/CTF obligations.",
+      "Protects clients on both sides from fraud, scams and identity takeover: checks identity and documents, and explains every red flag.",
+    role_line: "Protects clients from fraud, scams and identity takeover.",
     palette: "finCrimeInvestigator",
     color: "#ef4444",
-    personality: "Observant, sceptical and discreet — never accusatory.",
+    personality: "Sharp, protective and never accusatory.",
     responsibilities: [
-      "Checks ID documents for tampering",
-      "Builds the account-activity timeline (contact-detail changes, new devices)",
+      "Verifies identity for every new client",
+      "Checks IDs, medical reports, death certificates and bank statements for tampering",
+      "Builds the timeline of contact and bank-detail changes",
       "Screens for PEP and sanctions matches",
-      "Flags SMSF rollover red flags with an explainable risk score",
-      "Recommends holds and call-backs — an SMR to AUSTRAC stays a human decision",
+      "Recommends holds and call-backs; a block is always a human decision",
     ],
-    typical_line:
-      "Something doesn’t add up — let’s verify with the member on a number we already trust.",
+    typical_line: "If it’s urgent and different, it’s worth a second look.",
     ambient: [
-      "Running PEP & sanctions screening",
-      "Reviewing change-of-details alerts",
-      "Checking new-device logins",
-      "Verifying ID document security features",
-      "Reviewing SMSF rollover red flags",
+      "Running PEP and sanctions screening",
+      "Reviewing a bank-detail change",
+      "Checking a new-device login",
+      "Verifying a driver licence",
+      "Checking a medical report",
     ],
     app_agent_id: "financial-crime",
     agent_name: "Financial Crime Agent",
-    agent_tagline: "Protects members from fraud, scams and identity takeover.",
+    agent_tagline: "Checks every document and explains every red flag, without accusing anyone.",
   },
   {
-    id: "transfers-1",
-    name: "Rory",
-    role: "Transfers & Rollovers Coordinator",
-    team: "Superannuation Team",
-    department: "Transfers & Rollovers",
+    id: "underwriting-1",
+    name: "Uma",
+    role: "Underwriting Coordinator",
+    team: "Protection Advice Team",
+    department: "Underwriting & New Business",
     role_short:
-      "The Superannuation Team’s rollover specialist — moves money between Caldova and the outside world: SuperStream rollovers, SMSFs, in-specie transfers and the ATO.",
-    role_line: "Moves money between Caldova and the outside world.",
-    palette: "transfersCoord",
+      "Takes each application through underwriting with the insurer, from the duty to take reasonable care to the policy being issued.",
+    role_line: "Takes each application through underwriting until the policy is issued.",
+    palette: "underwritingCoord",
     color: "#10b981",
-    personality: "Organised, persistent and counterparty-savvy.",
+    personality: "Organised, persistent and plain-spoken about health questions.",
     responsibilities: [
-      "Looks up external funds by USI and lodges SuperStream rollovers",
-      "Warns when a rollover will end insurance cover",
-      "Verifies SMSFs with the ATO SMSF verification service (SVS)",
-      "Generates transfer and rollover request forms",
-      "Tracks the 3-business-day SLA and chases counterparties",
+      "Prepares the application and explains the duty to take reasonable care",
+      "Tracks medicals, blood tests, GP reports and financial evidence",
+      "Chases the insurer and explains loadings and exclusions",
+      "Brings every loading, exclusion or decline to the client and Amelia",
+      "Confirms the policy is issued and in force",
     ],
-    typical_line:
-      "Your old funds have the request — the money should land within three business days.",
+    typical_line: "Answer every question carefully. It protects your claim later.",
     ambient: [
-      "Reconciling SuperStream rollovers",
-      "Running SVS check",
-      "Chasing an external fund",
-      "Tracking rollover SLAs",
-      "Lodging transfer balance account reports",
+      "Chasing a GP report",
+      "Checking underwriting requirements",
+      "Preparing an application",
+      "Explaining a loading",
+      "Confirming a policy is in force",
     ],
-    app_agent_id: "transfers-rollovers",
-    agent_name: "Transfers & Rollovers Agent",
-    agent_tagline: "Moves money between funds safely — and on time.",
+    app_agent_id: "underwriting",
+    agent_name: "Underwriting Agent",
+    agent_tagline: "Takes the application through underwriting, from disclosure to the policy.",
   },
   {
-    id: "payments-1",
-    name: "Penny",
-    role: "Payments Officer",
-    team: "Superannuation Team",
-    department: "Payments",
+    id: "claims-1",
+    name: "Ben",
+    role: "Benefit Claims Advocate",
+    team: "Claims & Care Team",
+    department: "Claims",
     role_short:
-      "The Superannuation Team’s pensions and payments officer — releases money correctly: lump sums, pension payments, death benefits, hardship payments and rollovers out.",
-    role_line: "Releases money correctly.",
-    palette: "paymentsOfficer",
-    color: "#a855f7",
-    personality: "Precise, transparent and unflappable.",
+      "Supports clients and families through a claim: checks the policy, builds the claim pack, calculates the benefit and lodges the claim once a person approves.",
+    role_line: "Supports clients and families through every claim.",
+    palette: "claimsAdvocate",
+    color: "#6366f1",
+    personality: "Steady, compassionate and a tenacious advocate.",
     responsibilities: [
-      "Validates payee and bank details",
-      "Splits tax-free and taxable components",
-      "Calculates PAYG withholding",
-      "Checks authority limits and raises a Microsoft Teams approval card",
-      "Releases money only after human approval, and invests incoming rollovers",
+      "Checks the definition, waiting period, exclusions and evidence",
+      "Builds the claim pack",
+      "Calculates the expected benefit and explains it",
+      "Raises the Microsoft Teams approval, and lodges only after approval",
+      "Tracks the insurer’s Code of Practice timeframes",
     ],
-    typical_line:
-      "Gross $10,000, tax withheld $2,068 — $7,932 lands in your account on Friday.",
+    typical_line: "My job is to make the claim as easy as it can be for you.",
     ambient: [
-      "Awaiting next request",
-      "Validating payee BSB",
-      "Calculating PAYG withholding",
-      "Preparing the pension payment run",
-      "Investing incoming rollovers",
+      "Building a claim pack",
+      "Checking a waiting period",
+      "Calculating a benefit",
+      "Chasing an insurer update",
+      "Checking a definition",
     ],
-    app_agent_id: "payments",
-    agent_name: "Payments Agent",
-    agent_tagline: "Gets the tax right, then waits for the human approval.",
+    app_agent_id: "claims",
+    agent_name: "Claims Agent",
+    agent_tagline: "Builds the claim pack, works out the benefit and lodges it after approval.",
   },
   {
     id: "comms-1",
     name: "Cara",
     role: "Client Communications Specialist",
-    team: "Wealth Management Team",
+    team: "Claims & Care Team",
     department: "Client Communications",
     role_short:
-      "The client and adviser relationship voice of the Wealth Management Team — clear updates, letters and calls in plain English, for super members and wealth clients alike.",
-    role_line: "Talks to members and advisers.",
+      "Keeps clients, families and referral partners informed in plain English, with the right tone for illness, claims, scams and bereavement.",
+    role_line: "Keeps clients, families and referral partners informed in plain English.",
     palette: "commsSpecialist",
     color: "#ec4899",
-    personality: "Warm, clear and empathetic.",
+    personality: "Warm, clear and careful with words.",
     responsibilities: [
-      "Drafts member letters, adviser updates, SMS and call scripts",
-      "Explains decisions in plain English — no jargon",
-      "Matches tone for bereavement, hardship and scam victims",
-      "Checks every message for required disclosures and IDR/AFCA rights",
+      "Drafts letters, SoA summaries, underwriting and claim updates, and SMS",
+      "Updates referral partners with only what the client agreed to share",
+      "Matches the tone for illness, claims, scams and bereavement",
+      "Checks every message for required disclosures and IDR and AFCA rights",
       "Takes calls as Cara through the voice agent",
     ],
-    typical_line: "I’ll explain exactly what happens next — no jargon.",
+    typical_line: "Plain English, every time.",
     ambient: [
-      "Awaiting next request",
-      "Drafting an adviser update",
-      "Plain-English check on a member letter",
-      "Returning a member call",
-      "Sending an SMS confirmation",
+      "Drafting a welcome letter",
+      "Writing a claim update",
+      "Updating a referral partner",
+      "Returning a client call",
+      "Checking the tone of a letter",
     ],
     app_agent_id: "client-communications",
     agent_name: "Client Communications Agent",
-    agent_tagline: "Plain-English updates for members and their advisers.",
+    agent_tagline: "Plain-English letters and updates for clients, families and referral partners.",
   },
   {
     id: "lead-1",
     name: "Theo",
-    role: "Client Operations Team Leader",
-    team: "Client Operations Leadership",
+    role: "Practice Team Leader",
+    team: "Practice Leadership",
     department: "Team Leader Office",
     role_short:
-      "Leads both the Superannuation and Wealth Management teams from between them — workload, SLAs, IDR clocks, approvals, quality and vulnerable members.",
-    role_line: "Runs the operations floor.",
+      "Leads both teams from the middle of the floor: workload, service levels, complaint clocks, approvals, file quality and vulnerable clients.",
+    role_line: "Leads both teams.",
     palette: "teamLeader",
-    color: "#14b8a6",
-    personality: "Decisive, supportive and commercially aware.",
+    color: "#f97316",
+    personality: "Calm under pressure and people-first.",
     responsibilities: [
-      "Monitors queues, rollover SLAs and IDR clocks",
-      "Approves declines, partial approvals and financial-crime blocks",
-      "Personally reviews vulnerable-member cases",
-      "Samples completed cases for quality",
-      "Coordinates the specialist agents on complex cases",
+      "Watches the advice pipeline, underwriting and claim clocks, and IDR clocks",
+      "Approves blocks, fraud referrals and claim lodgements",
+      "Gives every case of $2,000,000 or more a second review",
+      "Personally reviews cases for vulnerable clients",
+      "Audits files against the best interests duty",
     ],
-    typical_line:
-      "Let’s get this right for the member — I’ll take the approval.",
+    typical_line: "Nobody waits without knowing why.",
     ambient: [
-      "Reviewing the SLA dashboard",
-      "Checking IDR clocks",
-      "Approving a high-value payment",
-      "QA sampling closed cases",
+      "Reviewing the pipeline",
+      "Checking the IDR clocks",
+      "Approving a claim lodgement",
+      "Auditing an advice file",
       "Coaching the team",
     ],
     app_agent_id: "team-leader",
     agent_name: "Team Leader Agent",
-    agent_tagline: "Watches the whole floor — SLAs, IDR clocks and approvals.",
+    agent_tagline: "Watches the pipeline, the clocks and the approvals for both teams.",
   },
 ];
 
 /* ------------------------------------------------------------------------ */
-/* Client cast — five scripted Melbourne life events                        */
+/* Client cast — five Melbourne stories                                      */
 /* ------------------------------------------------------------------------ */
 
-export const CUSTOMER_PERSONAS: CustomerPersona[] = [
+export const CLIENT_PERSONAS: ClientPersona[] = [
   // Order matches docs/scenario-N-*.md:
-  //   1. onboarding   2. protection   3. retirement   4. hardship   5. bereavement
+  //   1. family   2. fraud   3. business   4. income   5. bereavement
   {
-    id: "onboarding",
+    id: "family",
     name: "Priya Natarajan",
-    situation:
-      "Starting a new job in Docklands — consolidating her old super into one Caldova account.",
+    situation: "Has just bought a home in Coburg, with a second baby on the way, and wants her family protected.",
     situation_long:
-      "Priya (34) is a product manager who has just started at a Docklands fintech and lives in a Southbank apartment. Her adviser, Hannah Lewis of Yarra Private Wealth, has sent Caldova an application pack for a new Caldova Super (Select) account in the Growth model, consolidating about $138,200 from Southern Cross Industry Super and Harbourline Retail Super.",
+      "Priya (34) is a physiotherapist in Brunswick. She lives in Coburg with her partner Arjun and their daughter Asha (2), and a second baby is due in March 2027. They bought a home in October 2026 with a $680,000 joint mortgage, and their mortgage broker, Hannah Lewis of Yarra Home Loans, referred Priya to Caldova.",
     need: [
-      "One super account, set up properly and digitally",
-      "Her two old funds (about $138,200) rolled over without fuss",
-      "The Growth model portfolio from her Statement of Advice",
-      "Her partner Arjun nominated as her beneficiary",
+      "Enough cover to clear the mortgage and look after the children",
+      "Premiums that fit the budget: up to $300 a month",
+      "Her old super cover kept until the new cover starts",
+      "Plain answers about her health questions",
     ],
-    concern:
-      "She is busy with the new job — she doesn’t want paperwork bouncing back, or to lose anything valuable when her old funds close.",
-    personality: "Busy, organised, and wants it done digitally.",
-    typical_line:
-      "I’ve got super scattered across old jobs — I just want one account, set up properly.",
-    palette: "customerOnboarding",
-    request_type: "New account & consolidation",
+    concern: "She worries about what would happen to Arjun and the children if she couldn’t work.",
+    personality: "Organised, busy and practical.",
+    typical_line: "We’ve just bought a house and there’s a baby on the way. I want us to be okay, whatever happens.",
+    palette: "clientFamily",
+    request_type: "New protection advice",
     color: "#3a8fd6",
   },
   {
-    id: "protection",
+    id: "fraud",
     name: "Grace Williams",
-    situation:
-      "Travelling in Italy — someone is trying to move her super while she’s away.",
+    situation: "Travelling in Italy, while someone uses her name to claim her trauma cover.",
     situation_long:
-      "Grace (63) is a retired school principal from Williamstown and a direct member (no adviser) with $612,400 in Caldova Super (Select). She left Melbourne Airport on 18 October for a long-planned trip through Italy and has a travel notice on file. While she is away, someone using her identity has changed her contact details and asked to roll her entire balance to a brand-new SMSF.",
+      "Grace (61) is a semi-retired school principal from Hawthorn and a Caldova client since 2019. Her Lyrebird Life policy holds $500,000 of life cover and $200,000 of trauma cover. She told Amelia she would be in Italy until 1 December. While she is away, someone changes her contact details and claims her trauma cover in her name.",
     need: [
-      "Her $612,400 kept safe",
+      "Her cover kept safe",
       "To be contacted on the number she already trusts",
-      "Her online access locked down and reset",
+      "Her portal access locked and her details restored",
       "Clear reassurance about what happens next",
     ],
-    concern:
-      "She is overseas and had no idea anything was happening — the alert went to an email she isn’t checking.",
-    personality: "Independent and careful — rattled when she hears.",
-    typical_line: "I’m in Florence — I haven’t asked anyone to move my super!",
-    palette: "customerProtection",
-    request_type: "Rollover out to SMSF",
+    concern: "She is overseas and had no idea anything was happening.",
+    personality: "Independent and careful, and rattled when she hears.",
+    typical_line: "I’m in Florence and I’m perfectly well. I never asked for anything!",
+    palette: "clientFraud",
+    request_type: "Trauma claim and bank change",
     color: "#d9534f",
   },
   {
-    id: "retirement",
+    id: "business",
     name: "George Papadopoulos",
-    situation: "Just retired — wants a steady pension income from his super.",
+    situation: "Co-owns a joinery business with Harpreet, and they have no succession plan.",
     situation_long:
-      "George (66) is a retired electrical contractor from Oakleigh, married to Helen (63). With his adviser Marcus Tan of Bayside Financial Partners, he is asking Caldova to start an account-based pension with $1,250,000 of his $1,284,600 balance, paying $78,000 a year in monthly instalments, with Helen as his reversionary beneficiary.",
+      "George (52) is a master joiner and co-founder of Northcote Custom Joinery Pty Ltd, which he owns 50/50 with Harpreet Kaur (47), its operations and finance director. The business has 14 staff and is valued at $2,400,000. Their accountant, Marcus Tan of Bayside Business Accountants, referred them because they have no succession plan.",
     need: [
-      "A reliable $6,500 every month",
-      "Helen protected as his reversionary beneficiary",
-      "A cash buffer so he never has to sell in a downturn",
-      "Plain answers on tax and the transfer balance cap",
+      "A way for the surviving partner to buy out the other",
+      "Cover for the business if it loses George",
+      "Clear numbers they can check with Marcus",
+      "Help through the medicals and the paperwork",
     ],
-    concern:
-      "He is a little anxious about “running out” after forty years of earning.",
-    personality: "Proud, practical, and a little anxious about running out.",
-    typical_line:
-      "Forty years on the tools — I just want a steady income and to stop worrying.",
-    palette: "customerRetirement",
-    request_type: "Pension commencement",
+    concern: "He doesn’t want Helen or Harpreet left to sort out the business on their own.",
+    personality: "Proud, practical and a little wary of paperwork.",
+    typical_line: "We built this from nothing. If something happens to one of us, I don’t want it to fall apart.",
+    palette: "clientBusiness",
+    request_type: "Business protection advice",
     color: "#e8a33d",
   },
   {
-    id: "hardship",
+    id: "income",
     name: "Tom Bradley",
-    situation: "His Lygon St café has closed — he needs help catching up on bills.",
+    situation: "A self-employed electrician who fell from a ladder and can’t work for months.",
     situation_long:
-      "Tom (47) ran a small café on Lygon Street, Carlton, until it closed in mid-2025. He has received JobSeeker continuously since 6 April 2026 and is behind on his mortgage and utility bills. He is applying to release $15,000 of his $84,300 Caldova Super (Essential) balance on severe financial hardship grounds.",
+      "Tom (41) runs Bradley Electrical as a sole trader in Frankston. He lives with his wife Kylie and their two children. On 14 October 2026 he fell from a ladder on a job and tore his rotator cuff, and his surgeon expects four to six months off work. His Harbourline Life income protection policy insures $7,000 a month.",
     need: [
-      "Money to catch up on the mortgage and utilities",
-      "A quick, respectful decision",
-      "To understand the tax and the impact on his retirement",
-      "Pointers to free financial counselling",
+      "Income coming in while he recovers",
+      "Kylie able to help as his support person",
+      "A clear answer about how much will be paid, and when",
+      "Less paperwork while he can’t use his right arm",
     ],
-    concern:
-      "He never thought he would need to touch his super and feels embarrassed asking.",
-    personality: "Proud, embarrassed and stressed.",
-    typical_line:
-      "I never thought I’d need to touch my super — I just need to catch up on the bills.",
-    palette: "customerHardship",
-    request_type: "Financial hardship release",
+    concern: "The bills don’t stop because he’s injured.",
+    personality: "Practical, proud and worried about money.",
+    typical_line: "I’ve never missed a month of work. I just need to know the bills will be paid.",
+    palette: "clientIncome",
+    request_type: "Income protection claim",
     color: "#e07a2c",
   },
   {
     id: "bereavement",
     name: "Robert Chen",
-    situation: "His mum has passed away — her pension is paid to the family.",
+    situation: "His wife Mei died suddenly, and he is claiming on her life cover.",
     situation_long:
-      "Robert (52) lives in Box Hill. His mother, Mei Chen, died on 12 October 2026 aged 81, holding a Caldova Pension worth $486,200. Acting for himself and his sister Lily, he has sent Caldova the death certificate and their IDs. Mei’s binding nomination splits her benefit 50/50 between her two children.",
+      "Robert (44) is a secondary school teacher in Box Hill. His wife Mei, a pharmacist, died suddenly of a brain aneurysm on 12 October 2026, aged 42. They have two children, Lily (12) and Max (9). Mei’s Corella Life policy, advised by Amelia in 2019, holds $1,000,000 of life cover with Robert as her nominated beneficiary.",
     need: [
-      "A gentle, clear process during a hard time",
-      "Confirmation that Mum’s nomination will be followed",
-      "A plain-English explanation of the tax",
-      "A realistic timeline for the payments",
+      "A gentle, clear process",
+      "One person to talk to",
+      "To know when the money will arrive",
+      "Help with anything else Mei had in place",
     ],
-    concern:
-      "The paperwork feels overwhelming while the family is grieving.",
-    personality: "Quiet, grieving, and organised for the family.",
-    typical_line:
-      "Mum always said she’d sorted everything — I just want to do this right for her.",
-    palette: "customerBereavement",
-    request_type: "Death benefit (binding nomination)",
+    concern: "The paperwork feels overwhelming while the family is grieving.",
+    personality: "Quiet, grieving and organised for the children.",
+    typical_line: "Mei sorted all of this years ago. I just want to get it right for the kids.",
+    palette: "clientBereavement",
+    request_type: "Death claim",
     color: "#6e7a8a",
   },
 ];
@@ -479,13 +453,6 @@ export const CUSTOMER_PERSONAS: CustomerPersona[] = [
 /* ------------------------------------------------------------------------ */
 /* Helpers                                                                  */
 /* ------------------------------------------------------------------------ */
-
-/** Teams in display order, with each team's accent colour. */
-export const STAFF_TEAMS: ReadonlyArray<{ name: StaffTeam; blurb: string; color: string }> = [
-  { name: "Superannuation Team", blurb: "Member accounts, rollovers, pensions", color: "#14b8a6" },
-  { name: "Wealth Management Team", blurb: "Advice, investments, risk, clients", color: "#c9a14a" },
-  { name: "Client Operations Leadership", blurb: "Oversight of both teams", color: "#6b7fb0" },
-];
 
 export function findStaffByRole(role: StaffRole): StaffPersona {
   const p = STAFF_PERSONAS.find((x) => x.role === role);

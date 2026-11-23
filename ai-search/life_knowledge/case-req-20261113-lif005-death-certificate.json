@@ -1,0 +1,26 @@
+{
+  "id": "case-req-20261113-lif005-death-certificate",
+  "title": "Case REQ-20261113-LIF005 — death certificate",
+  "category": "Case Evidence",
+  "requestType": "Death claim",
+  "caseNumber": "REQ-20261113-LIF005",
+  "clientNumber": "CL-101935",
+  "content": "Certified copy of the death certificate of Mei Chen, received with Robert Chen's death notification on Fri 13 Nov 2026. Case REQ-20261113-LIF005.\n\nDetails: Mei Chen; born 05/06/1984; died Mon 12 Oct 2026, aged 42; cause of death: brain aneurysm; occupation: pharmacist; usual residence: Box Hill VIC; spouse: Robert Chen; children: Lily (12) and Max (9). Registered with the Victorian registry of births, deaths and marriages; copy certified by an authorised witness.\n\nAlso received: a certified copy of Robert Chen's ID (claimant; CL-101935).\n\nDocument checks by the Financial Crime Agent's Document Authenticity assistant for Felix (Financial Crime): the death certificate and Robert's ID are legitimate, and the details match Caldova's client records. ✅\n\nUsed for: the death claim on Corella Life policy CR-19033105, and the separate death claim with Riverbend Super's trustee for Mei's default death cover of $180,000 (see 'Case REQ-20261113-LIF005 — super fund cover note').\n\nPrivacy: the certificate is shared only with the people who need it — Claims, Financial Crime, Amelia and the insurer or fund handling each claim.",
+  "severity": "high",
+  "department": "Claims",
+  "tags": [
+    "robert-chen",
+    "mei-chen",
+    "REQ-20261113-LIF005",
+    "CL-101935",
+    "CL-101934",
+    "death-certificate",
+    "certified-copy",
+    "brain-aneurysm",
+    "12-oct-2026",
+    "document-checks",
+    "legitimate",
+    "claimant-id"
+  ],
+  "lastUpdated": "2026-11-13T02:00:00Z"
+}

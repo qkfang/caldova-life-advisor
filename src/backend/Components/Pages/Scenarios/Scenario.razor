@@ -6,52 +6,101 @@
     private ScenarioDefinition? Def =>
         string.IsNullOrEmpty(ScenarioId) ? null : ScenarioCatalog.FindById(ScenarioId);
 
-    // Agent pages that support it pre-select the case from ?caseNumber=.
-    private static string DemoHref(ScenarioStep step, ScenarioDefinition def)
+    // The Onboarding page pre-selects the scenario's inbound request from
+    // ?sample=; every other agent page pre-selects the seeded case from
+    // ?caseNumber=.
+    private static string StepHref(ScenarioStep step, ScenarioDefinition def)
     {
-        var agent = AgentCatalog.All.FirstOrDefault(a => a.Name == step.AgentName);
-        return agent is null
-            ? "/"
+        var agent = AgentCatalog.FindByName(step.AgentName);
+        if (agent is null) return "/";
+        return agent.Id == "onboarding"
+            ? $"/agents/onboarding?sample={Uri.EscapeDataString(def.SampleId)}"
             : $"/agents/{agent.Id}?caseNumber={Uri.EscapeDataString(def.CaseNumber)}";
     }
+
+    private static string StatusClass(string outcome) =>
+        outcome.Contains("block", StringComparison.OrdinalIgnoreCase) ? "is-blocked"
+        : outcome.Contains("partial", StringComparison.OrdinalIgnoreCase) ? "is-partial"
+        : "is-done";
+
+    private static string StageClass(string stage) => "stage-" + stage.ToLowerInvariant();
 }
 
 @if (Def is null)
 {
-    <PageTitle>Scenario not found — Wealth Team in a Day</PageTitle>
+    <PageTitle>Scenario not found — Advice Team in a Day</PageTitle>
     <div class="agent-header" style="--accent: #94a3b8">
-        <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+        <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the agent console</a>
         <div class="agent-header-row">
             <div class="agent-header-icon">❓</div>
             <div>
                 <div class="agent-header-dept">Scenario</div>
                 <h1>Scenario not found</h1>
-                <p class="tagline">We couldn't find a scenario with that id.</p>
+                <p class="tagline">We couldn't find a scenario with that id. Pick one of the five Client Cases below.</p>
             </div>
         </div>
+    </div>
+    <div class="other-agents">
+        @foreach (var s in ScenarioCatalog.All)
+        {
+            <a class="other-agent" href="@($"/scenarios/{s.Id}")"><span class="other-agent-icon" aria-hidden="true">@s.Icon</span>@s.ShortTitle — @s.Customer</a>
+        }
     </div>
 }
 else
 {
-    <PageTitle>@Def.ShortTitle — Wealth Team in a Day</PageTitle>
+    <PageTitle>@Def.ShortTitle — Advice Team in a Day</PageTitle>
 
     <div class="agent-header" style="--accent: @Def.Accent">
-        <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+        <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the agent console</a>
         <div class="agent-header-row">
             <div class="agent-header-icon">@Def.Icon</div>
             <div>
-                <div class="agent-header-dept">Scenario @Def.Number · Case @Def.CaseNumber</div>
+                <div class="agent-header-dept">Scenario @Def.Number · Client Case @Def.CaseNumber</div>
                 <h1>@Def.Title</h1>
                 <div class="agent-header-persona">@Def.Persona</div>
                 <p class="tagline">@Def.Tagline</p>
-                <div class="scenario-outcome" style="--accent: @Def.Accent">Outcome: <strong>@Def.Outcome</strong></div>
+                <div class="scenario-outcome @StatusClass(Def.Outcome)">
+                    <span class="scenario-outcome-status">@Def.Outcome</span>
+                    <span class="scenario-outcome-detail">@Def.OutcomeDetail</span>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="agent-tab-panel standalone">
+        <div class="scenario-grid">
+            <section class="panel scenario-facts" style="--accent: @Def.Accent">
+                <h2>Key facts</h2>
+                <ul>
+                    @foreach (var fact in Def.KeyFacts)
+                    {
+                        <li>@fact</li>
+                    }
+                </ul>
+            </section>
+            <section class="panel scenario-approvals" style="--accent: @Def.Accent">
+                <h2>People approve</h2>
+                <ul>
+                    @foreach (var approval in Def.HumanApprovals)
+                    {
+                        <li>@approval</li>
+                    }
+                </ul>
+                <p class="muted">The agents gather facts, check, calculate and draft. Amelia gives the advice, and people make every decision that matters.</p>
+            </section>
+        </div>
+
         <section class="panel" style="--accent: @Def.Accent">
-            <h2>Case journey</h2>
+            <div class="scenario-journey-head">
+                <h2>Case journey</h2>
+                <ol class="scenario-lifecycle" aria-label="Lifecycle">
+                    @foreach (var stage in AgentCatalog.Lifecycle)
+                    {
+                        <li class="@StageClass(stage)">@stage</li>
+                    }
+                </ol>
+            </div>
             <ol class="scenario-steps">
                 @foreach (var step in Def.Steps)
                 {
@@ -59,13 +108,17 @@ else
                         <div class="scenario-step-head">
                             <span class="scenario-step-num">@step.Number</span>
                             <div class="scenario-step-title">
-                                <h3>@step.Title</h3>
+                                <h3>@step.Title <span class="stage-tag @StageClass(step.Stage)">@step.Stage</span></h3>
                                 <div class="scenario-step-agent">
                                     <span class="scenario-step-agent-icon" aria-hidden="true">@step.AgentIcon</span>
                                     <span>@step.AgentName</span>
+                                    @if (AgentCatalog.FindByName(step.AgentName) is { } agent)
+                                    {
+                                        <span class="scenario-step-persona">· @agent.Persona</span>
+                                    }
                                 </div>
                             </div>
-                            <a class="scenario-step-link" href="@DemoHref(step, Def)">Run this step <span aria-hidden="true">→</span></a>
+                            <a class="scenario-step-link" href="@StepHref(step, Def)">Run this step <span aria-hidden="true">→</span></a>
                         </div>
                         <p class="scenario-step-summary">@step.Summary</p>
                     </li>
@@ -77,13 +130,66 @@ else
 
 <style>
     .scenario-outcome {
-        display: inline-block;
-        margin-top: 0.75rem;
-        padding: 0.3rem 0.85rem;
-        border-radius: 999px;
-        font-size: 0.84rem;
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.35rem 0.65rem;
+        margin-top: 0.85rem;
+        padding: 0.45rem 0.95rem;
+        border-radius: 14px;
+        font-size: 0.88rem;
         color: var(--cw-ink);
         background: #fff;
-        border: 1px solid color-mix(in srgb, var(--accent, var(--cw-gold)) 50%, var(--cw-line));
+        border: 1px solid var(--cw-line);
+        max-width: 52rem;
     }
+    .scenario-outcome-status {
+        font-weight: 700;
+        white-space: nowrap;
+        padding: 0.1rem 0.6rem;
+        border-radius: 999px;
+    }
+    .scenario-outcome.is-done .scenario-outcome-status { color: var(--cw-success); background: #e6f4ee; }
+    .scenario-outcome.is-partial .scenario-outcome-status { color: var(--cw-warn); background: #fdf1e1; }
+    .scenario-outcome.is-blocked .scenario-outcome-status { color: var(--cw-danger); background: #fdeceb; }
+    .scenario-outcome-detail { color: var(--cw-text); line-height: 1.5; }
+
+    .scenario-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+    @@media (max-width: 960px) { .scenario-grid { grid-template-columns: minmax(0, 1fr); } }
+    .scenario-grid .panel h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .scenario-approvals { background: color-mix(in srgb, var(--cw-gold) 7%, #fff); }
+    .scenario-approvals .muted { margin: 0.75rem 0 0 0; }
+
+    .scenario-journey-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .scenario-journey-head h2 { margin: 0; }
+    .scenario-lifecycle {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin: 0;
+        padding: 0;
+    }
+    .scenario-lifecycle li {
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        background: var(--cw-surface-2);
+        border: 1px solid var(--cw-line);
+        color: var(--cw-text-2);
+    }
+    .scenario-lifecycle li:not(:last-child)::after { content: " →"; color: var(--cw-muted-2); }
+    .scenario-step-persona { color: var(--cw-muted); }
 </style>

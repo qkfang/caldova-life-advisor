@@ -1,20 +1,21 @@
-@* Site header: Caldova Wealth logo, primary navigation (with AI agents and
-   Scenarios dropdowns) and call-to-action pills — modelled on the header of
-   Australian super fund sites. Dropdowns use native <details>; js/site-nav.js
-   closes them on outside click, Escape and link click. *@
+@* Site header: the Caldova Life Advice wordmark, primary navigation (with
+   AI agents and Scenarios dropdowns) and call-to-action pills. Dropdowns use
+   native <details>; js/site-nav.js closes them on outside click, Escape and
+   link click. *@
 @implements IDisposable
 @inject NavigationManager Nav
 
 <div class="site-container header-inner">
-    <a class="brand" href="" aria-label="Caldova Wealth — operations office home">
+    <a class="brand" href="" aria-label="Caldova Life Advice — agent console home">
         <svg class="brand-mark" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
             <rect width="40" height="40" rx="10" fill="#0b2a4f" />
             <path d="M26.9 14.2A9 9 0 1 0 26.9 25.8" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" />
-            <circle cx="29.4" cy="20" r="2.3" fill="#c9a24a" />
+            <path d="M29.4 16.4l3.2 1.2v2.3c0 2.3-1.4 3.9-3.2 4.6c-1.8-.7-3.2-2.3-3.2-4.6v-2.3z" fill="#14b8a6" />
+            <rect x="9" y="31.2" width="22" height="1.6" rx="0.8" fill="#c9a14a" />
         </svg>
         <span class="brand-text">
             <span class="brand-name">Caldova</span>
-            <span class="brand-sub">Wealth</span>
+            <span class="brand-sub">Life Advice</span>
         </span>
     </a>
 
@@ -22,13 +23,14 @@
 
     <div class="nav-panel">
         <nav class="primary-nav" aria-label="Main">
-            <NavLink class="pnav-link" href="" Match="NavLinkMatch.All">Operations office</NavLink>
+            <NavLink class="pnav-link" href="" Match="NavLinkMatch.All">Agent console</NavLink>
 
             <details class="pnav-dd">
                 <summary class="pnav-link @(IsAgentsActive ? "active" : null)">AI agents <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
                 <div class="pnav-menu pnav-menu-wide">
                     <div class="pnav-menu-head">
                         <span>Specialist agents</span>
+                        <span class="pnav-menu-note">Advice Team in a Day</span>
                     </div>
                     <div class="pnav-menu-grid">
                         @foreach (var agent in AgentCatalog.All)
@@ -46,10 +48,10 @@
             </details>
 
             <details class="pnav-dd">
-                <summary class="pnav-link @(IsScenariosActive ? "active" : null)">Member scenarios <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                <summary class="pnav-link @(IsScenariosActive ? "active" : null)">Scenarios <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
                 <div class="pnav-menu">
                     <div class="pnav-menu-head">
-                        <span>Member journeys</span>
+                        <span>Client Cases</span>
                     </div>
                     <div class="pnav-menu-list">
                         @foreach (var scenario in ScenarioCatalog.All)
@@ -65,6 +67,8 @@
                     </div>
                 </div>
             </details>
+
+            <NavLink class="pnav-link" href="account">Ask AI</NavLink>
         </nav>
 
         <div class="header-actions">

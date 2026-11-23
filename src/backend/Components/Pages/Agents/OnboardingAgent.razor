@@ -1,16 +1,20 @@
 @page "/agents/onboarding"
 
-<PageTitle>Onboarding Agent — Wealth Team in a Day</PageTitle>
+<PageTitle>Onboarding Agent — Advice Team in a Day</PageTitle>
 
 <div class="agent-header" style="--accent: #0ea5e9">
-    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to operations office</a>
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the agent console</a>
     <div class="agent-header-row">
         <div class="agent-header-icon">📥</div>
         <div>
             <div class="agent-header-dept">Onboarding &amp; Requests</div>
             <h1>Onboarding Agent</h1>
             <div class="agent-header-persona">Olivia — Onboarding &amp; Requests Officer</div>
-            <p class="tagline">Every application and request, set up right first time.</p>
+            <p class="tagline">Every enquiry, referral and claim, set up right the first time.</p>
+            <div class="agent-header-tags">
+                <span class="agent-header-tag">Discover · Verify</span>
+                <span class="agent-header-tag side-shared">Shared by both sides</span>
+            </div>
         </div>
     </div>
 </div>
@@ -21,13 +25,14 @@
         <div class="intake-step" data-step="1">
             <div class="intake-step-head">
                 <span class="intake-step-num">1</span>
-                <h3>Pick a sample inbound request</h3>
+                <h3>Pick an inbound request</h3>
             </div>
+            <p class="muted">Referral emails, an urgent claim email, a call note and a death notification — one for each scenario.</p>
             <div class="intake-samples" id="intake-samples"></div>
             <div class="intake-preview" id="intake-preview" hidden>
                 <div class="intake-preview-grid">
                     <div>
-                        <div class="intake-preview-label">Email</div>
+                        <div class="intake-preview-label">Email or call note</div>
                         <div class="intake-preview-meta">
                             <div><span class="k">From</span><span id="intake-email-from"></span></div>
                             <div><span class="k">Date</span><span id="intake-email-date"></span></div>
@@ -40,6 +45,10 @@
                         <pre class="intake-preview-body intake-form-doc" id="intake-form-body"></pre>
                     </div>
                 </div>
+                <div class="intake-file">
+                    <div class="intake-preview-label">🗂️ On file at Caldova</div>
+                    <pre class="intake-preview-body intake-file-body" id="intake-file-body"></pre>
+                </div>
             </div>
         </div>
 
@@ -49,7 +58,7 @@
                 <span class="intake-step-num">2</span>
                 <h3>Engage the Onboarding Agent</h3>
             </div>
-            <button id="intake-process-btn" type="button" disabled>Process with Onboarding Agent</button>
+            <button id="intake-process-btn" type="button" disabled>Process with the Onboarding Agent</button>
             <div id="intake-process-status" class="intake-status" hidden></div>
 
             <div class="engage-tabs-scope" data-engage-role="onboarding">
@@ -106,22 +115,21 @@
             </div>
         </div>
 
-        <!-- Step 3 — review the Member Case, NIGO checklist and priority -->
+        <!-- Step 3 — review the Client Case, fact find, checklist and priority -->
         <div class="intake-step" data-step="3" id="intake-step-3" hidden>
             <div class="intake-step-head">
                 <span class="intake-step-num">3</span>
-                <h3>Review the Member Case</h3>
+                <h3>Review the Client Case</h3>
             </div>
             <p class="muted">Everything is editable — Olivia checks it before the case opens.</p>
             <div class="intake-form-wrap" id="intake-form-wrap" hidden>
                 <form id="intake-form" class="intake-form" autocomplete="off">
-                    <div class="intake-subhead">Member Case</div>
+                    <div class="intake-subhead">Client Case</div>
                     <div class="intake-grid">
                         <label>Client name<input name="clientName" required /></label>
+                        <label>Client number<input name="clientNumber" required /></label>
                         <label>Client email<input type="email" name="clientEmail" /></label>
                         <label>Client phone<input name="clientPhone" /></label>
-                        <label>Member number<input name="memberNumber" required /></label>
-                        <label>Product<input name="product" /></label>
                         <label>
                             Request type
                             <select name="requestType" id="intake-request-type">
@@ -132,20 +140,29 @@
                             </select>
                         </label>
                         <label>Received date<input type="text" name="receivedDate" placeholder="YYYY-MM-DD" /></label>
-                        <label>Amount<input name="amount" /></label>
+                        <label class="span-2">Cover<input name="cover" /></label>
+                        <label>Headline amount<input name="amount" /></label>
                         <label>Adviser<input name="adviserName" /></label>
-                        <label>Advice practice<input name="adviserPractice" /></label>
-                        <label class="span-2">Request summary<textarea name="requestSummary" rows="3"></textarea></label>
-                        <label class="span-2">Preferred contact<input name="preferredContact" /></label>
+                        <label>Referred by<input name="referredBy" /></label>
+                        <label>Preferred contact<input name="preferredContact" /></label>
+                        <label class="span-2">Request summary<textarea name="requestSummary" rows="4"></textarea></label>
                     </div>
 
-                    <div class="intake-nigo" id="intake-nigo">
-                        <div class="intake-nigo-head">
-                            <span class="intake-subhead">NIGO checklist</span>
-                            <span class="intake-nigo-summary" id="intake-nigo-summary"></span>
+                    <div class="intake-factfind" id="intake-factfind">
+                        <div class="intake-check-head">
+                            <span class="intake-subhead" id="intake-factfind-title">Fact find</span>
+                            <span class="intake-factfind-note">🔒 Health information is shared only with the people who need it.</span>
                         </div>
-                        <p class="muted intake-nigo-help">✅ in good order · ⚠️ needs action</p>
-                        <ul class="intake-nigo-list" id="intake-nigo-list"></ul>
+                        <dl class="intake-factfind-list" id="intake-factfind-list"></dl>
+                    </div>
+
+                    <div class="intake-check" id="intake-check">
+                        <div class="intake-check-head">
+                            <span class="intake-subhead">In-good-order checklist</span>
+                            <span class="intake-check-summary" id="intake-check-summary"></span>
+                        </div>
+                        <p class="muted intake-check-help">✅ in good order · ⚠️ needs action</p>
+                        <ul class="intake-check-list" id="intake-check-list"></ul>
                     </div>
 
                     <div class="intake-priority" id="intake-priority" hidden>
@@ -158,7 +175,8 @@
                             </select>
                             <span class="intake-priority-pill" id="intake-priority-pill"></span>
                         </div>
-                        <textarea name="priorityReason" id="intake-priority-reason" rows="2" aria-label="Reason for the priority"></textarea>
+                        <textarea name="priorityReason" id="intake-priority-reason" rows="3" aria-label="Reason for the priority"></textarea>
+                        <div class="intake-vuln" id="intake-vuln"></div>
                     </div>
 
                     <div class="intake-routing-preview" id="intake-routing-preview" hidden>
@@ -181,7 +199,7 @@
         <div class="intake-step intake-receipt" data-step="4" id="intake-receipt" hidden>
             <div class="intake-step-head">
                 <span class="intake-step-num">4</span>
-                <h3>Case opened</h3>
+                <h3>Client Case opened</h3>
             </div>
             <div class="intake-receipt-body">
                 <div class="intake-receipt-num" id="intake-receipt-num"></div>
@@ -190,7 +208,10 @@
                 <div class="intake-routes" id="intake-routes"></div>
                 <div class="intake-outstanding" id="intake-outstanding" hidden></div>
                 <p class="muted">Every agent page can now pick up this case.</p>
-                <button type="button" id="intake-reset-btn" class="intake-reset">Run another sample</button>
+                <div class="intake-receipt-actions">
+                    <button type="button" id="intake-reset-btn" class="intake-reset">Process another request</button>
+                    <a id="intake-scenario-link" class="intake-scenario-link" href="/" hidden>See the whole scenario →</a>
+                </div>
             </div>
         </div>
     </section>
@@ -258,13 +279,18 @@
     .intake-sample-meta { font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
     .intake-sample-meta .pill {
         display: inline-block;
-        background: rgba(110, 193, 255, 0.10);
-        border: 1px solid rgba(110, 193, 255, 0.28);
-        color: #1564a8;
+        background: rgba(20, 184, 166, 0.10);
+        border: 1px solid rgba(20, 184, 166, 0.32);
+        color: #0f766e;
         padding: 0.05rem 0.5rem;
         border-radius: 999px;
         font-size: 0.7rem;
         margin-bottom: 0.25rem;
+    }
+    .intake-sample-meta .pill.claim {
+        background: rgba(201, 161, 74, 0.12);
+        border-color: rgba(201, 161, 74, 0.4);
+        color: #7a5a14;
     }
 
     .intake-preview { margin-top: 0.8rem; }
@@ -300,6 +326,12 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .intake-form-doc { background: rgba(16, 38, 72, 0.028); border-style: dashed; }
+    .intake-file { margin-top: 0.7rem; }
+    .intake-file-body {
+        max-height: 200px;
+        background: color-mix(in srgb, var(--intake-accent) 6%, #ffffff);
+        border-color: color-mix(in srgb, var(--intake-accent) 28%, transparent);
+    }
 
     .intake-status {
         margin-top: 0.6rem; font-size: 0.88rem;
@@ -357,22 +389,54 @@
     }
     .intake-form textarea { resize: vertical; min-height: 70px; }
 
-    /* NIGO checklist */
-    .intake-nigo {
+    /* Fact find (read-only) */
+    .intake-factfind {
+        margin-top: 1rem;
+        background: #ffffff;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+    }
+    .intake-factfind-note { font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
+    .intake-factfind-list {
+        display: grid;
+        grid-template-columns: minmax(160px, 220px) 1fr;
+        gap: 0.35rem 0.9rem;
+        margin: 0.4rem 0 0 0;
+        font-size: 0.88rem;
+    }
+    @@media (max-width: 720px) { .intake-factfind-list { grid-template-columns: 1fr; } }
+    .intake-factfind-list dt { color: #475467; font-weight: 600; }
+    .intake-factfind-list dd { margin: 0; color: #1d2939; }
+    .intake-factfind-list dd.sensitive {
+        background: rgba(139, 156, 247, 0.10);
+        border-left: 3px solid #8b9cf7;
+        padding: 0.1rem 0.5rem;
+        border-radius: 0 6px 6px 0;
+    }
+    .intake-sensitive-tag {
+        display: inline-block;
+        margin-left: 0.4rem;
+        font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        color: #4b55a8;
+    }
+
+    /* In-good-order checklist */
+    .intake-check {
         margin-top: 1rem;
         background: #f9fafb;
         border: 1px solid rgba(16, 38, 72, 0.112);
         border-radius: 10px;
         padding: 0.75rem 0.9rem;
     }
-    .intake-nigo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
-    .intake-nigo-head .intake-subhead { margin: 0; }
-    .intake-nigo-summary { font-size: 0.8rem; color: #344054; }
-    .intake-nigo-summary .ok { color: #0f7032; font-weight: 700; }
-    .intake-nigo-summary .action { color: #954f12; font-weight: 700; }
-    .intake-step .muted.intake-nigo-help { margin: 0.25rem 0 0.6rem 0; font-size: 0.82rem; }
-    .intake-nigo-list { list-style: none; margin: 0; padding: 0; }
-    .intake-nigo-item {
+    .intake-check-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+    .intake-check-head .intake-subhead { margin: 0; }
+    .intake-check-summary { font-size: 0.8rem; color: #344054; }
+    .intake-check-summary .ok { color: #0f7032; font-weight: 700; }
+    .intake-check-summary .action { color: #954f12; font-weight: 700; }
+    .intake-step .muted.intake-check-help { margin: 0.25rem 0 0.6rem 0; font-size: 0.82rem; }
+    .intake-check-list { list-style: none; margin: 0; padding: 0; }
+    .intake-check-item {
         display: grid;
         grid-template-columns: 175px 1fr;
         gap: 0.7rem;
@@ -384,13 +448,13 @@
         border: 1px solid rgba(16, 38, 72, 0.087);
         border-left: 3px solid #34d399;
     }
-    .intake-nigo-item.action { border-left-color: #fbbf24; background: rgba(245, 158, 11, 0.06); }
-    @@media (max-width: 720px) { .intake-nigo-item { grid-template-columns: 1fr; } }
-    .intake-form .intake-nigo-item select { margin-top: 0; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
-    .intake-nigo-label { color: #0b1f3a; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.25rem; }
-    .intake-form .intake-nigo-item input { margin-top: 0; padding: 0.4rem 0.55rem; font-size: 0.84rem; }
+    .intake-check-item.action { border-left-color: #fbbf24; background: rgba(245, 158, 11, 0.06); }
+    @@media (max-width: 720px) { .intake-check-item { grid-template-columns: 1fr; } }
+    .intake-form .intake-check-item select { margin-top: 0; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+    .intake-check-label { color: #0b1f3a; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.25rem; }
+    .intake-form .intake-check-item textarea { margin-top: 0; padding: 0.4rem 0.55rem; font-size: 0.84rem; min-height: 0; resize: vertical; }
 
-    /* Priority */
+    /* Priority and vulnerability */
     .intake-priority {
         margin-top: 0.85rem;
         background: color-mix(in srgb, var(--intake-accent) 10%, #f6f7f9);
@@ -412,6 +476,17 @@
     .intake-priority-pill.high     { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.4); }
     .intake-priority-pill.standard { background: rgba(34, 197, 94, 0.16); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.4); }
     .intake-form .intake-priority textarea { margin-top: 0; min-height: 56px; font-size: 0.86rem; }
+    .intake-vuln { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; font-size: 0.8rem; color: #344054; align-items: center; }
+    .intake-vuln-chip {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(236, 72, 153, 0.10);
+        border: 1px solid rgba(236, 72, 153, 0.35);
+        color: #9d174d;
+        font-weight: 600;
+    }
+    .intake-vuln-none { color: var(--cw-muted, #5d6b7e); }
 
     .intake-routing-preview { margin-top: 0.85rem; }
     .intake-routing-preview .other-agent { cursor: default; }
@@ -510,6 +585,7 @@
         font-size: 0.86rem;
     }
     .intake-outstanding ul { margin: 0.3rem 0 0 0; padding-left: 1.1rem; color: #344054; }
+    .intake-receipt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; }
     .intake-reset {
         background: transparent;
         color: #344054;
@@ -520,20 +596,22 @@
         cursor: pointer;
     }
     .intake-reset:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+    .intake-scenario-link { font-size: 0.88rem; font-weight: 600; }
 </style>
 
-@* Demo wiring lives in wwwroot/js/onboarding-demo.js (loaded globally from
-   App.razor) so it runs on full page loads and after Blazor enhanced
-   navigation — inline <script> tags in enhanced-navigated pages are not
-   reliably executed. *@
+@* The Try it out wiring lives in wwwroot/js/onboarding-scenario.js (loaded
+   globally from App.razor) so it runs on full page loads and after Blazor
+   enhanced navigation — inline <script> tags in enhanced-navigated pages are
+   not reliably executed. Pass ?sample=onboarding-priya (etc.) to pre-select
+   a request. *@
 
 @code {
     private static readonly string[] RequestTypeOptions =
     {
-        RequestTypes.NewAccount,
-        RequestTypes.RolloverOutSmsf,
-        RequestTypes.PensionCommencement,
-        RequestTypes.FinancialHardship,
-        RequestTypes.DeathBenefit,
+        RequestTypes.NewProtectionAdvice,
+        RequestTypes.BusinessProtectionAdvice,
+        RequestTypes.IncomeProtectionClaim,
+        RequestTypes.DeathClaim,
+        RequestTypes.TraumaClaimBankChange,
     };
 }

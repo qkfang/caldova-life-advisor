@@ -2,28 +2,25 @@ using System.ComponentModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using ModelContextProtocol.Server;
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Mcp;
+namespace CaldovaLife.App.Mcp;
 
 /// <summary>
-/// MCP tool surface for the Payments Agent (Penny, Payments Officer). Exposes
-/// the payment-flow primitives: validating the payee, confirming the
-/// eligibility decision on the Member Case, splitting tax-free / taxable
-/// components and calculating PAYG withholding and the net payment, checking
-/// authority limits, raising an approval request that is posted to Microsoft
-/// Teams, polling it, and finally releasing the payment once — and only once
-/// — a human has approved it.
+/// MCP tool surface for the Claims Agent (Ben, Benefit Claims Advocate):
+/// validating the claimant, checking the policy, calculating the expected
+/// benefit, checking the approval rules, raising the approval (posted to
+/// Microsoft Teams), polling it and — only once a person has approved —
+/// lodging the claim with the insurer.
 ///
 /// Every tool is deterministic and side-effect free except
 /// <see cref="RequestApproval"/> (creates an approval and posts the Teams
-/// card) and <see cref="ReleasePayment"/> (moves an approved payment to
-/// released). The static <c>*Payload</c> builders are shared with
-/// <c>PaymentsApi</c> so the deterministic demo path reports exactly what the
-/// tools return.
+/// card) and <see cref="LodgeClaim"/> (moves an approved claim to lodged).
+/// The static <c>*Payload</c> builders are shared with <c>ClaimsApi</c> so the
+/// offline path reports exactly what the tools return.
 /// </summary>
 [McpServerToolType]
-public class PaymentsMcpTools
+public class ClaimsMcpTools
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -32,377 +29,349 @@ public class PaymentsMcpTools
     };
 
     private readonly CaseStore _cases;
-    private readonly PaymentApprovalStore _payments;
+    private readonly ClaimApprovalStore _approvals;
     private readonly TeamsMcpTools _teams;
-    private readonly ILogger<PaymentsMcpTools> _logger;
+    private readonly ILogger<ClaimsMcpTools> _logger;
 
-    public PaymentsMcpTools(
+    public ClaimsMcpTools(
         CaseStore cases,
-        PaymentApprovalStore payments,
+        ClaimApprovalStore approvals,
         TeamsMcpTools teams,
-        ILogger<PaymentsMcpTools> logger)
+        ILogger<ClaimsMcpTools> logger)
     {
         _cases = cases;
-        _payments = payments;
+        _approvals = approvals;
         _teams = teams;
         _logger = logger;
     }
 
-    [McpServerTool(Name = "payments_validatePayee"),
-     Description("Check that the payee name and bank details match the member or a nominated beneficiary held on file for the Member Case. A mismatch needs Team Leader approval — pay only to nominated accounts. Call once per payee, before requesting approval.")]
-    public string ValidatePayee(
-        [Description("Member Case number, e.g. REQ-20261111-OPS004.")] string caseNumber,
-        [Description("Name on the bank account the money will be paid to.")] string payeeName,
+    [McpServerTool(Name = "claims_validateClaimant"),
+     Description("Check the claimant before anything goes to the insurer: entitled to the benefit (the policy owner for income protection, trauma, TPD and terminal illness; the nominated beneficiaries — or, without a valid nomination, the estate — for a death claim), claim form signed by the verified claimant, contact details not recently changed, bank account in the claimant's own name, and supporting documents. Any red flag means: don't lodge — refer to Financial Crime. Call this first.")]
+    public string ValidateClaimant(
+        [Description("Client Case number, e.g. REQ-20261111-LIF004.")] string caseNumber,
+        [Description("Claimant's name (optional — defaults to the claimant on the case).")] string? claimantName = null,
+        [Description("Claimant's relationship to the policy: policy-owner, beneficiary, estate or other (optional).")] string? relationship = null,
+        [Description("Name on the bank account the benefit would be paid into (optional).")] string? accountName = null,
         [Description("BSB — masked is fine (e.g. '033-***').")] string? bsb = null,
         [Description("Account number — masked is fine (e.g. '****5120').")] string? accountNumber = null)
     {
-        if (string.IsNullOrWhiteSpace(caseNumber)) return Error("caseNumber is required.");
-        if (string.IsNullOrWhiteSpace(payeeName)) return Error("payeeName is required.");
-
-        var record = _cases.Get(caseNumber.Trim());
-        if (record is null) return Error($"case '{caseNumber}' not found.");
-
-        var profile = PaymentRules.ProfileFor(record);
-        var result = PaymentRules.ValidatePayee(profile, payeeName, bsb, accountNumber);
-        return ToJson(ValidatePayeePayload(record.CaseNumber, profile.MemberDisplay, result));
-    }
-
-    [McpServerTool(Name = "payments_checkCaseApproval"),
-     Description("Confirm the eligibility decision recorded on the Member Case (approved, partially approved, declined, blocked by Financial Crime or pending), the approved amount, who decided and the rule cited — and whether the amount to pay is within it. Payments never pays more than was approved.")]
-    public string CheckCaseApproval(
-        [Description("Member Case number.")] string caseNumber,
-        [Description("Gross amount you intend to pay in AUD (total across payees; for a pension commencement, the commencement amount). Optional — defaults to the amount on the case.")] decimal? grossAmount = null)
-    {
-        if (string.IsNullOrWhiteSpace(caseNumber)) return Error("caseNumber is required.");
-
-        var record = _cases.Get(caseNumber.Trim());
-        if (record is null) return Error($"case '{caseNumber}' not found.");
-
-        var profile = PaymentRules.ProfileFor(record);
-        var current = _payments.CurrentForCase(record.CaseNumber);
-        var status = current?.CaseApprovalStatus ?? profile.CaseApprovalStatus;
-        var approved = current is not null ? current.ApprovedAmount : profile.ApprovedAmount;
-        var amount = grossAmount
-            ?? current?.CommencementAmount
-            ?? current?.GrossAmount
-            ?? (profile.PaymentType == PaymentTypes.Pension ? profile.CommencementAmount ?? profile.GrossAmount : profile.GrossAmount);
-
-        var check = PaymentRules.CheckCaseApproval(profile, status, approved, amount);
-        return ToJson(CheckCaseApprovalPayload(record, check));
-    }
-
-    [McpServerTool(Name = "payments_calculateBenefit"),
-     Description("Calculate a benefit payment transparently: gross amount → tax-free component → taxable component (taxed element) → PAYG withholding → net payment. Withholding on the taxed element: under 60 = 22% (20% + 2% Medicare levy); 60 or over = nil; death benefit to a non-dependant for tax = 17% (15% + 2% Medicare levy); death benefit to a tax dependant = nil; rollover = nil. Call once per payee.")]
-    public string CalculateBenefit(
-        [Description("Gross amount for this payee in AUD.")] decimal grossAmount,
-        [Description("Tax-free component as a percentage of the account, e.g. 6 for 6%.")] decimal taxFreePercent,
-        [Description("Recipient tax status: under-60, 60-plus, death-non-dependant, death-dependant or rollover.")] string taxStatus,
-        [Description("Payee name (optional, for the record).")] string? payeeName = null)
-    {
-        if (grossAmount <= 0m) return Error("grossAmount must be greater than zero.");
-        if (taxFreePercent < 0m || taxFreePercent > 100m) return Error("taxFreePercent must be between 0 and 100.");
-
-        var calculation = PaymentRules.Calculate(grossAmount, taxFreePercent, taxStatus);
-        return ToJson(CalculateBenefitPayload(calculation, payeeName));
-    }
-
-    [McpServerTool(Name = "payments_checkAuthorityLimit"),
-     Description("Check whether the payment needs Team Leader approval. Triggers: any single payment of $250,000 or more, any death benefit, any financial hardship release, a pension commencement of $1,000,000 or more, and any blocked case or payee that doesn't match the member or a nominated beneficiary. Every other release still needs the Payments Officer's sign-off.")]
-    public string CheckAuthorityLimit(
-        [Description("Largest single payment in AUD (for a death benefit, the largest beneficiary's gross share).")] decimal grossAmount,
-        [Description("Payment type: hardship, death-benefit, pension, rollover-out, inbound or lump-sum (labels are accepted).")] string paymentType,
-        [Description("Member Case number (optional) — adds the case's blocked status to the check.")] string? caseNumber = null,
-        [Description("Pension commencement amount in AUD (pension commencements only).")] decimal? commencementAmount = null,
-        [Description("True when payments_validatePayee reported a mismatch.")] bool payeeMismatch = false)
-    {
-        if (grossAmount < 0m) return Error("grossAmount can't be negative.");
-
-        var caseBlocked = false;
-        if (!string.IsNullOrWhiteSpace(caseNumber))
+        if (!TryGetCase(caseNumber, out var record, out var error)) return error;
+        var run = ClaimRules.BuildRun(record, new ClaimRunInputs
         {
-            var record = _cases.Get(caseNumber.Trim());
-            if (record is null) return Error($"case '{caseNumber}' not found.");
-
-            var profile = PaymentRules.ProfileFor(record);
-            var current = _payments.CurrentForCase(record.CaseNumber);
-            var status = CaseApprovalStatuses.Normalize(current?.CaseApprovalStatus ?? profile.CaseApprovalStatus);
-            caseBlocked = status == CaseApprovalStatuses.Blocked || current?.Status == PaymentApprovalStatus.Blocked;
-            if (commencementAmount is null && PaymentTypes.Normalize(paymentType) == PaymentTypes.Pension)
-                commencementAmount = current?.CommencementAmount ?? profile.CommencementAmount;
-        }
-
-        var check = PaymentRules.CheckAuthority(paymentType, grossAmount, commencementAmount, payeeMismatch, caseBlocked);
-        return ToJson(CheckAuthorityPayload(check));
+            ClaimantName = claimantName,
+            ClaimantRelationship = relationship,
+            AccountName = accountName,
+            Bsb = bsb,
+            Account = accountNumber,
+        });
+        if (run.Flow == ClaimFlows.NotAClaim) return NotAClaim(run);
+        return ToJson(ValidateClaimantPayload(run));
     }
 
-    [McpServerTool(Name = "payments_requestApproval"),
-     Description("Raise the payment approval request and post the 'Caldova Wealth — Payment approval' Adaptive Card to Microsoft Teams (via teams_sendApprovalCard). Returns the approvalId. There is one live approval per case: if the Payments desk has already raised it, that approvalId is returned instead of a duplicate. Refuses (no card) for blocked or unapproved cases. MUST be called before payments_releasePayment.")]
-    public async Task<string> RequestApproval(
-        [Description("Member Case number.")] string caseNumber,
-        [Description("Gross amount in AUD.")] decimal grossAmount,
-        [Description("PAYG tax withheld in AUD.")] decimal taxWithheld,
-        [Description("Net payment in AUD.")] decimal netAmount,
-        [Description("Payee name(s).")] string payeeName,
-        [Description("Masked bank details, e.g. 'BSB 033-*** ****5120'.")] string? payeeAccount = null,
-        [Description("Payment type (optional — defaults to the case's payment type).")] string? paymentType = null,
-        [Description("Why approval is needed — the authority rules triggered (optional).")] string? reason = null)
+    [McpServerTool(Name = "claims_checkPolicy"),
+     Description("Check the policy behind the claim: in force and premiums paid; the cover type and the definition the claim relies on; the waiting period; exclusions; and how long the policy has been in force — after 3 years the insurer can't avoid it for a non-fraudulent misrepresentation (Insurance Contracts Act 1984 s29(3)). Returns the claim pack (evidence verified, still to come, missing or referred to Financial Crime) and the insurer's Life Insurance Code of Practice timeframes.")]
+    public string CheckPolicy(
+        [Description("Client Case number.")] string caseNumber,
+        [Description("Claim type: income-protection, death, terminal-illness, trauma or tpd (optional — defaults to the case).")] string? claimType = null,
+        [Description("Date of the injury, illness or death, dd/MM/yyyy (optional).")] string? eventDate = null)
     {
-        if (string.IsNullOrWhiteSpace(caseNumber)) return Error("caseNumber is required.");
-        if (grossAmount <= 0m) return Error("grossAmount must be greater than zero.");
-        if (string.IsNullOrWhiteSpace(payeeName)) return Error("payeeName is required.");
+        if (!TryGetCase(caseNumber, out var record, out var error)) return error;
+        var run = ClaimRules.BuildRun(record, new ClaimRunInputs { ClaimType = claimType, EventDate = eventDate });
+        if (run.Flow == ClaimFlows.NotAClaim) return NotAClaim(run);
+        return ToJson(CheckPolicyPayload(run));
+    }
 
-        var record = _cases.Get(caseNumber.Trim());
-        if (record is null) return Error($"case '{caseNumber}' not found.");
+    [McpServerTool(Name = "claims_calculateBenefit"),
+     Description("Calculate the expected benefit step by step. Income protection: the lesser of the insured monthly benefit and the policy's share of average monthly earnings in the 12 months before the disability (Harbourline Life: 70%; APRA caps all benefits at 90% of earnings for the first 6 months of a claim and 70% after, for policies issued from 1 Oct 2021), accruing after the waiting period and paid monthly in arrears. Death: the sum insured times the nominated beneficiary's share, paid directly to them. Includes the tax treatment.")]
+    public string CalculateBenefit(
+        [Description("Client Case number.")] string caseNumber,
+        [Description("Claim type (optional — defaults to the case).")] string? claimType = null,
+        [Description("Insured monthly benefit (income protection) or sum insured (lump sums), AUD (optional).")] decimal? insuredAmount = null,
+        [Description("Earnings in the 12 months before the disability, AUD (income protection, optional).")] decimal? annualEarnings = null,
+        [Description("Waiting period in days (income protection, optional).")] int? waitingPeriodDays = null,
+        [Description("Date the disability started, dd/MM/yyyy (optional).")] string? eventDate = null,
+        [Description("Nominated beneficiary's share in % (death claims, optional).")] decimal? beneficiarySharePercent = null)
+    {
+        if (!TryGetCase(caseNumber, out var record, out var error)) return error;
+        if (insuredAmount is < 0m || annualEarnings is < 0m) return Error("amounts can't be negative.");
+        var run = ClaimRules.BuildRun(record, new ClaimRunInputs
+        {
+            ClaimType = claimType,
+            InsuredAmount = insuredAmount,
+            AnnualEarnings = annualEarnings,
+            WaitingPeriodDays = waitingPeriodDays,
+            EventDate = eventDate,
+            BeneficiarySharePercent = beneficiarySharePercent,
+        });
+        if (run.Flow == ClaimFlows.NotAClaim) return NotAClaim(run);
+        return ToJson(CalculateBenefitPayload(run));
+    }
 
-        var profile = PaymentRules.ProfileFor(record);
-        var payeeKey = PaymentRules.NormalizeName(payeeName);
-        var existing = _payments.ForCase(record.CaseNumber)
-            .Where(r => r.Status is PaymentApprovalStatus.Pending or PaymentApprovalStatus.Approved or PaymentApprovalStatus.Blocked)
-            .FirstOrDefault(r => r.RaisedBy == PaymentRules.RaisedByDesk
-                || r.Status == PaymentApprovalStatus.Blocked
-                || PaymentRules.NormalizeName(r.PayeeName) == payeeKey
-                || r.Payees.Any(p => PaymentRules.NormalizeName(p.Name) == payeeKey));
+    [McpServerTool(Name = "claims_checkApprovalRules"),
+     Description("Check which human approvals the claim needs: every claim lodgement; every death or terminal illness claim; any bank-detail change; a person first for vulnerable clients; and — when the claimant checks raise financial-crime concerns — the Team Leader's decision to block, with nothing lodged. Returns the recommendation (lodge, hold, or don't lodge and refer).")]
+    public string CheckApprovalRules(
+        [Description("Client Case number.")] string caseNumber,
+        [Description("Claim type (optional).")] string? claimType = null,
+        [Description("Claimant's name (optional).")] string? claimantName = null,
+        [Description("Name on the bank account (optional).")] string? accountName = null,
+        [Description("Account number — masked is fine (optional).")] string? accountNumber = null)
+    {
+        if (!TryGetCase(caseNumber, out var record, out var error)) return error;
+        var run = ClaimRules.BuildRun(record, new ClaimRunInputs
+        {
+            ClaimType = claimType,
+            ClaimantName = claimantName,
+            AccountName = accountName,
+            Account = accountNumber,
+        });
+        if (run.Flow == ClaimFlows.NotAClaim) return NotAClaim(run);
+        return ToJson(CheckApprovalRulesPayload(run));
+    }
+
+    [McpServerTool(Name = "claims_requestApproval"),
+     Description("Raise the approval and post the 'Caldova Life Advice — Claim lodgement approval' Adaptive Card to the Team Leader in Microsoft Teams (via teams_sendApprovalCard). Returns the approvalId. One live approval per case: if the Claims desk already raised one, that approvalId is returned. When the claimant checks fail, it raises a block decision instead — that can never be lodged. Nothing is raised when the claim isn't ready (claimant not entitled, cover not on the policy). MUST be called before claims_lodgeClaim.")]
+    public async Task<string> RequestApproval(
+        [Description("Client Case number.")] string caseNumber,
+        [Description("Expected benefit in AUD, from claims_calculateBenefit (optional — checked against the case).")] decimal? expectedBenefit = null,
+        [Description("Your recommendation for the approver (optional).")] string? recommendation = null,
+        [Description("Why approval is needed — the rules triggered (optional).")] string? reason = null)
+    {
+        if (!TryGetCase(caseNumber, out var record, out var error)) return error;
+
+        var existing = _approvals.CurrentForCase(record.CaseNumber);
         if (existing is not null)
             return ToJson(RequestApprovalPayload(existing, null, alreadyRaised: true));
 
-        var type = PaymentTypes.Normalize(string.IsNullOrWhiteSpace(paymentType) ? profile.PaymentType : paymentType);
-        var amountToCheck = type == PaymentTypes.Pension ? profile.CommencementAmount ?? grossAmount : grossAmount;
-        var caseCheck = PaymentRules.CheckCaseApproval(profile, null, null, amountToCheck);
-        var maskedAccount = PaymentRules.MaskAccountText(payeeAccount);
-
-        if (!caseCheck.Payable)
+        var run = ClaimRules.BuildRun(record);
+        if (run.Flow == ClaimFlows.NotAClaim) return NotAClaim(run);
+        if (run.Flow == ClaimFlows.Hold)
         {
-            // Audit trail only: a blocked request never gets a Teams card.
-            var blocked = _payments.Add(new PaymentApprovalRecord
+            return ToJson(new
             {
-                ApprovalId = PaymentApprovalStore.NewApprovalId(),
-                CaseNumber = record.CaseNumber,
-                ClientName = record.ClientName,
-                MemberNumber = record.MemberNumber,
-                MemberDisplay = profile.MemberDisplay,
-                PaymentType = type,
-                GrossAmount = grossAmount,
-                PayeeName = payeeName.Trim(),
-                PayeeAccount = maskedAccount,
-                Reason = caseCheck.Note,
-                ApprovalReasons = [caseCheck.Note],
-                RaisedBy = PaymentRules.RaisedByAgent,
-                CaseApprovalStatus = caseCheck.Status,
-                ApprovedAmount = caseCheck.ApprovedAmount,
-                Status = PaymentApprovalStatus.Blocked,
-                Decision = "blocked",
-                DecidedBy = profile.CaseDecidedBy,
-                DecidedAt = DateTimeOffset.UtcNow,
-                TeamsMessage = "No approval card raised — the case is blocked, so there is nothing to approve or release."
+                tool = "claims_requestApproval",
+                caseNumber = record.CaseNumber,
+                raised = false,
+                flow = run.Flow,
+                reasons = run.Approval.Reasons,
+                note = "No approval raised — the claim isn't ready to lodge. " + run.Approval.Recommendation
             });
-            _logger.LogInformation("payments_requestApproval refused for blocked case {CaseNumber}: {ApprovalId}",
-                Sanitize(record.CaseNumber), Sanitize(blocked.ApprovalId));
-            return ToJson(RequestApprovalPayload(blocked, null, alreadyRaised: false));
         }
 
-        var validation = PaymentRules.ValidatePayee(profile, payeeName, null, payeeAccount);
-        var commencement = type == PaymentTypes.Pension ? profile.CommencementAmount : null;
-        var authority = PaymentRules.CheckAuthority(type, grossAmount, commencement, !validation.Match, caseBlocked: false);
-        var reasonText = !string.IsNullOrWhiteSpace(reason)
-            ? reason.Trim()
-            : authority.Reasons.Count > 0 ? string.Join(" ", authority.Reasons) : authority.Note;
-
-        var approval = _payments.Add(new PaymentApprovalRecord
-        {
-            ApprovalId = PaymentApprovalStore.NewApprovalId(),
-            CaseNumber = record.CaseNumber,
-            ClientName = record.ClientName,
-            MemberNumber = record.MemberNumber,
-            MemberDisplay = profile.MemberDisplay,
-            PaymentType = type,
-            GrossAmount = grossAmount,
-            TaxWithheld = taxWithheld,
-            NetAmount = netAmount,
-            CommencementAmount = commencement,
-            PayeeName = payeeName.Trim(),
-            PayeeAccount = maskedAccount,
-            Payees =
-            [
-                new PaymentPayeeLine
-                {
-                    Name = payeeName.Trim(),
-                    MaskedAccount = maskedAccount,
-                    SharePercent = 100m,
-                    GrossAmount = grossAmount,
-                    TaxWithheld = taxWithheld,
-                    NetAmount = netAmount,
-                    PayeeMatches = validation.Match
-                }
-            ],
-            PaymentDate = profile.PaymentDate,
-            Reason = reasonText,
-            ApprovalReasons = authority.Reasons,
-            Approver = authority.Approver,
-            RaisedBy = PaymentRules.RaisedByAgent,
-            CaseApprovalStatus = caseCheck.Status,
-            ApprovedAmount = caseCheck.ApprovedAmount,
-            Status = PaymentApprovalStatus.Pending
-        });
-
-        var teamsResult = await _teams.SendApprovalCardCoreAsync(new TeamsApprovalCardRequest(
-            ApprovalId: approval.ApprovalId,
-            CaseNumber: approval.CaseNumber,
-            MemberName: approval.MemberDisplay,
-            PaymentType: PaymentTypes.Label(approval.PaymentType),
-            GrossAmount: approval.GrossAmount,
-            TaxWithheld: approval.TaxWithheld,
-            NetAmount: approval.NetAmount,
-            PayeeName: approval.PayeeName,
-            PayeeAccount: approval.PayeeAccount,
-            Reason: approval.Reason,
-            PaymentDate: approval.PaymentDate));
-
+        var approval = _approvals.Add(ClaimRules.CreateApprovalRecord(
+            run,
+            ClaimApprovalStore.NewApprovalId(),
+            ClaimRules.RaisedByAgent,
+            recommendation: recommendation,
+            reason: reason));
+        var teamsResult = await _teams.SendApprovalCardCoreAsync(BuildTeamsRequest(approval));
         approval.TeamsSent = teamsResult.Sent;
         approval.TeamsChannel = teamsResult.Channel;
         approval.TeamsMessage = teamsResult.Message;
         approval.ApprovalUrl = teamsResult.ApprovalUrl;
 
         _logger.LogInformation(
-            "Payment approval requested via MCP: id={ApprovalId} case={CaseNumber} gross={Gross} teamsSent={TeamsSent}",
-            Sanitize(approval.ApprovalId), Sanitize(approval.CaseNumber), approval.GrossAmount, teamsResult.Sent);
+            "Claim approval requested via MCP: id={ApprovalId} case={CaseNumber} kind={Kind} teamsSent={TeamsSent}",
+            Sanitize(approval.ApprovalId), Sanitize(approval.CaseNumber), approval.Kind, teamsResult.Sent);
 
-        return ToJson(RequestApprovalPayload(approval, teamsResult, alreadyRaised: false));
+        var payload = RequestApprovalPayload(approval, teamsResult, alreadyRaised: false);
+        if (expectedBenefit is { } passed && approval.Kind == ClaimDecisionKinds.Lodgement
+            && ClaimRules.Round2(passed) != ClaimRules.Round2(approval.ExpectedBenefit))
+        {
+            return ToJson(new
+            {
+                approval = payload,
+                warning = $"The expected benefit you passed ({ClaimRules.FormatMoney(passed)}) differs from the case calculation ({approval.ExpectedBenefitDisplay}); the approval uses the case calculation."
+            });
+        }
+        return ToJson(payload);
     }
 
-    [McpServerTool(Name = "payments_getApprovalStatus"),
-     Description("Look up the current status of a payment approval: pending, approved, rejected, released, blocked or cancelled (superseded).")]
+    [McpServerTool(Name = "claims_getApprovalStatus"),
+     Description("Current status of a claim approval: pending, approved, rejected, lodged, blocked or cancelled (superseded).")]
     public string GetApprovalStatus(
-        [Description("Approval id returned by payments_requestApproval.")] string approvalId)
+        [Description("Approval id returned by claims_requestApproval.")] string approvalId)
     {
         if (string.IsNullOrWhiteSpace(approvalId)) return Error("approvalId is required.");
-        var record = _payments.Get(approvalId);
+        var record = _approvals.Get(approvalId);
         if (record is null) return Error($"approval '{approvalId}' not found.");
         return ToJson(ApprovalStatusPayload(record));
     }
 
-    [McpServerTool(Name = "payments_releasePayment"),
-     Description("Release a payment that a human has approved. Refuses unless the approval is in the approved state — never call this without prior human approval in Microsoft Teams.")]
-    public string ReleasePayment(
-        [Description("Approval id returned by payments_requestApproval.")] string approvalId)
+    [McpServerTool(Name = "claims_lodgeClaim"),
+     Description("Lodge the claim with the insurer. Call ONLY after a person has approved in Microsoft Teams — the tool refuses while the approval is pending, rejected or superseded, and always refuses a block decision.")]
+    public string LodgeClaim(
+        [Description("Approval id returned by claims_requestApproval.")] string approvalId)
     {
         if (string.IsNullOrWhiteSpace(approvalId)) return Error("approvalId is required.");
-        var result = _payments.Release(approvalId);
+        var result = _approvals.Lodge(approvalId);
         if (result.Record is null) return Error(result.Error ?? $"approval '{approvalId}' not found.");
 
         if (result.Ok)
         {
-            _logger.LogInformation("Payment released via MCP: id={ApprovalId} ref={Reference}",
-                Sanitize(result.Record.ApprovalId), Sanitize(result.Record.PaymentReference ?? string.Empty));
+            _logger.LogInformation("Claim lodged via MCP: id={ApprovalId} ref={Reference}",
+                Sanitize(result.Record.ApprovalId), Sanitize(result.Record.LodgementReference ?? string.Empty));
         }
-        return ToJson(ReleasePayload(result));
+        return ToJson(LodgePayload(result));
     }
 
-    // ── Payload builders shared with PaymentsApi ───────────────────────
+    // ── Shared with ClaimsApi ───────────────────────────────────────────
 
-    internal static object ValidatePayeePayload(string caseNumber, string member, PayeeValidationResult v) => new
-    {
-        tool = "payments_validatePayee",
-        caseNumber,
-        member,
-        payeeName = v.PayeeName,
-        payeeAccount = v.MaskedAccount,
-        nameMatch = v.NameMatch,
-        accountMatch = v.AccountMatch,
-        match = v.Match,
-        matchedOnFile = v.MatchedOnFile,
-        relationship = v.Relationship,
-        humanApprovalRequired = !v.Match,
-        note = v.Note
-    };
+    internal static TeamsApprovalCardRequest BuildTeamsRequest(ClaimApprovalRecord a) => new(
+        ApprovalId: a.ApprovalId,
+        CaseNumber: a.CaseNumber,
+        ClientName: a.ClientDisplay,
+        Policy: $"{a.Insurer} {a.PolicyNumber}".Trim(),
+        Cover: a.CoverDisplay,
+        ClaimType: $"{ClaimCoverTypes.ClaimLabel(a.ClaimType)} — claimant {a.ClaimantName} ({a.ClaimantRole.ToLowerInvariant()})",
+        ExpectedBenefit: a.ExpectedBenefitDisplay,
+        Checks: a.Checks,
+        Recommendation: a.Recommendation,
+        Reason: a.Reason,
+        Kind: a.Kind,
+        Payee: $"{a.PayeeName} — {a.PayeeAccount}",
+        LodgementDate: a.LodgementDate is { } d ? $"{ClaimRules.FormatDate(d)}, after approval" : null,
+        Approver: a.Approver);
 
-    internal static object CheckCaseApprovalPayload(CaseRecord record, CaseApprovalCheckResult c) => new
+    internal static object ValidateClaimantPayload(ClaimRun run)
     {
-        tool = "payments_checkCaseApproval",
-        caseNumber = record.CaseNumber,
-        requestType = record.RequestType,
-        status = c.Status,
-        statusLabel = c.StatusLabel,
-        approvedAmount = c.ApprovedAmount,
-        amountChecked = c.AmountChecked,
-        amountWithinApproval = c.AmountWithinApproval,
-        payable = c.Payable,
-        decidedBy = c.DecidedBy,
-        ruleCited = c.RuleCited,
-        note = c.Note
-    };
-
-    internal static object CalculateBenefitPayload(BenefitCalculation c, string? payeeName) => new
-    {
-        tool = "payments_calculateBenefit",
-        payeeName,
-        inputs = new
-        {
-            grossAmount = c.GrossAmount,
-            taxFreePercent = c.TaxFreePercent,
-            taxStatus = c.TaxStatus
-        },
-        steps = new object[]
-        {
-            new { label = "Gross amount", amount = c.GrossAmount },
-            new { label = $"Tax-free component ({PaymentRules.FormatPercent(c.TaxFreePercent)})", amount = c.TaxFreeComponent },
-            new { label = "Taxable component (taxed element)", amount = c.TaxableComponent },
-            new { label = $"PAYG withholding ({c.WithholdingRateLabel})", amount = -c.TaxWithheld },
-            new { label = "Net payment", amount = c.NetAmount }
-        },
-        taxFreeComponent = c.TaxFreeComponent,
-        taxableComponent = c.TaxableComponent,
-        withholdingRate = c.WithholdingRate,
-        withholdingRateLabel = c.WithholdingRateLabel,
-        taxWithheld = c.TaxWithheld,
-        netAmount = c.NetAmount,
-        netAmountFormatted = PaymentRules.FormatMoney(c.NetAmount),
-        ruleCited = PaymentRules.TaxRuleTitle
-    };
-
-    internal static object CheckAuthorityPayload(AuthorityCheckResult a) => new
-    {
-        tool = "payments_checkAuthorityLimit",
-        paymentType = a.PaymentType,
-        paymentTypeLabel = PaymentTypes.Label(a.PaymentType),
-        largestSinglePayment = a.LargestSinglePayment,
-        commencementAmount = a.CommencementAmount,
-        limits = new
-        {
-            singlePayment = PaymentRules.SinglePaymentLimit,
-            pensionCommencement = PaymentRules.PensionCommencementLimit,
-            deathBenefit = "always",
-            hardshipRelease = "always",
-            blockedOrMismatchedPayee = "always"
-        },
-        humanApprovalRequired = a.Required,
-        approver = a.Approver,
-        reasons = a.Reasons,
-        note = a.Note,
-        ruleCited = PaymentRules.AuthorityRuleTitle
-    };
-
-    internal static object RequestApprovalPayload(PaymentApprovalRecord r, TeamsCardSendResult? teams, bool alreadyRaised)
-    {
-        var blocked = r.Status == PaymentApprovalStatus.Blocked;
-        var note = blocked
-            ? "The case is blocked — no approval card was raised and no payment can be released. Confirm the funds stay in the account."
-            : alreadyRaised
-                ? "An approval for this case is already with the approver in Microsoft Teams — use this approvalId. Call payments_releasePayment only after it has been approved."
-                : "Awaiting human approval in Microsoft Teams. Call payments_releasePayment with this approvalId only after approval has been granted.";
+        var c = run.Claimant;
+        var note = c.ReferToFinancialCrime
+            ? "Don't lodge — refer to Financial Crime. Describe the facts; never accuse the client — they may be the victim."
+            : !c.Entitled
+                ? "Not entitled — confirm who can claim with the adviser before anything is lodged."
+                : c.BankDetailChange
+                    ? "Claimant checks passed, but the bank-detail change needs a person's approval and a call-back on details we already trust."
+                    : "Claimant checks passed.";
         return new
         {
-            tool = "payments_requestApproval",
+            tool = "claims_validateClaimant",
+            caseNumber = run.Case.CaseNumber,
+            client = run.Profile.ClientDisplay,
+            policy = $"{run.Profile.Insurer} {run.Profile.PolicyNumber}",
+            policyOwner = run.Profile.PolicyOwner,
+            claimant = c.ClaimantName,
+            relationship = c.RelationshipLabel,
+            entitled = c.Entitled,
+            entitlement = c.EntitlementNote,
+            supportPerson = run.Profile.SupportPerson,
+            claimFormVerified = c.ClaimFormVerified,
+            contactDetailsTrusted = c.ContactDetailsTrusted,
+            bankAccount = new
+            {
+                name = c.AccountName,
+                account = c.MaskedAccount,
+                inClaimantsOwnName = c.AccountInOwnName,
+                matchesAccountOnFile = c.AccountMatchesFile,
+                bankDetailChange = c.BankDetailChange
+            },
+            referToFinancialCrime = c.ReferToFinancialCrime,
+            redFlags = c.RedFlags,
+            checks = Checks(c.Checks),
+            vulnerable = run.Profile.Vulnerable,
+            note
+        };
+    }
+
+    internal static object CheckPolicyPayload(ClaimRun run)
+    {
+        var p = run.Profile;
+        var policy = run.Policy;
+        return new
+        {
+            tool = "claims_checkPolicy",
+            caseNumber = run.Case.CaseNumber,
+            insurer = p.Insurer,
+            policyNumber = p.PolicyNumber,
+            policyOwner = p.PolicyOwner,
+            lifeInsured = p.LifeInsured,
+            heldOutsideSuper = p.HeldOutsideSuper,
+            cover = p.CoverLines,
+            claimType = ClaimCoverTypes.ClaimLabel(policy.ClaimType),
+            inForce = policy.InForce,
+            premiumsPaid = policy.PremiumsPaid,
+            coverMatches = policy.CoverMatches,
+            definition = p.Definition,
+            definitionMet = policy.DefinitionMet,
+            waitingPeriodDays = p.WaitingPeriodDays,
+            benefitPeriod = p.BenefitPeriod,
+            exclusions = p.Exclusions,
+            timeInForce = policy.TimeInForce,
+            pastMisrepresentationWindow = policy.PastMisrepresentationWindow,
+            checks = Checks(policy.Checks),
+            claimPack = policy.ClaimPack.Select(i => new { document = i.Document, status = i.Status, note = i.Note }),
+            codeTimeframes = run.Timeframes.Select(f => new { label = f.Label, value = f.Value }),
+            rulesCited = new[] { p.PdsTitle, ClaimRules.ClaimsRuleTitle, ClaimRules.DisclosureRuleTitle }.Where(t => t.Length > 0).Distinct()
+        };
+    }
+
+    internal static object CalculateBenefitPayload(ClaimRun run)
+    {
+        var b = run.Benefit;
+        return new
+        {
+            tool = "claims_calculateBenefit",
+            caseNumber = run.Case.CaseNumber,
+            claimType = ClaimCoverTypes.ClaimLabel(b.ClaimType),
+            steps = b.Steps.Select(s => new { label = s.Label, kind = s.Kind, amount = s.Amount, display = s.Display }),
+            insuredAmount = b.InsuredAmount,
+            expectedBenefit = b.Benefit,
+            expectedBenefitDisplay = b.BenefitDisplay,
+            limitedByEarnings = b.LimitedByEarnings,
+            averageMonthlyEarnings = b.MonthlyEarnings,
+            earningsLimit = b.EarningsCap,
+            accruesFrom = b.AccrualStart is { } a ? ClaimRules.FormatDate(a) : null,
+            firstPayment = b.FirstPayment,
+            paidTo = b.PaidTo,
+            benefitBasis = b.ClaimType == ClaimCoverTypes.IncomeProtection ? ClaimRules.IncomeBenefitBasis(run.Profile) : null,
+            taxTreatment = b.TaxTreatment,
+            notes = b.Notes,
+            ruleCited = b.RuleCited,
+            taxRuleCited = b.TaxRuleCited
+        };
+    }
+
+    internal static object CheckApprovalRulesPayload(ClaimRun run)
+    {
+        var a = run.Approval;
+        return new
+        {
+            tool = "claims_checkApprovalRules",
+            caseNumber = run.Case.CaseNumber,
+            flow = run.Flow,
+            humanApprovalRequired = a.Required,
+            approver = a.Approver,
+            reasons = a.Reasons,
+            personFirst = a.PersonFirst,
+            doNotLodge = a.DoNotLodge,
+            recommendation = a.Recommendation,
+            note = a.Note,
+            ruleCited = a.RuleCited
+        };
+    }
+
+    internal static object RequestApprovalPayload(ClaimApprovalRecord r, TeamsCardSendResult? teams, bool alreadyRaised)
+    {
+        var note = r.IsBlockDecision
+            ? "Block decision raised with the Team Leader in Microsoft Teams. Nothing can be lodged — claims_lodgeClaim refuses a block decision."
+            : r.Status == ClaimApprovalStatus.Lodged
+                ? $"This claim has already been lodged (reference {r.LodgementReference})."
+                : alreadyRaised
+                    ? "An approval for this case is already with the approver in Microsoft Teams — use this approvalId. Call claims_lodgeClaim only after it's approved."
+                    : "Awaiting a person's approval in Microsoft Teams. Call claims_lodgeClaim with this approvalId only after approval.";
+        return new
+        {
+            tool = "claims_requestApproval",
             approvalId = r.ApprovalId,
             caseNumber = r.CaseNumber,
+            kind = r.Kind,
             status = r.StatusKey,
-            raised = !blocked,
-            alreadyRaised = alreadyRaised && !blocked,
-            paymentType = PaymentTypes.Label(r.PaymentType),
-            grossAmount = r.GrossAmount,
-            taxWithheld = r.TaxWithheld,
-            netAmount = r.NetAmount,
-            payeeName = r.PayeeName,
-            payeeAccount = r.PayeeAccount,
+            raised = true,
+            alreadyRaised,
+            insurer = r.Insurer,
+            policyNumber = r.PolicyNumber,
+            claimType = ClaimCoverTypes.ClaimLabel(r.ClaimType),
+            expectedBenefit = r.ExpectedBenefitDisplay,
+            recommendation = r.Recommendation,
             approver = r.Approver,
             reasons = r.ApprovalReasons,
             teams = new
@@ -416,57 +385,78 @@ public class PaymentsMcpTools
         };
     }
 
-    internal static object ApprovalStatusPayload(PaymentApprovalRecord r) => new
+    internal static object ApprovalStatusPayload(ClaimApprovalRecord r) => new
     {
-        tool = "payments_getApprovalStatus",
+        tool = "claims_getApprovalStatus",
         approvalId = r.ApprovalId,
         caseNumber = r.CaseNumber,
+        kind = r.Kind,
         status = r.StatusKey,
         decision = r.Decision,
         decidedBy = r.DecidedBy,
         decidedAt = r.DecidedAt,
         decisionComment = r.DecisionComment,
-        grossAmount = r.GrossAmount,
-        netAmount = r.NetAmount,
-        paymentReference = r.PaymentReference,
-        releasedAt = r.ReleasedAt,
-        canRelease = r.Status == PaymentApprovalStatus.Approved
+        lodgementReference = r.LodgementReference,
+        lodgedAt = r.LodgedAt,
+        canLodge = !r.IsBlockDecision && r.Status == ClaimApprovalStatus.Approved
     };
 
-    internal static object ReleasePayload(PaymentTransitionResult result)
+    internal static object LodgePayload(ClaimTransitionResult result)
     {
         var r = result.Record!;
-        var released = result.Ok && r.Status == PaymentApprovalStatus.Released;
-        string note;
-        if (!result.Ok)
-            note = $"Not released: {result.Error}.";
-        else if (result.Note == "already released")
-            note = "Payment had already been released.";
-        else
-            note = r.TaxWithheld > 0m
-                ? $"Payment released to the payment rail. PAYG withheld ({PaymentRules.FormatMoney(r.TaxWithheld)}) is remitted to the ATO."
-                : "Payment released to the payment rail.";
+        var lodged = result.Ok && r.Status == ClaimApprovalStatus.Lodged;
+        var note = !result.Ok
+            ? $"Not lodged: {result.Error}."
+            : result.Note == "already lodged"
+                ? "The claim had already been lodged."
+                : $"Lodged with {r.Insurer} — reference {r.LodgementReference}. The insurer now works to the Life Insurance Code of Practice timeframes.";
         return new
         {
-            tool = "payments_releasePayment",
+            tool = "claims_lodgeClaim",
             approvalId = r.ApprovalId,
-            released,
+            lodged,
             status = r.StatusKey,
-            paymentReference = r.PaymentReference,
-            payees = r.Payees.Select(p => new
-            {
-                name = p.Name,
-                account = p.MaskedAccount,
-                netAmount = p.NetAmount,
-                paymentReference = p.PaymentReference
-            }),
-            netAmount = r.NetAmount,
-            taxWithheld = r.TaxWithheld,
+            insurer = r.Insurer,
+            policyNumber = r.PolicyNumber,
+            lodgementReference = r.LodgementReference,
+            lodgementDate = lodged && r.LodgementDate is { } d ? ClaimRules.FormatDate(d) : null,
+            expectedBenefit = r.ExpectedBenefitDisplay,
+            codeTimeframes = lodged ? r.Timeframes.Select(f => new { label = f.Label, value = f.Value }) : null,
             note
         };
     }
 
     internal static string ToJson(object payload) => JsonSerializer.Serialize(payload, JsonOptions);
+
+    private static IEnumerable<object> Checks(IEnumerable<ClaimCheckLine> checks) =>
+        checks.Select(c => new { check = c.Label, status = c.Status, value = c.Value, detail = c.Detail, source = c.Source });
+
+    private bool TryGetCase(string caseNumber, out CaseRecord record, out string error)
+    {
+        record = null!;
+        error = string.Empty;
+        if (string.IsNullOrWhiteSpace(caseNumber))
+        {
+            error = Error("caseNumber is required.");
+            return false;
+        }
+        var found = _cases.Get(caseNumber.Trim());
+        if (found is null)
+        {
+            error = Error($"case '{caseNumber}' not found.");
+            return false;
+        }
+        record = found;
+        return true;
+    }
+
+    private static string NotAClaim(ClaimRun run) => ToJson(new
+    {
+        caseNumber = run.Case.CaseNumber,
+        flow = run.Flow,
+        note = run.Profile.NotAClaimNote ?? "This case is new advice — there's nothing to claim.",
+        seeAlso = run.Profile.NotAClaimLinks.Select(l => new { agent = l.Label, page = l.Href })
+    });
 
     private static string Error(string message) => ToJson(new { error = message });
 

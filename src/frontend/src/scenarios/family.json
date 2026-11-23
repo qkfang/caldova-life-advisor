@@ -1,0 +1,27 @@
+{
+  "id": "family",
+  "scenarioNumber": 1,
+  "caseId": "REQ-20261103-LIF001",
+  "clientId": "family",
+  "amount": 750000,
+  "outcomeAmount": 750000,
+  "outcome": "approved",
+  "beats": [
+    {"at": "client", "action": "lodge-at-front-desk", "narration": "Hannah Lewis of Yarra Home Loans refers Priya on Tue 3 Nov 2026, with Priya's consent: a new home in Coburg, a $680,000 joint mortgage and a second baby due in March 2027."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent extracts the fact find: Priya, 34, a physiotherapist on $105,000, with Arjun and Asha (2), $45,000 in savings and up to $300 a month for premiums. It runs the in-good-order checklist."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "It also spots a catch: the $50,000 cover in her old Kestrel Retail Super account will stop on 30 Nov 2026 under Protecting Your Super unless she tells the fund to keep it. Olivia opens case REQ-20261103-LIF001 (CL-104582)."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix's agent checks Priya's driver licence and payslip: both legit. KYC is complete, with no PEP or sanctions match."},
+    {"at": "Paraplanner", "action": "paraplanning-needs", "narration": "Penny's agent shows the working: life cover needs of $1,010,000, less $45,000 in savings and $210,000 of super cover, leave a $755,000 shortfall, so $750,000. TPD $600,000, trauma $150,000, and income protection of $6,125 a month with a 90-day waiting period to age 65. It recommends Priya keeps her Kestrel cover until the new cover starts: her decision, with Amelia."},
+    {"at": "Insurance Research Analyst", "action": "research-compare", "narration": "Ivy's agent compares year-1 stepped premiums for the full package: Corella Life $3,180, Harbourline Life $3,412, Lyrebird Life $3,690. Corella is the lowest cost and has own-occupation TPD for physiotherapists. Its level-premium option is $4,050 in year 1."},
+    {"at": "Paraplanner", "action": "paraplanning-soa", "narration": "Penny's agent drafts the Statement of Advice: life and TPD inside super ($858 a year, paid by rollover from Riverbend Super), and the own-occupation TPD extension, trauma and income protection outside super ($193.50 a month). Commission is shown in dollars: $1,908 upfront and $636 a year from year 2. Amelia signs the SoA on 6 Nov, and Priya signs the Authority to Proceed on 7 Nov."},
+    {"at": "Underwriting Coordinator", "action": "underwriting", "narration": "Uma's agent explains the duty to take reasonable care and lodges the Corella Life application on 9 Nov. Decision on 16 Nov: standard rates, asthma accepted, and an exclusion for back and spine conditions on income protection. Priya accepts it with Amelia on 17 Nov, and policy CR-26118204 starts on 18 Nov 2026."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara's agent sends Priya a welcome letter and a plain-English policy summary, and tells Hannah the cover is in place, with no health details, as Priya asked."}
+  ],
+  "result": {
+    "status": "completed",
+    "headline": "Covered from 18 Nov 2026",
+    "figure": "$750,000 life cover",
+    "icon": "✅",
+    "summary": "Outcome: COMPLETED — life $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month from 18 Nov 2026, with a back exclusion on income protection. The old super cover was kept until the new cover started."
+  }
+}

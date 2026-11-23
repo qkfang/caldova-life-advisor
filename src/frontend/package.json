@@ -1,9 +1,9 @@
 {
-  "name": "caldova-wealth-team-ui",
+  "name": "caldova-advice-team-ui",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Wealth Team in a Day — the Caldova Wealth Lakehouse storybook: a voxel house of the idea, the people, the AI agents and the engine room (Babylon.js).",
+  "description": "Advice Team in a Day — Caldova House, the Caldova Life Advice storybook: a voxel heritage bank of the idea, the people, the AI agents and the engine room (Babylon.js).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

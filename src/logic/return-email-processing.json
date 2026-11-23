@@ -62,7 +62,7 @@
             "Create_Conversation": {
                 "type": "Http",
                 "inputs": {
-                    "uri": "https://aif-cs.services.ai.azure.com/api/projects/aif-cs-project/openai/conversations?api-version=2025-05-15-preview",
+                    "uri": "https://aif-caldovacl.services.ai.azure.com/api/projects/aif-caldovacl-project/openai/conversations?api-version=2025-05-15-preview",
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
@@ -90,7 +90,7 @@
             "Generate_Agent_Response": {
                 "type": "Http",
                 "inputs": {
-                    "uri": "https://aif-cs.services.ai.azure.com/api/projects/aif-cs-project/openai/responses?api-version=2025-05-15-preview",
+                    "uri": "https://aif-caldovacl.services.ai.azure.com/api/projects/aif-caldovacl-project/openai/responses?api-version=2025-05-15-preview",
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
@@ -133,7 +133,7 @@
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "check if the response from the return-email-agent indicates a successful run (processed_status = true).\nif successful, nothing to be done.\nif unsuccessful, engage the Client Operations Team Leader via teams\n\nprocess result is below:\n@{body('Filter_Message_Output')[0]['content'][0]['text']}"
+                                "content": "check if the response from the return-email-agent indicates a successful run (processed_status = true).\nif successful, nothing to be done.\nif unsuccessful, engage the Practice Team Leader via teams\n\nprocess result is below:\n@{body('Filter_Message_Output')[0]['content'][0]['text']}"
                             }
                         ],
                         "agentModelType": "AzureOpenAI",
@@ -173,7 +173,7 @@
                                                 "Click to Complete Manual Review"
                                             ],
                                             "recipient": {
-                                                "to": "client-ops-team-leader@caldova.example",
+                                                "to": "practice-team-leader@caldova.example",
                                                 "summary": "Return Email Process Issue"
                                             },
                                             "messageBody": "[manual review required]\n\nsender_email: @{variables('fabricLog')['sender_email']}\n\nsender_email_title: @{variables('fabricLog')['sender_email_title']}\n\nsender_email_body: @{variables('fabricLog')['sender_email_body']}\n\ncase_number: @{variables('agentResponse')?['case_number']}\n\nfabric_filename: @{variables('fabricFileName')}\n\nprocessing_note: @{variables('agentResponse')['processing_note']}",
@@ -242,7 +242,7 @@
                                 }
                             }
                         },
-                        "description": "raise an acknowledgement or status email the agent could not complete to the Client Operations Team Leader in Teams for manual review"
+                        "description": "raise an acknowledgement or status email the agent could not complete to the Practice Team Leader in Teams for manual review"
                     }
                 },
                 "runAfter": {

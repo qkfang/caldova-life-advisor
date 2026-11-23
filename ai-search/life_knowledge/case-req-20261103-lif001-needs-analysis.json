@@ -1,0 +1,28 @@
+{
+  "id": "case-req-20261103-lif001-needs-analysis",
+  "title": "Case REQ-20261103-LIF001 — needs analysis",
+  "category": "Case File",
+  "requestType": "New protection advice",
+  "caseNumber": "REQ-20261103-LIF001",
+  "clientNumber": "CL-104582",
+  "content": "Needs analysis prepared by the Paraplanning Agent's Needs Analysis assistant for Penny (Paraplanning) for Priya Natarajan (CL-104582), case REQ-20261103-LIF001, from the fact find of 3 Nov 2026. The working is shown step by step so Penny and Amelia, Caldova's Senior Risk Adviser, can check it. These are calculations for the adviser, not advice to the client.\n\nInputs: joint mortgage $680,000; daughter Asha (2) and a second baby due March 2027; salary $105,000; savings $45,000; existing super death and TPD cover of $210,000 with Riverbend Super. The $50,000 Kestrel Retail Super death cover is not counted, because it stops on 30 Nov 2026 unless Priya elects to keep it.\n\n1 Life cover\nMortgage $680,000\n+ children's education 2 × $50,000 = $100,000\n+ family income support $40,000 × 5 years = $200,000\n+ final expenses and emergency fund $30,000\n= total need $1,010,000\n− savings $45,000 − existing super death cover $210,000\n= shortfall $755,000 → recommend $750,000\n\n2 TPD cover\nMortgage $680,000 + rehabilitation and home modifications $100,000 + emergency fund $30,000 = $810,000\n− existing super TPD cover $210,000\n= $600,000\n\n3 Trauma cover\nSix months' income $52,500 + medical costs and partner's time off $50,000 + debt reduction $50,000 = $152,500 → $150,000\n\n4 Income protection\n70% × $105,000 = $73,500 a year = $6,125 a month; 90-day waiting period; benefit period to age 65.\n\nStructure for Amelia to consider: life and any-occupation TPD inside super (Corella Life's super plan, with premiums funded by a rollover from Riverbend Super, so they don't come from cash flow), plus an own-occupation TPD extension outside super (super-linked), because Priya's work as a physiotherapist is physical and new own-occupation TPD cover can't be held inside super (SIS Regs reg 4.07D); trauma and income protection outside super — trauma can't be held inside super either, and income protection premiums that protect salary and wages are tax-deductible outside super. See 'Insurance inside super — permitted cover, Protecting Your Super and opt-in rules' and 'Tax on life insurance — premiums and benefits'.\n\nExisting cover: keep the Riverbend Super cover ($210,000), which is counted above. Recommend that Priya elects to keep the Kestrel Retail Super cover until the new cover is in force; cancelling or replacing any cover is a human decision made with Amelia (see 'Advice rules — best interests duty, SoA and replacement advice').\n\nSummary for research: life $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month. Lump-sum cover totals $1,500,000, under the $2,000,000 second-review threshold.",
+  "severity": "medium",
+  "department": "Paraplanning",
+  "tags": [
+    "priya-natarajan",
+    "REQ-20261103-LIF001",
+    "CL-104582",
+    "needs-analysis",
+    "life-cover-750000",
+    "tpd-600000",
+    "trauma-150000",
+    "income-protection-6125",
+    "90-day-waiting-period",
+    "benefit-period-age-65",
+    "super-linking",
+    "own-occupation-tpd",
+    "inside-super",
+    "outside-super"
+  ],
+  "lastUpdated": "2026-11-04T05:00:00Z"
+}

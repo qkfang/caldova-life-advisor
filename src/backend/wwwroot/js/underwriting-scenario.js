@@ -1,380 +1,400 @@
-// Transfers & Rollovers Agent page (/agents/transfers-rollovers) — "Try it out".
-// Loaded as a permanent script from App.razor so init runs reliably on full
-// page load AND on Blazor enhanced navigation (inline <script> tags inside
-// razor pages do not re-execute on enhanced nav).
+// Underwriting & New Business "Try it out" wiring (/agents/underwriting).
 //
-// Flow: pick a Member Case → engage Rory's agent (/transfers/process,
-// streamed) → counterparties, insurance warnings, SMSF verification and SLA →
-// rollover request dispatched / held / scheduled with the PDF download.
+// Loaded as a permanent script from App.razor so init runs on a full page
+// load AND on Blazor enhanced navigation (inline <script> tags inside razor
+// pages do not re-execute on enhanced nav).
+//
+// Flow: 1 pick a Client Case (claim cases get a short note pointing to
+// Claims) → 2 insurer and requirements → 3 disclosure checklist (the duty to
+// take reasonable care first) → 4 engage Uma's agent, which generates the
+// application and disclosure summary PDF → 5 underwriting timeline and the
+// decision in plain English → 6 the client's decision with Amelia.
+// Endpoints: /underwriting/cases, /underwriting/cases/{n},
+// /underwriting/plan/{n}, /underwriting/process,
+// /underwriting/application/{id}.pdf. Open with ?case=REQ-… to pre-select.
 (function () {
     function init() {
-        const root = document.querySelector('.tr-panel');
+        const root = document.querySelector('.uw-panel');
         if (!root || root.dataset.wired === '1') return;
         root.dataset.wired = '1';
 
         // Re-query the live document each time so a Blazor enhanced
         // navigation swap never leaves us writing into a detached node.
         const $ = sel => {
-            const r = document.querySelector('.tr-panel') || root;
+            const r = document.querySelector('.uw-panel') || root;
             return r ? r.querySelector(sel) : null;
         };
 
         function escapeHtml(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
-
         function show(sel, visible) {
             const el = $(sel);
             if (el) el.hidden = !visible;
         }
-
         function setText(sel, value) {
             const el = $(sel);
             if (el) el.textContent = value == null ? '' : value;
         }
-
+        function setHtml(sel, html) {
+            const el = $(sel);
+            if (el) el.innerHTML = html;
+        }
         function tone(t) {
             return ['ok', 'warn', 'blocked', 'info'].includes(t) ? t : 'info';
         }
+        function money(v) {
+            const n = Number(v);
+            if (!isFinite(n) || n === 0) return '—';
+            return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: n % 1 === 0 ? 0 : 2 });
+        }
+        function formatReceived(value) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+            if (!m) return value || '';
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        }
 
-        function resetDownstream() {
-            show('#tr-process-status', false);
-            show('#tr-plan-step', false);
-            show('#tr-request-step', false);
+        let selectSeq = 0;
+
+        function resetAll() {
+            ['#uw-case-summary', '#uw-note', '#uw-load-status', '#uw-insurer-step', '#uw-disclosure-step',
+             '#uw-engage-step', '#uw-process-status', '#uw-pdf', '#uw-timeline-step', '#uw-client-step']
+                .forEach(sel => show(sel, false));
+            const btn = $('#uw-process-btn');
+            if (btn) btn.disabled = true;
+        }
+
+        function loadError(message) {
+            const status = $('#uw-load-status');
+            if (!status) return;
+            status.hidden = false;
+            status.className = 'uw-status error';
+            status.textContent = message;
         }
 
         // ── Step 1: cases ────────────────────────────────────────────────
         async function loadCases(preferred) {
-            const select = $('#tr-case-select');
+            const select = $('#uw-case-select');
             if (select) select.innerHTML = '<option value="">— Loading cases —</option>';
-            show('#tr-case-summary', false);
-            show('#tr-step-2', false);
-            show('#tr-empty', false);
-            const btn = $('#tr-process-btn');
-            if (btn) btn.disabled = true;
-            resetDownstream();
+            show('#uw-empty', false);
+            resetAll();
             try {
-                const res = await fetch('/transfers/cases');
+                const res = await fetch('/underwriting/cases');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const cases = await res.json();
                 if (!cases.length) {
                     if (select) select.innerHTML = '<option value="">— No cases available —</option>';
-                    show('#tr-empty', true);
+                    show('#uw-empty', true);
                     return;
                 }
                 if (select) {
                     select.innerHTML = '<option value="">— Select a case —</option>' + cases.map(c =>
-                        `<option value="${escapeHtml(c.caseNumber)}">${escapeHtml(c.caseNumber)} — ${escapeHtml(c.clientName)} (${escapeHtml(c.requestType)})</option>`
+                        `<option value="${escapeHtml(c.caseNumber)}">${escapeHtml(c.caseNumber)} — ${escapeHtml(c.clientName)} (${escapeHtml(c.requestType)})${c.applicable ? '' : ' · Claims'}</option>`
                     ).join('');
-                    if (preferred && cases.some(c => c.caseNumber === preferred)) {
-                        select.value = preferred;
-                        selectCase();
+                    if (preferred) {
+                        const match = cases.find(c => String(c.caseNumber).toLowerCase() === String(preferred).toLowerCase());
+                        if (match) {
+                            select.value = match.caseNumber;
+                            selectCase();
+                        }
                     }
                 }
             } catch (err) {
                 if (select) select.innerHTML = '<option value="">— Failed to load —</option>';
-                const status = $('#tr-process-status');
-                if (status) {
-                    status.hidden = false;
-                    status.className = 'tr-status error';
-                    status.textContent = 'Failed to load cases: ' + err.message;
-                }
+                loadError('Failed to load cases: ' + err.message);
             }
         }
 
         async function selectCase() {
-            const select = $('#tr-case-select');
+            const select = $('#uw-case-select');
             const caseNumber = select ? select.value : '';
-            const summary = $('#tr-case-summary');
-            const btn = $('#tr-process-btn');
-            resetDownstream();
-            if (!caseNumber) {
-                if (summary) summary.hidden = true;
-                show('#tr-step-2', false);
-                if (btn) btn.disabled = true;
-                return;
-            }
+            const seq = ++selectSeq;
+            resetAll();
+            if (!caseNumber) return;
             try {
-                const res = await fetch('/transfers/cases/' + encodeURIComponent(caseNumber));
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const c = await res.json();
-                const adviser = c.adviserPractice ? `${c.adviserName} (${c.adviserPractice})` : c.adviserName;
-                if (summary) {
-                    summary.innerHTML =
-                        `<div><span class="k">Case</span>${escapeHtml(c.caseNumber)}</div>` +
-                        `<div><span class="k">Client</span>${escapeHtml(c.clientName)}</div>` +
-                        `<div><span class="k">Member no.</span>${escapeHtml(c.memberNumber)}</div>` +
-                        `<div><span class="k">Product</span>${escapeHtml(c.product)}</div>` +
-                        `<div><span class="k">Request type</span>${escapeHtml(c.requestType)}</div>` +
-                        `<div><span class="k">Received</span>${escapeHtml(c.receivedDate)}</div>` +
-                        `<div><span class="k">Adviser</span>${escapeHtml(adviser)}</div>` +
-                        `<div><span class="k">Amount</span>${escapeHtml(c.amount)}</div>` +
-                        `<div><span class="k">Priority</span>${escapeHtml(c.priority)}</div>` +
-                        `<div class="wide"><span class="k">Summary</span>${escapeHtml(c.requestSummary)}</div>`;
-                    summary.hidden = false;
+                const enc = encodeURIComponent(caseNumber);
+                const [caseRes, planRes] = await Promise.all([
+                    fetch('/underwriting/cases/' + enc),
+                    fetch('/underwriting/plan/' + enc)
+                ]);
+                if (!caseRes.ok) throw new Error('HTTP ' + caseRes.status);
+                if (!planRes.ok) throw new Error('HTTP ' + planRes.status);
+                const c = await caseRes.json();
+                const plan = await planRes.json();
+                if (seq !== selectSeq) return;
+
+                setHtml('#uw-case-summary',
+                    `<div><span class="k">Case</span>${escapeHtml(c.caseNumber)}</div>` +
+                    `<div><span class="k">Client</span>${escapeHtml(c.clientName)}</div>` +
+                    `<div><span class="k">Client no.</span>${escapeHtml(c.clientNumber)}</div>` +
+                    `<div><span class="k">Cover</span>${escapeHtml(c.cover)}</div>` +
+                    `<div><span class="k">Request type</span>${escapeHtml(c.requestType)}</div>` +
+                    `<div><span class="k">Received</span>${escapeHtml(formatReceived(c.receivedDate))}</div>` +
+                    `<div><span class="k">Adviser</span>${escapeHtml(c.adviserName)}</div>` +
+                    `<div><span class="k">Referred by</span>${escapeHtml(c.referredBy || 'Existing client')}</div>` +
+                    `<div><span class="k">Priority</span>${escapeHtml(c.priority)}</div>` +
+                    `<div class="wide"><span class="k">Summary</span>${escapeHtml(c.requestSummary)}</div>`);
+                show('#uw-case-summary', true);
+
+                if (!plan.applicable) {
+                    setText('#uw-note-text', plan.notApplicableNote || 'This case is looked after by another agent.');
+                    setHtml('#uw-note-links', (plan.redirects || [])
+                        .map(l => `<a href="${escapeHtml(l.href)}">${escapeHtml(l.label)} →</a>`).join(''));
+                    show('#uw-note', true);
+                    return;
                 }
-                show('#tr-step-2', true);
+
+                renderInsurer(plan);
+                renderDisclosures(plan);
+                show('#uw-insurer-step', true);
+                show('#uw-disclosure-step', true);
+                show('#uw-engage-step', true);
+                const btn = $('#uw-process-btn');
                 if (btn) btn.disabled = false;
             } catch (err) {
-                if (summary) summary.hidden = true;
-                show('#tr-step-2', false);
-                if (btn) btn.disabled = true;
-                const status = $('#tr-process-status');
-                if (status) {
-                    status.hidden = false;
-                    status.className = 'tr-status error';
-                    status.textContent = 'Failed to load case: ' + err.message;
-                }
+                if (seq !== selectSeq) return;
+                loadError('Failed to load case: ' + err.message);
             }
         }
 
-        // ── Step 2: engage ───────────────────────────────────────────────
+        // ── Step 2: insurer and requirements ─────────────────────────────
+        function renderInsurer(plan) {
+            setText('#uw-plan-status', `As at ${plan.asAtLabel}. ${plan.overallStatus}. Lodged: ${plan.lodgedOn}.`);
+            const ins = plan.insurer;
+            if (ins) {
+                const list = arr => (arr || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+                const contacts = [ins.newBusinessContact, ins.underwritingContact, ins.claimsContact, ins.claimsIntegrityContact].filter(Boolean);
+                setHtml('#uw-insurer',
+                    '<div>' +
+                        `<div><span class="uw-insurer-name">${escapeHtml(ins.name)}</span><span class="uw-insurer-prefix">${escapeHtml(ins.policyPrefix)}…</span></div>` +
+                        `<div>${escapeHtml(ins.profile)}</div>` +
+                        `<span class="k">Cover</span><div>${escapeHtml(ins.covers)}</div>` +
+                        `<span class="k">Contacts</span><ul>${list(contacts)}</ul>` +
+                        `<span class="k">Cooling-off</span><div>${escapeHtml(ins.coolingOff)}</div>` +
+                    '</div>' +
+                    '<div>' +
+                        `<span class="k">Service standards</span><ul>${list(ins.serviceLevels)}</ul>` +
+                        `<span class="k">Underwriting thresholds</span><ul>${list(ins.underwritingThresholds)}</ul>` +
+                        `<span class="k">Caldova cases</span><div>${escapeHtml(ins.caldovaCases)}</div>` +
+                        `<span class="k">Chasing</span><div>${escapeHtml(ins.chasing)}</div>` +
+                    '</div>');
+            } else {
+                setHtml('#uw-insurer', `<div>${escapeHtml(plan.headline)}</div>`);
+            }
+
+            const covers = Array.isArray(plan.covers) ? plan.covers : [];
+            setHtml('#uw-covers', covers.length
+                ? '<thead><tr><th>Life insured</th><th>Cover</th><th class="num">Sum insured</th><th>Ownership</th><th class="num">Premium (yr 1)</th><th>Paid by</th></tr></thead><tbody>' +
+                  covers.map(cv => '<tr>' +
+                      `<td>${escapeHtml(cv.lifeInsured)}</td>` +
+                      `<td>${escapeHtml(cv.cover)}${cv.policyNumber ? `<p class="muted">Policy ${escapeHtml(cv.policyNumber)}</p>` : ''}</td>` +
+                      `<td class="num">${escapeHtml(cv.sumInsured)}</td>` +
+                      `<td>${escapeHtml(cv.ownership)}</td>` +
+                      `<td class="num">${escapeHtml(money(cv.premiumStandard))}</td>` +
+                      `<td>${escapeHtml(cv.paidBy)}</td>` +
+                  '</tr>').join('') + '</tbody>'
+                : '<tbody><tr><td>The covers come from the signed Statement of Advice.</td></tr></tbody>');
+            setText('#uw-premium-note', covers.length ? `Quoted ${money(plan.annualPremiumStandard)} a year at standard rates (year 1).` : plan.premiumNote);
+
+            const lives = Array.isArray(plan.livesInsured) ? plan.livesInsured : [];
+            setHtml('#uw-lives', lives.map(l => {
+                const sums = [
+                    l.lifeSumInsured ? `Life ${money(l.lifeSumInsured)}` : null,
+                    l.tpdSumInsured ? `TPD ${money(l.tpdSumInsured)}` : null,
+                    l.traumaSumInsured ? `Trauma ${money(l.traumaSumInsured)}` : null,
+                    l.incomeProtectionMonthly ? `IP ${money(l.incomeProtectionMonthly)} a month` : null,
+                ].filter(Boolean).join(' · ');
+                return '<div class="uw-life">' +
+                    `<div class="uw-life-name">${escapeHtml(l.name)} · age ${escapeHtml(l.age)}</div>` +
+                    `<div>${escapeHtml(l.occupation)}${l.smoker ? ' · ' + escapeHtml(l.smoker) : ''}</div>` +
+                    `<div class="uw-life-sums">${escapeHtml(sums)}${l.businessCover ? ' · ' + escapeHtml(l.businessCover) : ''}</div>` +
+                '</div>';
+            }).join(''));
+
+            const reqs = Array.isArray(plan.requirements) ? plan.requirements : [];
+            setHtml('#uw-requirements', reqs.length
+                ? '<thead><tr><th>Life insured</th><th>Requirement</th><th>Why</th><th>Status</th></tr></thead><tbody>' +
+                  reqs.map(r => '<tr>' +
+                      `<td>${escapeHtml(r.lifeInsured)}</td>` +
+                      `<td><strong>${escapeHtml(r.requirement)}</strong><p class="muted">${escapeHtml(r.category)}</p></td>` +
+                      `<td>${escapeHtml(r.reason)}${r.outcome ? `<p class="muted">${escapeHtml(r.outcome)}</p>` : ''}</td>` +
+                      `<td><span class="uw-pill ${tone(r.tone)}">${escapeHtml(r.status)}</span>${r.date ? `<p class="muted">${escapeHtml(r.date)}</p>` : ''}</td>` +
+                  '</tr>').join('') + '</tbody>'
+                : '');
+        }
+
+        // ── Step 3: disclosure checklist ─────────────────────────────────
+        function renderDisclosures(plan) {
+            setText('#uw-duty-script', plan.dutyOfCareScript);
+            setText('#uw-duty-ack', plan.dutyAcknowledgement);
+            const icons = { done: '✓', disclosed: '✎', action: '!', info: 'ⓘ' };
+            const words = { done: 'Done', disclosed: 'Disclosed', action: 'To do', info: 'Note' };
+            setHtml('#uw-disclosures', (plan.disclosures || []).map(d => {
+                const s = ['done', 'disclosed', 'action', 'info'].includes(d.status) ? d.status : 'info';
+                return `<li class="${s}"><span class="icon" aria-hidden="true">${icons[s]}</span>` +
+                    `<div><span class="label">${escapeHtml(d.label)}</span><span class="state">${words[s]}</span>` +
+                    `<div class="detail">${escapeHtml(d.detail)}</div></div></li>`;
+            }).join(''));
+        }
+
+        // ── Step 4: engage + PDF ─────────────────────────────────────────
         async function processCase() {
-            const select = $('#tr-case-select');
+            const select = $('#uw-case-select');
             const caseNumber = select ? select.value : '';
             if (!caseNumber) return;
-            const btn = $('#tr-process-btn');
-            const status = $('#tr-process-status');
+            const btn = $('#uw-process-btn');
+            const status = $('#uw-process-status');
             const scope = $('.engage-tabs-scope');
             if (btn) btn.disabled = true;
             if (status) {
                 status.hidden = false;
-                status.className = 'tr-status';
-                status.innerHTML = '<span class="spinner"></span>Engaging the Transfers &amp; Rollovers Agent…';
+                status.className = 'uw-status';
+                status.innerHTML = '<span class="spinner"></span>Engaging the Underwriting Agent…';
             }
-            show('#tr-plan-step', false);
-            show('#tr-request-step', false);
+            show('#uw-pdf', false);
+            show('#uw-timeline-step', false);
+            show('#uw-client-step', false);
 
             try {
                 const data = await window.zcAgentStream({
-                    url: '/transfers/process',
+                    url: '/underwriting/process',
                     body: { caseNumber },
                     onDelta: (_chunk, fullText) => {
                         if (window.engageTabsStreamNarrative) window.engageTabsStreamNarrative(scope, fullText);
                     },
                     onError: (msg) => {
-                        const s = $('#tr-process-status');
+                        const s = $('#uw-process-status');
                         if (s) {
-                            s.className = 'tr-status error';
-                            s.textContent = 'Agent error: ' + msg + ' — showing the deterministic plan.';
+                            s.className = 'uw-status error';
+                            s.textContent = 'Agent error: ' + msg + ' — showing the offline underwriting plan.';
                         }
                     }
                 });
                 if (!data) throw new Error('No response from the agent');
+                if (window.engageTabsRender) window.engageTabsRender(scope, data);
 
-                const s = $('#tr-process-status');
+                const s = $('#uw-process-status');
+                if (data.applicable === false) {
+                    if (s) { s.className = 'uw-status'; s.textContent = 'Not an underwriting case — see the note above.'; }
+                    return;
+                }
                 if (s) {
                     if (data.agentError) {
-                        s.className = 'tr-status error';
-                        s.textContent = 'The live agent didn\'t complete (' + data.agentError + ') — showing the deterministic transfer plan.';
+                        s.className = 'uw-status warn';
+                        s.textContent = 'The live agent didn\'t complete (' + data.agentError + ') — showing the offline underwriting plan and PDF.';
                     } else if (!data.agentConfigured) {
-                        s.className = 'tr-status';
-                        s.textContent = 'Processed with the deterministic transfer plan (Foundry agent not configured) — same directory, checks and PDF as the MCP tools.';
+                        s.className = 'uw-status';
+                        s.textContent = 'Prepared offline (Foundry agent not configured) — the same APL directory, requirement checks and PDF the MCP tools use.';
                     } else {
-                        s.className = 'tr-status';
-                        s.textContent = 'The Transfers & Rollovers Agent prepared the transfer plan.';
+                        s.className = 'uw-status';
+                        s.textContent = 'The Underwriting Agent prepared the application summary.';
                     }
                 }
 
-                if (window.engageTabsRender) window.engageTabsRender(scope, data);
-                renderPlan(data);
-                renderRequest(data);
-                const req = $('#tr-request-step');
-                if (req) req.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                renderPdf(data);
+                renderTimeline(data.plan || {});
+                renderClientDecision(data.plan || {});
+                const step = $('#uw-timeline-step');
+                if (step) step.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } catch (err) {
-                const s = $('#tr-process-status');
+                const s = $('#uw-process-status');
                 if (s) {
-                    s.className = 'tr-status error';
+                    s.className = 'uw-status error';
                     s.textContent = 'Failed to process: ' + err.message;
                 }
             } finally {
-                const b = $('#tr-process-btn');
-                const sel = $('#tr-case-select');
+                const b = $('#uw-process-btn');
+                const sel = $('#uw-case-select');
                 if (b) b.disabled = !(sel && sel.value);
             }
         }
 
-        // ── Step 3: counterparties, warnings, SVS, SLA ───────────────────
-        function renderPlan(data) {
-            const plan = data.plan || {};
-            setText('#tr-plan-asat', plan.asAtLabel ? `As at ${plan.asAtLabel}. ${plan.overallStatus || ''}` : (plan.overallStatus || ''));
-
-            const legs = Array.isArray(plan.legs) ? plan.legs : [];
-            const legsTable = $('#tr-legs-table');
-            if (legsTable) {
-                legsTable.innerHTML = legs.length
-                    ? '<thead><tr><th>Counterparty</th><th>Direction</th><th>From → To</th><th class="num">Amount</th><th>Status</th><th>Why</th><th>Due</th></tr></thead><tbody>' +
-                      legs.map(l =>
-                          '<tr>' +
-                              `<td><strong>${escapeHtml(l.counterparty)}</strong>` +
-                                  (l.counterpartyId ? `<div class="muted mono">${escapeHtml(l.counterpartyId)}</div>` : '') +
-                                  `<div class="muted">${escapeHtml(l.counterpartyType)}</div></td>` +
-                              `<td>${escapeHtml(l.direction)}<div class="muted">${escapeHtml(l.transferType)}</div></td>` +
-                              `<td>${escapeHtml(l.from)}<div class="muted">→ ${escapeHtml(l.to)}</div></td>` +
-                              `<td class="num">${escapeHtml(l.amountLabel)}</td>` +
-                              `<td><span class="tr-pill ${tone(l.statusTone)}">${escapeHtml(l.status)}</span>` +
-                                  (l.reference ? `<div class="muted mono">${escapeHtml(l.reference)}</div>` : '') + '</td>' +
-                              `<td>${escapeHtml(l.reason)}</td>` +
-                              `<td>${escapeHtml(l.due)}</td>` +
-                          '</tr>').join('') + '</tbody>'
-                    : '';
+        function renderPdf(data) {
+            const link = $('#uw-pdf-link');
+            const open = $('#uw-pdf-open');
+            if (!data.applicationPdfUrl || !link) {
+                show('#uw-pdf', false);
+                return;
             }
-            show('#tr-legs-wrap', legs.length > 0);
-            const legsEmpty = $('#tr-legs-empty');
-            if (legsEmpty) {
-                legsEmpty.hidden = legs.length > 0;
-                legsEmpty.innerHTML = legs.length ? '' : `<strong>No transfer required.</strong> ${escapeHtml(plan.headline)}`;
-            }
-
-            const warnings = Array.isArray(plan.insuranceWarnings) ? plan.insuranceWarnings : [];
-            const warnEl = $('#tr-warnings');
-            if (warnEl) {
-                warnEl.innerHTML = warnings.map(w =>
-                    '<div class="tr-callout warn">' +
-                        `<strong>⚠️ ${escapeHtml(w.fund)} — ${escapeHtml(w.cover)} cover of ${escapeHtml(Number(w.amount).toLocaleString('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }))}</strong> ` +
-                        `<span class="tr-pill warn">${escapeHtml(w.status)}</span><br />${escapeHtml(w.message)}` +
-                        `<span class="tr-callout-action">Action: ${escapeHtml(w.action)}</span>` +
-                    '</div>').join('');
-            }
-            show('#tr-warnings-block', warnings.length > 0);
-
-            const svs = plan.svs;
-            if (svs) {
-                const head = $('#tr-svs-head');
-                if (head) {
-                    head.innerHTML =
-                        `<span class="tr-pill ${svs.passed ? 'ok' : 'blocked'}">${escapeHtml(svs.outcome)}</span> ` +
-                        `<strong>${escapeHtml(svs.fundName || 'SMSF')}</strong> · ABN ${escapeHtml(svs.abn)}` +
-                        (svs.complianceStatus ? ` · ${escapeHtml(svs.complianceStatus)}` : '');
-                }
-                const table = $('#tr-svs-table');
-                if (table) {
-                    table.innerHTML = '<thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead><tbody>' +
-                        (svs.checks || []).map(ch =>
-                            `<tr><td>${escapeHtml(ch.check)}</td>` +
-                            `<td><span class="tr-pill ${ch.passed ? 'ok' : 'blocked'}">${ch.passed ? 'Pass' : 'Fail'}</span></td>` +
-                            `<td>${escapeHtml(ch.detail)}</td></tr>`).join('') + '</tbody>';
-                }
-                setText('#tr-svs-rec', svs.recommendation);
-            }
-            show('#tr-svs-block', !!svs);
-
-            const counterparties = Array.isArray(plan.counterparties) ? plan.counterparties : [];
-            const cards = $('#tr-counterparties');
-            if (cards) {
-                cards.innerHTML = counterparties.map(cp => {
-                    const id = [cp.usi ? 'USI ' + cp.usi : null, cp.abn ? 'ABN ' + cp.abn : null].filter(Boolean).join(' · ');
-                    return '<div class="tr-card">' +
-                        `<div class="tr-card-name">${escapeHtml(cp.name)}</div>` +
-                        (id ? `<div class="tr-card-id">${escapeHtml(id)}</div>` : '') +
-                        `<div class="tr-card-row"><span class="k">Type</span>${escapeHtml(cp.type)}</div>` +
-                        `<div class="tr-card-row"><span class="k">Channel</span>${escapeHtml(cp.channel)}</div>` +
-                        `<div class="tr-card-row"><span class="k">Contact</span>${escapeHtml(cp.contact)}</div>` +
-                        (cp.esa ? `<div class="tr-card-row"><span class="k">ESA</span>${escapeHtml(cp.esa)}</div>` : '') +
-                        `<div class="tr-card-row"><span class="k">Turnaround</span>${escapeHtml(cp.turnaroundNote)}</div>` +
-                        (cp.insuranceHeld ? `<div class="tr-card-row tr-card-insurance"><span class="k">Insurance held</span>${escapeHtml(cp.insuranceHeld)}</div>` : '') +
-                        `<div class="tr-card-row"><span class="k">Notes</span>${escapeHtml(cp.notes)}</div>` +
-                    '</div>';
-                }).join('');
-            }
-            show('#tr-counterparties-block', counterparties.length > 0);
-
-            const sla = Array.isArray(plan.sla) ? plan.sla : [];
-            const slaTable = $('#tr-sla-table');
-            if (slaTable) {
-                slaTable.innerHTML = '<thead><tr><th>Item</th><th>Counterparty</th><th>Started</th><th>Due</th><th>Status</th><th>Note</th></tr></thead><tbody>' +
-                    sla.map(s =>
-                        `<tr><td><strong>${escapeHtml(s.item)}</strong></td><td>${escapeHtml(s.counterparty)}</td>` +
-                        `<td>${escapeHtml(s.start)}</td><td>${escapeHtml(s.due)}</td>` +
-                        `<td><span class="tr-pill ${tone(s.tone)}">${escapeHtml(s.status)}</span></td>` +
-                        `<td>${escapeHtml(s.note)}</td></tr>`).join('') + '</tbody>';
-            }
-            show('#tr-sla-block', sla.length > 0);
-
-            const notes = Array.isArray(plan.notes) ? plan.notes : [];
-            const notesEl = $('#tr-notes');
-            if (notesEl) notesEl.innerHTML = notes.map(n => `<li>${escapeHtml(n)}</li>`).join('');
-            show('#tr-notes-block', notes.length > 0);
-
-            show('#tr-plan-step', true);
+            const fileName = data.applicationPdfFileName || 'application-summary.pdf';
+            link.href = data.applicationPdfUrl;
+            link.setAttribute('download', fileName);
+            if (open) open.href = data.applicationPdfUrl;
+            setText('#uw-pdf-name', fileName);
+            const kb = data.applicationPdfBytes ? ` · ${Math.max(1, Math.round(data.applicationPdfBytes / 1024))} KB` : '';
+            setText('#uw-pdf-sub', `${(data.plan && data.plan.applicationStatus) || ''}${kb}`);
+            show('#uw-pdf', true);
         }
 
-        // ── Step 4: request dispatched / held / scheduled ────────────────
-        function renderRequest(data) {
-            const plan = data.plan || {};
-            const card = $('#tr-request-card');
-            if (card) card.className = 'tr-request-card ' + tone(plan.statusTone);
-            setText('#tr-request-status', plan.requestStatus || plan.overallStatus || '');
-            setText('#tr-request-headline', plan.headline || '');
+        // ── Step 5: timeline and decision ────────────────────────────────
+        function renderTimeline(plan) {
+            setHtml('#uw-timeline', (plan.timeline || []).map(e =>
+                `<li class="${e.humanDecision ? 'human' : tone(e.tone)}">` +
+                    `<div class="date">${escapeHtml(e.date)}${e.humanDecision ? '<span class="human-tag">Human decision</span>' : ''}</div>` +
+                    `<div>${escapeHtml(e.event)}</div>` +
+                    `<div class="who">${escapeHtml(e.who)}</div>` +
+                '</li>').join(''));
+            const levels = plan.insurer && Array.isArray(plan.insurer.serviceLevels) ? plan.insurer.serviceLevels : [];
+            setText('#uw-sla', levels.length ? `${plan.insurer.name} service levels: ${levels.join(' ')}` : '');
+            setText('#uw-decision-summary', plan.decisionSummary);
+            setHtml('#uw-decisions', (plan.decisions || []).map(d =>
+                `<div class="uw-decision ${tone(d.tone)}">` +
+                    '<div class="uw-decision-head">' +
+                        `<span class="uw-pill ${tone(d.tone)}">${escapeHtml(d.decision)}</span>` +
+                        `<span class="uw-decision-cover">${escapeHtml(d.cover)}</span>` +
+                        `<span class="uw-decision-who">${escapeHtml(d.lifeInsured)}</span>` +
+                    '</div>' +
+                    `<p>${escapeHtml(d.plainEnglish)}</p>` +
+                '</div>').join('') +
+                (plan.premiumNote ? `<p class="uw-premium-note">${escapeHtml(plan.premiumNote)}</p>` : ''));
+            show('#uw-timeline-step', true);
+        }
 
-            const link = $('#tr-pdf-link');
-            if (data.transferRequestPdfUrl && link) {
-                const fileName = data.transferRequestPdfFileName || 'transfer-request.pdf';
-                link.href = data.transferRequestPdfUrl;
-                link.setAttribute('download', fileName);
-                setText('#tr-pdf-name', fileName);
-                const legs = Array.isArray(plan.legs) ? plan.legs : [];
-                setText('#tr-pdf-sub', legs.length
-                    ? `${plan.requestStatus} — ${legs.length} transfer${legs.length === 1 ? '' : 's'} on the request.`
-                    : 'Case-file record — no transfer is sent to another fund.');
-                show('#tr-pdf', true);
-            } else {
-                show('#tr-pdf', false);
+        // ── Step 6: client decision with the adviser ─────────────────────
+        function renderClientDecision(plan) {
+            const cd = plan.clientDecision || {};
+            const pill = $('#uw-client-pill');
+            if (pill) {
+                pill.className = 'uw-pill ' + tone(cd.tone);
+                pill.textContent = cd.status || '';
             }
+            setText('#uw-client-who', `${cd.who || ''}${cd.date ? ' · ' + cd.date : ''}`);
+            setText('#uw-client-summary', cd.summary);
+            setHtml('#uw-client-points', (cd.points || []).map(p => `<li>${escapeHtml(p)}</li>`).join(''));
+            setText('#uw-cooling-off', cd.coolingOff);
+            show('#uw-cooling-off', !!cd.coolingOff);
+            setText('#uw-existing-cover', cd.existingCoverNote);
+            show('#uw-existing-cover', !!cd.existingCoverNote);
 
-            const updates = Array.isArray(plan.updates) ? plan.updates : [];
-            const updatesEl = $('#tr-updates');
-            if (updatesEl) {
-                updatesEl.innerHTML = updates.length
-                    ? updates.map((u, i) =>
-                        '<div class="tr-update">' +
-                            '<div class="tr-update-head">' +
-                                `<span class="tr-update-audience">${escapeHtml(u.audience)}</span>` +
-                                `<span class="tr-update-channel">· ${escapeHtml(u.channel)}</span>` +
-                            '</div>' +
-                            (u.note ? `<div class="tr-update-note">${escapeHtml(u.note)}</div>` : '') +
-                            `<div class="tr-update-body agent-md" id="tr-update-body-${i}"></div>` +
-                        '</div>').join('')
-                    : '<p class="muted">No update is needed from Transfers &amp; Rollovers.</p>';
-                updates.forEach((u, i) => {
-                    const body = $('#tr-update-body-' + i);
-                    if (!body) return;
-                    if (typeof window.zcRenderMarkdown === 'function') window.zcRenderMarkdown(body, u.body || '');
-                    else body.textContent = u.body || '';
-                });
-            }
-
-            const approval = $('#tr-approval');
-            if (approval) approval.className = 'tr-approval' + (plan.humanApprovalRequired ? ' required' : '');
-            setText('#tr-approval-pill', plan.humanApprovalRequired ? 'Human approval required' : 'No approval needed');
-            setText('#tr-approval-reason', plan.humanApprovalReason || '');
-
-            show('#tr-request-step', true);
+            const approval = $('#uw-approval');
+            if (approval) approval.className = 'uw-approval' + (plan.humanApprovalRequired ? ' required' : '');
+            setText('#uw-approval-pill', plan.humanApprovalRequired ? 'Human decision' : 'No approval needed');
+            setText('#uw-approval-reason', plan.humanApprovalReason || '');
+            show('#uw-client-step', true);
         }
 
         // ── Wiring ───────────────────────────────────────────────────────
-        const selectInit = $('#tr-case-select');
-        const refreshInit = $('#tr-refresh-btn');
-        const processInit = $('#tr-process-btn');
+        const selectInit = $('#uw-case-select');
+        const refreshInit = $('#uw-refresh-btn');
+        const processInit = $('#uw-process-btn');
         if (selectInit) selectInit.addEventListener('change', selectCase);
         if (refreshInit) refreshInit.addEventListener('click', () => loadCases());
         if (processInit) processInit.addEventListener('click', processCase);
 
-        // Deep link: /agents/transfers-rollovers?caseNumber=REQ-… opens the
-        // Try it out tab with that case selected.
+        // Deep link: /agents/underwriting?case=REQ-… pre-selects that case.
         const params = new URLSearchParams(window.location.search);
-        const preferred = params.get('caseNumber') || params.get('case');
-        if (preferred) {
-            const tryTab = document.querySelector('.agent-tab-scope .agent-tab[data-tab="try"]');
-            if (tryTab && !tryTab.classList.contains('active')) tryTab.click();
-        }
-        loadCases(preferred);
+        loadCases(params.get('caseNumber') || params.get('case'));
     }
 
-    init();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
-    if (!window.__trDemoEnhancedHook) {
-        window.__trDemoEnhancedHook = true;
+    if (!window.__underwritingScenarioHook) {
+        window.__underwritingScenarioHook = true;
         const hook = () => init();
         if (typeof Blazor !== 'undefined' && typeof Blazor.addEventListener === 'function') {
             Blazor.addEventListener('enhancedload', hook);

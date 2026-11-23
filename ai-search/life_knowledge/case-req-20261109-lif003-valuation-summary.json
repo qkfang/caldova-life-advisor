@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261109-lif003-valuation-summary",
+  "title": "Case REQ-20261109-LIF003 — valuation summary",
+  "category": "Case Evidence",
+  "requestType": "Business protection advice",
+  "caseNumber": "REQ-20261109-LIF003",
+  "clientNumber": "CL-104611",
+  "content": "Summary of the business valuation supplied by Marcus Tan, accountant, Bayside Business Accountants, and how the Paraplanning Agent used it for Penny (Paraplanning). Case REQ-20261109-LIF003.\n\nValuation: Northcote Custom Joinery Pty Ltd is valued at $2,400,000 (100% of the company) at 30 Jun 2026. Caldova relies on the accountant's valuation and doesn't value businesses itself.\nBusiness: founded 2011; 14 staff; revenue $3.1 million; net profit $520,000.\nOwnership: George Papadopoulos 50% (CL-104611); Harpreet Kaur 50% (CL-104612).\n\nNeeds (calculations for Amelia, not advice):\n1 Buy-sell: each owner's 50% share is 50% × $2,400,000 = $1,200,000, so life and TPD cover of $1,200,000 on each owner. Each partner owns the policy on their own life (self-ownership), backed by a buy-sell agreement that their lawyer drafts.\n2 Key person: Marcus estimates that losing George would cost the business about $400,000 of profit over 18 months while a replacement is found and trained, so life and TPD cover of $400,000 on George, owned by the company for a revenue purpose.\n3 Total cover on the case: $1,200,000 + $1,200,000 + $400,000 = $2,800,000. That is $2,000,000 or more, so Theo, the Practice Team Leader, gives the advice a second review (see 'Matrix — authority, approvals and escalation').\n\nTax: how premiums and benefits are treated for buy-sell and key person cover is set out in 'Tax on life insurance — premiums and benefits'. Marcus confirmed the treatment for George and Harpreet as their accountant.\n\nFinancial evidence for underwriting: Northbank Life accepts the accountant's valuation and the company's financial statements for the last two years as financial evidence (see 'Northbank Life — Business Protection PDS extract').",
+  "severity": "medium",
+  "department": "Paraplanning",
+  "tags": [
+    "george-papadopoulos",
+    "harpreet-kaur",
+    "REQ-20261109-LIF003",
+    "CL-104611",
+    "CL-104612",
+    "valuation",
+    "2400000",
+    "30-jun-2026",
+    "buy-sell-1200000",
+    "key-person-400000",
+    "self-ownership",
+    "revenue-purpose",
+    "total-cover-2800000",
+    "second-review",
+    "financial-evidence"
+  ],
+  "lastUpdated": "2026-11-10T03:00:00Z"
+}

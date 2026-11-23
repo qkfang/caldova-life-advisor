@@ -1,19 +1,21 @@
 /**
- * "The Lakehouse" storybook, the frontend served at / (see docs/storybook.md).
+ * "Caldova House", the storybook served at / (see docs/storybook.md).
  *
- * A futuristic, casual lakehouse for a wealth business with two sides,
- * read from the top down:
- *   Level 3      the business owner's office and her idea (the brain)
- *   Level 2      two small teams, one for each side: Wealth Management and Superannuation
- *   Level 1      one group of Microsoft Foundry agents, dedicated to a side or shared by both
- *   Lower level  the engine room: Microsoft IQ and the Azure services under the waterline
+ * A bank built in 1889 on a Melbourne city corner, with a futuristic office
+ * inside, for a life insurance advice practice with two sides, read from the
+ * top down:
+ *   Level 3   the business owner's office under the copper dome, and her idea (the brain)
+ *   Level 2   two small teams, one for each side: Claims & Care and Protection Advice
+ *   Level 1   one group of Microsoft Foundry agents in the old banking chamber,
+ *             dedicated to a side or shared by both
+ *   B         the engine room: Microsoft IQ and the Azure services in the old vault
  *
- * The storybook pages open one level at a time (the levels above lift away).
- * Out front, visitors arrive by water taxi and sign at the front desk on the
- * dock, where Amelia, Caldova's financial adviser, links them with the agents
- * that get them started. The finale starts there: the member signs, then the
- * house pulls apart to trace their request from the top of the house to the
- * bottom and back.
+ * The front of the house is cut away, dollhouse style. The storybook pages
+ * open one level at a time (the levels above lift away). Out front, visitors
+ * arrive by tram and sign at the front desk under the verandah, where Amelia,
+ * Caldova's adviser, links them with the agents that get them started. The
+ * finale starts there: the client signs, then the house pulls apart to trace
+ * their request from the top of the house to the bottom and back.
  */
 import {
   ArcRotateCamera,
@@ -32,8 +34,7 @@ import { CameraDirector } from "../cameraDirector";
 import { findStaffById, STAFF_PERSONAS, type ScenarioId } from "../personaData";
 import type { CharacterPickMetadata } from "../voxelCharacter";
 import { Callouts, type CalloutSpec } from "./callouts";
-import { buildDock } from "./dock";
-import { buildExterior } from "./exterior";
+import { buildFrontDesk } from "./frontDesk";
 import { inspectorView, nowText, tooltipText, type InspectorAction, type Live } from "./inspector";
 import { Kit } from "./kit";
 import {
@@ -48,7 +49,7 @@ import {
   roleInfo,
   type InfraId,
   type LevelId,
-} from "./lakehouseData";
+} from "./houseData";
 import { LevelStack } from "./levelStack";
 import { buildAgentsLevel } from "./levels/agentsLevel";
 import { buildEngineLevel } from "./levels/engineLevel";
@@ -56,6 +57,7 @@ import { buildIdeaLevel, buildRoof } from "./levels/ideaLevel";
 import { buildPeopleLevel } from "./levels/peopleLevel";
 import { buildParty } from "./party";
 import { RequestTrace, type TraceFocus, type TraceStep } from "./requestTrace";
+import { buildStreet } from "./street";
 import { Storybook } from "./storybook";
 import { PAGES, pageIndex, type CameraShot, type PageId, type StoryPage } from "./storyData";
 import { Threads, anchorPoint, type ThreadSpec } from "./threads";
@@ -123,9 +125,9 @@ function bootstrap(): void {
   sun.diffuse = new Color3(1, 0.9, 0.76);
   // No glow layer or bloom: lit parts are plain unlit colours, so every sign stays sharp.
 
-  /* ---------------- Build the lakehouse ---------------- */
+  /* ---------------- Build Caldova House ---------------- */
   const kit = new Kit(scene);
-  const exterior = buildExterior(kit);
+  const street = buildStreet(kit);
   const ideaLevel = buildIdeaLevel(kit);
   const peopleLevel = buildPeopleLevel(kit);
   const agentsLevel = buildAgentsLevel(kit);
@@ -136,7 +138,7 @@ function bootstrap(): void {
     engine: buildEngineLevel(kit),
   };
   const roof = buildRoof(kit);
-  // Up on the roof, Caldova throws a party for its customers. Built before the stack, so it
+  // Up on the roof, Caldova throws a party for its clients. Built before the stack, so it
   // lifts away and fades with the roof.
   const party = buildParty(kit, roof);
   const stack = new LevelStack({
@@ -146,10 +148,10 @@ function bootstrap(): void {
     agents: levels.agents.root,
     engine: levels.engine.root,
   });
-  // The dock out front: visitors arrive by water taxi and sign at the front desk, where Amelia
-  // links them with their agents and the Form Extraction agent comes out to read what they signed.
+  // The front desk out front: visitors arrive by tram and sign under the verandah, where Amelia
+  // links them with their agents and the Fact Find Extraction agent comes out to read what they signed.
   let liveLinks: string[] = [];
-  const dock = buildDock(kit, exterior.deck, {
+  const desk = buildFrontDesk(kit, street.front, {
     callAgent: () => agentsLevel.callToDesk(),
     releaseAgent: () => agentsLevel.releaseDesk(),
     agentReady: () => agentsLevel.deskReady(),
@@ -159,16 +161,16 @@ function bootstrap(): void {
       refreshLive();
     },
   });
-  let deckShown = true;
-  const setDeck = (on: boolean): void => {
-    deckShown = on;
-    exterior.setDeckVisible(on);
-    dock.setActive(on);
+  let streetShown = true;
+  const setStreet = (on: boolean): void => {
+    streetShown = on;
+    street.setFrontVisible(on);
+    desk.setActive(on);
   };
 
   const anchors = new Map<string, Anchor>();
   for (const level of Object.values(levels)) for (const [key, a] of level.anchors) anchors.set(key, a);
-  for (const [key, a] of dock.anchors) anchors.set(key, a);
+  for (const [key, a] of desk.anchors) anchors.set(key, a);
   const anchor = (key: string): Anchor | undefined => anchors.get(key);
 
   // The whole house as one tree: idea → people → agents → Microsoft Foundry.
@@ -342,7 +344,7 @@ function bootstrap(): void {
         break;
       }
       case "adviser":
-        // Amelia and the agents she links customers with.
+        // Amelia and the agents she links visitors with.
         for (const l of ADVISER.links) {
           link(end("adviser"), end(`agent:${l.id}`), GOLD);
           agentLabel(l.id);
@@ -368,11 +370,11 @@ function bootstrap(): void {
         }
       : highlightsFor(selection);
     for (const level of Object.values(levels)) level.setHighlights(h);
-    dock.setHighlights(h);
+    desk.setHighlights(h);
     party.setHighlights(h);
   };
 
-  // Amelia's live links from the front desk to the agents' bays. They show while the dock and the
+  // Amelia's live links from the front desk to the agents' bays. They show while the front desk and the
   // agents are in view, and give way to anything else the visitor has selected.
   let liveKey = "";
   const refreshLive = (): void => {
@@ -418,7 +420,7 @@ function bootstrap(): void {
   const PAN_SPEED = 0.55;
   /** Seconds an arrow is held before it keeps moving. */
   const PAN_HOLD = 0.35;
-  /** The centre stays within this reach of the middle of the house and the dock, so the house stays in view. */
+  /** The centre stays within this reach of the middle of the house and the front desk, so the house stays in view. */
   const PAN_HOME = { x: 0, z: -6 };
   const PAN_REACH = 30;
   /** World units still to glide; positive is to the right on screen. */
@@ -473,13 +475,14 @@ function bootstrap(): void {
     for (const [id, level] of Object.entries(levels) as [LevelId, LevelBuild][]) {
       level.tag.setEnabled(mode.kind !== "focus" || mode.level === id);
     }
-    setDeck(!(mode.kind === "exploded" || (mode.kind === "focus" && mode.level === "engine")));
+    // The street in front hides when the story looks into the vault, like a section cut through the ground.
+    setStreet(!(mode.kind === "exploded" || (mode.kind === "focus" && mode.level === "engine")));
     refreshLive();
   };
 
   /* ---------------- The finale's request trace ---------------- */
   const finale = PAGES[pageIndex("finale")];
-  let scenario: ScenarioId = "retirement";
+  let scenario: ScenarioId = "family";
   let traceStep: TraceStep | null = null;
   let storybook: Storybook | null = null;
   const pushTraceState = (): void =>
@@ -496,12 +499,12 @@ function bootstrap(): void {
         traceFocus = f;
         applyHighlights();
       },
-      // The finale opens at the dock with the house together, then pulls it apart once the member has signed.
+      // The finale opens at the front desk with the house together, then pulls it apart once the client has signed.
       stage: (s) => {
         if (storybook?.page.id !== "finale") return;
-        if (s === "dock") {
+        if (s === "desk") {
           setMode({ kind: "house" });
-          flyTo(finale.dock ?? finale.shot);
+          flyTo(finale.desk ?? finale.shot);
         } else {
           setMode(finale.mode);
           flyTo(finale.shot, 2.2);
@@ -509,14 +512,14 @@ function bootstrap(): void {
       },
       done: () => pushTraceState(),
     },
-    dock,
+    desk,
   );
   let pending: number | undefined;
   const startTrace = (id: ScenarioId): void => {
     window.clearTimeout(pending);
     scenario = id;
     traceStep = null;
-    // The member is down at the dock now, not up at the party.
+    // The client is down at the front desk now, not up at the party.
     party.setAway(id);
     trace.start(id);
     pushTraceState();
@@ -528,15 +531,15 @@ function bootstrap(): void {
     ownerTask: () => ideaLevel.ownerTask(),
     staffTask: (id) => peopleLevel.task(id),
     roleTask: (id) => agentsLevel.roleTask(id),
-    visitor: () => dock.visitor(),
-    adviserTask: () => dock.adviserTask(),
+    visitor: () => desk.visitor(),
+    adviserTask: () => desk.adviserTask(),
     partyNow: () => party.now(),
     guestTask: (id) => party.guestTask(id),
   };
   let shownVisitor: string | null = null;
   const renderInspector = (): void => {
     if (!selection) return;
-    shownVisitor = dock.visitor()?.name ?? null;
+    shownVisitor = desk.visitor()?.name ?? null;
     storybook?.showInspector(inspectorView(selection, live));
   };
   // Labels for the far ends of the selection's beams; clicking one goes there.
@@ -655,9 +658,9 @@ function bootstrap(): void {
     window.clearTimeout(pending);
     coverSpin = page.id === "cover";
     if (page.id === "finale") {
-      // Open at the dock, where the member's water taxi is coming in.
+      // Open at the front desk, where the client's tram is coming in.
       setMode({ kind: "house" });
-      flyTo(page.dock ?? page.shot);
+      flyTo(page.desk ?? page.shot);
       pending = window.setTimeout(() => startTrace(scenario), 600);
     } else {
       setMode(page.mode);
@@ -714,10 +717,10 @@ function bootstrap(): void {
 
   /* ---------------- Picking ---------------- */
   // Only the level being read is clickable, so a click on a floor never selects something hidden
-  // underneath. The dock is out front, so it stays clickable whenever it is showing.
+  // underneath. The front desk is out front, so it stays clickable whenever the street is showing.
   const pickable = (m: AbstractMesh): boolean => {
     if (!m.isPickable || !m.isEnabled()) return false;
-    if (m.isDescendantOf(dock.root)) return deckShown;
+    if (m.isDescendantOf(desk.root)) return streetShown;
     const mode = stack.current;
     return mode.kind !== "focus" || m.isDescendantOf(levels[mode.level].root);
   };
@@ -763,9 +766,9 @@ function bootstrap(): void {
   const first = requested ? Math.max(0, pageIndex(requested)) : 0;
   book.goTo(first);
   if (first > 0) {
-    // Deep link: open straight onto the chapter (the finale opens at the dock).
+    // Deep link: open straight onto the chapter (the finale opens at the front desk).
     scene.stopAnimation(camera);
-    const s = PAGES[first].dock ?? PAGES[first].shot;
+    const s = PAGES[first].desk ?? PAGES[first].shot;
     camera.setTarget(new Vector3(...s.target));
     camera.alpha = s.alpha;
     camera.beta = s.beta;
@@ -786,9 +789,9 @@ function bootstrap(): void {
     time += dt;
     if (coverSpin && book.page.id === "cover" && now > cameraBusyUntil) camera.alpha += dt * 0.035;
     stack.update(dt);
-    exterior.update(dt, time);
+    street.update(dt, time);
     for (const level of Object.values(levels)) level.update(dt, time);
-    dock.update(dt);
+    desk.update(dt);
     // The party only runs while the roof is showing.
     if (stack.alpha("roof") > 0.01) party.update(dt);
     threads.update(dt);
@@ -803,7 +806,7 @@ function bootstrap(): void {
       nowClock = 0;
       // A new visitor at the front desk gets a fresh card; otherwise just the "Now" line moves on.
       const atDesk = selection.type === "visitor" || selection.type === "desk" || selection.type === "adviser";
-      if (atDesk && (dock.visitor()?.name ?? null) !== shownVisitor) {
+      if (atDesk && (desk.visitor()?.name ?? null) !== shownVisitor) {
         renderInspector();
       } else {
         book.setInspectorNow(nowText(selection, live));
@@ -831,7 +834,7 @@ function bootstrap(): void {
   });
   if ((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV) {
     // Dev-only handle for inspecting the scene from the browser console.
-    (window as unknown as { __v2: unknown }).__v2 = { scene, camera, stack, book, dock, party, trace, levels, select, threads };
+    (window as unknown as { __v2: unknown }).__v2 = { scene, camera, stack, book, desk, party, trace, levels, select, threads, street };
   }
 }
 

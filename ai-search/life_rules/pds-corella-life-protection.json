@@ -1,0 +1,41 @@
+{
+  "id": "pds-corella-life-protection",
+  "title": "Corella Life — Protection PDS extract",
+  "product": "Corella Protection Plan and Corella Super Plan",
+  "version": "PDS extract — PDS dated 1 July 2026",
+  "summary": "Extract of the Product Disclosure Statement for the Corella Protection Plan (cover held outside super) and the Corella Super Plan (cover held inside super through Corella's super plan), issued by Corella Life Limited. Corella offers super-linking: life cover and any-occupation TPD inside super, with an own-occupation TPD extension, trauma cover and income protection held outside super and linked to it. Corella also offers key person and buy-sell cover. Paraplanning, Insurance Research and Underwriting & New Business use this extract for the ownership structure, definitions and underwriting; Claims uses it for who is paid. General information only — it doesn't take account of anyone's objectives, financial situation or needs.",
+  "rules": "1 Life cover — pays the sum insured on death. Terminal illness benefit: paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.\n2 TPD cover, any occupation (inside or outside super) — because of illness or injury, the life insured is unlikely ever to work again in any occupation suited to their education, training or experience.\n3 Own-occupation TPD extension (outside super, super-linked) — pays if the life insured is unlikely ever to work again in their own occupation, even if they could do other work. A TPD claim is assessed against the any-occupation cover inside super first; if that definition isn't met but the own-occupation definition is, the extension pays. The two parts are priced and linked together, the extension never pays more than the linked TPD sum insured, and benefits from the extension are paid to the policy owner personally. Suits people whose work is physical or specialised, such as physiotherapists.\n4 Cover inside super — the Corella Super Plan's trustee owns the cover. Premiums are deducted from the person's Corella Super Plan account, which can be funded by a rollover from another super fund. Super cover can only pay on events that match a condition of release, so own-occupation TPD and trauma are held outside super. Benefits from cover inside super are paid by the trustee under the plan's rules and any valid nomination.\n5 Trauma cover (outside super) — lump sum on diagnosis of a listed condition, such as cancer, heart attack or stroke, confirmed by a specialist medical practitioner. Mental health conditions are not covered.\n6 Income protection (outside super) — waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65; insured monthly benefit at application up to 70% of annual pre-tax earnings, divided by 12. Corella pays the lesser of the insured monthly benefit and 70% of the life insured's average monthly earnings in the 12 months before the disability. Benefits are paid monthly in arrears from the end of the waiting period.\n7 Exclusion review — where Corella has excluded a pre-existing condition from income protection (for example back and spine conditions), the policy owner can ask Corella to review the exclusion after two symptom-free years. If Corella removes it, cover for that condition applies from the review date.\n8 Premiums — stepped (rise with age) or level (start higher and rise more slowly). Sums insured increase each year in line with CPI unless the policy owner declines.\n9 Underwriting — tele-interview for every application; Corella may accept cover at standard rates, with a loading or an exclusion, or decline. The policy owner and life insured must take reasonable care not to make a misrepresentation. Corella won't ask for or use genetic test results.\n10 Who is paid (outside super) — benefits are paid to the policy owner. If the policy owner is the life insured and has nominated beneficiaries, life cover is paid directly to the nominated beneficiaries in the shares nominated, not through the estate; without a nomination it is paid to the estate. The policy owner can change nominations in writing at any time.\n11 Cooling-off — 14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made.\n12 Claims — a dedicated case manager for every death and terminal illness claim. Corella subscribes to the Life Insurance Code of Practice (see 'Claims rules — Life Insurance Code of Practice and income protection benefits').\n13 Adviser remuneration — Corella may pay the adviser commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent. The Statement of Advice shows the amounts in dollars.\n14 Earlier policies — the life cover, terminal illness and beneficiary nomination terms described here are the same as in Corella's 2019 PDS.",
+  "limits": "Own-occupation TPD and trauma cover can't be held inside super, so they're only available outside super. The own-occupation extension can't be bought on its own; it must be linked to any-occupation TPD cover inside super, and it never pays twice for the same disability. Income protection isn't offered on an agreed-value basis. Exclusions shown on the policy schedule apply until Corella removes them. Benefits are paid only into an account in the payee's own name. Corella doesn't give personal advice.",
+  "evidenceRequired": [
+    "Claim form and certified ID of the claimant",
+    "Death: certified copy of the death certificate and the policy number",
+    "Beneficiary nomination on Corella's records (outside super) or the trustee's nomination records (inside super)",
+    "TPD: treating doctors' reports and work history",
+    "Income protection: treating doctor's report and earnings evidence for the 12 months before the disability",
+    "Exclusion review: medical evidence of two symptom-free years",
+    "Bank account in the payee's own name"
+  ],
+  "sources": [],
+  "owner": "Insurance Research",
+  "tags": [
+    "pds",
+    "corella-life",
+    "CR-",
+    "super-linking",
+    "corella-super-plan",
+    "own-occupation-extension",
+    "any-occupation-tpd",
+    "inside-super",
+    "outside-super",
+    "trauma",
+    "income-protection",
+    "exclusion-review-two-years",
+    "nominated-beneficiaries",
+    "paid-directly-not-estate",
+    "terminal-illness",
+    "level-premium",
+    "stepped-premium",
+    "cooling-off"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

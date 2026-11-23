@@ -5,13 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-    <RootNamespace>CaldovaSuper.App</RootNamespace>
-    <AssemblyName>cs-backend</AssemblyName>
+    <RootNamespace>CaldovaLife.App</RootNamespace>
+    <AssemblyName>cl-backend</AssemblyName>
     <NoWarn>$(NoWarn);OPENAI001;SCME0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\agent\cs-agent.csproj" />
+    <ProjectReference Include="..\agent\cl-agent.csproj" />
   </ItemGroup>
 
   <ItemGroup>

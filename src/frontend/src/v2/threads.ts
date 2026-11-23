@@ -30,7 +30,7 @@ import {
   VertexData,
 } from "@babylonjs/core";
 import type { Kit } from "./kit";
-import { LEVELS } from "./lakehouseData";
+import { LEVELS } from "./houseData";
 import type { LevelStack } from "./levelStack";
 import type { Anchor } from "./types";
 

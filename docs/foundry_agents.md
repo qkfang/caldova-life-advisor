@@ -1,60 +1,69 @@
-# Mapping Operations Staff into Foundry Agents
+# Mapping Practice Staff into Foundry Agents
 
-> Part of **Wealth Team in a Day** — the AI operations office demo for **Caldova Wealth**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
 
 ## Core Design Idea
 
-Each staff character at **Caldova Wealth** becomes a specialised **Microsoft Foundry** agent.
+Each staff character at **Caldova Life Advice** becomes a specialised **Microsoft Foundry** agent.
 
-*Wealth Team in a Day* doesn't build one generic "super chatbot". It models a digital operations department, **Caldova Client Operations**, where every agent owns a specific part of the request lifecycle:
+*Advice Team in a Day* doesn't build one generic "insurance chatbot". It models a digital advice practice, where every agent owns a specific part of the request lifecycle:
 
-> **Request → Verify → Assess → Action → Confirm**
+> **Discover → Verify → Advise → Implement → Confirm**
 
-All agents read from and write to one shared object, the **Member Case**.
+All agents read from and write to one shared object, the **Client Case**. Amelia, Caldova's adviser, gives the advice and signs every Statement of Advice. The agents gather facts, explain rules, calculate needs and benefits, compare products, draft documents and recommend, for human approval.
 
 **How it's built**
 
 - The agents are declarative Foundry agents created from code with `Azure.AI.Projects`.
 - They share a `CaldovaAgent` base class, which wires up two grounding sources:
-  - **Azure AI Search** over the `wealth_knowledge` index
+  - **Azure AI Search** over the `life_knowledge` index
   - **Bing**
-- Agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `caldova-ops-mcp`).
+- The agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `caldova-ops-mcp`): Ivy's Insurance Research Agent, Uma's Underwriting Agent and Ben's Claims Agent.
 - Every agent has its own page in the backend console at `/agents/{route id}`.
 
 ---
 
-## Shared Member Case Object
+## Shared Client Case Object
 
-All agents read from and write to a common case record. The example column shows George's pension case ([scenario 3](scenario-3-retirement-pension.md)).
+All agents read from and write to a common case record. In the backend, the case header is the `CaseRecord` held by `CaseStore`. The store is seeded with the five scenario cases, and the Onboarding page creates new `REQ-…` numbers.
 
-| Field | Description | Example: `REQ-20261109-OPS003` |
+The example column shows Priya's case ([scenario 1](scenario-1-family-protection.md)).
+
+| Field | Description | Example: `REQ-20261103-LIF001` |
 |---|---|---|
-| `case_number` | Case reference, `REQ-YYYYMMDD-XXXXXX` | `REQ-20261109-OPS003` |
-| `member_number` | Account number: `CS-…` for super, `CP-…` for pension | `CS-1077881`, and the new pension `CP-3077881` |
-| `client_name` | Member or client name | George Papadopoulos |
-| `product` | Product and tier | Caldova Super (Select), moving to Caldova Pension |
-| `request_type` | New account & consolidation · Rollover out to SMSF · Pension commencement · Financial hardship release · Death benefit claim | Pension commencement |
-| `adviser` | Adviser, practice and adviser code | Marcus Tan, Bayside Financial Partners (ADV-20871) |
-| `received_date` | Date the request arrived | 2026-11-09 |
-| `priority` | Standard, High or Urgent, with a reason | High |
-| `documents_received` | Forms, IDs, statements and certificates on the case | Pension application, SoA extract, transfer balance account history |
-| `nigo_items` | Outstanding "not in good order" items | None |
-| `eligibility_status` | Eligible, partially eligible or not eligible, with the recommendation | Eligible: approve |
-| `cited_rules` | Titles of the rule documents relied on | Pension standards; Conditions of release & preservation; Tax on super benefits & PAYG withholding |
-| `fincrime_risk_score` | Low, medium or high, with indicators | Not required (no indicators) |
-| `transfer_status` | Rollover or transfer status and service-level clock | $1,250,000 internal transfer to `CP-3077881` on 16 Nov 2026; TBAR prepared |
-| `payment_gross` / `payment_tax` / `payment_net` | Payment amounts | $6,500 / $0 / $6,500 a month from 15 Dec 2026 |
-| `approvals` | Approvals requested and given | Pension commencement of $1m or more: approved by Theo in Microsoft Teams |
-| `communications` | Letters, updates, SMS and calls | Welcome-to-retirement letter (George); confirmation (Marcus) |
-| `assigned_agent` | Agent currently working the case | `payments-agent` |
-| `next_action` | What happens next | Pay the first pension payment on 15 Dec 2026 |
-| `human_approval_required` | Whether a person must sign off | `true` |
+| `CaseNumber` | Case reference, `REQ-YYYYMMDD-XXXXXX` | `REQ-20261103-LIF001` |
+| `SampleId` | The onboarding sample the case came from | `onboarding-priya` |
+| `ClientName` | The client: the person advised, or the claimant | Priya Natarajan |
+| `ClientEmail` | Client email | priya.natarajan@example.com |
+| `ClientPhone` | Client phone | 0491 570 156 |
+| `ClientNumber` | Caldova client number, `CL-…` | `CL-104582` |
+| `Cover` | Existing or requested cover, in one line | Riverbend Super death and TPD $210,000 (keep); Kestrel Retail Super death $50,000 (at risk 30 Nov 2026); nothing outside super |
+| `RequestType` | New protection advice · Trauma claim and bank change · Business protection advice · Income protection claim · Death claim | New protection advice |
+| `ReceivedDate` | Date the request arrived | Tue 3 Nov 2026 |
+| `AdviserName` | Caldova's adviser, always "Amelia, Senior Risk Adviser" | Amelia, Senior Risk Adviser |
+| `ReferredBy` | Referral partner and firm, or "Existing client" | Hannah Lewis, Yarra Home Loans |
+| `RequestSummary` | One-paragraph summary of the request | New family protection advice after buying a home with a $680,000 joint mortgage |
+| `Amount` | The headline figure | $680,000 joint mortgage to protect |
+| `PreferredContact` | How the client wants to hear from Caldova, and what may be shared | Mobile or email. Updates to Hannah: the outcome only |
+| `Priority` | Standard, High or Urgent | High |
+| `PriorityReason` | Why | Existing cover at risk: the Kestrel Retail Super death cover stops on 30 Nov 2026 unless Priya elects in writing to keep it, and the family has a new $680,000 mortgage with no cover outside super |
+| `CreatedAt` | When the case was opened | When Olivia's agent opened the case |
 
-In the backend, the case header is the `CaseRecord` held by `CaseStore`, which has these fields:
+As the case moves through the practice, each agent adds its work to the case:
 
-`CaseNumber`, `SampleId`, `ClientName`, `ClientEmail`, `ClientPhone`, `MemberNumber`, `Product`, `RequestType`, `ReceivedDate`, `AdviserName`, `AdviserPractice`, `RequestSummary`, `Amount`, `PreferredContact`, `Priority`, `PriorityReason`, `CreatedAt`.
-
-The store is seeded with the five scenario cases. The Onboarding demo creates new `REQ-…` numbers.
+| What the agent adds | Added by | Example for Priya |
+|---|---|---|
+| Fact find and in-good-order checklist | Onboarding Agent | Goals, dependants, debts, income, health basics and existing cover. Commission consent to be collected with the SoA |
+| Identity and risk | Financial Crime Agent | Driver licence and payslip legit, KYC complete, no PEP or sanctions match: clear |
+| Needs analysis and structure | Paraplanning Agent | Life $750,000, TPD $600,000, trauma $150,000, income protection $6,125 a month. Life and any-occupation TPD inside super |
+| Research shortlist | Insurance Research Agent | Corella Life $3,180, Harbourline Life $3,412, Lyrebird Life $3,690 (year 1, stepped) |
+| Statement of Advice | Paraplanning Agent, then Amelia | Drafted 5 Nov, signed by Amelia 6 Nov, Authority to Proceed 7 Nov |
+| Underwriting | Underwriting Agent | Standard rates, with a back and spine exclusion on income protection, accepted with Amelia on 17 Nov |
+| Policy | Underwriting Agent | Corella Life `CR-26118204`, from 18 Nov 2026 |
+| Claim | Claims Agent | Not applicable |
+| Approvals | Every agent, decided by people | SoA signed by Amelia; exclusion accepted by Priya with Amelia |
+| Communications | Client Communications Agent | Welcome letter and policy summary (Priya); outcome-only update (Hannah) |
+| Next action | The agent working the case | Annual review with Amelia |
 
 ---
 
@@ -70,151 +79,149 @@ The store is seeded with the five scenario cases. The Onboarding demo creates ne
 
 ### Purpose
 
-Capture every request accurately, check it is in good order, open the Member Case and route it.
+Capture every request accurately, run the fact find and the in-good-order checklist, open the Client Case and route it.
 
 ### Inputs
 
-- Inbound adviser or member email
-- Application or request form and attachments: ID, SoA extract, fee consent, nominations, rollover details, death certificate
-- Existing member records
-- Contact details and preferences
+- An enquiry or referral email, or a claim notification by email or phone
+- The fact-find questionnaire and attachments: ID, payslips, policy schedules, death certificates
+- Existing client records and policies
+- Contact details and preferences, and any consent to share with a referral partner
 
 ### Tools
 
-- Azure AI Search over `wealth_knowledge`: the Caldova Super & Pension PDS extract, the Caldova Wrap IDPS guide extract, and the case files
+- Azure AI Search over `life_knowledge`: *Guide — in-good-order checklist for advice and claims*, *Caldova Life Advice — Financial Services Guide and remuneration*, *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*, and the case files
 - Bing grounding
-- Structured field extraction into the Member Case
+- Structured field extraction into the Client Case
 - Backend `/onboarding/*` endpoints, which open the case in `CaseStore` and route it
 
 ### Outputs
 
-- Member Case with every extracted field, with TFNs masked
-- NIGO checklist, showing each item as passed, missing or warning
-- Request type and priority, with a reason
-- Vulnerable-member and sensitive-case flags
-- Routing decision and next action
-- Draft "what we still need" note
+- The Client Case, with every extracted field, TFNs masked and health details marked sensitive
+- The in-good-order checklist, with each item passed, missing or flagged
+- Existing-cover flags, such as default cover in super that is about to stop
+- The request type and priority, with a reason
+- Vulnerable-client flags
+- The routing decision and next action
+- A draft "what we still need" note
 
 ### Example Instruction
 
-> You are the Onboarding Agent for Caldova Wealth, supporting Olivia, the Onboarding & Requests Officer. Read the inbound email and attachments, extract every field into the Member Case, run the NIGO checklist for this request type, classify the request, set a priority with a reason, and route the case. Mask TFNs. Flag vulnerable members and sensitive cases such as death notifications. Do not make eligibility decisions and never give financial advice.
+> You are the Onboarding Agent for Caldova Life Advice, supporting Olivia, the Onboarding & Requests Officer. Read the enquiry, referral or claim notification and its attachments. Extract the goals, dependants, debts, income, occupation, health basics and existing cover into the Client Case. Run the in-good-order checklist for this request type, classify the request, set a priority with a reason, and route the case: new advice to Paraplanning, claims to Claims, and every new client to Financial Crime. Mask TFNs and treat health information as sensitive. Flag vulnerable clients, including anyone who is seriously ill, injured, bereaved or in financial stress. Never give advice.
 
 ### Human Approval
 
 Usually not required, unless:
 
-- A vulnerable member or sensitive case is detected
+- A vulnerable client is identified
 - Identity can't be verified
-- The request may not come from the member or their authorised adviser
-- The instructions conflict, for example the application and the SoA don't match
+- The request may not come from the client or someone they have authorised
+- The request includes a change to policy ownership, beneficiaries or bank details
+- The instructions conflict
 
 ---
 
-## 2. Benefits & Eligibility Agent
+## 2. Paraplanning Agent
 
-**Based on:** Benefits & Eligibility Assessor (Ben)
+**Based on:** Paraplanner (Penny)
 
-**Foundry agent:** `benefits-eligibility-agent`
+**Foundry agent:** `paraplanning-agent`
 
-**Page:** `/agents/benefits-eligibility`
+**Page:** `/agents/paraplanning`
 
 ### Purpose
 
-Apply the PDS, trust deed and super law to the request, cite every rule, and recommend approve, partial or decline.
+Work out how much cover is needed and how to hold it, and draft the Statement of Advice for Amelia, citing each rule.
 
 ### Inputs
 
-- The Member Case
-- The member's date of birth, balance and account history, including prior releases and transfer balance account history
-- The request type and amount
-- The evidence: Services Australia letter, statutory declaration, BDBN, death certificate, SVS result, fee consent and SoA
+- The Client Case and fact find
+- Existing cover, including cover in super
+- The client's budget for premiums
+- For business protection: the business valuation and the profit at risk
+- The research shortlist from Insurance Research
 
 ### Tools
 
-- Azure AI Search over `wealth_knowledge`, using these rule documents:
-  - *Conditions of release & preservation*
-  - *Financial hardship*
-  - *Pension standards (minimum drawdown table, TBC, reversionary)*
-  - *Trust-deed rules on death benefits & nominations*
-  - *Tax on super benefits & PAYG withholding*
-  - *Adviser fee consent (s99FA) & ongoing fee arrangements*
-  - *SuperStream rollovers, insurance-loss warnings & SMSF verification*
-  - *Caldova Super & Pension PDS extract*
+- Azure AI Search over `life_knowledge`, using:
+  - *Advice rules — best interests duty, SoA and replacement advice*
+  - *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*
+  - *Tax on life insurance — premiums and benefits*
+  - *Commission rules — LIF caps, clawback and consent*
+  - *Caldova Life Advice — Financial Services Guide and remuneration*
+  - the insurers' PDS extracts
 - Product and rule document texts used for citations (`ProductDocuments`)
 - Bing grounding
+- Backend `/paraplanning/*` endpoints
 
 ### Outputs
 
-- Eligibility checklist, showing each rule, a pass, fail or warn result, and the cited clause
-- Calculations: cap space, pro-rated minimums and payment limits
-- Recommendation of approve, partial or decline, with reasoning
-- List of missing information
-- Plain-English explanation for Client Communications
+- The needs analysis for each cover, with every step of the working
+- The ownership structure: inside super, outside super or super-linked, and who owns each policy
+- The existing-cover and replacement analysis
+- The Statement of Advice draft, with premiums and commission in dollars
+- A second-review flag when total cover is $2,000,000 or more
+- A list of anything still missing
 
 ### Example Instruction
 
-> You are the Benefits & Eligibility Agent for Caldova Wealth, supporting Ben. Check the request against the PDS, trust deed and super law. For every rule, show pass, fail or warn, your working, and the title of the document you relied on. Recommend approve, partial or decline. Never invent figures or rules. Do not issue a final decision: declines and partial approvals need human approval.
+> You are the Paraplanning Agent for Caldova Life Advice, supporting Penny, the Paraplanner. From the Client Case, calculate life, TPD, trauma and income protection needs, showing every step and the existing cover you have taken into account. Draft the ownership structure and the Statement of Advice for Amelia: scope, strategy, ownership, best-interests steps, the replacement analysis, and premiums and commission in dollars. Cite the title of every rule document you rely on. Never invent figures or rules. You draft; Amelia gives the advice and signs. Flag any case with total cover of $2,000,000 or more for a second review, and never recommend cancelling existing cover without a human decision.
 
 ### Human Approval
 
 Required for:
 
-- Declines and partial approvals
-- Hardship releases
-- Death benefit decisions
-- Pension commencements of $1,000,000 or more
-- Ambiguous rules or trust-deed interpretation
+- Every Statement of Advice and Record of Advice, which Amelia signs
+- Replacing or cancelling any existing cover
+- Advice with total cover of $2,000,000 or more on one case, which gets a second review by Theo
 
 ---
 
-## 3. Investment Analyst Agent
+## 3. Insurance Research Agent
 
-**Based on:** Investment Analyst (Ivy), Investment Solutions
+**Based on:** Insurance Research Analyst (Ivy)
 
-**Foundry agent:** `investment-analyst-agent`
+**Foundry agent:** `insurance-research-agent`
 
-**Page:** `/agents/investment-analyst`
+**Page:** `/agents/insurance-research`
 
 ### Purpose
 
-Check that portfolios fit the plan, compare models with fees in dollars, build income strategies and plan redemptions.
+Compare the insurers on Caldova's approved product list (APL) on definitions, features, exclusions and premiums, and build the comparison workbook.
 
 ### Inputs
 
-- The Member Case: balance, product and request
-- The risk profile and Statement of Advice extract
-- Model portfolio fact sheets
-- The Caldova fee schedule and the Caldova Managed Portfolios menu
-- Income or payment requirements
+- The Client Case and the needs analysis: cover types and sums insured
+- The client's age, occupation and smoker status
+- The insurers' product sheets and PDS extracts
+- Caldova's APL and research method
 
 ### Tools
 
 - MCP tools (`caldova-ops-mcp`):
-  - `analyzeFactSheet(documentUrl)`
-  - `compareModels(modelsJson, balance)`
-  - `generateClientWorkbook(caseNumber, caseSummaryJson, modelsJson, recommendationsJson)`
-- Azure AI Search over *Caldova Managed Portfolios menu* and *Caldova fee schedule*
-- Mermaid chart output in the agent response
+  - `research_analysePolicyDocument`: reads a product sheet or PDS extract for definitions, features and exclusions
+  - `research_compareInsurers`: compares the APL insurers for the client's cover, including stepped and level premiums, definitions and features
+  - `research_generateComparisonWorkbook`: builds an Excel workbook with a premium chart, downloadable from `/research/download/{fileName}`
+- Azure AI Search over the insurers' PDS extracts and *Caldova Life Advice — Approved product list and research method*
+- Backend `/research/*` endpoints
 
 ### Outputs
 
-- Fit check against the risk profile and SoA
-- Comparison table covering allocation, fees in dollars per year, returns and risk
-- Income strategy (such as a cash bucket) or a redemption plan
-- Excel workbook, downloadable from `/investments/download/{fileName}`, and a chart
-- Notes for the adviser
+- A comparison of definitions, features and exclusions that matter for the client
+- Year-1 premiums across the APL insurers, stepped and level
+- The comparison workbook and chart
+- A shortlist and notes for Amelia
 
 ### Example Instruction
 
-> You are the Investment Analyst Agent for Caldova Wealth, supporting Ivy in Investment Solutions. Check that the selected model portfolio fits the client's risk profile and Statement of Advice. Use the fact sheets to compare models on fees in dollars per year, returns and risk. For pensions, build an income strategy; for payments, plan the redemption. Produce the client workbook. Never make a personal recommendation: present the facts and trade-offs for the adviser.
+> You are the Insurance Research Agent for Caldova Life Advice, supporting Ivy, the Insurance Research Analyst. Use the MCP tools to read each APL insurer's product sheet, compare the definitions, features, exclusions and premiums for the client's cover, and build the comparison workbook. Explain the definitions that decide whether a claim would pay, such as own-occupation TPD for the client's occupation. Compare stepped and level premiums. Shortlist with reasons, but never make a personal recommendation: the choice of insurer is Amelia's advice.
 
 ### Human Approval
 
 Required before:
 
-- Any investment switch that the member or their adviser hasn't instructed
-- Sharing comparisons directly with a client (they go through the adviser)
-- Redemption plans for death benefits and hardship releases
+- Any insurer is recommended to a client (Amelia's advice)
+- Any comparison is shared with a client (it goes through Amelia)
 
 ---
 
@@ -228,166 +235,164 @@ Required before:
 
 ### Purpose
 
-Detect fraud, scams and identity takeover, support AML/CTF obligations, and recommend controls.
+Verify identity, check documents, and detect fraud, scams and identity takeover, then recommend controls.
 
 ### Inputs
 
-- The Member Case and request
-- The account-activity log: contact-detail changes, devices, IP locations and MFA events
-- Documents on the case: ID, bank statements, SMSF and ESA letters, death certificates
-- The SMSF verification service (SVS) result
-- Travel notices and case notes
+- The Client Case and request
+- The activity log: contact and bank-detail changes, devices, IP locations and portal logins
+- Documents on the case: IDs, medical reports, death certificates, payslips, BAS, bank statements and company extracts
+- Travel notices and file notes
 - KYC, politically exposed person (PEP) and sanctions screening results
 
 ### Tools
 
 - **Azure Content Understanding**, using a shared authenticity field schema: document type, issuer, holder name, document number, issue and expiry dates, tamper indicators, security features, and a consistency summary
-- A deterministic checks layer that turns the extracted fields into a verdict: legit, suspicious or fake
-- Azure AI Search over the *Financial-crime red flags & controls* guide and the case files
+- A deterministic checks layer that turns the extracted fields into a verdict: legit, suspicious, tampered or fake
+- Azure AI Search over *Guide — financial crime red flags and controls for life insurance* and the case files
 - Bing grounding
-- Backend `/fincrime/*` endpoints, with sample documents listed in `wwwroot/fincrime/samples/manifest.json`
+- Backend `/fincrime/*` endpoints
 
 ### Outputs
 
-- An explainable risk score (low, medium or high) with its indicators
-- The account-activity timeline
+- An explainable risk rating (low, medium or high), with its indicators
+- The risk timeline
 - A verdict for each document, with the checks behind it and the reasons
-- Recommended actions: hold, lock online access, call back on the verified number, IDCARE referral
-- A fact summary for an SMR, for a human decision
+- Recommended actions: a hold, restoring verified details, locking portal access, a call-back on the verified number, alerting the insurer's fraud team
+- A one-page summary for the Team Leader
 
 ### Example Instruction
 
-> You are the Financial Crime Agent for Caldova Wealth, supporting Felix. Review the account activity, documents and request for signs of fraud, scams, identity takeover or AML/CTF risk. Explain every risk indicator in plain language and link it to a known pattern. Recommend controls such as a hold, or a call-back on the verified number on file. Never accuse the member, who may be the victim. Decisions to block a request or lodge an SMR belong to people.
+> You are the Financial Crime Agent for Caldova Life Advice, supporting Felix, the Financial Crime Investigator. Verify identity for new clients, including companies and their beneficial owners. Review the activity log, documents and request for signs of fraud, scams or identity takeover. Explain every risk indicator in plain language and link it to a known pattern. Recommend controls such as a hold, or a call-back on the verified number on file, never a number in the request. Never accuse the client, who may be the victim. Decisions to block a request or refer suspected fraud to an insurer belong to people.
 
 ### Human Approval
 
 Always required before:
 
 - Blocking a request on financial-crime grounds
-- Lodging an SMR with AUSTRAC
+- Referring suspected fraud to an insurer
+- Any change to policy ownership, beneficiaries or bank details
 - Contacting a suspected fraud victim
 - Closing an alert as a false positive
 
-### Document authenticity (Try it out)
+### Document Authenticity (Try it out)
 
-The demo on `/agents/financial-crime` checks each document attached to a case:
+The **Try it out** flow on `/agents/financial-crime` checks each document attached to a case:
 
 1. **Scan.** Each document goes through Azure Content Understanding with the shared authenticity schema.
-2. **Verdict.** A small deterministic rules layer gives it a verdict of *legit*, *suspicious* or *fake*.
-3. **Findings.** The demo lists every check performed and the reasons any check failed.
-4. **Risk narrative.** The findings feed into Felix's risk narrative, so document red flags are cited by document number.
+2. **Verdict.** A small deterministic rules layer gives it a verdict of *legit*, *suspicious*, *tampered* or *fake*. *Tampered* means the details pass the identity check but the image itself has been edited, as with Grace's driver licence.
+3. **Findings.** The page lists every check performed and the reasons any check failed.
+4. **Risk narrative.** The findings feed into Felix's risk narrative, so document red flags are cited by document.
 
-The sample documents come in genuine and tampered pairs: a driver licence, a passport, a bank statement, a death certificate, and an SMSF/ESA letter. Every sample is visibly marked **"SPECIMEN — DEMO ONLY"**. See [`src/backend/README.md`](../src/backend/README.md) for the full flow and endpoint list.
+The 12 sample documents cover all five scenarios: genuine IDs, a payslip, a company extract, a BAS and profit and loss summary, a surgeon's report and a certified death certificate, plus the fake oncologist's report, the tampered licence and the suspicious bank statement in Grace's case. Every sample is visibly marked "SPECIMEN — NOT A REAL DOCUMENT". See [`src/backend/README.md`](../src/backend/README.md) for the full flow and endpoint list.
 
 ---
 
-## 5. Transfers & Rollovers Agent
+## 5. Underwriting Agent
 
-**Based on:** Transfers & Rollovers Coordinator (Rory)
+**Based on:** Underwriting Coordinator (Uma)
 
-**Foundry agent:** `transfers-rollovers-agent`
+**Foundry agent:** `underwriting-agent`
 
-**Page:** `/agents/transfers-rollovers`
+**Page:** `/agents/underwriting`
 
 ### Purpose
 
-Move money between Caldova and other super funds, SMSFs and the ATO, correctly and within service levels.
+Take each application through underwriting with the insurer, explain the client's duty first, and get the policy issued.
 
 ### Inputs
 
-- The Member Case and its eligibility outcome
-- External fund details: name, USI and member number
-- SMSF details: ABN, ESA and bank details
-- Any death or TPD cover held in the outgoing fund
-- Rollover benefit statements
+- The Client Case, the signed SoA and the Authority to Proceed
+- The application answers and health disclosures
+- The insurer's requirements for the client's age and sums insured
+- The evidence: tele-interviews, blood results, medical examinations, GP reports and financial evidence
 
 ### Tools
 
 - MCP tools (`caldova-ops-mcp`):
-  - `lookupFunds(query)`
-  - `verifySmsf(abn, memberName, bsb, accountName, esa)`
-  - `generateTransferRequestPdf(...)`, with the PDF served from `/transfers/request/{id}.pdf`
-- Azure AI Search over *SuperStream rollovers, insurance-loss warnings & SMSF verification*
+  - `underwriting_lookupInsurer`: the APL directory, with contacts, service levels and underwriting thresholds
+  - `underwriting_checkRequirements`: the medical and financial evidence needed for the client's age and sums insured
+  - `underwriting_generateApplicationSummaryPdf`: the application and disclosure summary PDF
+- Azure AI Search over *Underwriting and the duty to take reasonable care*, *Directory — insurers on the approved product list* and the insurers' PDS extracts
 - Bing grounding
+- Backend `/underwriting/*` endpoints
 
 ### Outputs
 
-- Counterparty list with the status of each
-- Lost-cover warnings
-- SMSF verification result
-- Transfer request PDF
-- Service-level tracker and chasers
-- Whether the rollover was dispatched or held, and why
+- The application, with the duty to take reasonable care explained first
+- The requirements list and tracker, with chasers
+- The underwriting decision explained in plain English
+- The application summary PDF
+- Confirmation of the policy number, the start date and the cooling-off period
 
 ### Example Instruction
 
-> You are the Transfers & Rollovers Agent for Caldova Wealth, supporting Rory. Identify every counterparty and look up external funds by USI. Warn when a rollover would end death or TPD cover. Verify any SMSF through the SMSF verification service before a rollover. Generate the transfer request and track the 3-business-day service level. Hold any rollover that fails verification and explain why. Never release a held rollover without human approval.
+> You are the Underwriting Agent for Caldova Life Advice, supporting Uma, the Underwriting Coordinator. Before any health question, explain the duty to take reasonable care in plain English. Use the MCP tools to look up the insurer, check the medical and financial requirements for the client's age and sums insured, and generate the application summary. Track the requirements and explain each decision (standard rates, a loading or an exclusion) without jargon. Treat health information as sensitive, and never ask for or use genetic test results. Never accept a loading, an exclusion or a decline on the client's behalf: that is the client's decision with Amelia.
 
 ### Human Approval
 
 Required for:
 
-- Releasing a rollover held on financial-crime grounds
-- Going ahead with a rollover that ends cover, without written confirmation
-- Any SMSF rollover where verification fails (it stays blocked)
-- Cancelling a rollover request with a counterparty
+- Accepting a loading, an exclusion or a decline
+- Replacing or cancelling any existing cover once the new cover is in force
+- Any change to policy ownership or beneficiaries
 
 ---
 
-## 6. Payments Agent
+## 6. Claims Agent
 
-**Based on:** Payments Officer (Penny)
+**Based on:** Benefit Claims Advocate (Ben)
 
-**Foundry agent:** `payments-agent`
+**Foundry agent:** `claims-agent`
 
-**Page:** `/agents/payments`
+**Page:** `/agents/claims`
 
 ### Purpose
 
-Calculate and release payments correctly, and only after the right approval.
+Support clients and families through a claim: check the policy and the evidence, build the claim pack, calculate the benefit, and lodge the claim only after approval.
 
 ### Inputs
 
-- The approved Member Case
-- The gross amount and payment type: lump sum, pension payment, death benefit, hardship payment or rollover
-- The member's age and tax status, and the tax components
-- Payee and bank details
+- The Client Case and the claim notification
+- The policy schedule and the insurer's PDS extract
+- The evidence: medical reports, death certificates and earnings evidence
+- The claimant's identity and any authority (support person or nominated beneficiary)
 - The authority and escalation matrix
 
 ### Tools
 
 - MCP tools (`caldova-ops-mcp`):
-  - `payments_validatePayee`
-  - `payments_checkCaseApproval`
-  - `payments_calculateBenefit`: tax components, PAYG withholding and net amount
-  - `payments_checkAuthorityLimit`
-  - `payments_requestApproval`: posts a Microsoft Teams adaptive card through `teams_sendApprovalCard`
-  - `payments_getApprovalStatus`
-  - `payments_releasePayment`: refuses unless the payment is approved
-- Azure AI Search over *Tax on super benefits & PAYG withholding* and the authority and escalation matrix
+  - `claims_validateClaimant`
+  - `claims_checkPolicy`
+  - `claims_calculateBenefit`
+  - `claims_checkApprovalRules`
+  - `claims_requestApproval`: posts a Microsoft Teams adaptive card through `teams_sendApprovalCard`
+  - `claims_getApprovalStatus`
+  - `claims_lodgeClaim`: refuses unless the claim is approved
+- Azure AI Search over *Claims rules — Life Insurance Code of Practice and income protection benefits*, *Tax on life insurance — premiums and benefits*, *Matrix — authority, approvals and escalation* and the insurers' PDS extracts
+- Backend `/claims/*` endpoints
 
 ### Outputs
 
-- Benefit calculation: gross, tax-free, taxable, PAYG withheld and net
-- Payee validation result
-- Authority-limit check
-- Teams approval request and its status
-- Release confirmation and audit trail
+- The claimant and policy check
+- The claim pack
+- The benefit calculation, explained in plain English
+- The Teams approval request and its status
+- The lodgement confirmation and the Code of Practice timeframe tracker
+- Any other cover found, such as cover in super
 
 ### Example Instruction
 
-> You are the Payments Agent for Caldova Wealth, supporting Penny. Validate the payee and confirm the case decision is approved. Calculate the tax-free and taxable components, PAYG withholding and net amount, and check authority limits. When approval is needed, request it through Microsoft Teams and wait. Show the calculation clearly. Never release a payment without the required approval.
+> You are the Claims Agent for Caldova Life Advice, supporting Ben, the Benefit Claims Advocate. Validate the claimant and check the policy: definition, waiting period, exclusions, who is paid and the evidence. Build the claim pack and calculate the expected benefit, showing your working and citing the PDS extract. Check the approval rules, request approval in Microsoft Teams, and lodge the claim only when it is approved. Track the insurer's Code of Practice timeframes. Be gentle with people who are ill, injured or bereaved. Never promise an outcome the insurer hasn't decided, and never accuse a claimant of fraud: refer concerns to Financial Crime.
 
 ### Human Approval
 
 Required for:
 
-- Single payments of $250,000 or more
-- Any death benefit
-- Pension commencements of $1,000,000 or more
-- Hardship releases
-- Payee mismatches and new payees
-- Manual overrides
+- Lodging any claim, and every death or terminal illness claim
+- Any change to bank details for a claim payment
+- Referring suspected fraud to an insurer
+- Any communication to a seriously ill client or a bereaved family
 
 ---
 
@@ -401,14 +406,13 @@ Required for:
 
 ### Purpose
 
-Draft clear, empathetic and compliant communications for members, clients, families and advisers.
+Draft clear, empathetic and compliant communications for clients, families and referral partners.
 
 ### Inputs
 
-- The Member Case and decision
-- The eligibility outcome and cited rules
-- Payment details
-- The audience (member, adviser or family) and the situation (celebration, hardship, scam or bereavement)
+- The Client Case and the outcome: a signed SoA, an underwriting decision or a claim outcome
+- The audience (client, family or referral partner) and what the client agreed to share
+- The situation: new cover, a loading or exclusion, an injury or illness, a scam or a bereavement
 - Contact preferences
 
 ### Tools
@@ -417,27 +421,27 @@ Draft clear, empathetic and compliant communications for members, clients, famil
 - Azure AI Search over the case files and rule documents, for facts and required disclosures
 - A compliance check: no personal advice, the required disclosures, and IDR and AFCA rights
 - Bing grounding
+- Backend `/communications/*` endpoints
 
 ### Outputs
 
-- Case summary
-- Member letter
-- Adviser update
-- SMS
-- Call script
+- A case summary
+- A client letter
+- A referral-partner update, limited to what the client agreed to share
+- An SMS
+- A call script
 
 ### Example Instruction
 
-> You are the Client Communications Agent for Caldova Wealth, supporting Cara. Explain the case outcome in clear, warm, plain English for the member, and in concise professional terms for the adviser. Match the tone to the situation. Include the required disclosures and complaint rights. Never give personal financial advice, invent facts, or promise outcomes that haven't been approved.
+> You are the Client Communications Agent for Caldova Life Advice, supporting Cara, the Client Communications Specialist. Explain the case outcome in clear, warm, plain English for the client, and in concise professional terms for a referral partner, sharing only what the client agreed to share and never health details without consent. Match the tone to the situation. Include the required disclosures and complaint rights. Never give personal advice, invent facts, or promise outcomes that haven't been decided.
 
 ### Human Approval
 
 Required for:
 
-- Declines and partial approvals
 - Complaint responses
-- Any communication to a fraud victim or a bereaved family
-- Letters to members in hardship
+- Any communication to a fraud victim, a seriously ill client or a bereaved family
+- Anything that could read as advice, which goes to Amelia
 
 ---
 
@@ -451,17 +455,17 @@ Required for:
 
 ### Purpose
 
-Let members and advisers talk to Cara by voice about a case.
+Let clients, families and referral partners talk to Cara by voice about a case.
 
 ### Inputs
 
-- The selected Member Case
+- The selected Client Case
 - The caller's spoken questions
 
 ### Tools
 
 - **Voice Live**, for real-time speech in and out, through the backend's Voice Live proxy (`CommunicationsVoiceLiveProxy`)
-- The same `wealth_knowledge` grounding as the other agents
+- The same `life_knowledge` grounding as the other agents
 
 ### Outputs
 
@@ -470,22 +474,22 @@ Let members and advisers talk to Cara by voice about a case.
 
 ### Example Instruction
 
-> You are Cara's voice assistant at Caldova Wealth. Speak warmly and simply. Explain case status and next steps using only facts from the Member Case. Don't make decisions, give financial advice, or confirm anything that hasn't been approved. For complaints, vulnerable callers or identity concerns, offer a call-back from a person.
+> You are Cara's voice assistant at Caldova Life Advice. Speak warmly and simply. Explain case status and next steps using only facts from the Client Case. Don't make decisions, give advice, or confirm anything that hasn't been decided. Never discuss health details unless you are sure you are speaking with the client. For complaints, vulnerable callers or identity concerns, offer a call-back from a person.
 
 ### Human Approval
 
-Not required to explain status that has already been approved. Hand over to a person for:
+Not required to explain status that has already been decided. Hand over to a person for:
 
 - complaints
-- hardship
-- bereavement
+- serious illness, injury or bereavement
 - identity verification
+- anything that needs advice
 
 ---
 
 ## 8. Team Leader Agent
 
-**Based on:** Client Operations Team Leader (Theo)
+**Based on:** Practice Team Leader (Theo)
 
 **Foundry agent:** `team-leader-agent`
 
@@ -493,85 +497,84 @@ Not required to explain status that has already been approved. Hand over to a pe
 
 ### Purpose
 
-Run the floor: monitor work, service levels and IDR clocks, prepare approvals, and orchestrate the team on a case.
+Lead the practice: monitor the pipeline, service levels and complaint clocks, prepare approvals and second reviews, audit file quality, and orchestrate the team on a case.
 
 ### Inputs
 
 - All open cases
 - Agent outputs and recommendations
-- Service-level, IDR and SMR clock status
+- Underwriting, claim and IDR clock status
 - Approval requests
 - Complaints and escalations
 - The authority and escalation matrix
 
 ### Tools
 
-- Azure AI Search over the *Authority & escalation matrix (including IDR timeframes)* and the case files
-- The floor dashboard, through `/team-leader/*`
+- Azure AI Search over *Matrix — authority, approvals and escalation*, *Claims rules — Life Insurance Code of Practice and income protection benefits*, *Advice rules — best interests duty, SoA and replacement advice* and the case files
+- The practice dashboard, through `/team-leader/*`
 - A multi-agent group chat (`TeamLeaderGroupChatApi`), in which Theo's agent coordinates the seven specialist agents
 - Bing grounding
 
 ### Outputs
 
-- Floor dashboard summary
-- Alerts for service levels, IDR clocks and SMR deadlines
-- Approval briefs and recommendations
-- Quality findings
-- Group chat transcript with a consolidated case plan
+- A pipeline dashboard summary
+- Alerts for service levels, Code of Practice timeframes and IDR clocks
+- Approval briefs and second-review briefs
+- File quality findings against the best interests duty
+- A group chat transcript with a consolidated case plan
 
 ### Example Instruction
 
-> You are the Team Leader Agent for Caldova Wealth, supporting Theo. Monitor the operations floor and identify cases at risk of missing service levels, IDR timeframes or SMR deadlines. Summarise the items that need approval and recommend priorities. In group chat, coordinate the specialist agents on one case and produce a consolidated plan. Never approve on Theo's behalf and never override authority limits.
+> You are the Team Leader Agent for Caldova Life Advice, supporting Theo, the Practice Team Leader. Monitor the advice pipeline, underwriting requirements, claims and complaint clocks, and identify cases at risk. Summarise the items that need approval, prepare second-review briefs for advice with total cover of $2,000,000 or more, and audit files against the best interests duty. In group chat, coordinate the specialist agents on one case and produce a consolidated plan. Never approve on Theo's behalf, and never override an approval rule.
 
 ### Human Approval
 
 Theo, the human team leader, approves:
 
-- Declines and partial approvals
-- Financial-crime blocks and SMR referrals
-- Payments above authority limits, and every death benefit
-- Pension commencements of $1,000,000 or more
-- Hardship releases
+- Second reviews of advice with total cover of $2,000,000 or more
+- Blocking a request on financial-crime grounds, and referring suspected fraud to an insurer
+- Claim lodgements in Microsoft Teams, including every death or terminal illness claim
+- Changes to policy ownership, beneficiaries or bank details
 - Complaint responses
-- Communications to fraud victims and bereaved families
+- Communications to fraud victims, seriously ill clients and bereaved families
 
 ---
 
 # Suggested Multi-Agent Workflow
 
-## Workflow: Request to Confirmation
+## Workflow: Discover to Confirm
 
-1. `onboarding-agent` (**Request**)
-   - Captures the request and runs the NIGO checklist.
-   - Opens the Member Case and routes it.
+1. `onboarding-agent` (**Discover**)
+   - Captures the request, runs the fact find and the in-good-order checklist.
+   - Opens the Client Case and routes it.
 
 2. `financial-crime-agent` (**Verify**)
-   - Screens every new client (KYC and AML).
-   - Runs whenever risk indicators appear.
+   - Verifies every new client (KYC, PEP and sanctions).
+   - Runs whenever documents, contact changes or bank details need checking.
    - Produces a risk summary and recommended controls.
 
-3. `benefits-eligibility-agent` (**Assess**)
-   - Checks the rules.
-   - Recommends approve, partial or decline, with citations.
+3. `paraplanning-agent` (**Advise**)
+   - Works out the needs and the structure.
+   - Drafts the Statement of Advice for Amelia, who gives the advice and signs it.
 
-4. `investment-analyst-agent` (**Assess**)
-   - Checks portfolio fit and compares fees in dollars.
-   - Plans income or redemptions.
+4. `insurance-research-agent` (**Advise**)
+   - Compares the APL insurers on definitions, features and premiums.
+   - Builds the comparison workbook.
 
-5. `transfers-rollovers-agent` (**Action**)
-   - Moves money to and from other funds, SMSFs and the ATO.
-   - Holds anything that fails verification.
+5. `underwriting-agent` (**Implement**)
+   - Takes the application through underwriting after the Authority to Proceed.
+   - Explains each decision, and confirms the policy is issued.
 
-6. `payments-agent` (**Action**)
-   - Calculates the payment and requests approval in Microsoft Teams.
-   - Releases the payment only after approval.
+6. `claims-agent` (**Implement**)
+   - Checks the policy and evidence, calculates the benefit, and requests approval in Microsoft Teams.
+   - Lodges the claim only after approval, and tracks the insurer's timeframes.
 
 7. `client-communications-agent` and `client-communications-voice-agent` (**Confirm**)
-   - Keep the member and adviser informed throughout.
+   - Keep the client, family and referral partner informed throughout.
    - Draft the final letters.
 
 8. `team-leader-agent` (all stages)
-   - Monitors the workflow and takes approvals.
+   - Monitors the workflow, prepares approvals and second reviews.
    - Orchestrates the group chat on complex cases.
 
 ---
@@ -580,22 +583,22 @@ Theo, the human team leader, approves:
 
 ## Option A: One Agent per Department
 
-Use this when the demo needs to match the lakehouse, where every person has an agent of their own. This is how the demo is built: each department page engages its own agent.
+Use this when the story needs to match Caldova House, where every person has an agent of their own. This is how the app is built: each department page engages its own agent.
 
 | Department | Foundry agent id |
 |---|---|
 | Onboarding & Requests | `onboarding-agent` |
-| Benefits & Eligibility | `benefits-eligibility-agent` |
-| Investment Solutions | `investment-analyst-agent` |
+| Paraplanning | `paraplanning-agent` |
+| Insurance Research | `insurance-research-agent` |
 | Financial Crime | `financial-crime-agent` |
-| Transfers & Rollovers | `transfers-rollovers-agent` |
-| Payments | `payments-agent` |
+| Underwriting & New Business | `underwriting-agent` |
+| Claims | `claims-agent` |
 | Client Communications | `client-communications-agent`, plus the voice agent `client-communications-voice-agent` |
 | Team Leader Office | `team-leader-agent` |
 
 Best for:
 
-- Demo storytelling
+- Storytelling
 - A visual department layout
 - Clear responsibilities
 - Agent-to-agent handoffs
@@ -604,10 +607,10 @@ Best for:
 
 ## Option B: Orchestrator plus Specialist Agents
 
-Use this when the demo needs stronger workflow control.
+Use this when you need stronger workflow control.
 
 - **Orchestrator:** `team-leader-agent` decides which specialist works next and when a human approval gate is reached.
-- **Specialists:** `onboarding-agent`, `benefits-eligibility-agent`, `investment-analyst-agent`, `financial-crime-agent`, `transfers-rollovers-agent`, `payments-agent` and `client-communications-agent`.
+- **Specialists:** `onboarding-agent`, `paraplanning-agent`, `insurance-research-agent`, `financial-crime-agent`, `underwriting-agent`, `claims-agent` and `client-communications-agent`.
 
 Theo's **group chat** on the Team Leader page shows this pattern on a single case.
 
@@ -624,201 +627,216 @@ Best for:
 
 | Object | Used by | Notes |
 |---|---|---|
-| **Member Case** | All agents | The central operational object |
-| **Member / Client** | Onboarding, Communications | Identity, contact preferences, vulnerability flags |
-| **Adviser** | Onboarding, Benefits & Eligibility, Communications | Practice, adviser code, fee consent, SoA |
-| **Account** | All agents | Member number, product, tier, balance and cash account |
-| **Document** | Onboarding, Financial Crime, Benefits & Eligibility | Forms, IDs, statements, certificates, nominations |
-| **Rule** | Benefits & Eligibility, Payments | PDS, trust deed and super law documents in `wealth_knowledge` |
-| **Model Portfolio** | Investment Analyst | Fact sheets, allocation and fees |
-| **Counterparty** | Transfers & Rollovers | Other super funds, SMSFs, other platforms, the ATO |
-| **Payment** | Payments | Components, withholding and payee |
-| **Approval** | Payments, Team Leader | Microsoft Teams adaptive cards and decisions |
-| **Communication** | Client Communications | Letters, adviser updates, SMS, calls |
+| **Client Case** | All agents | The central object |
+| **Client** | Onboarding, Communications | The life insured, policy owner, beneficiary or claimant, with contact preferences and vulnerability flags |
+| **Adviser** | Paraplanning, Communications, Team Leader | Amelia: every SoA and RoA she signs |
+| **Referral partner** | Onboarding, Communications | The broker or accountant, and what the client agreed to share with them |
+| **Fact find** | Onboarding, Paraplanning | Goals, dependants, debts, income, occupation, health basics and existing cover |
+| **Needs analysis** | Paraplanning | Each cover, the working and the ownership structure |
+| **Insurer** | Insurance Research, Underwriting, Claims | The APL insurers: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life |
+| **Policy** | Underwriting, Claims | Policy number with the insurer's prefix, cover, sums insured, premiums, owner and nominated beneficiaries |
+| **Document** | Onboarding, Financial Crime, Claims | IDs, medical reports, death certificates, payslips, BAS and bank statements |
+| **Rule** | Paraplanning, Underwriting, Claims | The PDS extracts, Caldova's guides and the rule documents in `life_knowledge` |
+| **Application** | Underwriting | Answers, disclosures, requirements and the insurer's decision |
+| **Claim** | Claims | The claim pack, benefit calculation, lodgement and the insurer's timeframes |
+| **Approval** | Claims, Team Leader | Microsoft Teams adaptive cards and decisions |
+| **Communication** | Client Communications | Letters, referral-partner updates, SMS and calls |
 | **Task** | Team Leader, orchestration | Next actions and owners |
-| **Escalation / Complaint** | Team Leader | IDR clocks (30, 45 or 90 days) and AFCA |
+| **Escalation / Complaint** | Team Leader | IDR clocks and AFCA |
 
 ---
 
 # Suggested Agent Handoff Rules
 
-## Onboarding to Benefits & Eligibility
+## Onboarding to Paraplanning
 
 Trigger when:
 
-- The Member Case is opened
-- The request type is identified
-- The NIGO checklist is complete, or only non-blocking items remain
+- A request for new advice is in good order, or only non-blocking items remain
+
+## Onboarding to Claims
+
+Trigger when:
+
+- A claim notification arrives
 
 ## Onboarding to Financial Crime
 
 Trigger when:
 
-- A new client or account is opened (KYC and AML screening)
-- Contact or bank details were changed recently
-- A rollover to an SMSF is requested
-- A death notification or a third-party request arrives and documents need checking
+- A new client is onboarded (every new client, including companies and their beneficial owners)
+- Identity, a document or a bank-detail change needs checking
 
-## Benefits & Eligibility to Financial Crime
+## Paraplanning and Insurance Research
 
 Trigger when:
 
-- SMSF verification fails
-- Documents or evidence are inconsistent
-- A failed hardship application is followed by an SMSF rollover request
+- The needs analysis is ready and the SoA needs research across the APL
+- Research changes the structure or the premiums, and the needs analysis needs updating
 
-## Benefits & Eligibility to Investment Solutions
-
-Trigger when:
-
-- A pension is starting and needs an income strategy
-- A payment requires investments to be sold
-- A new account's investment selection needs a fit check
-
-## Benefits & Eligibility to Transfers & Rollovers
+## Paraplanning to Underwriting
 
 Trigger when:
 
-- A rollover in or out is eligible
-- A transfer from accumulation to pension is approved
+- Amelia has signed the SoA and the client has signed the Authority to Proceed
 
-## Transfers & Rollovers or Investment Solutions to Payments
-
-Trigger when:
-
-- Rollover money arrives and needs investing
-- A redemption completes and cash is available
-- An outbound payment or rollover is ready to release
-
-## Payments to Client Communications
+## Underwriting to Client Communications
 
 Trigger when:
 
-- A payment is released, held or cancelled
-- A decision is approved and needs explaining
+- The policy is issued
+
+## Claims to Financial Crime
+
+Trigger when:
+
+- Claim documents need checking
+- A claim comes with a bank-detail change, or from contact details that changed recently
+
+## Claims to Client Communications
+
+Trigger when:
+
+- The claim is lodged, decided or paid, and the client or family needs an update
+
+## Financial Crime to Team Leader
+
+Trigger when:
+
+- A block or a fraud referral to an insurer needs approval
 
 ## Any Agent to Team Leader
 
 Trigger when:
 
 - Human approval is required
-- A vulnerable member or a sensitive case is identified
+- Advice has total cover of $2,000,000 or more and needs a second review
+- A vulnerable client is identified
 - A complaint is received, which starts the IDR clock
-- A service level or SMR deadline is at risk
-- A financial-crime concern is raised
-- A rule exception or trust-deed question arises
+- A service level or an insurer's timeframe is at risk
+
+Theo's agent coordinates the group chat when a case needs several agents at once.
 
 ---
 
 # Human-in-the-Loop Design
 
-Super and wealth operations need repeatable orchestration with firm approval gates. Agents recommend, draft, summarise, check and calculate. People approve, override and finalise.
+Life insurance advice needs repeatable orchestration with firm approval gates. Agents recommend, draft, summarise, check and calculate. The adviser gives the advice, and people approve, override and finalise.
 
 Human approval is **always** required for:
 
-- Declines and partial approvals
-- Blocking a request on financial-crime grounds
-- Suspicious matter reports (SMRs)
-- A single payment of $250,000 or more, and any death benefit
-- Pension commencements of $1,000,000 or more
-- Hardship releases (vulnerable members)
-- Complaint responses
-- Any communication to a fraud victim or a bereaved family
+- every Statement of Advice and Record of Advice, which the adviser signs
+- replacing or cancelling any existing cover
+- accepting a loading, an exclusion or a decline at underwriting
+- lodging any claim, and every death or terminal illness claim
+- blocking a request on financial-crime grounds, and referring suspected fraud to an insurer
+- any change to policy ownership, beneficiaries or bank details
+- advice with total cover of $2,000,000 or more on one case, which gets a second review
+- complaint responses
+- any communication to a fraud victim, a seriously ill client or a bereaved family
 
-How the demo makes the human role visible:
+How the app makes the human role visible:
 
-- **Payments** won't release money until a person approves. `payments_requestApproval` posts a Microsoft Teams adaptive card, and `payments_releasePayment` refuses until the card is approved.
-- **Team Leader** turns every approval into a one-page brief. The group chat ends with a plan for Theo to sign off.
+- **Paraplanning** drafts the SoA for Amelia. It never issues advice.
+- **Claims** won't lodge a claim until a person approves. `claims_requestApproval` posts a Microsoft Teams adaptive card, and `claims_lodgeClaim` refuses until the card is approved.
+- **Team Leader** turns every approval and second review into a one-page brief. The group chat ends with a plan for Theo to sign off.
 - **Every engage step** shows five tabs: Agent Narrative, Reference, Agent Prompt & Tools, Agent Input and Raw Output. Viewers can see what the agent was told, which tools it used, what it cited and what it produced.
 
 ---
 
-# Demo-Friendly Interaction Model
+# Presenter-Friendly Interaction Model
 
-This walk-through follows George's retirement ([scenario 3](scenario-3-retirement-pension.md)). It is the golden path in [agent-demo.md](agent-demo.md).
+This walk-through follows Priya's family protection advice ([scenario 1](scenario-1-family-protection.md)). It is the core of the golden path in [agent-demo.md](agent-demo.md).
 
-## Step 1: The adviser submits a request
+## Step 1: A referral arrives
 
-Marcus Tan emails Caldova on 9 Nov 2026:
+Hannah Lewis of Yarra Home Loans emails Caldova on 3 Nov 2026:
 
-> George Papadopoulos (CS-1077881) would like to start a Caldova Pension with $1,250,000, paying $78,000 a year monthly, with his wife Helen as reversionary beneficiary. Application attached.
+> With her consent, I'm referring Priya Natarajan. Priya and her partner Arjun have just bought in Coburg with a $680,000 joint mortgage, and they'd like to protect the loan and the family. Priya's fact find is attached.
 
-The `onboarding-agent` extracts the fields, finds no NIGO items, and opens `REQ-20261109-OPS003`.
+The `onboarding-agent` extracts the fact find, runs the in-good-order checklist and opens `REQ-20261103-LIF001`. It flags that the $50,000 of death cover in Priya's old Kestrel Retail Super account stops on 30 Nov 2026 unless she tells the fund to keep it.
 
-## Step 2: The eligibility check
+## Step 2: Identity
 
-The `benefits-eligibility-agent` says:
+The `financial-crime-agent` says:
 
-> George is 66, so his super is unrestricted. A $1,250,000 credit is within the $2.1 million transfer balance cap and leaves $850,000 of cap space. His minimum is 5%, or $62,500 a year, pro-rated to $38,870 for 2026-27 (227 of 365 days from 16 November). $78,000 a year is above the minimum, and Helen can be the reversionary beneficiary. I recommend approval.
+> Priya's driver licence and payslip are legit, KYC is complete, and there's no PEP or sanctions match. Clear.
 
-## Step 3: The income strategy
+## Step 3: The needs analysis
 
-The `investment-analyst-agent` says:
+The `paraplanning-agent` says:
 
-> I suggest a cash bucket of two years' payments ($156,000) in the cash account and term deposits, with the remaining $1,094,000 in the Balanced model. The workbook compares three strategies for Marcus. The bucket covers 24 monthly payments of $6,500 without selling growth assets.
+> Priya's life cover need is $1,010,000: the $680,000 mortgage, $100,000 for the children's education, $200,000 of family income support and $30,000 for final expenses and an emergency fund. Less $45,000 of savings and $210,000 of existing death cover in Riverbend Super, the shortfall is $755,000, so I've drafted $750,000. TPD is $600,000, trauma is $150,000, and income protection is $6,125 a month, 70% of her income, with a 90-day waiting period to age 65.
 
-## Step 4: The internal transfer
+## Step 4: The research
 
-The `transfers-rollovers-agent` says:
+The `insurance-research-agent` says:
 
-> The internal transfer of $1,250,000 from CS-1077881 to the new pension account CP-3077881 is scheduled for 16 Nov 2026. $34,600 stays in accumulation. The transfer balance account report (TBAR) for the ATO is ready.
+> For the full package, year-1 stepped premiums are Corella Life $3,180, Harbourline Life $3,412 and Lyrebird Life $3,690. Corella Life is the lowest cost and has own-occupation TPD for physiotherapists. Its level-premium option is $4,050 in year 1. The workbook is ready for Amelia.
 
-## Step 5: Approval and payments
+## Step 5: The Statement of Advice
 
-The `payments-agent` says:
+The `paraplanning-agent` drafts the SoA on 5 Nov, with no advice fee and the commission in dollars: $1,908 upfront and $636 a year from year 2. **Amelia reviews and signs it on 6 Nov**, and Priya signs the Authority to Proceed on 7 Nov.
 
-> This pension commencement of $1,250,000 is at or above the $1,000,000 limit, so I've sent Theo a Teams approval card.
+## Step 6: Underwriting
 
-Theo approves in Microsoft Teams. The pension commences on 16 Nov 2026. Payments of $6,500 a month start on 15 Dec 2026. They are tax-free because George is over 60, so PAYG withholding is nil.
+The `underwriting-agent` explains the duty to take reasonable care, lodges the application with Corella Life on 9 Nov, and reports the decision on 16 Nov:
 
-## Step 6: Client communication
+> Life, TPD and trauma are accepted at standard rates, and the asthma is accepted at standard. Income protection is accepted with an exclusion for back and spine conditions, which Corella Life will review after two symptom-free years. Accepting it is Priya's decision with Amelia.
 
-The `client-communications-agent` drafts:
+Priya accepts with Amelia on 17 Nov. Policy `CR-26118204` starts on 18 Nov 2026.
 
-> Congratulations on your retirement, George. Your Caldova Pension has started. From 15 December you'll receive $6,500 each month, tax-free, and Helen is set up to continue receiving your pension if anything happens to you. The legal minimum for this financial year is $38,870, and your payments are well above it.
+## Step 7: Client communication
 
-A confirmation goes to Marcus. If George calls, Cara's voice agent can answer questions such as "When's my first payment?". The answer is Tuesday 15 December: $6,500, tax-free.
+The `client-communications-agent` drafts a welcome letter and a plain-English policy summary for Priya, and an update for Hannah:
 
-## Step 7: The team leader dashboard
+> Good news: Priya's cover is now in place. Thanks for the referral.
 
-The `team-leader-agent` shows the floor for the five demo cases:
+The update to Hannah has no health details, because Priya agreed to share the outcome only. If Priya calls, Cara's voice agent can answer questions such as "When does my cover start?". The answer is Wednesday 18 November 2026.
 
-| Case | Member | Status |
+## Step 8: The team leader dashboard
+
+The `team-leader-agent` shows the practice for the five scenario cases:
+
+| Case | Client | Status |
 |---|---|---|
-| `REQ-20261103-OPS001` | Priya Natarajan | ✅ Account opened. Waiting for the BDBN re-sign and the insurance confirmation from the adviser |
-| `REQ-20261106-OPS002` | Grace Williams | 🛡️ Blocked. SMR referral approved, and no funds left the account |
-| `REQ-20261109-OPS003` | George Papadopoulos | ✅ Pension started. Commencement approved in Teams; first payment 15 Dec 2026 |
-| `REQ-20261111-OPS004` | Tom Bradley | 🟡 Partially approved. $7,932 net paid on 13 Nov 2026 |
-| `REQ-20261113-OPS005` | Robert Chen (for Mei Chen) | ✅ Benefit paid to Robert and Lily after Teams approval |
+| `REQ-20261103-LIF001` | Priya Natarajan | ✅ Completed. Corella Life policy `CR-26118204` in force from 18 Nov 2026, with a back and spine exclusion on income protection accepted with Amelia |
+| `REQ-20261106-LIF002` | Grace Williams | 🛡️ Blocked. No claim lodged and $200,000 protected. Lyrebird Life's fraud team alerted with Theo's approval |
+| `REQ-20261109-LIF003` | George Papadopoulos and Harpreet Kaur | ✅ Completed. Second review done. Three Northbank Life policies in force from 20 Nov 2026, with a 25% loading on George's cover |
+| `REQ-20261111-LIF004` | Tom Bradley | 🟡 Partially approved. Accepted at $5,600 a month, not the $7,000 insured. First payment about 13 Dec 2026 |
+| `REQ-20261113-LIF005` | Robert Chen (for Mei Chen) | ✅ Completed. $1,000,000 paid to Robert on 23 Nov 2026, and the $180,000 super claim under way |
 
 ---
 
-# UI Mapping to the Lakehouse
+# UI Mapping to Caldova House
 
-In the Lakehouse storybook ([storybook.md](storybook.md)), every person's card on Level 2 and every agent's, assistant's and voice agent's card on Level 1 has an **Open the agent page ↗** link that opens that agent's page (`/agents/{route id}`) in a new tab. On Level 1 it sits right under the name.
+In the Caldova House storybook ([storybook.md](storybook.md)), every person's card on Level 2 and every agent's, assistant's and voice agent's card on Level 1 has an **Open the agent page ↗** link that opens that agent's page (`/agents/{route id}`) in a new tab.
 
 | Agent page | Shows |
 |---|---|
-| Onboarding (Olivia) | New requests, the extracted Member Case and the NIGO checklist |
-| Benefits & Eligibility (Ben) | The eligibility checklist with cited rules, and the recommendation |
-| Investment Analyst (Ivy) | Model comparisons, fees in dollars, income strategies and the workbook |
-| Financial Crime (Felix) | Risk indicators, the account-activity timeline and document verdicts |
-| Transfers & Rollovers (Rory) | Counterparties, rollovers in flight, service-level timers and lost-cover warnings |
-| Payments (Penny) | The benefit calculation and the Teams approval status |
+| Onboarding (Olivia) | New requests, the extracted Client Case, the in-good-order checklist and existing-cover flags |
+| Paraplanning (Penny) | The needs analysis with its working, the ownership structure and the SoA draft for Amelia |
+| Insurance Research (Ivy) | The insurer comparison, stepped and level premiums, the chart and the workbook |
+| Financial Crime (Felix) | Risk indicators, the risk timeline and document verdicts |
+| Underwriting (Uma) | The duty to take reasonable care, requirements, the underwriting decision and the application summary PDF |
+| Claims (Ben) | The policy and evidence check, the benefit calculation, the Teams approval status and the lodgement |
 | Client Communications (Cara) | The message drafts and the voice chat with Cara |
-| Team Leader (Theo) | The floor dashboard, service-level and IDR clocks, approvals, and the multi-agent group chat on one case |
+| Team Leader (Theo) | The practice dashboard, service-level and IDR clocks, approvals and second reviews, and the multi-agent group chat on one case |
 
-Elsewhere in the house:
+The house, read from the top down:
 
-- **The front desk on the dock** is where requests come in. Amelia's card links to the onboarding scenario (`/scenarios/new-client-onboarding`).
-- **The engine room** shows what the agents run on. Foundry IQ holds the `wealth_knowledge` index: the records and rules the agents cite.
+- **Level 3, the idea:** Maya's office under the copper dome, with her idea, "the brain".
+- **Level 2, the people:** the open-plan office inside the old brick shell, with Claims & Care on the left, Protection Advice on the right, and Olivia and Theo in the middle.
+- **Level 1, the agents:** the old banking chamber at street level. The old teller counter is now the **Client Case** hub, with a bay under every desk, the MCP tool bench for Ivy's, Uma's and Ben's agents, the group-chat ring at Theo's bay and the voice equaliser at Cara's.
+- **B, the engine room:** the old bank vault in the basement, behind a huge round vault door. It holds the Microsoft Foundry core, Microsoft IQ (Work IQ, Fabric IQ, Foundry IQ and Web IQ) and the Azure services the agents run on. Foundry IQ holds the `life_knowledge` index: the records and rules the agents cite.
+- **The front desk**, under the heritage verandah beside the tram stop, is where requests come in. Amelia links each visitor with the agents that get them started.
 
 ---
 
-# Best Demo Framing
+# Best Framing
 
 The strongest framing is:
 
-> Each staff member in Caldova Client Operations becomes a Foundry agent with a specialised role, governed tools, cited rules and human approval points. Together, they operate as a coordinated digital operations team, and people stay in charge of every decision that matters.
+> Each staff member at Caldova Life Advice becomes a Foundry agent with a specialised role, governed tools, cited rules and human approval points. Together, they operate as a coordinated digital advice practice. The adviser gives the advice, and people stay in charge of every decision that matters.
 
-This makes the demo feel enterprise-ready. It shows AI supporting super and wealth operations professionals rather than replacing them, and the agents never give financial advice.
+This makes the app feel enterprise-ready. It shows AI supporting advice professionals rather than replacing them, and the agents never give personal advice.

@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Services;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 record CommunicationsProcessRequest(string CaseNumber);
 
@@ -15,15 +15,15 @@ record CommunicationsVoiceRequest(string Message, string? CaseNumber, string? Pr
 ///
 /// The flow:
 ///
-/// 1. List the Member Cases held in <see cref="CaseStore"/> (the five seeded
-///    scenario cases plus any opened live by the Onboarding demo) so the user
-///    can pick one.
+/// 1. List the Client Cases held in <see cref="CaseStore"/> (the five seeded
+///    scenario cases plus any opened live with the Onboarding Agent) so the
+///    user can pick one.
 /// 2. Engage the Client Communications Agent (Cara) on the selected case. The
 ///    page always receives Cara's deterministic case summary and drafts from
-///    <see cref="ClientCommunicationsDrafter"/> — member letter/email, adviser
-///    update (when the account has an adviser) and SMS, each with tone and
-///    compliance notes — and, when Foundry is configured, the live agent's
-///    streamed narrative as well.
+///    <see cref="ClientCommunicationsDrafter"/> — client letters, call scripts,
+///    referral-partner updates (only what the client consented to share) and
+///    an SMS, each with tone and compliance notes — and, when Foundry is
+///    configured, the live agent's streamed narrative as well.
 /// 3. A typed "talk to Cara" endpoint used by the Voice chat tab whenever the
 ///    real-time Voice Live connection isn't available: the live voice agent
 ///    answers when Foundry is configured, otherwise a deterministic,
@@ -46,15 +46,16 @@ public static class CommunicationsApi
                 caseNumber = c.CaseNumber,
                 clientName = c.ClientName,
                 requestType = c.RequestType,
-                memberNumber = c.MemberNumber,
+                clientNumber = c.ClientNumber,
                 adviserName = c.AdviserName,
+                referredBy = c.ReferredBy,
                 priority = c.Priority,
                 createdAt = c.CreatedAt
             });
             return Results.Ok(cases);
         });
 
-        // Full Member Case record for a single case.
+        // Full Client Case record for a single case.
         app.MapGet("/communications/cases/{caseNumber}", (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
@@ -64,10 +65,10 @@ public static class CommunicationsApi
         });
 
         // Engage Cara on the selected case. Deterministic drafts are always
-        // produced server-side so the demo completes end-to-end; when Foundry
-        // is configured the live agent is invoked too and its narrative is
-        // returned in `agentNotes` (streamed as SSE `delta` events when the
-        // client sends `Accept: text/event-stream`).
+        // produced server-side so the page completes end-to-end offline; when
+        // Foundry is configured the live agent is invoked too and its
+        // narrative is returned in `agentNotes` (streamed as SSE `delta`
+        // events when the client sends `Accept: text/event-stream`).
         app.MapPost("/communications/process", async (HttpContext httpContext, CommunicationsProcessRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.CaseNumber))
@@ -87,17 +88,21 @@ public static class CommunicationsApi
                 caseNumber = record.CaseNumber,
                 clientName = record.ClientName,
                 requestType = record.RequestType,
-                memberNumber = record.MemberNumber,
+                clientNumber = record.ClientNumber,
                 priority = record.Priority,
                 adviserName = record.AdviserName,
+                referredBy = record.ReferredBy,
                 stage = bundle.Stage,
                 outcome = bundle.Outcome,
                 summary = bundle.Summary,
                 vulnerabilityFlags = bundle.VulnerabilityFlags,
                 humanApprovalRequired = bundle.HumanApprovalRequired,
                 humanApprovalReason = bundle.HumanApprovalReason,
+                approver = bundle.Approver,
                 drafts = bundle.Drafts,
+                partnerNote = bundle.PartnerNote,
                 adviserNote = bundle.AdviserNote,
+                sources = bundle.Sources,
                 agentNotes = trace?.Text,
                 agentConfigured = factory.IsConfigured,
                 agentError,
@@ -163,7 +168,7 @@ public static class CommunicationsApi
         // reply, and can read it aloud with the Web Speech API. With Foundry
         // configured the conversational voice agent answers (chaining turns
         // via previousResponseId); otherwise a deterministic, case-aware reply
-        // keeps the demo working end-to-end.
+        // keeps the tab working offline.
         app.MapPost("/communications/voice", async (CommunicationsVoiceRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.Message))
@@ -234,23 +239,23 @@ public static class CommunicationsApi
     // ── Prompts ───────────────────────────────────────────────────────────────
     private static string BuildDraftingPrompt(CaseRecord r, ClientCommunicationsDrafter.DraftBundle bundle)
     {
-        var isScenario = ClientCommunicationsDrafter.IsScenarioCase(r);
-        var sample = isScenario ? (r.SampleId ?? string.Empty).ToLowerInvariant() : string.Empty;
+        var scenario = LifeScenarioCases.KeyOf(r);
         var type = (r.RequestType ?? string.Empty).ToLowerInvariant();
-        var hasAdviser = ClientCommunicationsDrafter.HasAdviser(r);
+        var hasPartner = ClientCommunicationsDrafter.HasReferralPartner(r);
         var sb = new StringBuilder();
 
-        sb.AppendLine("MEMBER CASE FOR CLIENT COMMUNICATIONS");
+        sb.AppendLine("CLIENT CASE FOR CLIENT COMMUNICATIONS");
         sb.AppendLine("=====================================");
         sb.AppendLine($"Case number    : {r.CaseNumber}");
         sb.AppendLine($"Client         : {r.ClientName}");
         sb.AppendLine($"Email / phone  : {r.ClientEmail} / {r.ClientPhone}");
         sb.AppendLine($"Preferred      : {r.PreferredContact}");
-        sb.AppendLine($"Member number  : {r.MemberNumber}");
-        sb.AppendLine($"Product        : {r.Product}");
+        sb.AppendLine($"Client number  : {r.ClientNumber}");
+        sb.AppendLine($"Cover          : {r.Cover}");
         sb.AppendLine($"Request type   : {r.RequestType}");
         sb.AppendLine($"Received       : {r.ReceivedDate}");
-        sb.AppendLine($"Adviser        : {(hasAdviser ? $"{r.AdviserName} ({r.AdviserPractice})" : "None (direct member)")}");
+        sb.AppendLine($"Adviser        : {r.AdviserName}");
+        sb.AppendLine($"Referred by    : {(hasPartner ? r.ReferredBy : "Existing client — no referral partner")}");
         sb.AppendLine($"Amount         : {r.Amount}");
         sb.AppendLine($"Priority       : {r.Priority} — {r.PriorityReason}");
         sb.AppendLine($"Request summary: {r.RequestSummary}");
@@ -267,67 +272,85 @@ public static class CommunicationsApi
             sb.AppendLine("Vulnerability  :");
             foreach (var flag in bundle.VulnerabilityFlags) sb.AppendLine($"- {flag}");
         }
+        sb.AppendLine("Documents      : " + string.Join("; ", bundle.Sources));
         sb.AppendLine();
         sb.AppendLine("TASK");
         sb.AppendLine("----");
-        sb.AppendLine("Write the communications for this case as Cara:");
-        sb.AppendLine("1. Case summary — the member's likely sentiment, what happened and what happens next (3–5 lines).");
-        sb.AppendLine(sample == "death-benefit-robert"
-            ? "2. Member letters — a separate condolence letter to each beneficiary (Robert and Lily)."
-            : "2. Member letter or email.");
-        sb.AppendLine(hasAdviser
-            ? $"3. Adviser update for {r.AdviserName} ({r.AdviserPractice}) in adviser language."
-            : "3. No adviser on this account — say so and skip the adviser update.");
-        sb.AppendLine("4. An SMS (aim for under 160 characters, no sensitive details).");
-        sb.AppendLine("For each draft give Channel & Audience, Draft Message, Tone & Compliance Check and Human Approval Required.");
-        sb.AppendLine("Compliance must cover: no personal financial advice; next steps; timeframes; contact details " +
-                      "(Caldova Client Services 1300 975 707); complaint rights — Caldova's internal dispute resolution first, then AFCA " +
-                      "(1800 931 678, www.afca.org.au).");
-        switch (sample)
+        sb.AppendLine("Write the communications for this case as Cara, for review before anything is sent. Start with a 3–5 line case " +
+                      "summary: the client's likely sentiment, what happened and what happens next. Then:");
+        switch (scenario)
         {
-            case "hardship-tom":
-                sb.AppendLine("Hardship: be kind and non-judgemental; explain why $10,000 is the legal maximum; include the National Debt Helpline " +
-                              "(1800 007 007) and Moneysmart (www.moneysmart.gov.au).");
+            case LifeScenarioCases.Priya:
+                sb.AppendLine("1. A welcome letter from Amelia to Priya: cover, policy number, premiums in dollars (inside and outside super), " +
+                              "the Kestrel and Riverbend cover, the cooling-off period, how to claim and complaint rights.");
+                sb.AppendLine("2. A plain-English policy summary that explains the income protection exclusion for back and spine conditions — what it " +
+                              "is, why, that life, TPD and trauma are unaffected, and the review after two symptom-free years.");
+                sb.AppendLine("3. A short update to Hannah Lewis (Yarra Home Loans): cover is in place, nothing more. Priya consented to share the " +
+                              "outcome only — no sums insured, premiums or health details.");
+                sb.AppendLine("4. An SMS (under 160 characters, nothing sensitive).");
                 break;
-            case "rollover-grace":
-                sb.AppendLine("Fraud victim: lead with reassurance that her money is safe; contact only via the pre-change verified details " +
-                              "(grace.williams@example.com, 0491 570 157); include IDCARE (1800 595 160); NEVER mention an SMR, AUSTRAC or any report.");
+            case LifeScenarioCases.Grace:
+                sb.AppendLine("1. A call script for Cara to call Grace on her verified mobile 0491 570 157 only (never 0491 570 159 or " +
+                              "grace.w.claims@example.net): reassure first, explain simply, confirm she didn't make the claim, what we've done, " +
+                              "identity-protection steps.");
+                sb.AppendLine("2. A reassurance letter to grace.williams@example.com: her cover is safe and nothing was paid, what happened, what we've " +
+                              "done, identity-protection steps (including IDCARE), no links and no code requests.");
+                sb.AppendLine("3. An SMS to the verified mobile only. Never imply Grace did anything wrong, and don't share investigation detail.");
                 break;
-            case "death-benefit-robert":
-                sb.AppendLine("Bereavement: condolences first, plain-English explanation of the 17% withholding, one named contact, " +
-                              "and the adviser update only with the family's consent.");
+            case LifeScenarioCases.George:
+                sb.AppendLine("1. A letter from Amelia to George: his buy-sell and the company's key person policies, premiums, the 25% loading " +
+                              "explained kindly (it changes the price, not the cover; Northbank reviews it in two years), the lawyer finalising the " +
+                              "buy-sell agreement, tax questions to Marcus, cooling-off and complaint rights.");
+                sb.AppendLine("2. A separate letter to Harpreet about her own policy — never mention George's health or loading.");
+                sb.AppendLine("3. An update to Marcus Tan (Bayside Business Accountants), with consent: cover in place from 20 Nov 2026 and the " +
+                              "lawyer finalising the buy-sell agreement. No health or underwriting details.");
+                sb.AppendLine("4. An SMS to George.");
                 break;
-            case "onboarding-priya":
-                sb.AppendLine("Include the insurance-loss warning (Southern Cross $520,000 Death & TPD cover ends on rollover) and the " +
-                              "nomination re-sign request; give the employer details (USI CDV0101AU).");
+            case LifeScenarioCases.Tom:
+                sb.AppendLine("1. Talking points for Amelia to call Tom first (Kylie may join as his support person).");
+                sb.AppendLine("2. A kind letter explaining $5,600 a month against the $7,000 insured, with the working (70% of $8,000), the dates " +
+                              "(accrues 13 Nov, first payment about 13 Dec), that payments are taxable income, free financial counselling and his " +
+                              "right to complain to Harbourline Life and then AFCA.");
+                sb.AppendLine("3. An SMS sent only after Amelia's call. Do not suggest changing his cover — that is Amelia's decision at his next review.");
                 break;
-            case "pension-george":
-                sb.AppendLine("Celebrate the retirement; give the payment schedule ($6,500 monthly from 15/12/2026), the $38,870 minimum " +
-                              "for 2026-27 and, for the adviser, the $850,000 remaining transfer balance cap space.");
+            case LifeScenarioCases.Robert:
+                sb.AppendLine("1. Gentle talking points for Amelia to call Robert first.");
+                sb.AppendLine("2. A gentle condolence-toned letter from Amelia: $1,000,000 paid to Robert on 23 Nov 2026 as Mei's nominated beneficiary " +
+                              "(not through the estate, not taxable), and a simple checklist for the separate $180,000 claim with Riverbend Super, " +
+                              "which the trustee pays under the fund's rules. One named contact: Amelia.");
+                sb.AppendLine("3. A gentle SMS sent only after Amelia's call. No product or review conversation.");
                 break;
             default:
-                // A case opened live: acknowledge receipt, set expectations and
-                // match the tone to the request type — no decision exists yet.
                 sb.AppendLine("This case has just been received — acknowledge it, explain what happens next and don't pre-empt any decision.");
-                if (type.Contains("hardship"))
-                    sb.AppendLine("Hardship: be kind and non-judgemental and include the National Debt Helpline (1800 007 007) and Moneysmart.");
-                else if (type.Contains("death"))
-                    sb.AppendLine("Bereavement: condolences first, plain English and one named contact.");
-                else if (type.Contains("smsf") || type.Contains("rollover"))
-                    sb.AppendLine("Rollover out: write only to the verified contact details on file, invite the member to call if they didn't " +
-                                  "make the request, and never discuss any suspicion with the requester.");
+                sb.AppendLine("1. An acknowledgement email to the client.");
+                if (hasPartner && !type.Contains("claim"))
+                    sb.AppendLine($"2. A short thank-you to the referral partner ({r.ReferredBy}) — receipt of the referral only, with the client's consent.");
+                sb.AppendLine("3. An SMS (under 160 characters, nothing sensitive).");
+                if (type.Contains("death"))
+                    sb.AppendLine("Bereavement: condolences first, plain English and one named contact (Amelia).");
+                else if (type.Contains("bank"))
+                    sb.AppendLine("A claim with a bank-detail change: write only to the contact details verified before any recent change, invite the " +
+                                  "client to call if they didn't make the request, and never confirm the new bank details.");
+                else if (type.Contains("claim"))
+                    sb.AppendLine("A claim: be kind and practical, explain what the insurer may need and that the claim is lodged only after approval.");
                 break;
         }
-        sb.AppendLine("Use only the facts above — never invent amounts or dates. Mask TFNs and bank account numbers.");
+        sb.AppendLine();
+        sb.AppendLine("For each draft give Channel & Audience, Draft Message, Tone & Compliance Check and Human Approval Required.");
+        sb.AppendLine($"Compliance must cover: no personal advice (Amelia gives the advice); facts that match the case; next steps and dates; " +
+                      $"contact details (Caldova Life Advice {PracticeContacts.Phone}); complaint rights where relevant — Caldova (or the insurer, for a " +
+                      $"claim decision) first, a written response within {LifeRules.IdrResponse}, then AFCA ({LifeRules.AfcaContact}); and health " +
+                      "information shared only with the people who need it.");
+        sb.AppendLine("Use only the facts above — never invent amounts, dates or rules. Mask TFNs and bank accounts. Cite documents by their exact titles.");
         return sb.ToString();
     }
 
     private static string BuildVoicePrompt(CaseRecord? record, string message)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("You are Cara from Caldova Wealth, speaking with a caller on a voice call. Reply in two to four short, warm, " +
-                      "plain-English sentences — no markdown, lists or headings. Never invent case facts; if you don't know, say " +
-                      "you'll check and follow up. Never give personal financial advice.");
+        sb.AppendLine("You are Cara from Caldova Life Advice, speaking with a caller on a voice call. Reply in two to four short, warm, " +
+                      "plain-English sentences — no markdown, lists or headings. Never invent case facts; if you don't know, say you'll check " +
+                      "and follow up. Never give personal advice — Amelia, the adviser, does that.");
         sb.AppendLine();
         if (record is not null)
         {
@@ -335,11 +358,13 @@ public static class CommunicationsApi
             sb.AppendLine("CALLER & CASE CONTEXT (the caller's identity has already been verified — do not read this aloud):");
             sb.AppendLine($"Case number   : {record.CaseNumber}");
             sb.AppendLine($"Caller        : {record.ClientName}");
-            sb.AppendLine($"Member number : {record.MemberNumber}");
+            sb.AppendLine($"Client number : {record.ClientNumber}");
             sb.AppendLine($"Request type  : {record.RequestType}");
             sb.AppendLine($"Stage         : {bundle.Stage}");
             sb.AppendLine($"What happened : {bundle.Summary.WhatHappened}");
             sb.AppendLine("What's next   : " + string.Join(" ", bundle.Summary.WhatsNext));
+            if (bundle.VulnerabilityFlags.Count > 0)
+                sb.AppendLine("Handle with care: " + string.Join(" ", bundle.VulnerabilityFlags));
             sb.AppendLine();
         }
         sb.AppendLine("CALLER SAID:");
@@ -353,11 +378,8 @@ public static class CommunicationsApi
         var intent = DetectIntent(message);
         if (record is null) return GenericReply(intent);
 
-        if (ClientCommunicationsDrafter.IsScenarioCase(record))
-        {
-            var caseReply = CaseReply(record, intent);
-            if (caseReply is not null) return caseReply;
-        }
+        var caseReply = CaseReply(record, intent);
+        if (caseReply is not null) return caseReply;
 
         var first = ClientCommunicationsDrafter.FirstName(record.ClientName);
         if (intent is "status" or "general" or "greeting")
@@ -365,7 +387,7 @@ public static class CommunicationsApi
             var condolence = (record.RequestType ?? string.Empty).Contains("death", StringComparison.OrdinalIgnoreCase)
                 ? "I'm so sorry for your loss. "
                 : string.Empty;
-            return $"Hi {first}, it's Cara from Caldova. {condolence}Your request, {record.CaseNumber}, is with our team now, and we'll be in " +
+            return $"Hi {first}, it's Cara from Caldova Life Advice. {condolence}Your request, {record.CaseNumber}, is with our team now, and we'll be in " +
                    "touch as soon as there's an update — there's nothing you need to do right now. Is there anything I can help with in the meantime?";
         }
         return $"Hi {first}. " + GenericReply(intent);
@@ -376,22 +398,28 @@ public static class CommunicationsApi
         var t = (message ?? string.Empty).ToLowerInvariant().Replace('’', '\'');
         bool Any(params string[] words) => words.Any(w => t.Contains(w));
 
-        if (Any("changed my", "change my details", "someone changed", "hacked", "scam", "fraud", "didn't ask",
-                "did not ask", "not me", "suspicious", "stolen", "identity"))
+        if (Any("changed my", "change my details", "someone changed", "hacked", "scam", "fraud", "didn't ask", "did not ask",
+                "not me", "suspicious", "stolen", "identity", "someone called", "someone rang"))
             return "security";
-        if (Any("passed away", "passed", "died", "death", "funeral", "deceased", "estate"))
+        if (Any("passed away", "passed", "died", "death", "funeral", "lost my wife", "lost my husband", "lost my partner"))
             return "bereavement";
-        if (Any("hardship", "bills", "struggling", "mortgage", "can't afford", "cannot afford", "behind on",
-                "centrelink", "jobseeker", "early access", "access my super", "withdraw"))
-            return "hardship";
-        if (Any("pension", "retire", "income stream"))
-            return "pension";
-        if (Any("consolidate", "combine", "scattered", "old jobs", "old super", "super accounts", "other fund", "one account",
-                "roll over", "rollover", "move my super"))
-            return "consolidate";
-        if (Any("mum", "mother", "dad", "father", "parent"))
-            return "family";
-        if (Any("status", "update", "what's happening", "whats happening", "where is", "where's", "how long", "when will"))
+        if (Any("when will", "first payment", "get paid", "be paid", "payment", "paid"))
+            return "payment";
+        if (Any("hurt", "injur", "accident", "can't work", "cannot work", "off work", "surgery", "income protection"))
+            return "claim-injury";
+        if (Any("cancer", "diagnos", "illness", "sick", "heart attack", "stroke", "trauma"))
+            return "claim-illness";
+        if (Any("claim"))
+            return "claim";
+        if (Any("business", "partner", "buy-sell", "buy sell", "key person", "succession", "company"))
+            return "business";
+        if (Any("premium", "cost", "price", "expensive", "went up", "go up"))
+            return "premium";
+        if (Any("exclusion", "loading", "covered for", "my cover", "my policy", "what does", "cover start", "start"))
+            return "cover";
+        if (Any("bought a home", "new home", "mortgage", "baby", "protect my family", "life insurance", "new cover", "get cover"))
+            return "new-advice";
+        if (Any("status", "update", "what's happening", "whats happening", "where is", "where's", "how long"))
             return "status";
         if (Any("hello", "hi ", "hey", "good morning", "good afternoon", "g'day"))
             return "greeting";
@@ -399,34 +427,35 @@ public static class CommunicationsApi
     }
 
     // Case-aware replies once the caller has been verified against a case.
-    // Returns null when the caller's question doesn't fit the case, so the
-    // generic answer for that topic is used instead.
+    // Returns null when the caller's question is about something else, so
+    // the generic answer for that topic is used instead.
     private static string? CaseReply(CaseRecord record, string intent)
     {
-        var generalOrStatus = intent is "status" or "general" or "greeting";
-        switch ((record.SampleId ?? string.Empty).ToLowerInvariant())
+        switch (LifeScenarioCases.KeyOf(record))
         {
-            case "onboarding-priya" when generalOrStatus || intent == "consolidate":
-                return "Hi Priya, it's Cara from Caldova. Your new Caldova Super account, CS-2049817, is open and invested in the Growth portfolio from Hannah's advice. " +
-                       "We've asked Harbourline to send your super across, which should arrive within about three business days, and we're holding your Southern Cross account " +
-                       "until you and Hannah confirm you're happy for its $520,000 of insurance cover to end. The only other thing is your nomination for Arjun — it needs a " +
-                       "second witness, so Hannah has a fresh form for you.";
-            case "rollover-grace" when generalOrStatus || intent is "security" or "family":
-                return "Grace, I'm so glad you called, and I'm sorry you've had this worry while you're away. Your super is safe — the request to move your $612,400 " +
-                       "was stopped, and no money has left your account. We've put your previous contact details back and locked your online access, and a specialist " +
-                       "will call you on 0491 570 157 to set you up again — that's the only number we'll use. IDCARE can also help you, free, on 1800 595 160.";
-            case "pension-george" when generalOrStatus || intent == "pension":
-                return "Hi George, congratulations again on your retirement. Your Caldova Pension started on the 16th of November, and you'll receive $6,500 a month " +
-                       "from the 15th of December — tax-free, so nothing is taken out. This year's minimum is $38,870, and your payments are comfortably above it. " +
-                       "Would you like me to explain anything about the payments?";
-            case "hardship-tom" when generalOrStatus || intent == "hardship":
-                return "Hi Tom, thanks for calling — I know this hasn't been easy. We've approved $10,000 before tax, which is the most the law allows for a hardship " +
-                       "release in any twelve months, and $7,932 will reach your account on Friday the 13th of November after tax. If it would help, the National Debt " +
-                       "Helpline on 1800 007 007 offers free financial counselling. Is there anything I can explain for you?";
-            case "death-benefit-robert" when generalOrStatus || intent is "bereavement" or "family":
-                return "Robert, I'm so sorry about your mum. Her binding nomination is valid, so her pension has been paid exactly as she wished — half to you and half " +
-                       "to Lily, $217,477.26 each after tax — and we've written to you both with the details. I'll be your contact the whole way through, so please " +
-                       "call me on 1300 975 707 whenever you need.";
+            case LifeScenarioCases.Priya when intent is not ("security" or "bereavement" or "business" or "claim" or "claim-injury" or "claim-illness"):
+                return "Hi Priya, it's Cara from Caldova Life Advice. Your Corella Life cover started on Wednesday the 18th of November — life cover of " +
+                       "$750,000, TPD of $600,000, trauma of $150,000 and income protection of $6,125 a month. The one thing to know is that your income " +
+                       "protection doesn't cover back or spine conditions, and Corella will review that after two symptom-free years. Your welcome letter " +
+                       "and plain-English summary are in your email — is there anything you'd like me to explain?";
+            case LifeScenarioCases.Grace when intent is not ("bereavement" or "business" or "new-advice" or "premium"):
+                return "Grace, thank you for calling, and I'm so sorry this happened while you're away. Your cover is safe — no claim was lodged and " +
+                       "nothing was paid. We've put your own mobile and email back, locked your portal and told Lyrebird Life's fraud team, and from now " +
+                       "on we'll only contact you on 0491 570 157. You haven't done anything wrong. Would you like me to go through a few steps to protect " +
+                       "your identity?";
+            case LifeScenarioCases.George when intent is not ("security" or "bereavement" or "claim" or "claim-injury" or "claim-illness"):
+                return "Hi George, it's Cara from Caldova Life Advice. Your Northbank Life cover has been in force since Friday the 20th of November — " +
+                       "$1.2 million of buy-sell cover each for you and Harpreet, and $400,000 of key person cover on you, owned by the company. Your " +
+                       "lawyer is finalising the buy-sell agreement, and Northbank will review your loading in two years. Anything I can help with?";
+            case LifeScenarioCases.Tom when intent is not ("security" or "bereavement" or "business" or "new-advice"):
+                return "Hi Tom, it's Cara — how's the shoulder? Harbourline has accepted your claim at $5,600 a month. That's 70% of your average " +
+                       "monthly earnings over the year before your injury, which is lower than the $7,000 you're insured for. It counts from the 13th of " +
+                       "November and it's paid monthly in arrears, so your first payment should arrive around the 13th of December. Would you like Amelia " +
+                       "or Ben to call you to go through it?";
+            case LifeScenarioCases.Robert when intent is not ("security" or "business" or "new-advice" or "premium"):
+                return "Robert, I'm so sorry about Mei. Corella paid her life cover of $1,000,000 into your account on Monday the 23rd of November — " +
+                       "directly to you, as her nominated beneficiary — and it isn't taxable. Mei's $180,000 of cover with Riverbend Super is a separate " +
+                       "claim, and Ben will help you with it one step at a time. Amelia is your contact for anything at all — would you like her to call you?";
             default:
                 return null;
         }
@@ -435,32 +464,42 @@ public static class CommunicationsApi
     private static string GenericReply(string intent) => intent switch
     {
         "security" =>
-            "That must be really worrying — thank you for calling us straight away. For your protection we never change details or move money on a call like this, " +
-            "so I'm flagging your account to our member protection team now, and a specialist will call you back on the number we had on file before the change. " +
-            "Please don't share any codes you've been sent, and IDCARE can help for free on 1800 595 160.",
+            "That must be really worrying — thank you for calling straight away. For your protection, we never change contact or bank details, or " +
+            "lodge a claim, on a call like this. I'll flag your file now, and a specialist will call you back on the number we had on file before any " +
+            "change. Please don't share any codes you've been sent — and IDCARE, a free identity support service, can help on 1800 595 160.",
         "bereavement" =>
-            "I'm so sorry for your loss. I'll help you through this one step at a time — could you tell me your loved one's full name and, if you have it, their " +
-            "member number? We'll need a certified copy of the death certificate and some identification for you, and I'll stay your contact the whole way through.",
-        "family" =>
-            "Of course, I'd be glad to help. I can only talk about your mum's account with her permission, or if you hold her power of attorney — and if she has " +
-            "passed away, I'm so sorry, and I'll gently guide you through what we need. Could you tell me a little more about what's happened?",
-        "hardship" =>
-            "I'm sorry things are tough at the moment — asking is the right step. You may be able to access some of your super on severe financial hardship grounds " +
-            "if you've received Centrelink income support, like JobSeeker, for 26 weeks in a row; it's a single payment of between $1,000 and $10,000 before tax, " +
-            "once in any twelve months. The National Debt Helpline on 1800 007 007 also offers free financial counselling — would you like me to send you the form?",
-        "pension" =>
-            "I'd be glad to help you start a pension. Generally you can start an account-based pension once you've met a condition of release — like turning 65, " +
-            "or retiring after 60 — and your adviser can help you decide how much income to take. I'll just need to confirm your full name, date of birth and " +
-            "member number, and then I can send you the application pack.",
-        "consolidate" =>
-            "Happy to help bring your super together. We can request the rollovers from your other funds for you — I'll just need each fund's name and your member " +
-            "number with them. One important thing: if any of those accounts includes insurance, that cover usually ends when the account is closed, so it's worth " +
-            "checking with your adviser first.",
+            "I'm so sorry for your loss. I'll help you one step at a time. Could you tell me your loved one's full name and, if you have it, their " +
+            "policy number? We'll need a certified copy of the death certificate and some identification for you, and Amelia will be your contact " +
+            "the whole way through.",
+        "claim-injury" =>
+            "I'm sorry to hear you've been hurt. I can help you start a claim. Ben, our Benefit Claims Advocate, will check your policy — the waiting " +
+            "period and what the insurer needs, like your doctor's report and proof of your earnings — and we'll only lodge it once it's ready. Could I " +
+            "take your name and policy number, and the date you stopped work?",
+        "claim-illness" =>
+            "I'm really sorry you're going through this. We'll help with the claim so you can focus on your health. Ben from our Claims team will check " +
+            "what your policy covers and what the insurer needs — usually a report from your specialist. Could I take your name and policy number?",
+        "claim" =>
+            "I can help with that. Ben, our Benefit Claims Advocate, will check your policy and what the insurer needs, and we'll only lodge the claim " +
+            "once it's ready and approved. Could I take your name and policy number, and a little about what's happened?",
+        "payment" =>
+            "I can check that for you. Could you give me your client number — it starts with C-L — or the case reference starting with R-E-Q?",
+        "cover" =>
+            "Happy to help you understand your cover. I can explain what your policy says in plain English, but if you're thinking about changing it, " +
+            "Amelia, our Senior Risk Adviser, is the right person — she gives the advice. Could I have your name and client number?",
+        "premium" =>
+            "I understand — premiums matter. Stepped premiums usually rise each year as you get older, while level premiums start higher and rise more " +
+            "slowly. I can't recommend a change, but Amelia can review your cover with you. Would you like me to book a time with her?",
+        "business" =>
+            "We help business owners protect their business with buy-sell and key person cover. Amelia, our Senior Risk Adviser, would start with a " +
+            "conversation about your business, what it's worth and who it depends on. Would you like me to book you in with her?",
+        "new-advice" =>
+            "That's a great thing to be thinking about. Amelia, our Senior Risk Adviser, starts with a fact find — your income, debts, family and any " +
+            "cover you already have, including through super — and then gives you her advice in writing. Would you like me to book a time with her?",
         "status" =>
-            "I can check that for you. Could you give me your member number, or the case reference starting with R-E-Q, so I can pull up the details?",
+            "I can check that for you. Could you give me your client number, starting with C-L, or the case reference starting with R-E-Q?",
         _ =>
-            "Hi, you're speaking with Cara from Caldova Wealth. I can help with your account, a request you've made, or questions about how super and pensions " +
-            "work. What can I help you with today?"
+            "Hi, you're speaking with Cara from Caldova Life Advice. I can help with your cover, a claim, or a request you've made. What can I help " +
+            "you with today?"
     };
 
     // Strip basic markdown so the reply sounds natural when read aloud by the

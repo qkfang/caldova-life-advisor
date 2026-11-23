@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261106-lif002-client-activity-log",
+  "title": "Case REQ-20261106-LIF002 — client activity log",
+  "category": "Case Evidence",
+  "requestType": "Trauma claim and bank change",
+  "caseNumber": "REQ-20261106-LIF002",
+  "clientNumber": "CL-100377",
+  "content": "Client activity log for Grace Williams (CL-100377), extracted by the Financial Crime Agent's Risk Timeline assistant for Felix (Financial Crime) from Caldova's client records and the client portal. Times are Melbourne time (AEDT).\n\n• Mon 28 Sep 2026 — Annual review with Amelia, Senior Risk Adviser. Grace says she will be in Italy from 20 Oct to 1 Dec 2026 (see 'Case REQ-20261106-LIF002 — travel notice'). Verified mobile 0491 570 157; email grace.williams@example.com.\n• Mon 2 Nov 2026 10:41 — Inbound call. The caller says she is Grace and has lost her phone, and passes the basic checks (name, date of birth and address). Mobile changed from 0491 570 157 to 0491 570 159; email changed from grace.williams@example.com to grace.w.claims@example.net. No verification code was sent to the old mobile.\n• Mon 2 Nov 2026 10:58 — Client portal login from a new device, on an IP address in Sydney.\n• Fri 6 Nov 2026 07:52 — Email from grace.w.claims@example.net: trauma claim for breast cancer for the full $200,000, marked urgent, with payment to a new account ending 4471 in the name 'G Williams Consulting Pty Ltd'.\n• Time between the change of contact details and the claim: about 93 hours.\n\nPattern (each red flag explained, not a finding): the contact details were changed by phone on basic checks alone, without a code to the verified mobile; 17 minutes later the portal was opened from a new device in Sydney, while the travel notice on file says Grace is in Italy; about 93 hours later an urgent claim for the full trauma benefit arrives from the new email address, asking for payment to a brand-new account in a company name. Each step matches the identity-takeover red flags in 'Guide — financial crime red flags and controls for life insurance'. The request appears not to have come from Grace; she is treated as the likely victim.\n\nWhat happened next on 6 Nov 2026: Felix's agent rated the risk HIGH and recommended a block. Theo, the Practice Team Leader, approved the block, restored Grace's verified contact details, locked portal access and approved alerting Lyrebird Life's fraud team. Ben (Claims) confirmed that no claim was lodged with Lyrebird Life. Cara (Client Communications) called Grace on her verified mobile 0491 570 157: Grace, in Florence, confirmed she is well and never asked for a claim. Cara then sent a reassurance letter with identity-protection steps.\n\nOutcome: 🛡️ Blocked — no claim lodged; $200,000 protected; Grace's $500,000 life cover and $200,000 trauma cover are safe.",
+  "severity": "high",
+  "department": "Financial Crime",
+  "tags": [
+    "grace-williams",
+    "REQ-20261106-LIF002",
+    "CL-100377",
+    "client-activity-log",
+    "risk-timeline",
+    "change-of-contact-details",
+    "lost-phone",
+    "no-code-to-old-mobile",
+    "new-device",
+    "sydney-ip",
+    "93-hours",
+    "identity-takeover",
+    "travel-notice",
+    "blocked",
+    "200000-protected"
+  ],
+  "lastUpdated": "2026-11-06T03:30:00Z"
+}

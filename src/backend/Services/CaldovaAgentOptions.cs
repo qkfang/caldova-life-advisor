@@ -1,7 +1,7 @@
-namespace CaldovaSuper.App.Services;
+namespace CaldovaLife.App.Services;
 
 /// <summary>
-/// Configuration values needed to construct the Caldova Wealth Foundry agents
+/// Configuration values needed to construct the Caldova Life Advice Foundry agents
 /// from <c>src/agent</c>. These keys are read from the app's
 /// <c>appsettings.json</c> / environment variables and mirror the keys used
 /// by the standalone agent CLI.
@@ -18,11 +18,11 @@ public class CaldovaAgentOptions
     /// <summary>
     /// Base URL of the in-process MCP server exposed by this app
     /// (e.g. a dev tunnel URL). When set, agents that opt in register an MCP
-    /// tool pointing at <c>{AppMcpUrl}/mcp</c> — the Investment Analyst uses
-    /// <c>analyzeFactSheet</c> / <c>compareModels</c> /
-    /// <c>generateClientWorkbook</c>, and the Transfers &amp; Rollovers agent
-    /// uses <c>lookupFunds</c> / <c>verifySmsf</c> /
-    /// <c>generateTransferRequestPdf</c>.
+    /// tool pointing at <c>{AppMcpUrl}/mcp</c> (server label
+    /// <c>caldova-ops-mcp</c>) — the Insurance Research Agent uses the
+    /// <c>research_*</c> tools, the Underwriting Agent the
+    /// <c>underwriting_*</c> tools and the Claims Agent the <c>claims_*</c>
+    /// tools plus <c>teams_sendApprovalCard</c>.
     /// </summary>
     public string? AppMcpUrl { get; set; }
 

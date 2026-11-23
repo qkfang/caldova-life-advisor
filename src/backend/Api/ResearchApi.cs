@@ -1,105 +1,108 @@
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Mcp;
-using CaldovaSuper.App.Services;
-using static CaldovaSuper.App.Mcp.InvestmentsMcpTools;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Mcp;
+using CaldovaLife.App.Services;
+using static CaldovaLife.App.Mcp.ResearchMcpTools;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
-record InvestmentsProcessRequest(string CaseNumber);
-record InvestmentsChatRequest(string? PreviousResponseId, string Message, string? CaseNumber);
+record ResearchProcessRequest(string CaseNumber);
+record ResearchWorkbookRequest(string CaseNumber, string? Notes);
+record ResearchChatRequest(string? PreviousResponseId, string Message, string? CaseNumber);
 
 /// <summary>
-/// HTTP endpoints behind the "Try it out" tab on the Investment Analyst agent
-/// page (<c>/agents/investment-analyst</c>, Ivy — Investment Solutions):
+/// HTTP endpoints behind the "Try it out" flow on the Insurance Research
+/// Agent page (<c>/agents/insurance-research</c>, Ivy — Insurance Research
+/// Analyst):
 ///
-/// 1. <c>GET /investments/cases</c> and <c>GET /investments/cases/{caseNumber}</c>
-///    — the Member Cases held in <see cref="CaseStore"/>, plus the investment
-///    profile Ivy reviews (balance, current/selected model, risk profile/SoA,
-///    request type, fact sheets).
-/// 2. <c>POST /investments/process</c> — engages the Investment Analyst
-///    agent. The analysis for the case (fee comparison, income strategy,
-///    redemption plan or "no action") and the client workbook are always
-///    computed in-process with the same code as the MCP tools, so the page
-///    shows the comparison table, the Mermaid chart and the workbook link
-///    even when Foundry isn't configured. With Foundry configured the
-///    agent's streamed report is shown; with <c>APP_MCP_URL</c> set the
-///    agent calls <c>analyzeFactSheet</c> / <c>compareModels</c> /
-///    <c>generateClientWorkbook</c> itself, otherwise the tool results are
+/// 1. <c>GET /research/cases</c> and <c>GET /research/cases/{caseNumber}</c>
+///    — every Client Case in <see cref="CaseStore"/> with its research brief
+///    (advice: the cover to compare and the definitions that matter; claim:
+///    the policy on file) and the APL product sheets.
+/// 2. <c>POST /research/process</c> — engages the Insurance Research Agent.
+///    The comparison (advice cases) or policy wording lookup (claim cases) is
+///    always computed in-process with the same code as the MCP tools, so the
+///    page shows the table, chart, definitions and projection even when
+///    Foundry isn't configured. With Foundry the agent's streamed report is
+///    shown; with <c>APP_MCP_URL</c> set the agent calls the
+///    <c>research_*</c> tools itself, otherwise their results are
 ///    pre-resolved into its prompt.
-/// 3. <c>POST /investments/chat</c> — follow-up questions in the same Foundry
-///    conversation; answered from the deterministic analysis when the live
-///    agent isn't available.
+/// 3. <c>POST /research/workbook</c> — builds the comparison workbook (the
+///    same code as <c>research_generateComparisonWorkbook</c>).
+/// 4. <c>POST /research/chat</c> — follow-up questions in the same Foundry
+///    conversation; answered from the research when the live agent isn't
+///    available.
 /// </summary>
-public static class InvestmentsApi
+public static class ResearchApi
 {
-    // Canon menu (fallback when a fact sheet can't be read).
-    private static readonly (string File, string Name, string Code, decimal Icr, decimal Growth, string Style)[] ModelMenu =
-    {
-        ("model-conservative.json", "Conservative", "CMP-CON", 0.32m, 30m, "Active, multi-asset"),
-        ("model-balanced.json", "Balanced", "CMP-BAL", 0.38m, 60m, "Active, multi-asset"),
-        ("model-growth.json", "Growth", "CMP-GRO", 0.42m, 80m, "Active, multi-asset"),
-        ("model-high-growth.json", "High Growth", "CMP-HGR", 0.45m, 95m, "Active, multi-asset"),
-        ("model-index-balanced.json", "Index Balanced", "CMP-IXB", 0.18m, 60m, "Passive (index)"),
-        ("model-sustainable-growth.json", "Sustainable Growth", "CMP-SUS", 0.49m, 80m, "Active, multi-asset with ESG screens"),
-    };
+    private const string AgentRole = "insurance-research";
+    private const string AgentLabel = "Insurance Research Agent";
 
-    public static void MapInvestmentsEndpoints(
+    public static void MapResearchEndpoints(
         this WebApplication app,
         CaseStore store,
         CaldovaAgentFactory factory,
         ILogger logger)
     {
         var agentOptions = app.Services.GetRequiredService<CaldovaAgentOptions>();
-        var tools = ActivatorUtilities.CreateInstance<InvestmentsMcpTools>(app.Services);
+        var tools = ActivatorUtilities.CreateInstance<ResearchMcpTools>(app.Services);
         var mcpEnabled = !string.IsNullOrWhiteSpace(agentOptions.AppMcpUrl);
 
-        // Cases available to Ivy — every Member Case in the shared store.
-        app.MapGet("/investments/cases", () =>
-            Results.Ok(store.All().Select(c => new
+        // Every Client Case in the shared store — advice cases get a comparison,
+        // claim cases a policy wording lookup.
+        app.MapGet("/research/cases", () =>
+            Results.Ok(store.All().Select(c =>
             {
-                caseNumber = c.CaseNumber,
-                clientName = c.ClientName,
-                memberNumber = c.MemberNumber,
-                product = c.Product,
-                requestType = c.RequestType,
-                receivedDate = c.ReceivedDate,
-                amount = c.Amount,
-                priority = c.Priority,
-                createdAt = c.CreatedAt
+                var brief = tools.ResolveBrief(c);
+                return new
+                {
+                    caseNumber = c.CaseNumber,
+                    clientName = c.ClientName,
+                    clientNumber = c.ClientNumber,
+                    cover = c.Cover,
+                    requestType = c.RequestType,
+                    receivedDate = c.ReceivedDate,
+                    amount = c.Amount,
+                    priority = c.Priority,
+                    createdAt = c.CreatedAt,
+                    kind = brief.Kind,
+                    researchTitle = brief.Title
+                };
             })));
 
-        // One case plus the investment profile shown in the "Review" step.
-        app.MapGet("/investments/cases/{caseNumber}", async (string caseNumber) =>
+        // One case, its research brief and the APL product sheets.
+        app.MapGet("/research/cases/{caseNumber}", async (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
             if (record is null)
                 return Results.NotFound(new { error = $"case '{caseNumber}' not found" });
 
-            var analysis = await AnalyseAsync(record, tools);
+            var brief = tools.ResolveBrief(record);
+            var sheets = await tools.LoadAplSheetsAsync();
             return Results.Ok(new
             {
                 caseNumber = record.CaseNumber,
                 clientName = record.ClientName,
-                memberNumber = record.MemberNumber,
-                product = record.Product,
+                clientNumber = record.ClientNumber,
+                cover = record.Cover,
                 requestType = record.RequestType,
                 receivedDate = record.ReceivedDate,
                 adviserName = record.AdviserName,
-                adviserPractice = record.AdviserPractice,
+                referredBy = record.ReferredBy,
                 requestSummary = record.RequestSummary,
                 amount = record.Amount,
                 priority = record.Priority,
                 priorityReason = record.PriorityReason,
-                investment = ProfileView(analysis)
+                research = BriefView(brief),
+                productSheets = sheets.Select(s => SheetView(s, brief)),
+                chatSuggestions = ChatSuggestions(brief)
             });
         });
 
-        // Engage the Investment Analyst agent. Clients can ask for a live SSE
+        // Engage the Insurance Research Agent. Clients can ask for a live SSE
         // stream with `Accept: text/event-stream`; otherwise one JSON envelope.
-        app.MapPost("/investments/process", async (HttpContext httpContext, InvestmentsProcessRequest request) =>
+        app.MapPost("/research/process", async (HttpContext httpContext, ResearchProcessRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request?.CaseNumber))
                 return Results.BadRequest(new { error = "caseNumber is required" });
@@ -108,25 +111,13 @@ public static class InvestmentsApi
             if (record is null)
                 return Results.NotFound(new { error = $"case '{request.CaseNumber}' not found" });
 
-            logger.LogInformation("Investments process: caseNumber={CaseNumber} sample={SampleId} mcp={Mcp}",
-                Sanitize(record.CaseNumber), Sanitize(record.SampleId), mcpEnabled);
+            var brief = tools.ResolveBrief(record);
+            logger.LogInformation("Research process: caseNumber={CaseNumber} scenario={Scenario} kind={Kind} mcp={Mcp}",
+                Sanitize(record.CaseNumber), Sanitize(brief.Scenario), brief.Kind, mcpEnabled);
 
-            var analysis = await AnalyseAsync(record, tools);
-
-            // Run the tool logic in-process: these are exactly the outputs the
-            // MCP tools return, so the page (and the agent prompt when MCP
-            // isn't wired up) always has the table, chart and workbook.
-            var factSheetResults = analysis.FactSheets
-                .Select(fs => (Url: fs.Source, Json: Serialize(new { source = fs.Source, factSheet = fs })))
-                .ToList();
-            var modelsJson = BuildModelsJson(analysis);
-            var compareJson = analysis.Comparison is null ? null : Serialize(analysis.Comparison);
-            var caseSummaryJson = BuildCaseSummaryJson(record, analysis);
-            var recommendationsJson = BuildRecommendationsJson(analysis);
-            var workbookJson = tools.GenerateClientWorkbook(record.CaseNumber, caseSummaryJson, modelsJson, recommendationsJson);
-            var workbook = ParseWorkbookResult(workbookJson);
-
-            var prompt = BuildPrompt(record, analysis, mcpEnabled, factSheetResults, modelsJson, compareJson, caseSummaryJson, workbookJson);
+            InsurerComparison? comparison = brief.Kind == BriefKinds.Advice ? await tools.BuildComparisonAsync(brief) : null;
+            WordingLookup? wording = brief.Kind == BriefKinds.Claim ? await tools.BuildWordingLookupAsync(brief) : null;
+            var prompt = BuildPrompt(record, brief, comparison, wording, mcpEnabled);
 
             string? createError = null;
 
@@ -135,21 +126,17 @@ public static class InvestmentsApi
                 var error = agentError ?? createError;
                 var notes = trace?.Text;
                 if (string.IsNullOrWhiteSpace(notes))
-                    notes = BuildFallbackNarrative(record, analysis, workbook, error, factory.IsConfigured);
+                    notes = BuildFallbackNarrative(brief, comparison, wording, error, factory.IsConfigured);
 
                 return new
                 {
                     caseNumber = record.CaseNumber,
                     clientName = record.ClientName,
                     requestType = record.RequestType,
-                    analysis = AnalysisView(analysis),
-                    workbook = workbook.DownloadUrl is null ? null : new
-                    {
-                        fileName = workbook.FileName,
-                        downloadUrl = workbook.DownloadUrl,
-                        sheets = workbook.Sheets
-                    },
-                    workbookError = workbook.Error,
+                    kind = brief.Kind,
+                    research = BriefView(brief),
+                    comparison,
+                    wording,
                     mcpEnabled,
                     agentNotes = notes,
                     agentError = error,
@@ -173,18 +160,18 @@ public static class InvestmentsApi
             {
                 try
                 {
-                    agent = factory.Create("investments");
+                    agent = factory.Create(AgentRole);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Investment Analyst Agent could not be created; using the deterministic analysis");
+                    logger.LogWarning(ex, "{Agent} could not be created; using the offline research", AgentLabel);
                     createError = ex.Message;
                 }
             }
 
             if (AgentSseStreaming.WantsEventStream(httpContext))
             {
-                await AgentSseStreaming.StreamAsync(httpContext, agent, prompt, BuildEnvelope, logger, "Investment Analyst Agent");
+                await AgentSseStreaming.StreamAsync(httpContext, agent, prompt, BuildEnvelope, logger, AgentLabel);
                 return Results.Empty;
             }
 
@@ -198,7 +185,7 @@ public static class InvestmentsApi
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Investment Analyst Agent invocation failed; using the deterministic analysis");
+                    logger.LogWarning(ex, "{Agent} invocation failed; using the offline research", AgentLabel);
                     invocationError = ex.Message;
                 }
             }
@@ -206,20 +193,42 @@ public static class InvestmentsApi
             return Results.Ok(BuildEnvelope(traceResult, invocationError));
         });
 
+        // Build the comparison workbook (same code as research_generateComparisonWorkbook).
+        app.MapPost("/research/workbook", async (ResearchWorkbookRequest request) =>
+        {
+            if (string.IsNullOrWhiteSpace(request?.CaseNumber))
+                return Results.BadRequest(new { error = "caseNumber is required" });
+
+            var record = store.Get(request.CaseNumber);
+            if (record is null)
+                return Results.NotFound(new { error = $"case '{request.CaseNumber}' not found" });
+
+            var notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+            if (notes is { Length: > 2000 }) notes = notes[..2000];
+
+            var result = await tools.GenerateWorkbookAsync(record.CaseNumber, null, notes);
+            logger.LogInformation("Research workbook: caseNumber={CaseNumber} file={File} error={Error}",
+                Sanitize(record.CaseNumber), Sanitize(result.FileName ?? "-"), Sanitize(result.Error ?? "-"));
+            return result.Error is null
+                ? Results.Ok(result)
+                : Results.UnprocessableEntity(new { error = result.Error });
+        });
+
         // Follow-up chat. Chains off previousResponseId when the live agent is
-        // available; otherwise answers from the deterministic analysis of the
-        // case so the demo still holds a conversation offline.
-        app.MapPost("/investments/chat", async (HttpContext httpContext, InvestmentsChatRequest request) =>
+        // available; otherwise answers from the research for the case so the
+        // page still holds a conversation offline.
+        app.MapPost("/research/chat", async (HttpContext httpContext, ResearchChatRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request?.Message))
                 return Results.BadRequest(new { error = "message is required" });
 
             var live = factory.IsConfigured && !string.IsNullOrWhiteSpace(request.PreviousResponseId);
             var record = string.IsNullOrWhiteSpace(request.CaseNumber) ? null : store.Get(request.CaseNumber);
-            var analysis = record is null ? null : await AnalyseAsync(record, tools);
+            var brief = record is null ? null : tools.ResolveBrief(record);
+            InsurerComparison? comparison = brief?.Kind == BriefKinds.Advice ? await tools.BuildComparisonAsync(brief) : null;
+            WordingLookup? wording = brief?.Kind == BriefKinds.Claim ? await tools.BuildWordingLookupAsync(brief) : null;
 
-            logger.LogInformation("Investments chat: live={Live} caseNumber={CaseNumber}",
-                live, Sanitize(request.CaseNumber ?? string.Empty));
+            logger.LogInformation("Research chat: live={Live} caseNumber={CaseNumber}", live, Sanitize(request.CaseNumber ?? string.Empty));
 
             string? createError = null;
             CaldovaAgent? agent = null;
@@ -227,11 +236,11 @@ public static class InvestmentsApi
             {
                 try
                 {
-                    agent = factory.Create("investments");
+                    agent = factory.Create(AgentRole);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Investment Analyst Agent could not be created for chat");
+                    logger.LogWarning(ex, "{Agent} could not be created for chat", AgentLabel);
                     createError = ex.Message;
                 }
             }
@@ -250,8 +259,8 @@ public static class InvestmentsApi
                             : string.IsNullOrWhiteSpace(request.PreviousResponseId)
                                 ? "there's no live conversation to continue"
                                 : "the live agent returned no text";
-                    notes = $"_Offline reply — {reason}, so Ivy is answering from the deterministic analysis of the case._\n\n" +
-                            OfflineChatReply(record, analysis, request.Message);
+                    notes = $"_Offline reply — {reason}, so Ivy is answering from the research on this case._\n\n" +
+                            OfflineChatReply(brief, comparison, wording, request.Message);
                 }
 
                 return new
@@ -277,7 +286,7 @@ public static class InvestmentsApi
             {
                 await AgentSseStreaming.StreamChatAsync(
                     httpContext, agent, request.PreviousResponseId ?? string.Empty, request.Message,
-                    BuildChatEnvelope, logger, "Investment Analyst Agent");
+                    BuildChatEnvelope, logger, AgentLabel);
                 return Results.Empty;
             }
 
@@ -291,7 +300,7 @@ public static class InvestmentsApi
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Investment Analyst Agent chat invocation failed");
+                    logger.LogWarning(ex, "{Agent} chat invocation failed", AgentLabel);
                     chatError = ex.Message;
                 }
             }
@@ -301,1184 +310,676 @@ public static class InvestmentsApi
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Scenario analysis (deterministic, canon numbers)
+    // Page views
     // ─────────────────────────────────────────────────────────────────────
 
-    internal static async Task<InvestmentCaseAnalysis> AnalyseAsync(CaseRecord c, InvestmentsMcpTools tools)
+    private static object BriefView(ResearchBrief b) => new
     {
-        var files = c.SampleId switch
-        {
-            "onboarding-priya" => new[] { "model-growth.json", "model-balanced.json", "model-index-balanced.json" },
-            "rollover-grace" => new[] { "model-balanced.json" },
-            "pension-george" => new[] { "model-balanced.json", "model-conservative.json" },
-            "hardship-tom" => new[] { "model-balanced.json" },
-            "death-benefit-robert" => new[] { "model-conservative.json" },
-            _ => new[] { "model-balanced.json", "model-growth.json", "model-index-balanced.json" }
-        };
-
-        var sheets = new List<FactSheet>();
-        foreach (var file in files)
-        {
-            var sheet = await tools.LoadFactSheetAsync(SamplesUrlPrefix + file);
-            if (sheet is not null) sheets.Add(sheet);
-        }
-
-        return c.SampleId switch
-        {
-            "onboarding-priya" => Priya(sheets),
-            "rollover-grace" => Grace(sheets),
-            "pension-george" => George(sheets),
-            "hardship-tom" => Tom(sheets),
-            "death-benefit-robert" => MeiChen(sheets),
-            _ => Generic(c, sheets)
-        };
-    }
-
-    private static InvestmentCaseAnalysis Priya(IReadOnlyList<FactSheet> sheets)
-    {
-        const decimal balance = 138_200m;
-        var options = new[]
-        {
-            ModelFor("Growth", sheets, selected: true, note: "Selected in the SoA dated 28 Oct 2026"),
-            ModelFor("Balanced", sheets),
-            ModelFor("Index Balanced", sheets),
-        };
-        var comparison = Compare(options, balance);
-
-        var profile = new InvestmentProfile(
-            Scenario: "fee-comparison",
-            AnalysisTitle: "Model fit & fee comparison",
-            AnalysisSummary: "Check Growth against the SoA risk profile and compare Growth, Balanced and Index Balanced on $138,200 — fees in dollars.",
-            Balance: balance,
-            BalanceLabel: "Consolidated balance (est.)",
-            BalanceNote: "Southern Cross Industry Super ≈ $96,400 + Harbourline Retail Super ≈ $41,800, rolling in",
-            CurrentModel: "Caldova Managed Portfolio — Growth (80/20), 100% — selected in the SoA (1% kept in the Caldova Cash Account)",
-            RiskProfile: "Growth",
-            Soa: "SoA dated 28 Oct 2026 — Hannah Lewis CFP®, Yarra Private Wealth",
-            Holdings: Array.Empty<InvestmentHolding>());
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: options,
-            Comparison: comparison,
-            Chart: ChartFromComparison(comparison),
-            Plan: null,
-            PortfolioFit:
-                "Consistent. The Growth model (80/20 growth/defensive, standard risk measure 6 — High, minimum suggested " +
-                "timeframe 7 years) matches the \"Growth\" risk profile in Hannah Lewis's SoA dated 28 Oct 2026 and is " +
-                "available on the Select tier. Priya's super is preserved until at least age 60 — far longer than the " +
-                "7-year minimum timeframe.",
-            CaseFacts: new[]
-            {
-                "New Caldova Super (Select) account CS-2049817. Incoming rollovers: Harbourline Retail Super about $41,800 (requested now) and Southern Cross Industry Super about $96,400 (held until the adviser and member confirm in writing that $520,000 Death & TPD cover will end). Estimated consolidated balance $138,200.",
-                "SoA dated 28 Oct 2026 (Hannah Lewis CFP®, Yarra Private Wealth): risk profile Growth; investment 100% Caldova Managed Portfolio — Growth, with 1% kept in the Caldova Cash Account.",
-                $"Caldova admin fee on $138,200: {AdminFeeWorking(balance)}, plus the $180 p.a. account-keeping fee.",
-                "The ongoing adviser fee ($3,300 p.a. incl. GST) is charged separately and is excluded from the comparison.",
-                "Compare Growth (selected) with Balanced and Index Balanced. Do not recommend a change — the investment choice is the adviser's advice.",
-            },
-            Observations: WithExtras(comparison.Observations,
-                "The comparison uses the estimated consolidated balance. Until the Southern Cross rollover goes ahead, Priya's Caldova balance will be about $41,800 (Harbourline only)."),
-            ActionNote: null,
-            NextSteps: new[]
-            {
-                "Send the workbook to Hannah Lewis with the note: \"Growth is consistent with the SoA. Fees are in dollars so Priya can see the trade-offs.\"",
-                "No change recommended — the investment choice is Hannah's advice. Payments invests each rollover into Growth on receipt, keeping 1% in cash.",
-                "Re-run the comparison on the actual balance once both rollover benefit statements arrive.",
-            },
-            HumanApprovalRequired: false,
-            HumanApprovalReason: "No — the selected model matches the SoA risk profile and no change is being made. Hannah Lewis reviews the workbook with Priya.",
-            AgentTask:
-                "Confirm the Growth model fits the SoA risk profile, then compare Growth (selected), Balanced and Index Balanced on $138,200 with total annual Caldova fees in dollars. Produce the client workbook for the adviser.");
-    }
-
-    private static InvestmentCaseAnalysis Grace(IReadOnlyList<FactSheet> sheets)
-    {
-        const decimal balance = 612_400m;
-        var holdings = new[]
-        {
-            new InvestmentHolding("Caldova Cash Account", 12_248m, 2.0m),
-            new InvestmentHolding("Caldova Managed Portfolio — Balanced", 600_152m, 98.0m),
-        };
-        var plan = new InvestmentPlan("investmentHold", "Investment hold — what happens while the account is frozen", new[]
-        {
-            new InvestmentPlanRow("1", "Member-initiated switches and model changes", null, "On hold",
-                "Only actioned after Grace is verified on her pre-change number (0491 570 157)."),
-            new InvestmentPlanRow("2", "Redemptions, withdrawals and rollovers out", null, "On hold",
-                "The SMSF rollover is held by Transfers & Rollovers — no units are sold."),
-            new InvestmentPlanRow("3", "Existing investments", 612_400m, "Unchanged",
-                "The balance stays invested as Grace chose. Moving it to cash without her instruction would itself be an unauthorised change; the portfolio manager's normal rebalancing continues."),
-            new InvestmentPlanRow("4", "Holdings snapshot", 612_400m, "Recorded 6 Nov 2026",
-                "Baseline for confirming nothing moved while the contact details were compromised."),
-        }, "No investment instruction is actioned until Financial Crime and the Team Leader release the hold.");
-
-        var profile = new InvestmentProfile(
-            Scenario: "no-action",
-            AnalysisTitle: "No investment action — account on hold",
-            AnalysisSummary: "The account is frozen while Financial Crime reviews a suspected identity takeover — no switches, redemptions or rollovers are actioned.",
-            Balance: balance,
-            BalanceLabel: "Account balance (protected)",
-            BalanceNote: "Full-balance SMSF rollover request held — no money has left the account",
-            CurrentModel: "Caldova Managed Portfolio — Balanced (98%) + Caldova Cash Account (2%)",
-            RiskProfile: "Balanced — Grace's own investment choice",
-            Soa: "No SoA — direct Select member with no adviser",
-            Holdings: holdings);
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: Array.Empty<ModelOption>(),
-            Comparison: null,
-            Chart: null,
-            Plan: plan,
-            PortfolioFit:
-                "No review needed — there is no investment request on this case. Grace's existing Balanced investment is left exactly as she chose it.",
-            CaseFacts: new[]
-            {
-                "Caldova Super (Select) CS-1058220, balance $612,400; direct member, no adviser. A travel notice is on file (Italy, from 18 Oct 2026).",
-                "Mobile and email were changed by phone on 2 Nov 2026 at 10:42; a request to roll the full balance to a newly registered SMSF arrived on 6 Nov 2026 at 07:52 — about 93 hours later.",
-                "The rollover is held: the ATO SMSF verification failed (TFN not linked; bank details and ESA don't match). Financial Crime is reviewing; Grace is treated as the likely victim.",
-                "Indicative holdings: Caldova Cash Account $12,248 (2%), Caldova Managed Portfolio — Balanced $600,152 (98%).",
-                "Do not compare models or plan any redemption. Record the holdings snapshot and confirm the investment-instruction hold.",
-            },
-            Observations: new[]
-            {
-                "No investment action is taken while the Financial Crime hold is in place.",
-                "Grace's $612,400 stays invested in Balanced, so normal market movements still apply during the hold.",
-                "Instructions received through the changed contact details (mobile 0491 570 158, email grace.w.super@mailbox.example) must not be actioned.",
-                "Once Grace is verified on her pre-change number and confirms her wishes, nothing needs to be unwound — nothing was sold or switched.",
-            },
-            ActionNote:
-                "No investment action — account frozen pending the Financial Crime review. The $612,400 balance stays invested; no switches, redemptions or rollovers are processed until Grace is verified on her pre-change number (0491 570 157).",
-            NextSteps: new[]
-            {
-                "Keep the investment-instruction hold until Financial Crime and the Team Leader release it.",
-                "Attach the workbook (holdings snapshot at 6 Nov 2026) to the case file.",
-                "Re-check the account once Grace confirms her instructions on her verified contact details.",
-            },
-            HumanApprovalRequired: true,
-            HumanApprovalReason: "Yes — any investment instruction on this account needs Financial Crime and Team Leader sign-off while the hold is in place.",
-            AgentTask:
-                "No investment action is required: the account is frozen pending the Financial Crime review. Confirm the hold, note that the balance stays invested, and record the holdings snapshot in the client workbook. Do not compare models.");
-    }
-
-    private static InvestmentCaseAnalysis George(IReadOnlyList<FactSheet> sheets)
-    {
-        const decimal balance = 1_250_000m;
-        var balanced = ModelFor("Balanced", sheets);
-        var conservative = ModelFor("Conservative", sheets);
-        var balancedIcr = balanced.IcrPercent ?? 0.38m;
-        var conservativeIcr = conservative.IcrPercent ?? 0.32m;
-        const string cashBucket = "Cash bucket (Caldova Cash Account & term deposits)";
-
-        var options = new[]
-        {
-            new ModelOption("Cash bucket + Balanced", null, true, null, null, null, null,
-                "Adviser instruction — two years of payments in cash, the rest in Balanced", null,
-                new[]
-                {
-                    new ModelComponent(cashBucket, 156_000m, 0m, 0m),
-                    new ModelComponent("Balanced", 1_094_000m, balancedIcr, balanced.GrowthPercent ?? 60m),
-                }, null),
-            new ModelOption("Balanced only", balanced.Code, false, null, null, null, balanced.Style,
-                "Everything invested; payments come from selling units", null,
-                new[] { new ModelComponent("Balanced", 1_250_000m, balancedIcr, balanced.GrowthPercent ?? 60m) }, null),
-            new ModelOption("Cash bucket + Conservative", null, false, null, null, null, null,
-                "Lower-risk alternative for comparison", null,
-                new[]
-                {
-                    new ModelComponent(cashBucket, 156_000m, 0m, 0m),
-                    new ModelComponent("Conservative", 1_094_000m, conservativeIcr, conservative.GrowthPercent ?? 30m),
-                }, null),
-        };
-        var comparison = Compare(options, balance, "Total Caldova fees per year on the $1,250,000 pension");
-
-        var plan = new InvestmentPlan("incomePlan", "Income structure — cash bucket + Balanced", new[]
-        {
-            new InvestmentPlanRow("1", "Cash bucket — Caldova Cash Account & term deposits", 156_000m, "On commencement, 16 Nov 2026",
-                "Two years of payments: 24 × $6,500 (2 × $78,000)"),
-            new InvestmentPlanRow("2", "Caldova Managed Portfolio — Balanced", 1_094_000m, "On commencement, 16 Nov 2026",
-                "Long-term growth that refills the cash bucket"),
-            new InvestmentPlanRow("3", "Monthly pension payment", 6_500m, "From 15 Dec 2026, on the 15th",
-                "$78,000 p.a.; tax-free because George is over 60"),
-            new InvestmentPlanRow("4", "FY2026-27 minimum payment (pro-rated)", 38_870m, "By 30 Jun 2027",
-                "5% × $1,250,000 × 227/365 = $38,869.86, rounded to $38,870; seven payments ($45,500) meet it"),
-            new InvestmentPlanRow("5", "Refill the cash bucket", null, "At each annual review",
-                "Top up from Balanced when markets allow — the adviser's decision"),
-        }, "Amounts are on commencement; market movements change the Balanced value over time.");
-
-        var profile = new InvestmentProfile(
-            Scenario: "income-strategy",
-            AnalysisTitle: "Pension income strategy — cash bucket",
-            AnalysisSummary: "Two-year cash bucket ($156,000) + $1,094,000 in Balanced for $78,000 p.a. paid monthly, compared with Balanced only and cash bucket + Conservative.",
-            Balance: balance,
-            BalanceLabel: "Pension commencement amount",
-            BalanceNote: "From accumulation CS-1077881 ($1,284,600) into Caldova Pension CP-3077881 — $34,600 stays in accumulation",
-            CurrentModel: "Instructed for the pension: Caldova Managed Portfolio — Balanced, with two years of payments ($156,000) in the Caldova Cash Account and term deposits",
-            RiskProfile: "Balanced (adviser instruction)",
-            Soa: "Retirement advice — Marcus Tan, Bayside Financial Partners (pension application signed 6 Nov 2026)",
-            Holdings: Array.Empty<InvestmentHolding>());
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: options,
-            Comparison: comparison,
-            Chart: ChartFromComparison(comparison),
-            Plan: plan,
-            PortfolioFit:
-                "Consistent with the adviser's instruction. Balanced (60/40, standard risk measure 5 — Medium to high, minimum " +
-                "suggested timeframe 5 years) plus a two-year cash bucket gives about 52.5% growth / 47.5% defensive overall, " +
-                "matching the investment strategy on the pension application Marcus Tan submitted.",
-            CaseFacts: new[]
-            {
-                "Commence a Caldova Pension (account-based) with $1,250,000 from accumulation CS-1077881 (balance $1,284,600; $34,600 stays in accumulation) into new pension account CP-3077881 on 16 Nov 2026. George is 66.",
-                "Income $78,000 p.a. paid monthly ($6,500 on the 15th, first payment 15 Dec 2026); tax-free from age 60. Reversionary beneficiary: Helen (spouse).",
-                "Minimum payment 5% (age 65–74) = $62,500 p.a.; FY2026-27 pro-rated minimum $38,870 (227 of 365 days).",
-                "Adviser's instructed strategy: two years of payments (2 × $78,000 = $156,000) in the Caldova Cash Account and term deposits (available on the Select tier); the remaining $1,094,000 in Balanced.",
-                "Compare three structures on $1,250,000: cash bucket + Balanced (instructed), Balanced only, cash bucket + Conservative. Cash and term deposits carry no investment fee.",
-                $"Caldova admin fee on $1,250,000: {AdminFeeWorking(balance)}, plus the $180 p.a. account-keeping fee.",
-            },
-            Observations: WithExtras(comparison.Observations,
-                "The cash bucket covers 24 monthly payments of $6,500, so income can continue for two years through a market fall without selling Balanced units.",
-                "$78,000 p.a. is 6.24% of $1,250,000 — above the 5% minimum ($62,500 p.a.). This year's pro-rated minimum is $38,870; seven payments before 30 Jun 2027 total $45,500.",
-                "Balanced only keeps every dollar invested, but each payment relies on selling units — including during a downturn (sequencing risk).",
-                "Cash bucket + Conservative has the lowest fees but only about 26% growth assets overall, so it may not keep pace with a $78,000 income over a long retirement. Marcus and George decide — this is not advice.",
-                "Cash and term deposits usually earn less than growth assets over time, so the bucket is refilled from Balanced at reviews."),
-            ActionNote: null,
-            NextSteps: new[]
-            {
-                "Send the three-way comparison workbook to Marcus Tan for his review with George.",
-                "On commencement (16 Nov 2026): $156,000 to the Caldova Cash Account and term deposits; invest $1,094,000 in Balanced.",
-                "Payments raises the Team Leader approval (commencement of $1,000,000 or more) before the internal transfer runs.",
-            },
-            HumanApprovalRequired: true,
-            HumanApprovalReason: "Yes — a pension commencement of $1,000,000 or more needs Team Leader approval (raised by Payments). The income strategy itself is Marcus Tan's recommendation.",
-            AgentTask:
-                "Build the pension income strategy: a two-year cash bucket ($156,000) plus $1,094,000 in Balanced, and compare it with Balanced only and cash bucket + Conservative on $1,250,000 — fees in dollars, sequencing risk in plain English. Produce the three-way workbook for the adviser.");
-    }
-
-    private static InvestmentCaseAnalysis Tom(IReadOnlyList<FactSheet> sheets)
-    {
-        const decimal balance = 84_300m;
-        const decimal gross = 10_000m;
-        const decimal cash = 1_686m;
-        const decimal units = 82_614m;
-        var spreadPercent = sheets.FirstOrDefault()?.BuySellSpreadPercent ?? DefaultBuySellSpreadPercent;
-
-        var minimumCash = Round2((balance - gross) * 0.01m);               // 1% of the balance after the release
-        var fromCash = cash - minimumCash;                                    // $943.00
-        var netFromUnits = gross - fromCash;                                  // $9,057.00
-        var unitsSold = Round2(netFromUnits / (1m - spreadPercent / 100m));   // $9,066.07
-        var spreadCost = unitsSold - netFromUnits;                            // $9.07
-        var after = minimumCash + (units - unitsSold);                        // $74,290.93
-
-        var plan = new InvestmentPlan("redemptionPlan", "Redemption plan — $10,000 gross hardship release", new[]
-        {
-            new InvestmentPlanRow("1", "Caldova Cash Account — cash above the 1% minimum", fromCash, "Draw first",
-                $"Cash {MoneySmart(cash)} less the 1% minimum ({MoneySmart(minimumCash)}) kept for fees"),
-            new InvestmentPlanRow("2", "Sell Caldova Managed Portfolio — Balanced units", unitsSold, "After Team Leader approval",
-                $"Raises {Money(netFromUnits)} after the {FormatPercent(spreadPercent)} sell spread ({Money(spreadCost)})"),
-            new InvestmentPlanRow("3", "Gross hardship release to Payments", gross, "Paid Fri 13 Nov 2026",
-                "Payments calculates the tax withheld and the net payment"),
-            new InvestmentPlanRow("4", "Estimated balance after the release", after, "Before market movements",
-                $"Cash {MoneySmart(minimumCash)} + Balanced about {MoneySmart(Math.Round(units - unitsSold))} — about $74,300"),
-        }, "Indicative — unit prices on the sale date set the final figures.");
-
-        var chart = new InvestmentChart(
-            "Tom's balance before and after the $10,000 release",
-            "AUD",
-            new[] { new InvestmentChartBar("Before release", balance, false), new InvestmentChartBar("After release (est.)", after, true) },
-            BuildBarChartMermaid("Tom's balance before and after the $10,000 release",
-                new List<(string, decimal)> { ("Before release", balance), ("After release (est.)", after) }, "AUD"));
-
-        var profile = new InvestmentProfile(
-            Scenario: "redemption",
-            AnalysisTitle: "Redemption plan — $10,000 hardship release",
-            AnalysisSummary: "Fund the partially approved $10,000 gross release: cash first, then Balanced units — the balance falls from $84,300 to about $74,300.",
-            Balance: balance,
-            BalanceLabel: "Account balance",
-            BalanceNote: "Partially approved: $10,000 gross of the $15,000 requested",
-            CurrentModel: "Caldova Managed Portfolio — Balanced (98%) + Caldova Cash Account (2%)",
-            RiskProfile: "Balanced — Tom's own investment choice",
-            Soa: "No SoA — direct Essential member with no adviser",
-            Holdings: new[]
-            {
-                new InvestmentHolding("Caldova Cash Account", cash, 2.0m),
-                new InvestmentHolding("Caldova Managed Portfolio — Balanced", units, 98.0m),
-            });
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: Array.Empty<ModelOption>(),
-            Comparison: null,
-            Chart: chart,
-            Plan: plan,
-            PortfolioFit:
-                "No change — Tom keeps his existing Balanced investment. Only the units needed to fund the release are sold.",
-            CaseFacts: new[]
-            {
-                "Severe financial hardship release partially approved: $10,000 gross — the legal maximum in any 12 months; $15,000 was requested.",
-                "Caldova Super (Essential) CS-1030412, balance $84,300. Indicative holdings at 11 Nov 2026: Caldova Cash Account $1,686 (2%), Caldova Managed Portfolio — Balanced $82,614 (98%).",
-                "Plan the redemption: cash above the 1% minimum first, then Balanced units. The 0.10% sell spread applies to units sold.",
-                "Payments pays the release on Fri 13 Nov 2026 and calculates the tax withheld and the net amount.",
-                "Vulnerable member — keep it plain and kind; no investment changes beyond funding the release.",
-            },
-            Observations: new[]
-            {
-                $"Drawing cash first keeps the units sold — and the sell-spread cost (about {Money(spreadCost)}) — as small as possible.",
-                $"The 1% minimum ({MoneySmart(minimumCash)}) stays in the Caldova Cash Account for fees.",
-                "Tom's balance falls from $84,300 to about $74,300 before market movements; the rest stays invested in Balanced as he chose.",
-                "The release permanently reduces Tom's retirement savings — Client Communications explains this in plain English, with free financial counselling details.",
-            },
-            ActionNote: null,
-            NextSteps: new[]
-            {
-                $"Place the sell order for about {MoneySmart(Math.Round(unitsSold))} of Balanced units once the Team Leader's approval of the partial release is on file.",
-                "Confirm $10,000 of cleared cash to Payments ahead of the Fri 13 Nov 2026 payment.",
-                "Attach the workbook (holdings and redemption plan) to the case file.",
-            },
-            HumanApprovalRequired: true,
-            HumanApprovalReason: "Yes — the partial release ($10,000 of the $15,000 requested) and vulnerable-member handling need Team Leader approval before any units are sold.",
-            AgentTask:
-                "Plan the redemption that funds the $10,000 gross hardship release: draw cash above the 1% minimum first, then sell Balanced units, and show the balance before and after. Produce the workbook for the case file.");
-    }
-
-    private static InvestmentCaseAnalysis MeiChen(IReadOnlyList<FactSheet> sheets)
-    {
-        const decimal balance = 486_200m;
-        const decimal cash = 12_155m;
-        const decimal units = 474_045m;
-        var spreadPercent = sheets.FirstOrDefault()?.BuySellSpreadPercent ?? DefaultBuySellSpreadPercent;
-        var spreadCost = Round2(units * spreadPercent / 100m);               // $474.05
-        var available = units - spreadCost + cash;                           // $485,725.95
-
-        var plan = new InvestmentPlan("redemptionPlan", "Redemption plan — Mei Chen's pension portfolio to cash", new[]
-        {
-            new InvestmentPlanRow("1", "Sell all Caldova Managed Portfolio — Conservative units", units, "Once the binding nomination is confirmed",
-                "Sold at the prices on the sale date — the value can move until then"),
-            new InvestmentPlanRow("2", $"Less {FormatPercent(spreadPercent)} sell spread (est.)", -spreadCost, "At sale", "One-off transaction cost"),
-            new InvestmentPlanRow("3", "Cash already in the Caldova Cash Account", cash, "Held",
-                "Pension payments stopped on notification (13 Nov 2026)"),
-            new InvestmentPlanRow("4", "Estimated cash for the death benefit", available, "Before market movements",
-                "Payments uses the actual proceeds — 50% to Robert, 50% to Lily"),
-        }, "Final amounts depend on the sale proceeds.");
-
-        var chart = new InvestmentChart(
-            "Mei Chen's pension: value at notification vs estimated cash after sale",
-            "AUD",
-            new[] { new InvestmentChartBar("At notification", balance, false), new InvestmentChartBar("Est. cash after sale", available, true) },
-            BuildBarChartMermaid("Mei Chen's pension: value at notification vs estimated cash after sale",
-                new List<(string, decimal)> { ("At notification", balance), ("Est. cash after sale", available) }, "AUD"));
-
-        var profile = new InvestmentProfile(
-            Scenario: "redemption",
-            AnalysisTitle: "Redemption plan — death benefit",
-            AnalysisSummary: "Redeem Mei Chen's pension portfolio (about $486,200) to cash so the death benefit can be paid 50/50 to Robert and Lily as nominated.",
-            Balance: balance,
-            BalanceLabel: "Pension balance at notification (indicative)",
-            BalanceNote: "Caldova Pension CP-3019042 — pension payments stopped on notification",
-            CurrentModel: "Caldova Managed Portfolio — Conservative (97.5%) + Caldova Cash Account (2.5%)",
-            RiskProfile: "Conservative (Mei Chen's pension, adviser Marcus Tan)",
-            Soa: "Pension strategy — Marcus Tan, Bayside Financial Partners",
-            Holdings: new[]
-            {
-                new InvestmentHolding("Caldova Cash Account", cash, 2.5m),
-                new InvestmentHolding("Caldova Managed Portfolio — Conservative", units, 97.5m),
-            });
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: Array.Empty<ModelOption>(),
-            Comparison: null,
-            Chart: chart,
-            Plan: plan,
-            PortfolioFit:
-                "Not applicable — Mei's pension ceased on her death. The portfolio is redeemed to cash so the benefit can be paid as nominated.",
-            CaseFacts: new[]
-            {
-                "Mei Chen died on 12 Oct 2026. Caldova Pension CP-3019042, balance about $486,200 at notification on 13 Nov 2026; pension payments stopped on notification.",
-                "Binding death benefit nomination (signed 18 Mar 2024, valid to 18 Mar 2027): Robert 50%, Lily 50% — the trustee must pay as nominated.",
-                "Indicative holdings: Caldova Cash Account $12,155 (2.5%), Caldova Managed Portfolio — Conservative $474,045 (97.5%).",
-                "Death benefits to adult children who were not financially dependent are paid as cash lump sums — they can't be rolled over.",
-                "Redeem the whole portfolio to cash and note that the final amounts depend on the sale proceeds. Bereaved family — gentle, plain language.",
-            },
-            Observations: new[]
-            {
-                "Until the units are sold the account stays invested, so its value can rise or fall — the final amounts depend on the sale proceeds.",
-                $"Selling the whole portfolio costs an estimated {Money(spreadCost)} in sell spread ({FormatPercent(spreadPercent)}).",
-                "The $243,100 per beneficiary on the case is indicative (50% of $486,200); Payments works out each share from the actual proceeds.",
-                "Bereaved family — Client Communications is the family's single point of contact, so updates stay gentle and plain.",
-            },
-            ActionNote: null,
-            NextSteps: new[]
-            {
-                "Place the sell order for all Conservative units once Benefits & Eligibility confirms the binding nomination.",
-                "Pass the actual cash proceeds to Payments for each beneficiary's tax components and withholding.",
-                "Every death benefit needs Team Leader approval before payment — Payments raises it.",
-            },
-            HumanApprovalRequired: true,
-            HumanApprovalReason: "Yes — every death benefit needs Team Leader approval before payment. The redemption itself follows the trustee's duty to pay as nominated.",
-            AgentTask:
-                "Plan the redemption of Mei Chen's pension portfolio to cash so the death benefit can be paid as nominated (50/50 to Robert and Lily), and note that market movements until the sale change the final amounts. Produce the workbook for the case file.");
-    }
-
-    private static InvestmentCaseAnalysis Generic(CaseRecord c, IReadOnlyList<FactSheet> sheets)
-    {
-        var parsed = Regex.Match(c.Amount ?? string.Empty, @"\d[\d,]*(?:\.\d+)?");
-        var balance = parsed.Success && decimal.TryParse(parsed.Value.Replace(",", string.Empty), NumberStyles.Number, CultureInfo.InvariantCulture, out var amt) && amt > 0
-            ? amt
-            : 100_000m;
-        var options = new[] { ModelFor("Balanced", sheets), ModelFor("Growth", sheets), ModelFor("Index Balanced", sheets) };
-        var comparison = Compare(options, balance);
-
-        var profile = new InvestmentProfile(
-            Scenario: "fee-comparison",
-            AnalysisTitle: "Model fee comparison",
-            AnalysisSummary: $"Compare Balanced, Growth and Index Balanced on {MoneySmart(balance)} — fees in dollars.",
-            Balance: balance,
-            BalanceLabel: parsed.Success ? "Amount on the case" : "Illustrative balance",
-            BalanceNote: string.IsNullOrWhiteSpace(c.Amount) ? "No amount on the case — $100,000 used for illustration" : c.Amount,
-            CurrentModel: "Not recorded on the case — confirm with the adviser or member",
-            RiskProfile: "Not recorded on the case",
-            Soa: string.IsNullOrWhiteSpace(c.AdviserPractice) ? "No SoA on file" : $"Adviser: {c.AdviserName} ({c.AdviserPractice})",
-            Holdings: Array.Empty<InvestmentHolding>());
-
-        return new InvestmentCaseAnalysis(
-            Profile: profile,
-            FactSheets: sheets,
-            Options: options,
-            Comparison: comparison,
-            Chart: ChartFromComparison(comparison),
-            Plan: null,
-            PortfolioFit: "Needs adviser review — the case doesn't record the current model or a risk profile, so fit can't be confirmed yet.",
-            CaseFacts: new[]
-            {
-                $"Request: {c.RequestType}. {c.RequestSummary}",
-                $"Balance used for the comparison: {MoneySmart(balance)}.",
-                "Compare Balanced, Growth and Index Balanced with total annual Caldova fees in dollars. Flag that the current model and risk profile need confirming.",
-            },
-            Observations: comparison.Observations,
-            ActionNote: null,
-            NextSteps: new[]
-            {
-                "Confirm the client's current model and risk profile with the adviser (or the member, for direct members).",
-                "Share the workbook so the fee trade-offs are visible in dollars.",
-            },
-            HumanApprovalRequired: true,
-            HumanApprovalReason: "Yes — the current investment and risk profile aren't recorded on the case; confirm them before any change.",
-            AgentTask:
-                "Compare Balanced, Growth and Index Balanced on the case amount with fees in dollars, and flag that the client's current model and risk profile must be confirmed.");
-    }
-
-    private static ModelOption ModelFor(string name, IReadOnlyList<FactSheet> sheets, bool selected = false, string? note = null)
-    {
-        var sheet = sheets.FirstOrDefault(s => string.Equals(s.ShortName, name, StringComparison.OrdinalIgnoreCase));
-        if (sheet is not null)
-            return OptionFromFactSheet(sheet, selected, note);
-
-        var m = ModelMenu.First(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
-        return new ModelOption(m.Name, m.Code, selected, m.Growth, 100m - m.Growth, m.Icr, m.Style, note, null,
-            Array.Empty<ModelComponent>(), null);
-    }
-
-    private static InvestmentChart ChartFromComparison(ModelComparison comparison) => new(
-        $"Total Caldova fees per year on {MoneySmart(comparison.Balance)}",
-        "AUD per year",
-        comparison.Rows.Select(r => new InvestmentChartBar(r.Selected ? $"{r.Name} (selected)" : r.Name, r.TotalFee, r.Selected)).ToList(),
-        comparison.ChartMermaid);
-
-    private static IReadOnlyList<string> WithExtras(IReadOnlyList<string> observations, params string[] extras)
-    {
-        var list = observations.ToList();
-        var warningIndex = list.FindIndex(o => o == PastPerformanceWarning);
-        if (warningIndex >= 0) list.InsertRange(warningIndex, extras);
-        else list.AddRange(extras);
-        return list;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // Tool inputs (same JSON the agent would send to the MCP tools)
-    // ─────────────────────────────────────────────────────────────────────
-
-    private static string BuildModelsJson(InvestmentCaseAnalysis a) => Serialize(new
-    {
-        balance = a.Profile.Balance,
-        options = a.Options.Select(OptionPayload),
-        factSheets = a.FactSheets
-    });
-
-    private static object OptionPayload(ModelOption o) => new
-    {
-        name = o.Name,
-        code = o.Code,
-        selected = o.Selected,
-        growthPercent = o.GrowthPercent,
-        icrPercent = o.Components.Count > 0 ? null : o.IcrPercent,
-        style = o.Style,
-        note = o.Note,
-        components = o.Components.Count == 0 ? null : o.Components.Select(c => new
-        {
-            label = c.Label,
-            amount = c.Amount,
-            icrPercent = c.IcrPercent,
-            growthPercent = c.GrowthPercent
-        })
+        scenario = b.Scenario,
+        kind = b.Kind,
+        title = b.Title,
+        summary = b.Summary,
+        client = b.Client,
+        clientFirstNames = b.ClientFirstNames,
+        keyFacts = b.KeyFacts,
+        coverRequested = b.CoverRequested,
+        monthlyBudget = b.MonthlyBudget,
+        definitionsThatMatter = b.Items.Select(i => new { key = i.Key, title = i.Title, priority = i.Priority, whyItMatters = i.WhyItMatters }),
+        observations = b.Observations,
+        quotesOnFile = b.QuotesOnFile,
+        claimInsurer = b.ClaimInsurer,
+        policyNumber = b.PolicyNumber,
+        policyOnFile = b.PolicyOnFile,
+        handover = b.Handover,
+        handoverAgentId = b.HandoverAgentId,
+        handoverAgentName = AgentName(b.HandoverAgentId),
+        handoverUrl = HandoverUrl(b),
+        caseStatus = b.CaseStatus,
+        journeyNote = JourneyNote(b),
+        nextSteps = b.NextSteps,
+        humanApproval = b.HumanApproval
     };
 
-    private static string BuildCaseSummaryJson(CaseRecord c, InvestmentCaseAnalysis a) => Serialize(new
+    private static object SheetView(ProductSheet s, ResearchBrief b)
     {
-        client = c.ClientName,
-        memberNumber = c.MemberNumber,
-        product = c.Product,
-        requestType = c.RequestType,
-        received = c.ReceivedDate,
-        adviser = AdviserText(c),
-        riskProfile = a.Profile.RiskProfile,
-        statementOfAdvice = a.Profile.Soa,
-        currentOrSelectedModel = a.Profile.CurrentModel,
-        balance = a.Profile.Balance,
-        balanceBasis = $"{a.Profile.BalanceLabel} — {a.Profile.BalanceNote}",
-        analysis = $"{a.Profile.AnalysisTitle}: {a.Profile.AnalysisSummary}",
-        holdings = a.Profile.Holdings.Count == 0
-            ? null
-            : a.Profile.Holdings.Select(h => new { holding = h.Holding, value = h.Value, sharePercent = h.Percent })
-    });
+        var quote = b.QuotesOnFile
+            ? s.Quotes.FirstOrDefault(q => string.Equals(q.Scenario, b.Scenario, StringComparison.OrdinalIgnoreCase))
+            : null;
+        var notQuoted = s.NotQuoted.FirstOrDefault(n => string.Equals(n.Scenario, b.Scenario, StringComparison.OrdinalIgnoreCase))?.Reason;
 
-    private static string BuildRecommendationsJson(InvestmentCaseAnalysis a)
-    {
-        var fields = new Dictionary<string, object?>
+        bool relevant;
+        string status;
+        if (b.Kind == BriefKinds.Claim)
         {
-            ["portfolioFit"] = a.PortfolioFit,
-            ["investmentAction"] = a.ActionNote ?? a.Profile.AnalysisTitle,
-            ["observations"] = a.Observations,
-            ["nextSteps"] = a.NextSteps,
-            ["humanApprovalRequired"] = a.HumanApprovalReason
+            relevant = b.ClaimInsurer is not null && MatchesInsurer(s, b.ClaimInsurer);
+            status = relevant ? $"Policy on file · {b.PolicyNumber}" : "Not on this claim";
+        }
+        else if (quote is not null)
+        {
+            relevant = true;
+            status = $"Quoted · {Money(quote.Year1Premium)} a year stepped";
+        }
+        else
+        {
+            relevant = !b.QuotesOnFile && notQuoted is null;
+            status = notQuoted is not null ? "Not quoted" : b.QuotesOnFile ? "No quote on file" : "Definitions only";
+        }
+
+        return new
+        {
+            insurer = s.Insurer,
+            shortName = s.ShortName,
+            code = s.Code,
+            productName = s.ProductName,
+            pdsTitle = s.PdsTitle,
+            aplListing = s.AplListing,
+            url = s.Source,
+            relevant,
+            status,
+            notQuotedReason = quote is null ? notQuoted : null,
+            preview = SheetPreview(s)
         };
-        if (a.Plan is not null)
-        {
-            fields[a.Plan.Key] = a.Plan.Rows.Select(r => new
-            {
-                step = r.Step,
-                item = r.Item,
-                amount = r.Amount,
-                timing = r.Timing,
-                note = r.Note
-            });
-        }
-        return Serialize(fields);
     }
 
-    private static InvestmentWorkbookInfo ParseWorkbookResult(string json)
+    /// <summary>Plain-text summary of a product sheet for the hover popovers.</summary>
+    private static string SheetPreview(ProductSheet s)
     {
-        try
+        var sb = new StringBuilder();
+        sb.AppendLine(s.Summary);
+        sb.AppendLine();
+        sb.AppendLine($"APL listing: {s.AplListing}");
+        sb.AppendLine("Premiums: stepped or level");
+        sb.AppendLine();
+        sb.AppendLine("Cover types");
+        foreach (var c in s.CoverTypes)
+            sb.AppendLine($"  • {c.Cover}{(c.InsideSuper ? " — inside or outside super" : " — outside super")}");
+        if (s.Strengths.Count > 0)
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            if (root.TryGetProperty("error", out var err))
-                return new InvestmentWorkbookInfo(null, null, Array.Empty<string>(), err.GetString());
-
-            var sheets = root.TryGetProperty("sheets", out var s) && s.ValueKind == System.Text.Json.JsonValueKind.Array
-                ? s.EnumerateArray().Select(x => x.GetString() ?? string.Empty).ToArray()
-                : Array.Empty<string>();
-            return new InvestmentWorkbookInfo(
-                root.GetProperty("fileName").GetString(),
-                root.GetProperty("downloadUrl").GetString(),
-                sheets,
-                null);
+            sb.AppendLine();
+            sb.AppendLine("Strengths");
+            foreach (var x in s.Strengths.Take(3)) sb.AppendLine($"  • {x}");
         }
-        catch (Exception ex)
+        if (s.WatchPoints.Count > 0)
         {
-            return new InvestmentWorkbookInfo(null, null, Array.Empty<string>(), ex.Message);
+            sb.AppendLine();
+            sb.AppendLine("Watch points");
+            foreach (var x in s.WatchPoints.Take(3)) sb.AppendLine($"  • {x}");
         }
+        return sb.ToString().TrimEnd();
     }
+
+    private static IReadOnlyList<string> ChatSuggestions(ResearchBrief b) => b.Scenario switch
+    {
+        ResearchScenarios.FamilyProtection => new[]
+        {
+            "Why Corella Life for Priya?",
+            "Explain own vs any occupation TPD for a physio.",
+            "Stepped or level over 10 years?",
+            "How does it fit Priya's $300 a month budget?",
+            "Does commission affect the ranking?",
+        },
+        ResearchScenarios.BusinessProtection => new[]
+        {
+            "Why Northbank Life for George and Harpreet?",
+            "Which TPD definition applies to each owner?",
+            "How does financial underwriting differ?",
+            "Stepped or level for business cover?",
+            "Does commission affect the ranking?",
+        },
+        ResearchScenarios.FraudulentClaim => new[]
+        {
+            "What does Lyrebird's cancer definition need?",
+            "Who can the trauma benefit be paid to?",
+            "What does a trauma claim need?",
+            "Is Grace's life cover affected?",
+        },
+        ResearchScenarios.IncomeProtectionClaim => new[]
+        {
+            "How is Tom's monthly benefit worked out?",
+            "When do payments start?",
+            "What evidence does Harbourline need?",
+            "Is the benefit taxable?",
+        },
+        ResearchScenarios.DeathClaim => new[]
+        {
+            "Who receives Mei's life cover?",
+            "What does Corella need for the claim?",
+            "Can Corella avoid the policy for non-disclosure?",
+            "What about Mei's super cover?",
+        },
+        _ when b.Kind == BriefKinds.Advice => new[]
+        {
+            "Compare the TPD definitions.",
+            "Compare the income protection definitions.",
+            "What's needed before quotes?",
+        },
+        _ => new[] { "What do you need to look up the policy wording?" }
+    };
+
+    private static string? HandoverUrl(ResearchBrief b) =>
+        string.IsNullOrWhiteSpace(b.HandoverAgentId)
+            ? null
+            : $"/agents/{b.HandoverAgentId}?caseNumber={Uri.EscapeDataString(b.CaseNumber)}";
+
+    private static string? AgentName(string? agentId) => agentId switch
+    {
+        "claims" => "Claims Agent (Ben)",
+        "paraplanning" => "Paraplanning Agent (Penny)",
+        null or "" => null,
+        _ => agentId
+    };
+
+    private static string? JourneyNote(ResearchBrief b) => b.Kind switch
+    {
+        BriefKinds.Claim => b.ClaimInsurer is null
+            ? "This is a claim, so Ivy doesn't compare insurers — Ben's Claims Agent owns it. Ask Ben's agent for the policy schedule, then Ivy can look up the insurer's wording."
+            : $"This is a claim, so Ivy doesn't compare insurers — Ben's Claims Agent owns it. Ivy can still help with a policy wording lookup for {b.ClaimInsurer}.",
+        BriefKinds.Advice when !b.QuotesOnFile =>
+            "No insurer quotes are on this case yet — Ivy compares the definitions now; premiums follow Penny's needs analysis.",
+        BriefKinds.Unknown => b.Summary,
+        _ => null
+    };
 
     // ─────────────────────────────────────────────────────────────────────
     // Prompt
     // ─────────────────────────────────────────────────────────────────────
 
-    private static string BuildPrompt(
-        CaseRecord c,
-        InvestmentCaseAnalysis a,
-        bool mcpEnabled,
-        IReadOnlyList<(string Url, string Json)> factSheetResults,
-        string modelsJson,
-        string? compareJson,
-        string caseSummaryJson,
-        string workbookJson)
+    private static string BuildPrompt(CaseRecord c, ResearchBrief b, InsurerComparison? comparison, WordingLookup? wording, bool mcpEnabled)
     {
-        var p = a.Profile;
+        var isClaim = b.Kind == BriefKinds.Claim;
         var sb = new StringBuilder();
-        sb.AppendLine("MEMBER CASE FOR INVESTMENT REVIEW");
-        sb.AppendLine("=================================");
+        sb.AppendLine(isClaim ? "CLIENT CASE — POLICY WORDING LOOKUP (CLAIM)" : "CLIENT CASE FOR INSURANCE RESEARCH");
+        sb.AppendLine("===========================================");
         sb.AppendLine($"Case number   : {c.CaseNumber}");
         sb.AppendLine($"Client        : {c.ClientName}");
-        sb.AppendLine($"Member number : {c.MemberNumber}");
-        sb.AppendLine($"Product       : {c.Product}");
+        sb.AppendLine($"Client number : {c.ClientNumber}");
+        sb.AppendLine($"Cover         : {c.Cover}");
         sb.AppendLine($"Request type  : {c.RequestType}");
         sb.AppendLine($"Received      : {c.ReceivedDate}");
-        sb.AppendLine($"Adviser       : {AdviserText(c)}");
+        sb.AppendLine($"Adviser       : {c.AdviserName}");
+        sb.AppendLine($"Referred by   : {c.ReferredBy}");
         sb.AppendLine($"Priority      : {c.Priority} — {c.PriorityReason}");
         sb.AppendLine();
         sb.AppendLine("REQUEST SUMMARY");
         sb.AppendLine("---------------");
         sb.AppendLine(c.RequestSummary);
         sb.AppendLine();
-        sb.AppendLine("INVESTMENT PROFILE");
+        sb.AppendLine($"RESEARCH BRIEF — {b.Title}");
+        sb.AppendLine("------------------------------");
+        sb.AppendLine(b.Summary);
+        AppendList(sb, "Key facts", b.KeyFacts);
+        AppendList(sb, "Cover to research (from Penny's needs analysis)", b.CoverRequested);
+        if (b.MonthlyBudget is decimal budget)
+            sb.AppendLine($"Budget for premiums from cash flow: up to {Money(budget)} a month.");
+        if (isClaim)
+        {
+            AppendList(sb, "Policy on file", b.PolicyOnFile);
+            AppendList(sb, "Wording to look up", b.Items.Select(i => $"{i.Title} — {i.WhyItMatters}"));
+            if (!string.IsNullOrWhiteSpace(b.Handover)) sb.AppendLine($"Handover: {b.Handover}");
+        }
+        else
+        {
+            AppendList(sb, "Definitions that matter for this client", b.Items.Select(i => $"[{i.Priority}] {i.Title} — {i.WhyItMatters}"));
+        }
+        AppendList(sb, "Notes", b.Observations);
+        sb.AppendLine();
+
+        sb.AppendLine("APL PRODUCT SHEETS");
         sb.AppendLine("------------------");
-        sb.AppendLine($"Balance for analysis : {MoneySmart(p.Balance)} — {p.BalanceLabel} ({p.BalanceNote})");
-        sb.AppendLine($"Current / selected   : {p.CurrentModel}");
-        sb.AppendLine($"Risk profile         : {p.RiskProfile}");
-        sb.AppendLine($"Statement of Advice  : {p.Soa}");
-        sb.AppendLine($"Analysis required    : {p.AnalysisTitle}");
-        sb.AppendLine();
-        sb.AppendLine("CASE FACTS");
-        sb.AppendLine("----------");
-        foreach (var fact in a.CaseFacts) sb.AppendLine($"- {fact}");
-        sb.AppendLine();
-        sb.AppendLine("ANALYSIS TASK");
-        sb.AppendLine("-------------");
-        sb.AppendLine(a.AgentTask);
-        sb.AppendLine();
-
-        if (factSheetResults.Count > 0)
+        if (comparison is not null)
         {
-            sb.AppendLine("FACT SHEETS");
-            sb.AppendLine("-----------");
-            foreach (var (url, _) in factSheetResults) sb.AppendLine($"- {url}");
-            sb.AppendLine();
+            foreach (var r in comparison.Rows)
+                sb.AppendLine($"- {r.Insurer}: {r.SheetUrl} — cite \"{r.PdsTitle}\"{(r.Quoted ? string.Empty : $" (not quoted: {r.NotQuotedReason})")}");
         }
-
-        if (a.Options.Count > 0)
+        else if (wording?.SheetUrl is not null)
         {
-            sb.AppendLine($"OPTIONS TO COMPARE (modelsJson for compareModels; balance = {p.Balance.ToString(CultureInfo.InvariantCulture)})");
-            sb.AppendLine("----------------------------------------------------------------------");
-            sb.AppendLine(Serialize(a.Options.Select(OptionPayload)));
-            sb.AppendLine();
+            sb.AppendLine($"- {wording.Insurer}: {wording.SheetUrl} — cite \"{wording.PdsTitle}\" (the insurer on this claim)");
         }
-
-        var plainSections = BuildPlanAndChartMarkdown(a);
+        sb.AppendLine();
 
         if (mcpEnabled)
         {
             sb.AppendLine("TASK (use your MCP tools)");
             sb.AppendLine("-------------------------");
-            sb.AppendLine("1. Call analyzeFactSheet for each fact sheet listed above.");
-            if (a.Options.Count > 0)
+            if (isClaim)
             {
-                sb.AppendLine($"2. Call compareModels with the OPTIONS JSON above as modelsJson and balance {p.Balance.ToString(CultureInfo.InvariantCulture)}.");
-                sb.AppendLine("   Embed the returned comparisonMarkdown table and the chartMermaid ```mermaid``` block verbatim in your");
-                sb.AppendLine("   \"Model Comparison\" section.");
+                sb.AppendLine($"1. Call research_analysePolicyDocument with insurerOrUrl \"{b.ClaimInsurer ?? "the claim's insurer"}\" and caseNumber \"{c.CaseNumber}\".");
+                sb.AppendLine("2. Write the policy wording lookup in the claim output format. Don't compare insurers or build a workbook.");
             }
             else
             {
-                sb.AppendLine("2. Do NOT call compareModels — no model comparison is needed for this case. In \"Model Comparison\" say so");
-                sb.AppendLine("   and embed the holdings table and the ```mermaid``` chart below (if any) verbatim.");
-            }
-            sb.AppendLine("3. Call generateClientWorkbook with caseNumber, the CASE SUMMARY JSON below as caseSummaryJson, the same");
-            sb.AppendLine("   modelsJson (or [] when there is nothing to compare) and a recommendationsJson that includes your plan");
-            sb.AppendLine("   as an array of rows. Put the returned downloadUrl in \"Next Steps\" as a markdown link.");
-            sb.AppendLine("4. Write your report in the required output format.");
-            sb.AppendLine();
-            sb.AppendLine("CASE SUMMARY JSON (caseSummaryJson for generateClientWorkbook)");
-            sb.AppendLine("-------------------------------------------------------------");
-            sb.AppendLine(caseSummaryJson);
-            sb.AppendLine();
-            if (plainSections.Length > 0)
-            {
-                sb.AppendLine("PRE-COMPUTED PLAN / HOLDINGS / CHART (embed verbatim where relevant)");
-                sb.AppendLine("-------------------------------------------------------------------");
-                sb.AppendLine(plainSections);
-                sb.AppendLine();
+                sb.AppendLine($"1. Call research_analysePolicyDocument for each APL insurer above, passing caseNumber \"{c.CaseNumber}\".");
+                sb.AppendLine($"2. Call research_compareInsurers with caseNumber \"{c.CaseNumber}\". Embed comparisonMarkdown and chartMermaid (a ```mermaid``` block)");
+                sb.AppendLine("   in \"Insurers compared\", definitionsMarkdown in \"Definitions that matter\", and projectionMarkdown with projectionMermaid");
+                sb.AppendLine("   in \"Stepped vs level\" — verbatim.");
+                sb.AppendLine($"3. Call research_generateComparisonWorkbook with caseNumber \"{c.CaseNumber}\" and a one-line notesForAdviser. Put the");
+                sb.AppendLine("   downloadUrl in \"Recommendation for Amelia\" as a markdown link: [Download the comparison workbook](<downloadUrl>).");
+                sb.AppendLine("4. Write your report in the required output format.");
             }
         }
         else
         {
-            sb.AppendLine("MCP TOOL RESULTS (pre-resolved for you in this session)");
-            sb.AppendLine("=======================================================");
-            sb.AppendLine("The Investment Solutions service has already run these tools on your behalf — do NOT call them");
-            sb.AppendLine("again. Use the results directly.");
-            sb.AppendLine();
-            foreach (var (url, json) in factSheetResults)
+            sb.AppendLine("MCP TOOL RESULTS (pre-resolved for you in this session — do NOT call the tools again)");
+            sb.AppendLine("=====================================================================================");
+            if (comparison is not null)
             {
-                sb.AppendLine($"▶ analyzeFactSheet(\"{url}\") result:");
-                sb.AppendLine(json);
+                var rec = comparison.Recommendation;
+                sb.AppendLine($"▶ research_compareInsurers(\"{c.CaseNumber}\"):");
+                sb.AppendLine(rec.Headline);
+                AppendList(sb, "Reasons", rec.Reasons);
+                AppendList(sb, "Not chosen", rec.NotChosen);
+                if (!string.IsNullOrWhiteSpace(rec.SteppedVsLevel)) sb.AppendLine($"Stepped vs level: {rec.SteppedVsLevel}");
+                sb.AppendLine($"Commission: {comparison.CommissionNote}");
                 sb.AppendLine();
+                sb.AppendLine("comparisonMarkdown:");
+                sb.AppendLine(comparison.ComparisonMarkdown);
+                sb.AppendLine();
+                if (!string.IsNullOrWhiteSpace(comparison.ChartMermaid))
+                {
+                    sb.AppendLine("chartMermaid:");
+                    sb.AppendLine(comparison.ChartMermaid);
+                    sb.AppendLine();
+                }
+                sb.AppendLine("definitionsMarkdown:");
+                sb.AppendLine(comparison.DefinitionsMarkdown);
+                sb.AppendLine();
+                if (!string.IsNullOrWhiteSpace(comparison.ProjectionMarkdown))
+                {
+                    sb.AppendLine("projectionMarkdown:");
+                    sb.AppendLine(comparison.ProjectionMarkdown);
+                    sb.AppendLine();
+                    sb.AppendLine("projectionMermaid:");
+                    sb.AppendLine(comparison.ProjectionMermaid);
+                    sb.AppendLine();
+                }
+                sb.AppendLine($"Documents to cite: {string.Join("; ", comparison.Citations)}");
+                sb.AppendLine();
+                sb.AppendLine("▶ research_generateComparisonWorkbook was not run in this session — Amelia builds the workbook from the page's");
+                sb.AppendLine("  \"Build the comparison workbook\" step. Say so in \"Recommendation for Amelia\".");
+                sb.AppendLine();
+                sb.AppendLine("TASK");
+                sb.AppendLine("----");
+                sb.AppendLine("1. Embed comparisonMarkdown and the chart verbatim in \"Insurers compared\", definitionsMarkdown in \"Definitions that");
+                sb.AppendLine("   matter\", and the projection table and chart in \"Stepped vs level\".");
+                sb.AppendLine("2. Write your report in the required output format.");
             }
-            if (compareJson is not null)
+            else if (wording is not null)
             {
-                sb.AppendLine($"▶ compareModels(modelsJson, {p.Balance.ToString(CultureInfo.InvariantCulture)}) result:");
-                sb.AppendLine(compareJson);
+                sb.AppendLine($"▶ research_analysePolicyDocument(\"{wording.Insurer ?? "unknown insurer"}\", \"{c.CaseNumber}\") — wording that applies:");
+                sb.AppendLine(string.IsNullOrWhiteSpace(wording.Markdown) ? "(The policy schedule isn't on the case yet.)" : wording.Markdown);
                 sb.AppendLine();
-            }
-            if (plainSections.Length > 0)
-            {
-                sb.AppendLine("▶ Pre-computed plan, holdings and chart (markdown):");
-                sb.AppendLine(plainSections);
+                sb.AppendLine($"Documents to cite: {string.Join("; ", wording.Citations)}");
                 sb.AppendLine();
+                sb.AppendLine("TASK");
+                sb.AppendLine("----");
+                sb.AppendLine("Write the policy wording lookup in the claim output format. Don't compare insurers or build a workbook.");
             }
-            sb.AppendLine("▶ generateClientWorkbook(caseNumber, caseSummaryJson, modelsJson, recommendationsJson) result:");
-            sb.AppendLine(workbookJson);
-            sb.AppendLine();
-            sb.AppendLine("TASK");
-            sb.AppendLine("----");
-            if (compareJson is not null)
-                sb.AppendLine("1. In \"Model Comparison\", embed compareModels.comparisonMarkdown and compareModels.chartMermaid verbatim.");
-            else
-                sb.AppendLine("1. In \"Model Comparison\", say that no comparison is needed and embed the holdings table and chart above (if any) verbatim.");
-            sb.AppendLine("2. Use the pre-computed plan for \"Income / Redemption Plan\" where one is provided.");
-            sb.AppendLine("3. In \"Next Steps\", include the workbook downloadUrl as a markdown link: [Download the client workbook](<downloadUrl>).");
-            sb.AppendLine("4. Write your report in the required output format.");
-            sb.AppendLine();
         }
+        sb.AppendLine();
 
-        sb.AppendLine("Remember: facts and comparisons only — no personal financial advice (the adviser recommends and the client");
-        sb.AppendLine("instructs). Include the past-performance warning whenever returns are mentioned. Cite the fact sheets and");
-        sb.AppendLine("Caldova rule documents you rely on (e.g. \"Caldova Managed Portfolios menu\", \"Caldova fee schedule\").");
+        sb.AppendLine(isClaim
+            ? "Remember: wording only — you don't assess, decide or lodge claims; Ben's Claims Agent does, with approval. Never suggest the " +
+              "client did anything wrong, keep it gentle, and treat health details as sensitive. Cite each document by its exact title."
+            : "Remember: research for Amelia, not advice to the client — Amelia gives the advice and signs the Statement of Advice. " +
+              "Definitions first, price second; commission never drives the choice. Cite each PDS extract and rule document by its exact title.");
         return sb.ToString();
     }
 
-    private static string BuildPlanAndChartMarkdown(InvestmentCaseAnalysis a)
+    private static void AppendList(StringBuilder sb, string heading, IEnumerable<string> items)
     {
-        var sb = new StringBuilder();
-        if (a.Profile.Holdings.Count > 0)
-        {
-            sb.AppendLine("Holdings:");
-            sb.AppendLine(HoldingsMarkdown(a.Profile.Holdings));
-            sb.AppendLine();
-        }
-        if (a.Plan is not null)
-        {
-            sb.AppendLine($"{a.Plan.Title}:");
-            sb.AppendLine(PlanMarkdown(a.Plan));
-            sb.AppendLine();
-        }
-        if (a.Comparison is null && a.Chart is not null)
-        {
-            sb.AppendLine(a.Chart.MermaidBlock);
-        }
-        return sb.ToString().TrimEnd();
+        var list = items.Where(i => !string.IsNullOrWhiteSpace(i)).ToList();
+        if (list.Count == 0) return;
+        sb.AppendLine($"{heading}:");
+        foreach (var i in list) sb.AppendLine($"- {i}");
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Deterministic narrative (used when the live agent isn't available)
+    // Offline narrative (used when the live agent isn't available)
     // ─────────────────────────────────────────────────────────────────────
 
     private static string BuildFallbackNarrative(
-        CaseRecord c, InvestmentCaseAnalysis a, InvestmentWorkbookInfo workbook, string? agentError, bool agentConfigured)
+        ResearchBrief b, InsurerComparison? comparison, WordingLookup? wording, string? agentError, bool agentConfigured)
     {
         var preface = !agentConfigured
-            ? "_Foundry agent is not configured in this environment, so this is Ivy's deterministic analysis — the same calculations the MCP tools run on the case and the fact sheets._"
+            ? "_Offline — the Foundry agent isn't configured in this environment, so this is Ivy's research from the same tools the agent calls on the APL product sheets._"
             : !string.IsNullOrWhiteSpace(agentError)
-                ? $"_The Investment Analyst Agent did not return a report ({agentError}). Showing Ivy's deterministic analysis instead._"
-                : "_The Investment Analyst Agent finished without narrative text (it may only have called tools). Showing Ivy's deterministic analysis instead._";
+                ? $"_The Insurance Research Agent didn't return a report ({agentError}). Showing Ivy's offline research instead._"
+                : "_The Insurance Research Agent finished without narrative text (it may only have called tools). Showing Ivy's offline research instead._";
 
         var sb = new StringBuilder();
         sb.AppendLine(preface);
         sb.AppendLine();
-        sb.AppendLine($"### Investment review — {c.CaseNumber} · {c.ClientName}");
-        sb.AppendLine();
-        sb.AppendLine($"**{a.Profile.AnalysisTitle}.** {a.Profile.AnalysisSummary}");
-        sb.AppendLine();
 
-        sb.AppendLine("#### 1. Portfolio Fit");
-        sb.AppendLine(a.PortfolioFit);
-        if (a.ActionNote is not null)
+        if (comparison is not null)
         {
+            var rec = comparison.Recommendation;
+            var names = b.ClientFirstNames;
+            sb.AppendLine($"### Insurance research — {b.CaseNumber} · {b.Client}");
             sb.AppendLine();
-            sb.AppendLine($"> **{a.ActionNote}**");
-        }
-        sb.AppendLine();
+            sb.AppendLine("#### 1. Research summary");
+            sb.AppendLine(b.Summary);
+            sb.AppendLine();
+            sb.AppendLine($"**{rec.Headline}**");
+            sb.AppendLine();
 
-        sb.AppendLine("#### 2. Model Comparison");
-        if (a.Comparison is not null)
-        {
-            sb.AppendLine("Total annual Caldova fees in dollars:");
+            sb.AppendLine("#### 2. Insurers compared");
+            sb.AppendLine(comparison.ComparisonMarkdown);
             sb.AppendLine();
-            sb.AppendLine(a.Comparison.ComparisonMarkdown);
+            if (!string.IsNullOrWhiteSpace(comparison.ChartMermaid))
+            {
+                sb.AppendLine(comparison.ChartMermaid);
+                sb.AppendLine();
+            }
+
+            sb.AppendLine($"#### 3. Definitions that matter for {names}");
+            sb.AppendLine(comparison.DefinitionsMarkdown);
             sb.AppendLine();
-            sb.AppendLine(a.Comparison.ChartMermaid);
-        }
-        else
-        {
-            sb.AppendLine(a.Profile.Scenario == "no-action"
-                ? "No model comparison — no investment action is taken while the account is on hold. Holdings at the time of the hold:"
-                : "No model comparison is needed — the existing investment stays as it is. Holdings today:");
-            if (a.Profile.Holdings.Count > 0)
+
+            if (!string.IsNullOrWhiteSpace(rec.SteppedVsLevel) || !string.IsNullOrWhiteSpace(comparison.ProjectionMarkdown))
+            {
+                sb.AppendLine("#### 4. Stepped vs level");
+                if (!string.IsNullOrWhiteSpace(rec.SteppedVsLevel)) sb.AppendLine(rec.SteppedVsLevel);
+                if (!string.IsNullOrWhiteSpace(rec.BudgetCheck))
+                {
+                    sb.AppendLine();
+                    sb.AppendLine(rec.BudgetCheck);
+                }
+                sb.AppendLine();
+                if (!string.IsNullOrWhiteSpace(comparison.ProjectionMarkdown))
+                {
+                    sb.AppendLine(comparison.ProjectionMarkdown);
+                    sb.AppendLine();
+                    sb.AppendLine(comparison.ProjectionMermaid);
+                    sb.AppendLine();
+                }
+            }
+
+            sb.AppendLine("#### 5. Recommendation for Amelia");
+            sb.AppendLine(rec.Headline);
+            sb.AppendLine();
+            foreach (var r in rec.Reasons) sb.AppendLine($"- {r}");
+            if (rec.NotChosen.Count > 0)
             {
                 sb.AppendLine();
-                sb.AppendLine(HoldingsMarkdown(a.Profile.Holdings));
+                sb.AppendLine("Not chosen:");
+                foreach (var n in rec.NotChosen) sb.AppendLine($"- {n}");
             }
-            if (a.Chart is not null)
-            {
-                sb.AppendLine();
-                sb.AppendLine(a.Chart.MermaidBlock);
-            }
-        }
-        sb.AppendLine();
-
-        sb.AppendLine("#### 3. Income / Redemption Plan");
-        if (a.Plan is not null)
-        {
-            sb.AppendLine($"**{a.Plan.Title}**");
             sb.AppendLine();
-            sb.AppendLine(PlanMarkdown(a.Plan));
-            if (!string.IsNullOrWhiteSpace(a.Plan.Note))
+            sb.AppendLine($"_{comparison.CommissionNote}_");
+            if (comparison.Observations.Count > 0)
             {
                 sb.AppendLine();
-                sb.AppendLine($"_{a.Plan.Note}_");
+                foreach (var o in comparison.Observations) sb.AppendLine($"- {o}");
             }
+            sb.AppendLine();
+            sb.AppendLine("Next steps:");
+            foreach (var s in comparison.NextSteps) sb.AppendLine($"- {s}");
+            sb.AppendLine("- Build the comparison workbook (comparison, definitions, 10-year projection and charts) from the next steps on this page.");
+            sb.AppendLine();
+
+            sb.AppendLine("#### 6. Human approval required");
+            sb.AppendLine(comparison.HumanApproval);
+            sb.AppendLine();
+            sb.Append($"_Sources: {string.Join("; ", comparison.Citations)}. {rec.ForAdviser}_");
+            return sb.ToString();
         }
-        else
+
+        if (wording is not null)
         {
-            sb.AppendLine("No income or redemption plan is needed for this case.");
+            sb.AppendLine($"### Policy wording lookup — {b.CaseNumber} · {b.Client}");
+            sb.AppendLine();
+            var note = JourneyNote(b);
+            if (!string.IsNullOrWhiteSpace(note))
+            {
+                sb.AppendLine($"> {note}");
+                sb.AppendLine();
+            }
+            if (!string.IsNullOrWhiteSpace(wording.Markdown))
+            {
+                sb.AppendLine(wording.Markdown);
+                sb.AppendLine();
+            }
+            sb.AppendLine("#### Handover to Claims");
+            if (!string.IsNullOrWhiteSpace(wording.Handover)) sb.AppendLine(wording.Handover);
+            if (!string.IsNullOrWhiteSpace(wording.HandoverUrl))
+            {
+                sb.AppendLine();
+                sb.AppendLine($"[Open the Claims Agent for this case]({wording.HandoverUrl})");
+            }
+            sb.AppendLine();
+            foreach (var s in wording.NextSteps) sb.AppendLine($"- {s}");
+            sb.AppendLine();
+            sb.AppendLine("#### Human approval required");
+            sb.AppendLine(wording.HumanApproval);
+            sb.AppendLine();
+            if (wording.Citations.Count > 0)
+                sb.Append($"_Sources: {string.Join("; ", wording.Citations)}. Policy wording only — Ivy doesn't assess or decide claims._");
+            return sb.ToString();
         }
-        sb.AppendLine();
 
-        sb.AppendLine("#### 4. Observations & Risks");
-        foreach (var o in a.Observations) sb.AppendLine($"- {o}");
+        sb.AppendLine($"### {b.Title}");
         sb.AppendLine();
-
-        sb.AppendLine("#### 5. Next Steps");
-        foreach (var step in a.NextSteps) sb.AppendLine($"- {step}");
-        if (workbook.DownloadUrl is not null)
-            sb.AppendLine($"- [Download the client workbook (.xlsx)]({workbook.DownloadUrl}) — {string.Join(", ", workbook.Sheets)}.");
-        else if (workbook.Error is not null)
-            sb.AppendLine($"- The client workbook could not be generated ({workbook.Error}).");
-        sb.AppendLine();
-
-        sb.AppendLine("#### 6. Human Approval Required");
-        sb.AppendLine(a.HumanApprovalReason);
-        sb.AppendLine();
-        sb.Append("_Sources: Caldova Managed Portfolios menu and fact sheets; Caldova fee schedule. General information only — not personal financial advice._");
+        sb.Append(b.Summary);
         return sb.ToString();
-    }
-
-    private static string HoldingsMarkdown(IReadOnlyList<InvestmentHolding> holdings)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("| Holding | Value | Share |");
-        sb.AppendLine("|---|--:|--:|");
-        foreach (var h in holdings)
-            sb.AppendLine($"| {EscapeMd(h.Holding)} | {MoneySmart(h.Value)} | {h.Percent.ToString("0.0", CultureInfo.InvariantCulture)}% |");
-        sb.Append($"| **Total** | **{MoneySmart(holdings.Sum(h => h.Value))}** | 100% |");
-        return sb.ToString();
-    }
-
-    private static string PlanMarkdown(InvestmentPlan plan)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("| Step | Item | Amount | Timing / status | Note |");
-        sb.AppendLine("|:-:|---|--:|---|---|");
-        foreach (var r in plan.Rows)
-        {
-            sb.AppendLine($"| {r.Step} | {EscapeMd(r.Item)} | {(r.Amount is decimal amt ? MoneySmart(amt) : "—")} | " +
-                          $"{EscapeMd(r.Timing)} | {EscapeMd(r.Note)} |");
-        }
-        return sb.ToString().TrimEnd();
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // Offline chat
     // ─────────────────────────────────────────────────────────────────────
 
-    private static string OfflineChatReply(CaseRecord? c, InvestmentCaseAnalysis? a, string message)
+    private static string OfflineChatReply(ResearchBrief? b, InsurerComparison? comparison, WordingLookup? wording, string message)
     {
-        if (c is null || a is null)
-        {
-            return "I can answer questions about a specific Member Case once one is selected — pick a case in step 1 and engage me in step 3 first.";
-        }
+        if (b is null)
+            return "Pick a case in step 1 and engage me first — then I can answer questions about that case's research.";
 
         var q = message.ToLowerInvariant();
-        // Word-start matching, so "fit" matches "fits" but not "benefit".
+        // Word-start matching, so "level" matches "levels" but "ip" doesn't match "trip".
         bool Has(params string[] words) => words.Any(w => Regex.IsMatch(q, @"\b" + Regex.Escape(w)));
 
-        if (Has("should", "recommend", "switch", "change model", "better", "advice", "advise"))
-        {
-            var facts = a.Comparison is null
-                ? a.PortfolioFit
-                : $"{a.PortfolioFit} The lowest-cost option compared is {a.Comparison.Summary.LowestCostOption} at {Money(a.Comparison.Summary.LowestTotal)} p.a.";
-            return "I can't give personal financial advice — choosing or changing an investment is a decision for the adviser and " +
-                   $"the client. Here are the facts I can share.\n\n{facts}";
-        }
+        if (comparison is not null) return AdviceChatReply(b, comparison, Has);
+        if (wording is not null) return ClaimChatReply(b, wording, Has);
+        return b.Summary;
+    }
 
-        if (Has("hold", "frozen", "freeze", "scam", "fraud", "takeover", "suspicious"))
-        {
-            return a.ActionNote ?? "There's no investment hold on this case. " + a.Profile.AnalysisSummary;
-        }
+    private static string AdviceChatReply(ResearchBrief b, InsurerComparison c, Func<string[], bool> has)
+    {
+        bool Has(params string[] words) => has(words);
+        var rec = c.Recommendation;
 
-        if (Has("plan", "bucket", "income", "sequenc", "drawdown", "redeem", "redemption", "sell", "unit", "raise",
-                "fund the", "withdraw", "proceeds", "spread"))
+        string Definition(params string[] keys)
         {
-            if (a.Plan is null)
-                return "No income or redemption plan is needed on this case. " + a.Profile.AnalysisSummary;
-
-            var rows = a.Plan.Rows.Select(r => $"- **{r.Step}. {r.Item}**{(r.Amount is decimal amt ? $" — {MoneySmart(amt)}" : string.Empty)} ({r.Timing}). {r.Note}");
-            var reply = $"**{a.Plan.Title}**\n\n{string.Join("\n", rows)}" +
-                        (string.IsNullOrWhiteSpace(a.Plan.Note) ? string.Empty : $"\n\n_{a.Plan.Note}_");
-            if (a.Profile.Scenario == "income-strategy")
+            var rows = c.Definitions.Where(d => keys.Contains(d.Key)).ToList();
+            if (rows.Count == 0) return string.Empty;
+            var sb = new StringBuilder();
+            foreach (var d in rows)
             {
-                reply += "\n\nIf markets fall, the cash bucket keeps the $6,500 monthly payments flowing for up to two years without " +
-                         "selling Balanced units at low prices (sequencing risk). The bucket is refilled from Balanced at reviews — the adviser's call.";
+                sb.AppendLine($"**{d.Title}** ({d.Priority.ToLowerInvariant()}) — {d.WhyItMatters}");
+                sb.AppendLine();
+                foreach (var cell in d.Insurers) sb.AppendLine($"- **{cell.Insurer}:** {cell.Label} — {cell.Note}");
+                sb.AppendLine();
             }
-            return reply;
+            sb.Append($"_From each insurer's PDS extract: {string.Join("; ", rows.SelectMany(r => r.Insurers).Select(i => i.PdsTitle).Distinct())}._");
+            return sb.ToString();
         }
 
-        if (Has("fee", "cost", "cheap", "expens", "dollar", "price", "icr"))
+        var insurerAsked = c.Rows.FirstOrDefault(r => Has(r.ShortName.ToLowerInvariant()));
+
+        if (Has("should", "advise", "advice", "best for"))
         {
-            if (a.Comparison is null)
-                return $"This case doesn't need a fee comparison. {a.Profile.AnalysisSummary} For reference, the Caldova admin fee is tiered " +
-                       "(0.30% on the first $250,000, 0.15% to $1,000,000, 0.05% to $2,000,000, nil above) plus $180 p.a., and the " +
-                       "0.10% buy/sell spread applies to any units sold.";
-            var lines = a.Comparison.Rows.Select(r =>
-                $"- **{r.Name}{(r.Selected ? " (selected)" : string.Empty)}** — {Money(r.TotalFee)} p.a. " +
-                $"(investment fee {Money(r.InvestmentFee)} + admin and account-keeping {Money(r.AdminAndAccountKeepingFee)})");
-            return $"Total annual Caldova fees on {MoneySmart(a.Comparison.Balance)}:\n\n{string.Join("\n", lines)}\n\n" +
-                   $"Admin fee working: {a.Comparison.FeeBasis.AdminFeeWorking}, plus the $180 account-keeping fee. These figures " +
-                   "exclude any adviser fee and the 0.10% buy/sell spread.";
+            return "I can't give personal advice — Amelia gives the advice and signs the Statement of Advice. Here's what the research shows " +
+                   $"for her review:\n\n**{rec.Headline}**\n\n{string.Join("\n", rec.Reasons.Select(r => $"- {r}"))}";
         }
 
-        if (Has("return", "perform", "past"))
+        if (Has("commission", "lif cap", "life insurance framework", "clawback", "consent"))
+            return c.CommissionNote;
+
+        if (Has("stepped", "level", "projection", "over time", "10 year", "ten year", "break even", "break-even"))
         {
-            var lines = a.FactSheets
-                .Where(fs => fs.Returns is not null)
-                .Select(fs => $"- **{fs.ShortName}** — 1 year {Pct(fs.Returns!.OneYearPercent)}, 3 years {Pct(fs.Returns.ThreeYearPercentPa)} p.a., " +
-                              $"5 years {Pct(fs.Returns.FiveYearPercentPa)} p.a. (to {FormatDate(fs.Returns.PeriodEnding ?? fs.AsAt)})");
-            return "Illustrative model returns, net of investment fees and before admin fees and tax:\n\n" +
-                   string.Join("\n", lines) + $"\n\n{PastPerformanceWarning}";
+            var p = c.Projections.FirstOrDefault(x => insurerAsked is not null && x.Insurer == insurerAsked.Insurer)
+                    ?? c.Projections.FirstOrDefault(x => x.Recommended)
+                    ?? c.Projections.FirstOrDefault();
+            if (p is null) return "There's no projection yet — the insurers haven't quoted on this case.";
+            var rows = p.Years.Where(y => y.Year is 1 or 5 or 10 || y.Year == p.Years.Count).DistinctBy(y => y.Year)
+                .Select(y => $"| {y.Year} | {Money(y.Stepped)} | {Money(y.Level)} | {Money(y.CumulativeStepped)} | {Money(y.CumulativeLevel)} |");
+            return $"**{p.Insurer} — stepped vs level (illustrative)**\n\n{p.Summary}\n\n" +
+                   "| Year | Stepped | Level | Total paid (stepped) | Total paid (level) |\n|:-:|--:|--:|--:|--:|\n" +
+                   string.Join("\n", rows) +
+                   $"\n\n_{p.Label}_ Which style suits {b.ClientFirstNames} is Amelia's call.";
         }
 
-        if (Has("risk", "fit", "profile", "soa", "suitab", "timeframe"))
+        if (Has("own occupation", "own-occupation", "any occupation", "any-occupation", "tpd"))
         {
-            var sheet = a.FactSheets.FirstOrDefault();
-            var risk = sheet is null
-                ? string.Empty
-                : $"\n\n{sheet.ShortName}: growth/defensive {sheet.GrowthDefensive}, standard risk measure {sheet.RiskBand} — {sheet.RiskLabel} " +
-                  $"({sheet.NegativeYearsIn20} negative years in 20), minimum suggested timeframe {sheet.MinimumTimeframeYears} years.";
-            return $"{a.PortfolioFit}{risk}\n\nRecorded risk profile: {a.Profile.RiskProfile}. {a.Profile.Soa}.";
+            var text = Definition("tpd-own-occupation", "tpd-business-cover", "tpd-super-linking");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("income protection", "ip", "waiting", "benefit period", "70%", "70 per", "2 years", "two years"))
+        {
+            var text = Definition("ip-benefit-basis", "ip-periods", "ip-long-claims");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("trauma", "cancer", "histopathology"))
+        {
+            var text = Definition("trauma-cancer");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("exclusion", "back", "loading"))
+        {
+            var text = Definition("exclusion-review");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("super", "linking", "linked"))
+        {
+            var text = Definition("tpd-super-linking");
+            var notes = c.Observations.Where(o => o.Contains("super", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (text.Length > 0 || notes.Count > 0)
+                return text + (notes.Count > 0 ? "\n\n" + string.Join("\n", notes.Select(n => $"- {n}")) : string.Empty);
+        }
+
+        if (Has("budget", "cash flow", "afford", "a month", "monthly"))
+        {
+            if (!string.IsNullOrWhiteSpace(rec.BudgetCheck)) return rec.BudgetCheck!;
+            var monthly = c.Rows.Where(r => r.Quoted).Select(r => $"- **{r.Insurer}:** {Money(r.MonthlyStepped ?? 0m)} a month stepped");
+            return "There's no personal budget on this case. Monthly equivalents of the year-1 premiums:\n\n" + string.Join("\n", monthly);
+        }
+
+        if (Has("underwriting", "financial evidence", "accounts", "financials"))
+        {
+            var text = Definition("financial-underwriting");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("buy-sell", "buy sell", "key person", "valuation"))
+        {
+            var text = Definition("business-buy-sell", "business-key-person");
+            if (text.Length > 0) return text;
+        }
+
+        if (Has("tax", "deductible", "assessable"))
+        {
+            var notes = c.Observations.Where(o => o.Contains("tax", StringComparison.OrdinalIgnoreCase)).ToList();
+            return notes.Count > 0
+                ? string.Join("\n", notes.Select(n => $"- {n}"))
+                : $"Tax treatment is covered in '{TaxTitle}' — the client's accountant confirms it for their situation.";
         }
 
         if (Has("workbook", "excel", "xlsx", "spreadsheet", "download"))
         {
-            return "The client workbook was generated when you engaged me — use the **Download workbook** link in step 3. It has the case " +
-                   "summary, the comparison or plan, fact-sheet details and asset allocation, and my recommendations for adviser review.";
+            return "Use **Build the comparison workbook** on this page. It has four sheets — Summary (the recommendation rationale for Amelia " +
+                   "and sources), Comparison (premiums, cash flow, 10-year totals and a premium chart), Definitions (each insurer's result " +
+                   "and wording) and Projection (10 years of stepped vs level, with a chart).";
         }
 
-        if (Has("approv", "human", "sign off", "sign-off"))
+        if (Has("approv", "sign", "second review", "theo"))
+            return c.HumanApproval;
+
+        if (insurerAsked is not null)
         {
-            return a.HumanApprovalReason;
+            var notChosen = rec.NotChosen.FirstOrDefault(n => n.StartsWith(insurerAsked.Insurer, StringComparison.OrdinalIgnoreCase));
+            var price = insurerAsked.Quoted
+                ? $"{Money(insurerAsked.Year1Stepped ?? 0m)} a year stepped in year 1 ({Money(insurerAsked.MonthlyStepped ?? 0m)} a month), level option {Money(insurerAsked.Year1Level ?? 0m)}."
+                : $"Not quoted — {insurerAsked.NotQuotedReason}";
+            var why = insurerAsked.Recommended
+                ? $"It's the insurer recommended for Amelia's review:\n\n{string.Join("\n", rec.Reasons.Select(r => $"- {r}"))}"
+                : notChosen ?? insurerAsked.DefinitionSummary;
+            return $"**{insurerAsked.Insurer}** — {price}\n\n{why}\n\n_Cite: {insurerAsked.PdsTitle}._";
         }
 
-        return $"Here's where this case stands: {a.Profile.AnalysisSummary} {a.PortfolioFit}\n\n" +
-               "You can ask me about the **fees** in dollars, the **returns** shown on the fact sheets, **risk** and fit with the SoA, " +
-               "the **income** or **redemption** plan, the **workbook**, or what needs **approval**.";
+        if (Has("why", "recommend", "which insurer", "best"))
+            return $"**{rec.Headline}**\n\n{string.Join("\n", rec.Reasons.Select(r => $"- {r}"))}" +
+                   (rec.NotChosen.Count > 0 ? $"\n\nNot chosen:\n{string.Join("\n", rec.NotChosen.Select(n => $"- {n}"))}" : string.Empty);
+
+        if (Has("price", "premium", "cost", "cheap", "dear", "expensive", "quote"))
+        {
+            var lines = c.Rows.Select(r => r.Quoted
+                ? $"- **{r.Insurer}{(r.Recommended ? " (recommended)" : string.Empty)}:** {Money(r.Year1Stepped ?? 0m)} stepped, {Money(r.Year1Level ?? 0m)} level in year 1"
+                : $"- **{r.Insurer}:** not quoted — {r.NotQuotedReason}");
+            return "Year-1 premiums at standard rates before underwriting:\n\n" + string.Join("\n", lines) +
+                   "\n\nPrice comes second — an insurer that misses a must-have definition ranks below the others whatever it costs.";
+        }
+
+        return $"{c.Summary}\n\n**{rec.Headline}**\n\nYou can ask me why that insurer, about a **definition** (TPD, income protection, trauma), " +
+               "**stepped vs level**, the **budget**, **commission**, the **workbook**, or what needs **approval**.";
     }
 
-    private static string Pct(decimal? v) => v is decimal d ? d.ToString("0.0", CultureInfo.InvariantCulture) + "%" : "n/a";
-
-    // ─────────────────────────────────────────────────────────────────────
-    // JSON views for the page
-    // ─────────────────────────────────────────────────────────────────────
-
-    private static object ProfileView(InvestmentCaseAnalysis a)
+    private static string ClaimChatReply(ResearchBrief b, WordingLookup w, Func<string[], bool> has)
     {
-        var p = a.Profile;
-        return new
-        {
-            scenario = p.Scenario,
-            analysisTitle = p.AnalysisTitle,
-            analysisSummary = p.AnalysisSummary,
-            balance = p.Balance,
-            balanceDisplay = MoneySmart(p.Balance),
-            balanceLabel = p.BalanceLabel,
-            balanceNote = p.BalanceNote,
-            currentModel = p.CurrentModel,
-            riskProfile = p.RiskProfile,
-            soa = p.Soa,
-            holdings = HoldingsView(p.Holdings),
-            factSheets = a.FactSheets.Select(FactSheetView)
-        };
-    }
+        bool Has(params string[] words) => has(words);
 
-    private static object AnalysisView(InvestmentCaseAnalysis a) => new
-    {
-        kind = a.Profile.Scenario,
-        title = a.Profile.AnalysisTitle,
-        summary = a.Profile.AnalysisSummary,
-        balance = a.Profile.Balance,
-        balanceDisplay = MoneySmart(a.Profile.Balance),
-        balanceLabel = a.Profile.BalanceLabel,
-        portfolioFit = a.PortfolioFit,
-        actionNote = a.ActionNote,
-        comparison = a.Comparison is null ? null : new
+        string Item(params string[] keys)
         {
-            balance = a.Comparison.Balance,
-            feeBasis = a.Comparison.FeeBasis,
-            summary = a.Comparison.Summary,
-            markdown = a.Comparison.ComparisonMarkdown,
-            rows = a.Comparison.Rows.Select(r => new
-            {
-                name = r.Name,
-                code = r.Code,
-                selected = r.Selected,
-                growthDefensive = r.GrowthDefensive,
-                icrLabel = r.IcrLabel,
-                investmentFee = r.InvestmentFee,
-                investmentFeeDisplay = Money(r.InvestmentFee),
-                adminAndAccountKeepingFee = r.AdminAndAccountKeepingFee,
-                adminAndAccountKeepingFeeDisplay = Money(r.AdminAndAccountKeepingFee),
-                totalFee = r.TotalFee,
-                totalFeeDisplay = Money(r.TotalFee),
-                totalFeePercent = r.TotalFeePercent,
-                differenceVsLowest = r.DifferenceVsLowest,
-                differenceVsLowestDisplay = Money(r.DifferenceVsLowest),
-                components = r.Components,
-                note = r.Note
-            })
-        },
-        chart = a.Chart is null ? null : new
-        {
-            title = a.Chart.Title,
-            yAxis = a.Chart.YAxis,
-            // Fee charts show cents ($6,930.00); balance charts show whole dollars.
-            bars = a.Chart.Bars.Select(b => new
-            {
-                label = b.Label,
-                value = b.Value,
-                display = a.Comparison is not null ? Money(b.Value) : MoneySmart(b.Value),
-                highlight = b.Highlight
-            }),
-            mermaid = StripMermaidFence(a.Chart.MermaidBlock)
-        },
-        plan = a.Plan is null ? null : new
-        {
-            title = a.Plan.Title,
-            note = a.Plan.Note,
-            rows = a.Plan.Rows.Select(r => new
-            {
-                step = r.Step,
-                item = r.Item,
-                amount = r.Amount,
-                amountDisplay = r.Amount is decimal amt ? MoneySmart(amt) : "—",
-                timing = r.Timing,
-                note = r.Note
-            })
-        },
-        holdings = HoldingsView(a.Profile.Holdings),
-        observations = a.Observations,
-        nextSteps = a.NextSteps,
-        humanApprovalRequired = a.HumanApprovalRequired,
-        humanApprovalReason = a.HumanApprovalReason
-    };
-
-    private static object HoldingsView(IReadOnlyList<InvestmentHolding> holdings) => holdings.Select(h => new
-    {
-        holding = h.Holding,
-        value = h.Value,
-        valueDisplay = MoneySmart(h.Value),
-        percent = h.Percent
-    });
-
-    private static object FactSheetView(FactSheet fs) => new
-    {
-        name = fs.Name,
-        shortName = fs.ShortName,
-        code = fs.Code,
-        url = fs.Source,
-        icrPercent = fs.InvestmentFeePercent,
-        growthDefensive = fs.GrowthDefensive,
-        riskBand = fs.RiskBand,
-        riskLabel = fs.RiskLabel,
-        timeframeYears = fs.MinimumTimeframeYears,
-        preview = BuildFactSheetPreview(fs)
-    };
-
-    /// <summary>Plain-text summary of a fact sheet for the hover popovers.</summary>
-    internal static string BuildFactSheetPreview(FactSheet fs)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine($"Growth / defensive {fs.GrowthDefensive} · {fs.Style ?? "Multi-asset"}");
-        sb.AppendLine($"Investment fee (ICR) {(fs.InvestmentFeePercent is decimal icr ? FormatPercent(icr) : "n/a")} p.a. · " +
-                      $"buy/sell spread {(fs.BuySellSpreadPercent is decimal s ? FormatPercent(s) : "n/a")}");
-        if (fs.RiskBand is int band)
-            sb.AppendLine($"Standard risk measure {band} — {fs.RiskLabel} ({fs.NegativeYearsIn20} negative years in 20)");
-        if (fs.MinimumTimeframeYears is int years)
-            sb.AppendLine($"Minimum suggested timeframe {years} years");
-        if (fs.AssetAllocation.Count > 0)
-        {
-            sb.AppendLine();
-            sb.AppendLine("Target allocation");
-            foreach (var a in fs.AssetAllocation)
-                sb.AppendLine($"  {a.AssetClass} {a.TargetPercent.ToString("0.#", CultureInfo.InvariantCulture)}%");
+            var items = w.Items.Where(i => keys.Contains(i.Key)).ToList();
+            if (items.Count == 0) return string.Empty;
+            return string.Join("\n\n", items.Select(i =>
+                $"**{i.Heading}** — _{i.Source}_\n\n> {i.Wording}\n\n{(string.IsNullOrWhiteSpace(i.PlainEnglish) ? string.Empty : $"In plain English: {i.PlainEnglish}\n\n")}" +
+                $"What it means here: {i.WhatItMeans}"));
         }
-        if (fs.Returns is { } r)
+
+        var handover = string.IsNullOrWhiteSpace(w.HandoverUrl)
+            ? w.Handover ?? string.Empty
+            : $"{w.Handover} [Open the Claims Agent]({w.HandoverUrl})";
+
+        if (Has("should", "will it be paid", "approve", "decide", "assess", "accept", "advice"))
+            return "I can't assess or decide the claim — Ben's Claims Agent and the insurer do that, with approval. I can show you the wording that applies.\n\n" + handover;
+
+        if (Has("fraud", "scam", "suspicious", "changed", "hold", "block"))
         {
-            sb.AppendLine();
-            sb.AppendLine($"Returns to {FormatDate(r.PeriodEnding ?? fs.AsAt)} (illustrative)");
-            sb.AppendLine($"  1 yr {Pct(r.OneYearPercent)} · 3 yrs {Pct(r.ThreeYearPercentPa)} p.a. · 5 yrs {Pct(r.FiveYearPercentPa)} p.a.");
-            sb.Append(r.Warning);
+            return b.Scenario == ResearchScenarios.FraudulentClaim
+                ? "That's for Felix's Financial Crime Agent and Theo — Ivy only looks up the wording, and Grace is treated as the person to protect. " +
+                  "What the wording says: the benefit can only be paid to Grace, as policy owner, into an account in her own name.\n\n" + handover
+                : "I only look up the policy wording; any concern about documents or bank details goes to Felix's Financial Crime Agent.\n\n" + handover;
         }
-        return sb.ToString().TrimEnd();
+
+        var answer =
+            Has("waiting", "when", "first payment", "start") ? Item("ip-periods") :
+            Has("paid to", "payment", "bank", "account", "who receives", "who gets", "receive", "pay") ? Item("benefit-payment", "nominated-beneficiaries") :
+            Has("evidence", "document", "claim need", "need for", "proof", "form") ? Item("trauma-claim-evidence", "ip-claim-evidence", "death-claim-evidence") :
+            Has("cancer", "histopathology", "trauma", "diagnos") ? Item("trauma-cancer") :
+            Has("beneficiar", "nominat", "estate") ? Item("nominated-beneficiaries") :
+            Has("how much", "calculat", "monthly benefit", "worked out", "70", "earnings", "insured") ? Item("ip-benefit-basis", "rule-idii") :
+            Has("tax") ? string.Join("\n\n", w.Items.Where(i => i.WhatItMeans.Contains("tax", StringComparison.OrdinalIgnoreCase))
+                .Select(i => $"**{i.Heading}:** {i.WhatItMeans}")) :
+            Has("disclos", "misrep", "avoid", "three year", "3 year", "3-year") ? Item("rule-icas29") :
+            Has("life cover") ? Item("nominated-beneficiaries") :
+            string.Empty;
+
+        if (answer.Length == 0 && Has("super", "riverbend"))
+        {
+            var facts = b.KeyFacts.Where(k => k.Contains("super", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (facts.Count > 0) answer = string.Join("\n", facts.Select(f => $"- {f}")) + "\n\nBen's agent gives the family the checklist for the super claim.";
+        }
+
+        if (answer.Length == 0 && Has("compare", "workbook", "excel", "quote"))
+            answer = "There's nothing to compare on a claim, so there's no comparison or workbook — just the wording that applies.";
+
+        if (answer.Length > 0) return answer + "\n\n" + handover;
+
+        var headings = string.Join(", ", w.Items.Select(i => i.Heading.ToLowerInvariant()));
+        return $"{w.Summary}\n\nI can show the wording on: {headings}.\n\n{handover}";
     }
-
-    private static string FormatDate(string? iso) =>
-        DateTime.TryParse(iso, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)
-            ? d.ToString("d MMM yyyy", AuCulture)
-            : iso ?? "n/a";
-
-    private static string StripMermaidFence(string block) =>
-        block.Replace("```mermaid", string.Empty).Replace("```", string.Empty).Trim();
-
-    private static string AdviserText(CaseRecord c) =>
-        string.IsNullOrWhiteSpace(c.AdviserPractice) ? c.AdviserName : $"{c.AdviserName} ({c.AdviserPractice})";
 
     private static string Sanitize(string value) => value.Replace('\r', ' ').Replace('\n', ' ');
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// Investment case shapes
-// ─────────────────────────────────────────────────────────────────────────
-
-internal sealed record InvestmentHolding(string Holding, decimal Value, decimal Percent);
-
-internal sealed record InvestmentPlanRow(string Step, string Item, decimal? Amount, string Timing, string Note);
-
-internal sealed record InvestmentPlan(string Key, string Title, IReadOnlyList<InvestmentPlanRow> Rows, string? Note);
-
-internal sealed record InvestmentChartBar(string Label, decimal Value, bool Highlight);
-
-internal sealed record InvestmentChart(string Title, string YAxis, IReadOnlyList<InvestmentChartBar> Bars, string MermaidBlock);
-
-internal sealed record InvestmentWorkbookInfo(string? FileName, string? DownloadUrl, IReadOnlyList<string> Sheets, string? Error);
-
-/// <summary>What Ivy reviews before engaging: balance, model, risk profile and SoA.</summary>
-internal sealed record InvestmentProfile(
-    string Scenario,
-    string AnalysisTitle,
-    string AnalysisSummary,
-    decimal Balance,
-    string BalanceLabel,
-    string BalanceNote,
-    string CurrentModel,
-    string RiskProfile,
-    string Soa,
-    IReadOnlyList<InvestmentHolding> Holdings);
-
-/// <summary>The full deterministic analysis of one Member Case.</summary>
-internal sealed record InvestmentCaseAnalysis(
-    InvestmentProfile Profile,
-    IReadOnlyList<FactSheet> FactSheets,
-    IReadOnlyList<ModelOption> Options,
-    ModelComparison? Comparison,
-    InvestmentChart? Chart,
-    InvestmentPlan? Plan,
-    string PortfolioFit,
-    IReadOnlyList<string> CaseFacts,
-    IReadOnlyList<string> Observations,
-    string? ActionNote,
-    IReadOnlyList<string> NextSteps,
-    bool HumanApprovalRequired,
-    string HumanApprovalReason,
-    string AgentTask);

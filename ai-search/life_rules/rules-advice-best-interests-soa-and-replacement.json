@@ -1,0 +1,45 @@
+{
+  "id": "rules-advice-best-interests-soa-and-replacement",
+  "title": "Advice rules — best interests duty, SoA and replacement advice",
+  "product": "Corporations Act 2001 — personal advice obligations",
+  "version": "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026 (Corporations Act compilation in force 19 Sep to 30 Nov 2026)",
+  "summary": "The rules Amelia follows when she gives personal advice on life insurance, and that the Paraplanning Agent applies when it drafts a Statement of Advice (SoA): the best interests duty and the related obligations, what an SoA must contain and when it must be given, when a Record of Advice (RoA) can be used, the extra disclosure for replacement advice, and record keeping. Agents draft and check against these rules; only Amelia gives advice and signs the SoA.",
+  "rules": "1 Best interests duty (s961B(1)) — the adviser must act in the client's best interests. Safe harbour (s961B(2)) — the adviser satisfies the duty if they can prove they:\n(a) identified the client's objectives, financial situation and needs disclosed through the client's instructions;\n(b) identified the subject matter of the advice sought and the client's relevant circumstances;\n(c) made reasonable inquiries where information was incomplete or inaccurate;\n(d) assessed whether they have the expertise to give the advice, and declined if not;\n(e) if recommending a product is reasonable, conducted a reasonable investigation of the products that might meet the client's needs, and assessed them;\n(f) based all judgements on the client's relevant circumstances;\n(g) took any other step that would reasonably be regarded as being in the client's best interests.\nScaled (limited-scope) advice is allowed.\n2 Related obligations — give advice only if it is reasonable to conclude it is appropriate for the client (s961G); warn the client if the advice is based on incomplete or inaccurate information (s961H); and give priority to the client's interests over the adviser's, the licensee's and their associates' when there is a conflict (s961J), with civil penalties for contraventions (s961K, s961Q).\n3 Statement of Advice — personal advice needs an SoA (s946A). The small-investment exemption doesn't apply to advice on life risk insurance (s946AA(1)(b)(iii)). Timing (s946C): give the SoA when the advice is given, or as soon as practicable afterwards and before any further service connected with it; in time-critical cases, within 5 business days after the service, or before the cooling-off period starts if s1019B applies.\n4 SoA content (s947B) — the advice and its basis; the adviser's name and contact details; remuneration, including commission, stated in dollars (s947B(2)(d) and (h)); other interests and associations that might influence the advice; and any s961H warning. Include the level of detail the client would reasonably require (s947B(3)), presented in a clear, concise and effective way (s947B(6)). An authorised representative's SoA also names the licensee (s947C). An SoA can't be combined with an FSG or a PDS (s947E).\n5 Replacement advice (s947D) — when the advice is to replace one product with another (for example cancel existing cover and take out new cover), the SoA must also set out the charges on disposing of the old product and acquiring the new one, any benefits lost (temporarily or otherwise), and any other significant consequences. If these aren't known, it must say there will or may be such charges, losses or consequences (s947D(3)).\n6 Record of Advice — for further advice when the client's relevant circumstances, and the basis of the advice, aren't significantly different from the previous advice, an RoA can be used instead of an SoA (reg 7.7.10AE, notional s946B; ASIC INFO 266). It sets out the advice, or brief particulars of the recommendations and their basis, plus any s947D items (reg 7.7.09(1)); it is kept for 7 years (reg 7.7.09(3)); and the client can ask for a copy (s942B(8)).\n7 Records — keep records of the best-interests steps (or safe-harbour steps), the advice and why it is appropriate, and the actions taken to prioritise the client's interests, for 7 years (ASIC Instrument 2024/508, s912G).\n8 Commission — shown in dollars in the SoA, with the client's informed consent before the commission can be received (s963BB) — see 'Commission rules — LIF caps, clawback and consent'.\n9 Hawking — offering a product during unsolicited real-time contact is prohibited (s992A), but offers made in the course of personal advice by someone bound by the best interests duty are an exception (s992A(2)(a)), and contacting an existing client about a product they already hold isn't hawking (RG 38.27). Caldova contacts a referred client only after the referral partner has passed on the client's consent.\n10 Design and distribution — giving personal advice and arranging a product to implement it are 'excluded conduct' (s994A, s994E(3)); insurers still make a target market determination for each product (s994B).\n11 Caldova practice — Amelia signs every SoA and RoA. Existing cover is never cancelled until the new cover is in force, and replacing or cancelling cover is always the client's decision with Amelia. Advice with total cover of $2,000,000 or more on one case gets Theo's second review.\n12 Proposed changes (not law at 23 Nov 2026) — the government has announced Delivering Better Financial Outcomes 'tranche 2' measures, including changes to the SoA (a proposed 'client advice record'), a new class of adviser for super funds and life insurers, and keeping the best interests duty while removing only the broadest safe-harbour step (reported to be s961B(2)(g)). Until they are law, the current SoA, RoA and s961B rules apply.",
+  "limits": "AI agents never give personal advice, never sign or send an SoA, and never tell a client to replace or cancel cover. An SoA can't be combined with an FSG or a PDS. The small-investment exemption doesn't apply to life risk advice. An RoA can't be used when the client's relevant circumstances or the basis of the advice have changed significantly. Proposed tranche 2 changes must not be presented as law.",
+  "evidenceRequired": [
+    "Fact find: objectives, financial situation, needs and relevant circumstances",
+    "Needs analysis with the working shown",
+    "Research comparison of products (reasonable investigation)",
+    "Existing cover details, and the s947D disclosures for any replacement",
+    "Commission in dollars and the client's informed consent",
+    "SoA signed by Amelia, and the client's Authority to Proceed"
+  ],
+  "sources": [
+    "Corporations Act 2001 s946A–s946C, s947B–s947E, s961B–s961J, s992A, s994A–s994E — https://www.legislation.gov.au/C2004A00818/latest/text",
+    "Corporations Regulations 2001 reg 7.7.09 and reg 7.7.10AE (Records of Advice) — https://www.legislation.gov.au/F2001B00274/latest/text",
+    "ASIC INFO 266 — Records of advice — https://asic.gov.au/regulatory-resources/financial-services/giving-financial-product-advice/faqs-records-of-advice-roas",
+    "ASIC Instrument 2024/508 — advice record keeping (s912G), 7 years — https://www.legislation.gov.au/F2024L01201/latest/text",
+    "ASIC RG 38 — The hawking prohibition — https://download.asic.gov.au/media/hlojbvoc/rg38-published-23-september-2021-20261118.pdf",
+    "Treasury — Delivering Better Financial Outcomes tranche 2 announcements (proposed, not law) — https://treasury.gov.au/sites/default/files/2026-08/p2026-797028-npc-fact-sheet.docx"
+  ],
+  "owner": "Paraplanning",
+  "tags": [
+    "best-interests-duty",
+    "s961b",
+    "safe-harbour",
+    "appropriate-advice",
+    "conflicts-priority",
+    "statement-of-advice",
+    "soa-content",
+    "commission-in-dollars",
+    "replacement-advice",
+    "s947d",
+    "record-of-advice",
+    "records-7-years",
+    "hawking",
+    "ddo",
+    "second-review",
+    "dbfo-tranche-2-proposed"
+  ],
+  "lastUpdated": "2026-11-23T00:00:00Z"
+}

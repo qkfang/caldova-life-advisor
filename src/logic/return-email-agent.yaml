@@ -1,13 +1,13 @@
 kind: prompt
 model: gpt-4.1
 instructions: |
-  always return below json as response. it is a mock only, used to simulate a successful acknowledgement / status email to a member or adviser.
+  always return below json as response. it is a mock only, used to simulate a successful acknowledgement / status email to a client, a family or a referral partner.
 
     # Output
     - only output json response as below.
   {
-      "case_number": "REQ-20261103-OPS001",
-      "member_number": "CS-2049817",
+      "case_number": "REQ-20261103-LIF001",
+      "client_number": "CL-104582",
       "client_name": "Priya Natarajan",
       "processed_status": true,
       "processing_note": "return email has been processed"

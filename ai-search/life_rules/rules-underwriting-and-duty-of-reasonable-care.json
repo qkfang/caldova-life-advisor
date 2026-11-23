@@ -1,0 +1,42 @@
+{
+  "id": "rules-underwriting-and-duty-of-reasonable-care",
+  "title": "Underwriting and the duty to take reasonable care",
+  "product": "Insurance Contracts Act 1984 and Corporations Act 2001 s1019B",
+  "version": "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026 (Insurance Contracts Act compilation from 8 Oct 2026)",
+  "summary": "What a client must do when applying for life insurance, how an insurer can respond to a misrepresentation, the protection for genetic information that started on 8 Oct 2026, the cooling-off period, and how Caldova handles underwriting outcomes. Uma's Underwriting Agent explains the duty in plain English before any health question; Claims uses the remedies when it checks an older policy.",
+  "rules": "1 Duty to take reasonable care (ICA s20B) — before a consumer insurance contract is entered into (Division 1A, s20A), the insured must take reasonable care not to make a misrepresentation to the insurer. Whether reasonable care was taken depends on all the circumstances, including the type of contract and its target market, the insurer's explanatory material, how clear and specific the insurer's questions were, whether an agent was acting for the insured, and whether it is a new contract or a renewal or variation (s20B(3)). A failure to answer, or an obviously incomplete or irrelevant answer, isn't by itself a misrepresentation (s20B(5)). A fraudulent misrepresentation is always a breach (s20B(6)). The duty was inserted in 2020 and applies from 5 Oct 2021.\nCover owned by a business, such as key person cover, may not be a consumer insurance contract; Uma checks the insurer's application, which explains the duty that applies.\n2 Genetic information (from 8 Oct 2026) — not disclosing protected genetic information isn't a misrepresentation for life insurance (s20B(5A)), and insurers can't ask for or use it in underwriting (s33H). Caldova's agents never ask for, record or use genetic test results, and tell clients they don't need to disclose them.\n3 What a life insurer can do after a misrepresentation (ICA s29):\n• no remedy if the insurer would have entered into the contract anyway, or if the only issue is the date of birth, which is dealt with under s30 (s29(1));\n• fraud — the insurer may avoid the contract (s29(2));\n• not fraudulent, and the insurer wouldn't have offered cover on any terms — the insurer may avoid the contract, but only within 3 years of it being entered into (s29(3));\n• otherwise the insurer may reduce the sum insured to S × P ÷ Q, where S is the sum insured, P the premiums payable and Q the premiums it would have charged (s29(4)); for contracts with a surrender value or death cover, only within 3 years (s29(10));\n• for other cover, such as income protection, TPD or trauma, the insurer may instead vary the terms to put itself where it would have been (s29(6)–(8));\n• variations take effect from the start of the contract (s29(9)).\nExample: Mei Chen's Corella Life policy had been in force for more than seven years when she died, well past the 3-year window in s29(3).\n4 Underwriting outcomes — standard rates; a loading (a percentage added to the premium); an exclusion (a condition that isn't covered); or a decline. Accepting a loading, an exclusion or a decline is always the client's decision, made with Amelia. Insurers set their evidence requirements (tele-interview, blood profile, medical examination, financial evidence) by age and sum insured — see 'Directory — insurers on the approved product list'.\n5 Cooling-off (Corporations Act s1019B) — 14 days, starting from the earlier of when the client receives confirmation of the policy and the end of the fifth business day after it is issued (s1019B(3)). It isn't available once a claim has been made (s1019B(5)). The client can give notice in any way the insurer permits (reg 7.9.64A).\n6 Caldova practice — Uma's agent explains the duty before the first health question; the client answers every question themselves, carefully and completely; existing cover isn't cancelled until the new cover is in force; health information is shared only with the insurer and the people who need it.",
+  "limits": "AI agents never answer health questions for a client, never suggest what to leave out, never ask for genetic test results, and never accept a loading, an exclusion or a decline on a client's behalf. Cooling-off ends once a claim has been made. The 3-year limit in s29(3) doesn't apply to fraud.",
+  "evidenceRequired": [
+    "Application and disclosure answered by the client, after the duty to take reasonable care was explained",
+    "Tele-interview record",
+    "Medical evidence the insurer requires for the age and sum insured (e.g. blood profile, medical examination)",
+    "Financial evidence for income protection and business protection",
+    "Client's signed acceptance of any loading or exclusion"
+  ],
+  "sources": [
+    "Insurance Contracts Act 1984 s20A, s20B (including s20B(5A) from 8 Oct 2026), s29, s30 and s33H — https://www.legislation.gov.au/C2004A02944/latest/text",
+    "Corporations Act 2001 s1019B (cooling-off) — https://www.legislation.gov.au/C2004A00818/latest/text",
+    "Corporations Regulations 2001 reg 7.9.64A (giving cooling-off notice) — https://www.legislation.gov.au/F2001B00274/latest/text"
+  ],
+  "owner": "Underwriting & New Business",
+  "tags": [
+    "duty-to-take-reasonable-care",
+    "s20b",
+    "misrepresentation",
+    "consumer-insurance-contract",
+    "genetic-information",
+    "s33h",
+    "s29",
+    "3-year-window",
+    "avoidance",
+    "proportionate-reduction",
+    "loading",
+    "exclusion",
+    "decline",
+    "cooling-off",
+    "14-days",
+    "s1019b",
+    "tele-interview"
+  ],
+  "lastUpdated": "2026-11-23T00:00:00Z"
+}

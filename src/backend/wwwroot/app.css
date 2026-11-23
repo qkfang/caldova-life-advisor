@@ -1,10 +1,10 @@
 /* ============================================================
-   Wealth Team in a Day — global theme (Caldova Wealth)
-   Modelled on Australian super fund and wealth manager sites
-   (UniSuper, ART, AustralianSuper, Morgan Stanley, J.P. Morgan):
-   light ivory pages, white cards, deep navy brand ink, one
-   confident action blue, serif display headlines and a quiet
-   gold highlight.
+   Advice Team in a Day — global theme (Caldova Life Advice)
+   A modern life insurance advice practice: light ivory pages,
+   white cards, deep navy brand ink, Caldova teal for actions,
+   serif display headlines and a quiet gold highlight (the
+   copper-dome gold of Caldova House). Teal is the Protection
+   Advice side, gold the Claims & Care side and lilac is shared.
    ============================================================ */
 
 :root {
@@ -13,11 +13,14 @@
     --cw-navy-900: #071d38;
     --cw-navy-800: #0b2a4f;
     --cw-navy-700: #123866;
-    --cw-primary: #1660d0;        /* action blue — CTAs and links */
-    --cw-primary-hover: #0f4fb4;
-    --cw-primary-soft: #e9f0fc;
-    --cw-gold: #c9a24a;           /* premium highlight on navy */
+    --cw-teal: #14b8a6;           /* Caldova teal — Protection Advice */
+    --cw-teal-ink: #0f766e;       /* teal for text on light surfaces */
+    --cw-primary: #0f766e;        /* action teal — CTAs and links */
+    --cw-primary-hover: #115e59;
+    --cw-primary-soft: #e6f6f3;
+    --cw-gold: #c9a14a;           /* Caldova gold — Claims & Care */
     --cw-gold-ink: #8a6a1e;       /* gold for text on light surfaces */
+    --cw-lilac: #8b9cf7;          /* shared by both sides */
     --cw-success: #0f7b55;
     --cw-danger: #b42318;
     --cw-warn: #b45309;
@@ -110,7 +113,7 @@ a:hover, .btn-link:hover {
 .btn:focus-visible, .btn:active:focus, .btn-link.nav-link:focus,
 .form-control:focus, .form-select:focus, .form-check-input:focus {
     border-color: var(--cw-primary);
-    box-shadow: 0 0 0 0.22rem rgba(22, 96, 208, 0.22);
+    box-shadow: 0 0 0 0.22rem rgba(15, 118, 110, 0.22);
 }
 
 :focus-visible {
@@ -208,7 +211,7 @@ code {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Full-page toggle — hides the site header and footer for a wider, presenter-
-   friendly working area. Floats bottom-right like a fund site's chat button.
+   friendly working area. Floats bottom-right.
    ───────────────────────────────────────────────────────────────────────────── */
 .full-page-toggle {
     position: fixed;
@@ -244,7 +247,7 @@ body.left-nav-hidden .site-header,
 body.left-nav-hidden .site-footer { display: none; }
 body.left-nav-hidden .site-container { max-width: none; }
 /* ─────────────────────────────────────────────────────────────────────────────
-   Account page "Ask AI" chatbot (ported from forex-trading-agent)
+   Account page "Ask AI" assistant (ported from forex-trading-agent)
    ───────────────────────────────────────────────────────────────────────────── */
 .aichat-settings {
     background: #f8f9fa;
@@ -327,6 +330,8 @@ body.left-nav-hidden .site-container { max-width: none; }
 }
 .aichat-select { font-size: 0.82rem; }
 .aichat-temp-slider { cursor: pointer; }
+.aichat-temp-slider::-webkit-slider-thumb { background-color: var(--cw-primary); }
+.aichat-temp-slider::-moz-range-thumb { background-color: var(--cw-primary); }
 .cat-badge {
     display: inline-block;
     font-size: 0.68rem;

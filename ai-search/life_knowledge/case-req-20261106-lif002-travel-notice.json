@@ -1,0 +1,27 @@
+{
+  "id": "case-req-20261106-lif002-travel-notice",
+  "title": "Case REQ-20261106-LIF002 — travel notice",
+  "category": "Case Evidence",
+  "requestType": "Trauma claim and bank change",
+  "caseNumber": "REQ-20261106-LIF002",
+  "clientNumber": "CL-100377",
+  "content": "File note from Grace Williams's annual review with Amelia, Senior Risk Adviser, on Mon 28 Sep 2026 (client number CL-100377).\n\nTravel notice: Grace will be in Italy from 20 Oct to 1 Dec 2026.\n\nVerified contact details at the review: mobile 0491 570 157; email grace.williams@example.com.\n\nClient: Grace Williams, 61 (DOB 22/07/1965), semi-retired school principal who does relief teaching; lives in Hawthorn VIC; widowed in 2018; sons Daniel (32) and James (29). Client of Caldova since 2019.\n\nCover reviewed: Lyrebird Life policy LB-19004417, held outside super, stepped premiums — life cover $500,000 and trauma cover $200,000. Grace is the policy owner and life insured. Nominated beneficiaries: Daniel 50% and James 50%.\n\nHow the note was used on 6 Nov 2026: the portal login from Sydney on 2 Nov and the urgent claim email of 6 Nov didn't fit the travel notice, which supported Felix's HIGH risk rating ('Case REQ-20261106-LIF002 — document checks'). Cara called Grace on her verified mobile 0491 570 157; Grace, in Florence, confirmed she is well and never asked for a claim or a change to her details. The block was approved by Theo and no claim was lodged.",
+  "severity": "high",
+  "department": "Financial Crime",
+  "tags": [
+    "grace-williams",
+    "REQ-20261106-LIF002",
+    "CL-100377",
+    "travel-notice",
+    "annual-review",
+    "italy",
+    "20-oct-to-1-dec-2026",
+    "verified-contact-details",
+    "0491-570-157",
+    "LB-19004417",
+    "life-cover-500000",
+    "trauma-cover-200000",
+    "nominated-beneficiaries"
+  ],
+  "lastUpdated": "2026-09-28T04:00:00Z"
+}

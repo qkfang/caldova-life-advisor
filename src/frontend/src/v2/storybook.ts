@@ -4,9 +4,9 @@
  * right, the inspector card, the finale's request trace panel and the hover
  * tooltip. DOM only — main.ts drives the 3D.
  */
-import { CUSTOMER_PERSONAS, type ScenarioId } from "../personaData";
+import { CLIENT_PERSONAS, type ScenarioId } from "../personaData";
 import type { InspectorAction, InspectorView } from "./inspector";
-import { LEVELS } from "./lakehouseData";
+import { LEVELS } from "./houseData";
 import type { TraceStep } from "./requestTrace";
 import { PAGES, pageIndex, type PageId, type StoryPage } from "./storyData";
 
@@ -39,7 +39,7 @@ function byId<T extends HTMLElement>(id: string): T {
 
 /** Short name for navigation buttons and the lift. */
 function shortTitle(p: StoryPage): string {
-  if (p.id === "cover") return "The Lakehouse";
+  if (p.id === "cover") return "Caldova House";
   if (p.id === "finale") return "Top to bottom";
   return LEVELS.find((l) => l.id === p.id)?.name ?? p.title;
 }
@@ -176,7 +176,7 @@ export class Storybook {
     this.cover.innerHTML = `
       <div class="cover-card">
         <div class="cover-kicker">${esc(p.kicker)}</div>
-        <h1>The Lakehouse</h1>
+        <h1>Caldova House</h1>
         <p class="cover-title">${esc(p.title)}</p>
         ${p.body.map((b) => `<p class="cover-lede">${esc(b)}</p>`).join("")}
         <ol class="cover-levels">${levels}</ol>
@@ -294,7 +294,7 @@ export class Storybook {
     const box = this.card.querySelector<HTMLElement>(".pc-trace");
     if (!box) return;
     const st = this.trace;
-    const chips = CUSTOMER_PERSONAS.map(
+    const chips = CLIENT_PERSONAS.map(
       (c) =>
         `<button type="button" class="chip ${st?.scenario === c.id ? "on" : ""}" data-scenario="${c.id}" style="--c:${c.color}"><b>${esc(c.name.split(" ")[0])}</b><span>${esc(c.request_type)}</span></button>`,
     ).join("");
@@ -310,7 +310,7 @@ export class Storybook {
       : `<div class="trace-step idle"><p class="trace-text">The request is on its way to the house…</p></div>`;
     const play = st?.done ? "↺ Replay" : st?.paused ? "▶ Play" : "⏸ Pause";
     box.innerHTML = `
-      <div class="trace-members" role="group" aria-label="Choose a member">${chips}</div>
+      <div class="trace-clients" role="group" aria-label="Choose a client">${chips}</div>
       ${stepHtml}
       <div class="trace-controls">
         <button type="button" class="btn ghost" data-trace="${st?.done ? "replay" : "toggle"}">${play}</button>

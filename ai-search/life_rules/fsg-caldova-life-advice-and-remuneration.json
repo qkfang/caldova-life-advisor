@@ -1,0 +1,46 @@
+{
+  "id": "fsg-caldova-life-advice-and-remuneration",
+  "title": "Caldova Life Advice — Financial Services Guide and remuneration",
+  "product": "Caldova Life Advice Financial Services Guide",
+  "version": "FSG v2026.1 — dated 1 July 2026",
+  "summary": "Summary of Caldova Life Advice's Financial Services Guide (FSG): who Caldova is, the services it provides, the documents clients receive, how Caldova and its people are paid, its associations, privacy and how to complain. Onboarding gives every new client the FSG, or points them to the FSG information on Caldova's website; the SoA Drafting assistant and Client Communications use the remuneration section to explain fees and commission in dollars.",
+  "rules": "1 Who we are — Caldova Life Advice Pty Ltd, Caldova House, Melbourne: a life insurance advice practice that holds an Australian financial services licence for personal advice on, and dealing in, life risk insurance products. Contact: requests@caldova.example. Caldova acts for its clients, not for the insurers.\n2 Our adviser — Amelia, Senior Risk Adviser, gives all of Caldova's personal advice and signs every Statement of Advice. She meets the education standard for financial advisers, completes at least 40 hours of continuing professional development each year, follows the Financial Planners and Advisers Code of Ethics 2019, and is listed on ASIC's Financial Advisers Register.\n3 What we do — personal advice on life cover (with a terminal illness benefit), TPD, trauma, income protection and business protection (key person and buy-sell cover), including whether cover is held inside or outside super; applying for cover and supporting clients through underwriting; supporting clients and families through claims; annual reviews. We don't advise on investments, super investment options, tax or legal matters — we work with the client's accountant and lawyer.\n4 Documents you receive — this FSG (or the FSG information on our website); a Statement of Advice (SoA) for personal advice, which shows our remuneration, including commission, in dollars; a Record of Advice for further advice when your circumstances and the basis of the advice haven't changed significantly (you can ask for a copy); and each insurer's Product Disclosure Statement.\n5 How Caldova is paid — Caldova charges no advice fee for protection-only advice. The insurer pays Caldova commission within the Life Insurance Framework caps: up to 60% of the first year's policy cost (premiums and fees, excluding GST) and up to 20% of the policy cost in each later year. Example: on a first-year premium of $3,180, the upfront commission is up to $1,908 and the ongoing commission up to $636 a year.\n6 Your consent to commission — Caldova can only receive commission with your informed consent. Before you consent we tell you the insurer, the commission rate as a percentage of the policy cost, how often and for how long it is paid (including renewals), the services we provide (annual reviews and claims support), that the law requires your consent, and that your consent can't be withdrawn. You consent in writing, or we keep a written record of your verbal consent, and we give you a copy.\n7 Clawback — if a policy is cancelled in its first year, the insurer recovers 100% of the upfront commission from Caldova; if it is cancelled in its second year, 60%.\n8 How our people are paid — Amelia and the team are paid salaries by Caldova. Caldova doesn't pay or receive referral fees: referral partners such as Hannah Lewis (Yarra Home Loans) and Marcus Tan (Bayside Business Accountants) aren't paid for referring clients.\n9 Not independent — because Caldova receives commission from insurers, we don't call ourselves independent, impartial or unbiased.\n10 Associations — no insurer owns Caldova or has a financial interest in it. Caldova recommends cover from the insurers on its approved product list: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life (see 'Caldova Life Advice — Approved product list and research method').\n11 Privacy — Caldova treats health information as sensitive. We collect it with your consent, use it only for your advice, application or claim, and share it only with the people who need it, such as the insurer. Referral partners are told only what you agree to, never your health details.\n12 Complaints — tell us first. We'll give you a final written response within 30 calendar days. If you're not satisfied, you can take your complaint to the Australian Financial Complaints Authority (AFCA), a free, independent external dispute resolution scheme.\n13 Records — we keep records of your advice, including the steps we took to act in your best interests, for 7 years, and records of your commission consent for at least 5 years.",
+  "limits": "Caldova charges no advice fee for protection-only advice, so it has no ongoing fee arrangements with clients. Caldova doesn't advise on investments, super investment options, tax or legal matters, and doesn't draft legal documents such as buy-sell agreements. Caldova can't call itself independent, impartial or unbiased because it receives commission. AI agents support the team but never give advice; only Amelia does.",
+  "evidenceRequired": [
+    "Date the FSG was given (or the client was pointed to the FSG information on Caldova's website)",
+    "Signed privacy and health-information consent",
+    "Written commission consent, or a written record of verbal consent, with a copy given to the client"
+  ],
+  "sources": [
+    "Corporations Act 2001 s941A and s942B(2) (FSG and its content, including s942B(2)(fa)) and s923A (restricted words such as 'independent') — https://www.legislation.gov.au/C2004A00818/latest/text",
+    "ASIC INFO 291 — FSGs and website disclosure information (from 10 Jul 2024) — https://asic.gov.au/regulatory-resources/financial-services/giving-financial-product-advice/faqs-fsgs-and-website-disclosure-information/",
+    "Corporations Act 2001 s947B(2)(d) and (h) — remuneration, including commission, in the SoA in dollars — https://www.legislation.gov.au/C2004A00818/latest/text",
+    "Corporations Act 2001 s963B and s963BB, and ASIC INFO 292 — informed consent for insurance commissions — https://asic.gov.au/regulatory-resources/financial-services/giving-financial-product-advice/faqs-informed-consents-for-insurance-commissions/",
+    "ASIC Corporations (Life Insurance Commissions) Instrument 2017/510 — https://www.legislation.gov.au/F2017L00636/latest/details",
+    "ASIC RG 271 Internal dispute resolution — https://download.asic.gov.au/media/3olo5aq5/rg271-published-2-september-2021.pdf",
+    "ASIC Instrument 2024/508 (advice records kept for 7 years) — https://www.legislation.gov.au/F2024L01201/latest/text; Corporations Act 2001 s1101C(3) (consent records kept for at least 5 years)",
+    "ASIC — continuing professional development for financial advisers — https://asic.gov.au/regulatory-resources/financial-services/financial-advice/professional-standards/continuing-professional-development-cpd",
+    "Financial Planners and Advisers Code of Ethics 2019 — https://www.legislation.gov.au/F2019L00117/latest/text"
+  ],
+  "owner": "Team Leader Office",
+  "tags": [
+    "fsg",
+    "financial-services-guide",
+    "remuneration",
+    "commission",
+    "no-advice-fee",
+    "lif-caps",
+    "60-percent",
+    "20-percent",
+    "informed-consent",
+    "clawback",
+    "not-independent",
+    "referral-partners",
+    "privacy",
+    "health-information",
+    "complaints",
+    "afca",
+    "records"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

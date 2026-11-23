@@ -1,5 +1,37 @@
-﻿@page "/not-found"
+@page "/not-found"
 @layout MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>Page not found — Advice Team in a Day</PageTitle>
+
+<div class="agent-header" style="--accent: #94a3b8">
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the agent console</a>
+    <div class="agent-header-row">
+        <div class="agent-header-icon">🧭</div>
+        <div>
+            <div class="agent-header-dept">Caldova Life Advice</div>
+            <h1>Page not found</h1>
+            <p class="tagline">Sorry, we couldn't find that page. Try one of the agents or scenarios below.</p>
+        </div>
+    </div>
+</div>
+
+<section class="panel">
+    <h2>AI agents</h2>
+    <div class="other-agents">
+        @foreach (var agent in AgentCatalog.All)
+        {
+            <a class="other-agent" href="@($"/agents/{agent.Id}")"><span class="other-agent-icon" aria-hidden="true">@agent.Icon</span>@agent.Department</a>
+        }
+    </div>
+    <h2 class="not-found-scenarios">Scenarios</h2>
+    <div class="other-agents">
+        @foreach (var scenario in ScenarioCatalog.All)
+        {
+            <a class="other-agent" href="@($"/scenarios/{scenario.Id}")"><span class="other-agent-icon" aria-hidden="true">@scenario.Icon</span>@scenario.ShortTitle — @scenario.Customer</a>
+        }
+    </div>
+</section>
+
+<style>
+    .not-found-scenarios { margin-top: 1.5rem; }
+</style>

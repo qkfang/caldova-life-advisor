@@ -1,19 +1,24 @@
-// Onboarding "Try it out" demo wiring (/agents/onboarding).
+// Onboarding "Try it out" wiring (/agents/onboarding).
 //
 // Loaded globally from App.razor so it runs on a full page load AND re-binds
 // after Blazor enhanced navigation (`enhancedload`) — inline <script> tags in
 // enhanced-navigated pages are not reliably executed.
 //
-// Flow: 1 pick a sample inbound request → 2 engage the Onboarding Agent
-// (streamed narrative + engage sub-tabs) → 3 review the Member Case form,
-// NIGO checklist and priority → 4 open the case (REQ-…) and show where it
-// is routed. Endpoints: /onboarding/samples, /onboarding/samples/{id},
+// Flow: 1 pick an inbound request (email or call note + attachment + what
+// Caldova holds on file) → 2 engage the Onboarding Agent (streamed narrative
+// + engage sub-tabs) → 3 review the Client Case form, the fact find, the
+// in-good-order checklist, the priority and vulnerability flags → 4 open the
+// case (REQ-…) and show where it is routed. Works offline: without Foundry
+// the endpoints return the same fields with an offline narrative.
+// Endpoints: /onboarding/samples, /onboarding/samples/{id},
 // /onboarding/process, /onboarding/routing, /onboarding/submit.
+// Deep link: /agents/onboarding?sample=onboarding-priya pre-selects a request.
 (function () {
     const FIELD_NAMES = [
-        'clientName', 'clientEmail', 'clientPhone', 'memberNumber', 'product', 'requestType',
-        'receivedDate', 'amount', 'adviserName', 'adviserPractice', 'requestSummary', 'preferredContact'
+        'clientName', 'clientEmail', 'clientPhone', 'clientNumber', 'cover', 'requestType',
+        'receivedDate', 'amount', 'adviserName', 'referredBy', 'requestSummary', 'preferredContact'
     ];
+    const CLAIM_TYPES = ['Income protection claim', 'Death claim', 'Trauma claim and bank change'];
 
     function escapeHtml(s) {
         return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -35,12 +40,15 @@
         const formWrap = $('#intake-form-wrap');
         const form = $('#intake-form');
         const requestTypeSelect = $('#intake-request-type');
-        const nigoList = $('#intake-nigo-list');
-        const nigoSummary = $('#intake-nigo-summary');
+        const factFindTitle = $('#intake-factfind-title');
+        const factFindList = $('#intake-factfind-list');
+        const checkList = $('#intake-check-list');
+        const checkSummary = $('#intake-check-summary');
         const priorityEl = $('#intake-priority');
         const prioritySelect = $('#intake-priority-select');
         const priorityPill = $('#intake-priority-pill');
         const priorityReason = $('#intake-priority-reason');
+        const vulnEl = $('#intake-vuln');
         const routingPreview = $('#intake-routing-preview');
         const routingPreviewList = $('#intake-routing-preview-list');
         const submitBtn = $('#intake-submit-btn');
@@ -50,6 +58,7 @@
         const routesEl = $('#intake-routes');
         const outstandingEl = $('#intake-outstanding');
         const resetBtn = $('#intake-reset-btn');
+        const scenarioLink = $('#intake-scenario-link');
 
         const SUBMIT_LABEL = '<span class="intake-step-num inline">4</span>Confirm &amp; open case';
 
@@ -58,7 +67,7 @@
         let routingRequestSeq = 0;
 
         async function loadSamples() {
-            samplesEl.innerHTML = '<div class="muted">Loading samples…</div>';
+            samplesEl.innerHTML = '<div class="muted">Loading requests…</div>';
             try {
                 const res = await fetch('/onboarding/samples');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -66,15 +75,20 @@
                 samplesEl.innerHTML = samples.map(s => `
                     <button type="button" class="intake-sample" data-id="${escapeHtml(s.id)}">
                         <div class="intake-sample-label">${escapeHtml(s.label)}</div>
-                        <div class="intake-sample-meta"><span class="pill">${escapeHtml(s.requestType)}</span></div>
-                        <div class="intake-sample-meta">📧 ${escapeHtml(s.emailSubject)}</div>
+                        <div class="intake-sample-meta"><span class="pill${s.isClaim ? ' claim' : ''}">${escapeHtml(s.requestType)}</span></div>
+                        <div class="intake-sample-meta">${s.isClaim ? '📨' : '📧'} ${escapeHtml(s.emailSubject)}</div>
                         <div class="intake-sample-meta">📎 ${escapeHtml(s.formFileName)}</div>
                     </button>`).join('');
                 samplesEl.querySelectorAll('.intake-sample').forEach(el => {
                     el.addEventListener('click', () => selectSample(el.dataset.id));
                 });
+
+                const wanted = new URLSearchParams(window.location.search).get('sample');
+                if (wanted && samples.some(s => s.id === wanted)) {
+                    selectSample(wanted);
+                }
             } catch (err) {
-                samplesEl.innerHTML = `<div class="intake-status error">Failed to load samples: ${escapeHtml(err.message)}</div>`;
+                samplesEl.innerHTML = `<div class="intake-status error">Couldn't load the requests: ${escapeHtml(err.message)}</div>`;
             }
         }
 
@@ -83,7 +97,7 @@
             formWrap.hidden = true;
             priorityEl.hidden = true;
             routingPreview.hidden = true;
-            // Step 3 only re-appears once the agent has processed the sample.
+            // Step 3 only re-appears once the agent has processed the request.
             if (step3El) step3El.hidden = true;
             receipt.hidden = true;
         }
@@ -106,6 +120,7 @@
                 $('#intake-email-body').textContent = s.emailBody;
                 $('#intake-form-name').textContent = s.formFileName;
                 $('#intake-form-body').textContent = s.formDocumentText;
+                $('#intake-file-body').textContent = s.clientFile || 'Nothing on file.';
                 previewEl.hidden = false;
                 if (step2El) step2El.hidden = false;
                 processBtn.disabled = false;
@@ -114,7 +129,7 @@
                 processBtn.disabled = true;
                 processStatus.hidden = false;
                 processStatus.className = 'intake-status error';
-                processStatus.textContent = 'Failed to load sample: ' + err.message;
+                processStatus.textContent = 'Couldn\'t load the request: ' + err.message;
             }
         }
 
@@ -139,39 +154,54 @@
             setRequestType(f.requestType);
         }
 
-        function renderNigo(items) {
+        function renderFactFind(title, items) {
             const list = Array.isArray(items) ? items : [];
-            nigoList.innerHTML = list.map((n, i) => {
+            factFindTitle.textContent = title || 'Fact find';
+            factFindList.innerHTML = list.map(item => `
+                <dt>${escapeHtml(item.label)}</dt>
+                <dd class="${item.sensitive ? 'sensitive' : ''}">${escapeHtml(item.value)}${item.sensitive ? '<span class="intake-sensitive-tag">🔒 health information</span>' : ''}</dd>`).join('')
+                || '<dd class="muted">Nothing extracted.</dd>';
+        }
+
+        // Size each note box to its text so nothing is hidden behind a scrollbar.
+        function noteRows(note) {
+            const length = String(note || '').length;
+            return Math.min(6, Math.max(2, Math.ceil(length / 110)));
+        }
+
+        function renderChecklist(items) {
+            const list = Array.isArray(items) ? items : [];
+            checkList.innerHTML = list.map((n, i) => {
                 const status = n.status === 'ok' ? 'ok' : 'action';
                 return `
-                <li class="intake-nigo-item ${status}" data-id="${escapeHtml(n.id)}" data-label="${escapeHtml(n.label)}">
-                    <select class="intake-nigo-status" aria-label="Status for ${escapeHtml(n.label)}">
+                <li class="intake-check-item ${status}" data-id="${escapeHtml(n.id)}" data-label="${escapeHtml(n.label)}">
+                    <select class="intake-check-status" aria-label="Status for ${escapeHtml(n.label)}">
                         <option value="ok"${status === 'ok' ? ' selected' : ''}>✅ In good order</option>
                         <option value="action"${status === 'action' ? ' selected' : ''}>⚠️ Needs action</option>
                     </select>
-                    <div class="intake-nigo-text">
-                        <div class="intake-nigo-label">${escapeHtml(n.label)}</div>
-                        <input class="intake-nigo-note" id="intake-nigo-note-${i}" value="${escapeHtml(n.note)}" aria-label="Note for ${escapeHtml(n.label)}" />
+                    <div class="intake-check-text">
+                        <div class="intake-check-label">${escapeHtml(n.label)}</div>
+                        <textarea class="intake-check-note" id="intake-check-note-${i}" rows="${noteRows(n.note)}" aria-label="Note for ${escapeHtml(n.label)}">${escapeHtml(n.note)}</textarea>
                     </div>
                 </li>`;
-            }).join('') || '<li class="muted">No NIGO checks returned.</li>';
-            updateNigoSummary();
+            }).join('') || '<li class="muted">No checklist items returned.</li>';
+            updateChecklistSummary();
         }
 
-        function readNigo() {
-            return Array.from(nigoList.querySelectorAll('.intake-nigo-item')).map(li => ({
+        function readChecklist() {
+            return Array.from(checkList.querySelectorAll('.intake-check-item')).map(li => ({
                 id: li.dataset.id || '',
                 label: li.dataset.label || '',
-                status: li.querySelector('.intake-nigo-status').value,
-                note: li.querySelector('.intake-nigo-note').value
+                status: li.querySelector('.intake-check-status').value,
+                note: li.querySelector('.intake-check-note').value
             }));
         }
 
-        function updateNigoSummary() {
-            const items = readNigo();
+        function updateChecklistSummary() {
+            const items = readChecklist();
             const ok = items.filter(n => n.status === 'ok').length;
             const action = items.length - ok;
-            nigoSummary.innerHTML = items.length
+            checkSummary.innerHTML = items.length
                 ? `<span class="ok">${ok} in good order</span> · <span class="action">${action} need${action === 1 ? 's' : ''} action</span>`
                 : '';
         }
@@ -189,6 +219,14 @@
             priorityPill.className = 'intake-priority-pill ' + level.toLowerCase();
         }
 
+        function renderVulnerability(flags) {
+            const list = Array.isArray(flags) ? flags : [];
+            vulnEl.innerHTML = list.length
+                ? '<span>Vulnerability — for human handling:</span>' +
+                  list.map(f => `<span class="intake-vuln-chip">💗 ${escapeHtml(f)}</span>`).join('')
+                : '<span class="intake-vuln-none">No vulnerability indicators.</span>';
+        }
+
         function renderRoutingPreview(routing) {
             const routes = Array.isArray(routing) ? routing : [];
             routingPreviewList.innerHTML = routes.map(r => `
@@ -200,8 +238,10 @@
 
         async function refreshRoutingPreview() {
             const seq = ++routingRequestSeq;
+            const type = requestTypeSelect.value || '';
+            factFindTitle.textContent = CLAIM_TYPES.includes(type) ? 'Claim details' : 'Fact find';
             try {
-                const res = await fetch('/onboarding/routing?requestType=' + encodeURIComponent(requestTypeSelect.value || ''));
+                const res = await fetch('/onboarding/routing?requestType=' + encodeURIComponent(type));
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (seq === routingRequestSeq) renderRoutingPreview(data.routing);
@@ -216,7 +256,7 @@
             hideResults();
             processStatus.hidden = false;
             processStatus.className = 'intake-status';
-            processStatus.innerHTML = '<span class="spinner"></span>Engaging Onboarding Agent…';
+            processStatus.innerHTML = '<span class="spinner"></span>Engaging the Onboarding Agent…';
 
             try {
                 const data = await window.zcAgentStream({
@@ -229,11 +269,11 @@
                         }
                     },
                     onError: (msg) => {
-                        processStatus.className = 'intake-status error';
-                        processStatus.textContent = 'Agent error: ' + msg;
+                        processStatus.className = 'intake-status warn';
+                        processStatus.textContent = 'Agent error: ' + msg + ' — using the offline extraction.';
                     }
                 });
-                if (!data) throw new Error('No response from agent');
+                if (!data) throw new Error('No response from the agent');
                 processed = data;
 
                 if (data.agentError) {
@@ -242,13 +282,15 @@
                 } else {
                     processStatus.className = 'intake-status';
                     processStatus.textContent = data.agentConfigured
-                        ? 'Onboarding Agent processed the email and the attached form.'
-                        : 'Processed (Foundry agent not configured — using the offline extraction).';
+                        ? 'The Onboarding Agent read the request, the attachment and the client file.'
+                        : 'Processed offline (Foundry agent not configured) — showing the offline extraction.';
                 }
 
                 fillForm(data.fields);
-                renderNigo(data.nigo);
+                renderFactFind(data.factFindTitle, data.factFind);
+                renderChecklist(data.checklist);
                 setPriority(data.priority, data.priorityReason || '');
+                renderVulnerability(data.vulnerability);
                 renderRoutingPreview(data.routing);
 
                 if (step3El) step3El.hidden = false;
@@ -261,7 +303,7 @@
                 }
             } catch (err) {
                 processStatus.className = 'intake-status error';
-                processStatus.textContent = 'Failed to process: ' + err.message;
+                processStatus.textContent = 'Couldn\'t process the request: ' + err.message;
             } finally {
                 processBtn.disabled = false;
             }
@@ -272,14 +314,14 @@
             receiptNum.textContent = caseNumber;
             receiptMeta.innerHTML = [
                 escapeHtml(data.clientName),
-                escapeHtml(data.memberNumber),
+                escapeHtml(data.clientNumber),
                 escapeHtml(data.requestType),
                 'Priority: <strong>' + escapeHtml(data.priority) + '</strong>'
             ].filter(Boolean).join('<span class="sep">·</span>');
 
             const routes = Array.isArray(data.routing) ? data.routing : [];
             routesEl.innerHTML = routes.map(r => {
-                const href = (r.url || ('/agents/' + r.agentId)) + '?case=' + encodeURIComponent(caseNumber);
+                const href = (r.url || ('/agents/' + r.agentId)) + '?caseNumber=' + encodeURIComponent(caseNumber);
                 return `
                 <a class="intake-route" href="${escapeHtml(href)}" style="--route-accent: ${escapeHtml(r.accent || '#0ea5e9')}">
                     <div class="intake-route-head">
@@ -289,20 +331,29 @@
                     </div>
                     <div class="intake-route-persona">${escapeHtml(r.persona)}</div>
                     <div class="intake-route-reason">${escapeHtml(r.reason)}</div>
-                    <div class="intake-route-cta">Open ${escapeHtml(r.agentName)} →</div>
+                    <div class="intake-route-cta">Open the ${escapeHtml(r.agentName)} →</div>
                 </a>`;
             }).join('');
 
-            const outstanding = Array.isArray(data.outstandingNigo) ? data.outstandingNigo : [];
+            const outstanding = Array.isArray(data.outstandingChecklist) ? data.outstandingChecklist : [];
             if (outstanding.length) {
                 outstandingEl.innerHTML =
-                    `⚠️ <strong>${outstanding.length} NIGO item${outstanding.length === 1 ? '' : 's'} to follow up</strong> ` +
-                    `(${escapeHtml(data.nigoInGoodOrder)} of ${escapeHtml(data.nigoTotal)} checks in good order):` +
+                    `⚠️ <strong>${outstanding.length} checklist item${outstanding.length === 1 ? '' : 's'} to follow up</strong> ` +
+                    `(${escapeHtml(data.checklistInGoodOrder)} of ${escapeHtml(data.checklistTotal)} in good order):` +
                     '<ul>' + outstanding.map(n => `<li><strong>${escapeHtml(n.label)}</strong> — ${escapeHtml(n.note)}</li>`).join('') + '</ul>';
                 outstandingEl.hidden = false;
             } else {
                 outstandingEl.innerHTML = '';
                 outstandingEl.hidden = true;
+            }
+
+            if (scenarioLink) {
+                if (data.scenarioId) {
+                    scenarioLink.href = '/scenarios/' + encodeURIComponent(data.scenarioId);
+                    scenarioLink.hidden = false;
+                } else {
+                    scenarioLink.hidden = true;
+                }
             }
         }
 
@@ -311,7 +362,7 @@
             if (!selectedSampleId || !processed) return;
             if (!form.reportValidity()) return;
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Opening case…';
+            submitBtn.textContent = 'Opening the case…';
             try {
                 const payload = { sampleId: selectedSampleId };
                 FIELD_NAMES.forEach(name => {
@@ -320,7 +371,7 @@
                 });
                 payload.priority = prioritySelect.value;
                 payload.priorityReason = priorityReason.value;
-                payload.nigo = readNigo();
+                payload.checklist = readChecklist();
 
                 const res = await fetch('/onboarding/submit', {
                     method: 'POST',
@@ -333,7 +384,7 @@
                 receipt.hidden = false;
                 receipt.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } catch (err) {
-                alert('Failed to open the case: ' + err.message);
+                alert('Couldn\'t open the case: ' + err.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = SUBMIT_LABEL;
@@ -347,22 +398,24 @@
             previewEl.hidden = true;
             processBtn.disabled = true;
             hideResults();
-            // Re-hide step 2 so the demo restarts at step 1 only.
+            // Re-hide step 2 so the flow restarts at step 1 only.
             if (step2El) step2El.hidden = true;
             form.reset();
-            nigoList.innerHTML = '';
-            nigoSummary.innerHTML = '';
+            factFindList.innerHTML = '';
+            checkList.innerHTML = '';
+            checkSummary.innerHTML = '';
+            vulnEl.innerHTML = '';
             routingPreviewList.innerHTML = '';
             samplesEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        nigoList.addEventListener('change', e => {
-            const select = e.target.closest('.intake-nigo-status');
+        checkList.addEventListener('change', e => {
+            const select = e.target.closest('.intake-check-status');
             if (!select) return;
-            const li = select.closest('.intake-nigo-item');
+            const li = select.closest('.intake-check-item');
             li.classList.toggle('ok', select.value === 'ok');
             li.classList.toggle('action', select.value !== 'ok');
-            updateNigoSummary();
+            updateChecklistSummary();
         });
         prioritySelect.addEventListener('change', updatePriorityPill);
         requestTypeSelect.addEventListener('change', refreshRoutingPreview);
@@ -379,8 +432,8 @@
         init();
     }
 
-    if (!window.__onboardingDemoEnhancedHook) {
-        window.__onboardingDemoEnhancedHook = true;
+    if (!window.__onboardingScenarioEnhancedHook) {
+        window.__onboardingScenarioEnhancedHook = true;
         if (typeof Blazor !== 'undefined' && typeof Blazor.addEventListener === 'function') {
             Blazor.addEventListener('enhancedload', init);
         } else {

@@ -1,0 +1,30 @@
+{
+  "id": "case-req-20261111-lif004-benefit-calculation",
+  "title": "Case REQ-20261111-LIF004 — benefit calculation",
+  "category": "Case File",
+  "requestType": "Income protection claim",
+  "caseNumber": "REQ-20261111-LIF004",
+  "clientNumber": "CL-102265",
+  "content": "Benefit calculation by the Claims Agent's Benefit & Lodgement assistant for Ben (Claims), case REQ-20261111-LIF004 — Tom Bradley (CL-102265), Harbourline Life income protection HL-23051877. The working is shown so Ben, Theo and Amelia can check it.\n\n1 Insured monthly benefit: $7,000.\n2 Earnings before the disability: net business income of $96,000 in the 12 months to 30 Sep 2026 ÷ 12 = $8,000 a month (see 'Case REQ-20261111-LIF004 — earnings evidence').\n3 Earnings limit: 70% × $8,000 = $5,600 a month.\n4 Benefit payable: the lesser of $7,000 and $5,600 = $5,600 a month.\n\nTiming: the disability started on Wed 14 Oct 2026; the 30-day waiting period ends on 13 Nov 2026; the benefit accrues from 13 Nov 2026 and is paid monthly in arrears, with the first payment about 13 Dec 2026. The benefit is taxable income.\n\nWhy it's $5,600, in plain English: Tom's policy pays up to $7,000 a month, but it never pays more than 70% of what he earned in the 12 months before the injury. Over that year his business earned $8,000 a month after expenses, so the most it can pay is $5,600 a month.\n\nApprovals and lodgement: Theo, the Practice Team Leader, completed a vulnerable-client review, approved the lodgement through the Teams approval card and asked Amelia to call Tom personally before the letter went out. Ben lodged the claim with Harbourline Life on Thu 12 Nov 2026. Harbourline accepted it on Thu 19 Nov 2026 at $5,600 a month.\n\nLife Code timeframes tracked by Ben's agent: for an income-related claim, Harbourline must decide within 2 months of the Claim Received Date or the end of the waiting period, if later (cl 5.48); give a written decision within 15 business days of receiving all the information (cl 5.50); and pay income protection benefits by the due date or within 5 business days of receiving all the information (cl 5.63). Harbourline decided within 5 business days of lodgement. Kylie is recognised as Tom's support person (cl 6.13).\n\nNote for Amelia (not advice): Tom's insured benefit of $7,000 is more than his recent income supports. At his next review Amelia may consider whether the benefit should change. The adviser decides.\n\nOutcome: 🟡 Partially approved — claim accepted at $5,600 a month, not the $7,000 insured, because the benefit follows his earnings in the 12 months before the injury.",
+  "severity": "high",
+  "department": "Claims",
+  "tags": [
+    "tom-bradley",
+    "REQ-20261111-LIF004",
+    "CL-102265",
+    "benefit-calculation",
+    "HL-23051877",
+    "harbourline-life",
+    "5600-a-month",
+    "insured-7000",
+    "70-percent",
+    "waiting-period-30-days",
+    "accrues-13-nov-2026",
+    "paid-monthly-in-arrears",
+    "partially-approved",
+    "teams-approval",
+    "lodged-12-nov-2026",
+    "accepted-19-nov-2026"
+  ],
+  "lastUpdated": "2026-11-19T05:00:00Z"
+}

@@ -1,8 +1,8 @@
 using System.Text;
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Services;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 record TeamLeaderProcessRequest(string CaseNumber);
 
@@ -10,57 +10,76 @@ record TeamLeaderProcessRequest(string CaseNumber);
 /// HTTP endpoints behind the "Try it out" tab on the Team Leader agent page
 /// (<c>/agents/team-leader</c>):
 ///
-/// 1. List the Member Cases held in <see cref="CaseStore"/> so the user can
+/// 1. List the Client Cases held in <see cref="CaseStore"/> so the user can
 ///    pick the case Theo should focus on.
 /// 2. Engage the Team Leader Agent. The page always receives Theo's
-///    deterministic floor dashboard — counts by stage, SLA and IDR clocks,
-///    escalations, the approval queue, vulnerable members, coaching insights
-///    and today's priorities — built from the cases on the floor (the five
-///    scenario cases sit at their decision points). When Foundry is
-///    configured the live agent reviews the same floor and its streamed
-///    narrative is shown alongside.
+///    deterministic practice dashboard — the pipeline by lifecycle stage
+///    (Discover, Verify, Advise, Implement, Confirm), underwriting, claim and
+///    complaint clocks, escalations, the approval queue, vulnerable clients,
+///    file-quality audits against the best interests duty, coaching insights
+///    and today's priorities — built from the cases in the practice. The five
+///    scenario cases are shown at the point each one reaches Theo's desk;
+///    cases opened live with the Onboarding Agent sit at Discover. When
+///    Foundry is configured the live agent reviews the same practice and its
+///    streamed narrative is shown alongside.
 /// </summary>
 public static class TeamLeaderApi
 {
     // ── Dashboard shapes (serialised camelCase to the page) ───────────────────
     internal record StageCount(string Stage, int Count, string Hint);
-    internal record FloorCase(string CaseNumber, string ClientName, string RequestType, string Priority, string Stage, string Owner, string NextAction);
-    internal record FloorClock(string Clock, string CaseNumber, string ClientName, string Rule, string Status, string State);
+    internal record PipelineCase(string CaseNumber, string ClientName, string RequestType, string Side, string Priority, string Stage, string Owner, string NextAction);
+    internal record PracticeClock(string Clock, string CaseNumber, string ClientName, string Rule, string Status, string State);
     internal record Escalation(string CaseNumber, string ClientName, string Severity, string Reason, string Owner, string Clock);
-    internal record ApprovalItem(int Priority, string CaseNumber, string ClientName, string Item, string Authority, string Recommendation, string Due);
-    internal record VulnerableMember(string CaseNumber, string ClientName, string Flag, string Handling);
+    internal record ApprovalItem(int Priority, string CaseNumber, string ClientName, string Item, string Approver, string Authority, string Recommendation, string Due);
+    internal record VulnerableClient(string CaseNumber, string ClientName, string Flag, string Handling);
+    internal record AuditCheck(string Label, string Status, string Note);
+    internal record FileAudit(string CaseNumber, string ClientName, string Standard, string Result, IReadOnlyList<AuditCheck> Checks);
     internal record CaseFocus(
-        string CaseNumber, string ClientName, string RequestType, string Stage, string Owner,
+        string CaseNumber, string ClientName, string RequestType, string Side, string Stage, string Owner, string AsAt,
         string Summary, string Decision, string Recommendation, IReadOnlyList<string> KeyFacts);
-    internal record FloorView(
+    internal record PracticeView(
         string AsAt,
         IReadOnlyList<StageCount> StageCounts,
-        IReadOnlyList<FloorCase> Cases,
-        IReadOnlyList<FloorClock> Clocks,
+        IReadOnlyList<PipelineCase> Cases,
+        IReadOnlyList<PracticeClock> Clocks,
         IReadOnlyList<Escalation> Escalations,
         IReadOnlyList<ApprovalItem> Approvals,
-        IReadOnlyList<VulnerableMember> Vulnerable,
+        IReadOnlyList<VulnerableClient> Vulnerable,
+        IReadOnlyList<FileAudit> FileAudits,
         IReadOnlyList<string> Coaching,
         IReadOnlyList<string> Priorities);
 
     private record CaseProfile(
         string Stage,
+        string Side,
         string Owner,
+        string AsAt,
         string NextAction,
-        IReadOnlyList<FloorClock> Clocks,
+        IReadOnlyList<PracticeClock> Clocks,
         Escalation? Escalation,
-        ApprovalItem? Approval,
-        VulnerableMember? Vulnerable,
+        IReadOnlyList<ApprovalItem> Approvals,
+        VulnerableClient? Vulnerable,
+        FileAudit Audit,
         string Summary,
         string Decision,
         string Recommendation,
-        string? Today = null);
+        string? Today = null,
+        string? Coaching = null);
 
-    private const string Received = "Received";
-    private const string InAssessment = "In assessment";
-    private const string AwaitingApproval = "Awaiting approval";
-    private const string AwaitingCounterparty = "Awaiting counterparty";
-    private const string Completed = "Completed";
+    private const string Discover = "Discover";
+    private const string Verify = "Verify";
+    private const string Advise = "Advise";
+    private const string Implement = "Implement";
+    private const string Confirm = "Confirm";
+
+    private const string ProtectionAdvice = "Protection Advice";
+    private const string ClaimsAndCare = "Claims & Care";
+
+    private const string Theo = "Theo (Practice Team Leader)";
+    private const string Amelia = "Amelia (Senior Risk Adviser)";
+
+    private const string BestInterests = "Best interests duty — advice file";
+    private const string ClaimsHandling = "Claims handling and the Life Insurance Code of Practice";
 
     public static void MapTeamLeaderEndpoints(
         this WebApplication app,
@@ -68,8 +87,8 @@ public static class TeamLeaderApi
         CaldovaAgentFactory factory,
         ILogger logger)
     {
-        // Cases on the floor, most recent first — populates the case picker
-        // on both the Try it out and Group Chat tabs.
+        // Cases in the practice, most recent first — populates the case
+        // picker on both the Try it out and Group Chat tabs.
         app.MapGet("/team-leader/cases", () =>
         {
             var cases = store.All().Select(c => new
@@ -77,7 +96,7 @@ public static class TeamLeaderApi
                 caseNumber = c.CaseNumber,
                 clientName = c.ClientName,
                 requestType = c.RequestType,
-                memberNumber = c.MemberNumber,
+                clientNumber = c.ClientNumber,
                 priority = c.Priority,
                 receivedDate = c.ReceivedDate,
                 createdAt = c.CreatedAt
@@ -85,7 +104,7 @@ public static class TeamLeaderApi
             return Results.Ok(cases);
         });
 
-        // Full Member Case record for a single case.
+        // Full Client Case record for a single case.
         app.MapGet("/team-leader/cases/{caseNumber}", (string caseNumber) =>
         {
             var record = store.Get(caseNumber);
@@ -94,9 +113,9 @@ public static class TeamLeaderApi
                 : Results.Ok(record);
         });
 
-        // Engage Theo on the selected case: the deterministic floor view is
-        // always returned; with Foundry configured the live agent reviews the
-        // same floor (streamed over SSE when the client asks for it).
+        // Engage Theo on the selected case: the deterministic practice view
+        // is always returned; with Foundry configured the live agent reviews
+        // the same practice (streamed over SSE when the client asks for it).
         app.MapPost("/team-leader/process", async (HttpContext httpContext, TeamLeaderProcessRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.CaseNumber))
@@ -108,17 +127,16 @@ public static class TeamLeaderApi
 
             logger.LogInformation("Team Leader process: caseNumber={CaseNumber}", Sanitize(focusCase.CaseNumber));
 
-            var allCases = store.All();
-            var floor = BuildFloor(allCases);
+            var practice = BuildPractice(store.All());
             var focus = BuildFocus(focusCase);
-            var prompt = BuildPrompt(focusCase, focus, floor);
+            var prompt = BuildPrompt(focusCase, focus, practice);
 
             object BuildEnvelope(AgentTraceResult? trace, string? agentError) => new
             {
                 caseNumber = focusCase.CaseNumber,
                 clientName = focusCase.ClientName,
                 requestType = focusCase.RequestType,
-                floor,
+                practice,
                 focus,
                 agentNotes = trace?.Text,
                 agentError,
@@ -146,7 +164,7 @@ public static class TeamLeaderApi
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Team Leader Agent could not be created; showing the deterministic floor view");
+                        logger.LogWarning(ex, "Team Leader Agent could not be created; showing the deterministic practice view");
                         createError = ex.Message;
                     }
                 }
@@ -171,7 +189,7 @@ public static class TeamLeaderApi
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Team Leader Agent invocation failed; showing the deterministic floor view");
+                    logger.LogWarning(ex, "Team Leader Agent invocation failed; showing the deterministic practice view");
                     agentInvocationError = ex.Message;
                 }
             }
@@ -180,27 +198,29 @@ public static class TeamLeaderApi
         });
     }
 
-    // ── Floor model ───────────────────────────────────────────────────────────
-    private static FloorView BuildFloor(IReadOnlyList<CaseRecord> cases)
+    // ── Practice model ────────────────────────────────────────────────────────
+    private static PracticeView BuildPractice(IReadOnlyList<CaseRecord> cases)
     {
         var profiles = cases.Select(c => (Case: c, Profile: ProfileFor(c))).ToList();
 
-        string[] stages = [Received, InAssessment, AwaitingApproval, AwaitingCounterparty, Completed];
+        string[] stages = [Discover, Verify, Advise, Implement, Confirm];
         var hints = new Dictionary<string, string>
         {
-            [Received] = "opened by Olivia, awaiting triage",
-            [InAssessment] = "with Ben, Felix or Ivy",
-            [AwaitingApproval] = "on Theo's desk",
-            [AwaitingCounterparty] = "with other funds, advisers or the ATO",
-            [Completed] = "closed",
+            [Discover] = "fact find and in-good-order checklist with Olivia",
+            [Verify] = "identity, documents and financial crime with Felix",
+            [Advise] = "needs analysis, research and the SoA with Penny, Ivy and Amelia",
+            [Implement] = "underwriting with Uma, or the claim with Ben",
+            [Confirm] = "letters and updates with Cara",
         };
         var stageCounts = stages
             .Select(s => new StageCount(s, profiles.Count(p => p.Profile.Stage == s), hints[s]))
             .ToList();
 
-        var floorCases = profiles
-            .Select(p => new FloorCase(p.Case.CaseNumber, p.Case.ClientName, p.Case.RequestType, p.Case.Priority,
-                p.Profile.Stage, p.Profile.Owner, p.Profile.NextAction))
+        var pipeline = profiles
+            .OrderBy(p => Array.IndexOf(stages, p.Profile.Stage))
+            .ThenBy(p => p.Case.CaseNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(p => new PipelineCase(p.Case.CaseNumber, p.Case.ClientName, p.Case.RequestType, p.Profile.Side,
+                p.Case.Priority, p.Profile.Stage, p.Profile.Owner, p.Profile.NextAction))
             .ToList();
 
         var clocks = profiles
@@ -208,18 +228,17 @@ public static class TeamLeaderApi
             .OrderBy(c => StateRank(c.State))
             .ToList();
 
+        var approvals = profiles
+            .SelectMany(p => p.Profile.Approvals)
+            .OrderBy(a => a.Priority)
+            .ToList();
+
         // Escalations: most severe first, then in approval-queue order.
         var escalations = profiles
             .Where(p => p.Profile.Escalation is not null)
             .OrderBy(p => SeverityRank(p.Profile.Escalation!.Severity))
-            .ThenBy(p => p.Profile.Approval?.Priority ?? int.MaxValue)
+            .ThenBy(p => p.Profile.Approvals.Count > 0 ? p.Profile.Approvals.Min(a => a.Priority) : int.MaxValue)
             .Select(p => p.Profile.Escalation!)
-            .ToList();
-
-        var approvals = profiles
-            .Where(p => p.Profile.Approval is not null)
-            .Select(p => p.Profile.Approval!)
-            .OrderBy(a => a.Priority)
             .ToList();
 
         var vulnerable = profiles
@@ -227,263 +246,426 @@ public static class TeamLeaderApi
             .Select(p => p.Profile.Vulnerable!)
             .ToList();
 
-        var seededSamples = profiles
-            .Where(p => IsSeeded(p.Case))
-            .Select(p => (p.Case.SampleId ?? string.Empty).ToLowerInvariant())
-            .ToHashSet();
+        var audits = profiles
+            .OrderBy(p => p.Case.CaseNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(p => p.Profile.Audit)
+            .ToList();
 
-        var coaching = new List<string>();
-        if (seededSamples.Contains("rollover-grace"))
-            coaching.Add("Account takeover (Grace): a phone change of contact details passed knowledge-based checks using data likely exposed in a 2025 breach. " +
-                         "Coach the contact centre on step-up verification to the existing number and a hold on withdrawals and rollovers after any change of details — APRA expects MFA for these.");
-        if (seededSamples.Contains("onboarding-priya"))
-            coaching.Add("NIGO (Priya): one-witness nominations and un-ticked insurance-loss acknowledgements are common adviser NIGO items. " +
-                         "Share the checklist with Yarra Private Wealth so packs arrive in good order first time.");
-        if (seededSamples.Contains("hardship-tom"))
-            coaching.Add("Hardship (Tom): lead with what we can do, explain the $10,000 cap in one sentence and always include free counselling (National Debt Helpline 1800 007 007) — use Tom's letter as the QA exemplar.");
-        if (seededSamples.Contains("death-benefit-robert"))
-            coaching.Add("Bereavement (Chen family): one named contact, no process jargon, every letter human-reviewed — and tell the family what happens next before they have to ask.");
-        if (seededSamples.Contains("pension-george"))
-            coaching.Add("Retirement (George): a one-table payment schedule answers most new-retiree questions before they're asked — reuse Cara's format.");
-        coaching.Add("QA sampling: 100% of blocks, declines, partial approvals and bereavement letters; 1 in 5 routine completions.");
+        var coaching = profiles
+            .Where(p => p.Profile.Coaching is not null)
+            .OrderBy(p => p.Case.CaseNumber, StringComparer.OrdinalIgnoreCase)
+            .Select(p => p.Profile.Coaching!)
+            .ToList();
+        coaching.Add("File quality: Theo audits every advice case with total cover of $2,000,000 or more, every claim and every financial-crime block, " +
+                     "plus a sample of other files each month, against the best-interests safe-harbour steps (s961B(2)) and the in-good-order checklist.");
 
-        // Today's priorities: the approval queue in order, then other
-        // follow-ups, then triage of anything newly received.
+        // Today's priorities: the approval queue in order, then triage of
+        // anything newly received.
         var priorities = profiles
             .Where(p => p.Profile.Today is not null)
-            .OrderBy(p => p.Profile.Approval?.Priority ?? int.MaxValue)
+            .OrderBy(p => p.Profile.Approvals.Count > 0 ? p.Profile.Approvals.Min(a => a.Priority) : int.MaxValue)
             .Select(p => $"{p.Case.CaseNumber} — {p.Profile.Today}")
             .ToList();
-        var received = profiles.Count(p => p.Profile.Stage == Received);
+        var received = profiles.Count(p => p.Profile.Stage == Discover);
         if (received > 0)
-            priorities.Add($"Triage the {received} newly received case{(received == 1 ? "" : "s")} with Olivia and route each to the right specialist.");
+            priorities.Add($"Triage the {received} newly received case{(received == 1 ? "" : "s")} with Olivia and route each one to the right specialist.");
 
-        var asAt = $"{cases.Count} open Member Case{(cases.Count == 1 ? "" : "s")} · scenario cases shown at their decision points";
+        var asAt = $"{cases.Count} open Client Case{(cases.Count == 1 ? "" : "s")} · scenario cases shown at the point each one reached Theo's desk";
 
-        return new FloorView(asAt, stageCounts, floorCases, clocks, escalations, approvals, vulnerable, coaching, priorities);
+        return new PracticeView(asAt, stageCounts, pipeline, clocks, escalations, approvals, vulnerable, audits, coaching, priorities);
     }
 
     private static CaseFocus BuildFocus(CaseRecord c)
     {
         var p = ProfileFor(c);
-        IReadOnlyList<string> facts = IsSeeded(c)
-            ? TeamLeaderGroupChatService.KeyFacts(c)
-            :
-            [
-                $"{c.RequestType} for {c.ClientName} ({c.MemberNumber}), received {c.ReceivedDate}.",
-                c.RequestSummary,
-                $"Amount: {c.Amount}. Priority: {c.Priority} — {c.PriorityReason}",
-                ClientCommunicationsDrafter.HasAdviser(c)
-                    ? $"Adviser: {c.AdviserName}{(string.IsNullOrWhiteSpace(c.AdviserPractice) ? "" : " (" + c.AdviserPractice + ")")}."
-                    : "Direct member — no adviser on the account.",
-            ];
         return new CaseFocus(
-            c.CaseNumber, c.ClientName, c.RequestType, p.Stage, p.Owner,
-            p.Summary, p.Decision, p.Recommendation, facts);
+            c.CaseNumber, c.ClientName, c.RequestType, p.Side, p.Stage, p.Owner, p.AsAt,
+            p.Summary, p.Decision, p.Recommendation, TeamLeaderGroupChatService.KeyFacts(c));
     }
 
-    private static bool IsSeeded(CaseRecord c) =>
-        CaseStore.IsScenarioCaseNumber(c.CaseNumber);
-
-    private static string Sample(CaseRecord c) => (c.SampleId ?? string.Empty).ToLowerInvariant();
-
-    // Where each case sits on the floor. Seeded scenario cases are shown at
-    // the point they reach Theo's desk; cases opened live by the Onboarding
-    // demo are freshly received.
-    private static CaseProfile ProfileFor(CaseRecord c)
+    // Where each case sits in the practice. Scenario cases are shown at the
+    // point they reach Theo's desk; cases opened live are freshly received.
+    private static CaseProfile ProfileFor(CaseRecord c) => LifeScenarioCases.KeyOf(c) switch
     {
-        if (!IsSeeded(c)) return ReceivedProfile(c);
+        LifeScenarioCases.Priya => Priya(c),
+        LifeScenarioCases.Grace => Grace(c),
+        LifeScenarioCases.George => George(c),
+        LifeScenarioCases.Tom => Tom(c),
+        LifeScenarioCases.Robert => Robert(c),
+        _ => Received(c)
+    };
 
+    // 1. Priya — Corella's underwriting decision is in (Mon 16 Nov 2026).
+    private static CaseProfile Priya(CaseRecord c)
+    {
         var n = c.CaseNumber;
         var who = c.ClientName;
-        switch (Sample(c))
-        {
-            case "onboarding-priya":
-                return new CaseProfile(
-                    Stage: AwaitingCounterparty,
-                    Owner: "Rory (Transfers & Rollovers)",
-                    NextAction: "Harbourline rollover in flight; Southern Cross held for the adviser's insurance confirmation; nomination re-sign outstanding.",
-                    Clocks:
-                    [
-                        new("SuperStream rollover in — Harbourline", n, who,
-                            "3 business days once Harbourline has all required information (SIS reg 6.34A)",
-                            "Running — requested via SuperStream", "running"),
-                        new("SuperStream rollover in — Southern Cross", n, who,
-                            "3 business days once all required information is received",
-                            "Not started — held until the $520,000 Death & TPD cover decision is confirmed in writing", "paused"),
-                        new("Payday Super allocation", n, who,
-                            "Allocate (or return) each SG contribution within 3 business days of receipt",
-                            "Starts when Priya's first employer contribution arrives", "watch"),
-                    ],
-                    Escalation: new(n, who, "Watch",
-                        "Southern Cross rollover (~$96,400) held — ending $520,000 of Death & TPD cover needs written confirmation; the nomination has only one witness.",
-                        "Rory → Hannah Lewis (adviser)", "Southern Cross clock paused"),
-                    Approval: null,
-                    Vulnerable: null,
-                    Summary: "New advised Caldova Super (Select) account CS-2049817 open in the Growth model; consolidating ~$138,200 from two external funds.",
-                    Decision: "No approval needed — account opening is within delegated authority.",
-                    Recommendation: "Have Rory chase Hannah for the written insurance decision so $96,400 isn't left waiting; Cara's welcome email and adviser update are ready to go.",
-                    Today: "Ask Rory to chase Hannah for Priya's written insurance decision so the ~$96,400 Southern Cross rollover isn't left waiting.");
-
-            case "rollover-grace":
-                return new CaseProfile(
-                    Stage: AwaitingApproval,
-                    Owner: "Felix (Financial Crime) → Theo",
-                    NextAction: "Approve the block and the SMR referral; Cara calls Grace on her pre-change verified number.",
-                    Clocks:
-                    [
-                        new("SMR to AUSTRAC", n, who,
-                            "Within 3 business days of forming a suspicion",
-                            "Due Wed 11 Nov 2026 (suspicion formed Fri 6 Nov)", "due"),
-                        new("SuperStream rollover out", n, who,
-                            "3 business days once all required information is received and verified (SIS reg 6.34A)",
-                            "Not running — SMSF verification failed; rollover held and cancelled", "paused"),
-                    ],
-                    Escalation: new(n, who, "Urgent",
-                        "Suspected identity takeover: full-balance rollover ($612,400) to a nine-day-old SMSF; SVS failed; contact details changed ~93 hours earlier; tampered licence; payee name mismatch.",
-                        "Felix → Theo", "SMR due Wed 11 Nov 2026"),
-                    Approval: new(1, n, who,
-                        "Block the rollover on financial-crime grounds + SMR referral to the AML/CTF compliance officer",
-                        "Financial-crime blocks and SMRs always need a human decision",
-                        "Approve the block and the confidential SMR referral; keep the payment block until Grace re-verifies",
-                        "SMR by Wed 11 Nov 2026"),
-                    Vulnerable: new(n, who,
-                        "Identity-takeover victim, travelling overseas (Italy)",
-                        "Contact only on pre-change verified details; human-approved reassurance letter; IDCARE referral; never mention the SMR"),
-                    Summary: "Full-balance rollover ($612,400) to a newly registered SMSF after a phone change of details — financial-crime risk HIGH.",
-                    Decision: "Approve the block and the SMR referral.",
-                    Recommendation: "Approve now — the 3-business-day SMR clock is the tightest on the floor, and no money has moved.",
-                    Today: "Approve Grace's block and the SMR referral first — the SMR clock (due Wed 11 Nov 2026) is the tightest on the floor.");
-
-            case "pension-george":
-                return new CaseProfile(
-                    Stage: AwaitingApproval,
-                    Owner: "Penny (Payments) → Theo",
-                    NextAction: "Approve the $1,250,000 commencement in Teams so the pension starts Mon 16 Nov 2026.",
-                    Clocks:
-                    [
-                        new("Pension commencement", n, who,
-                            "Requested start date — needs approval first (≥ $1,000,000)",
-                            "Mon 16 Nov 2026", "due"),
-                        new("First pension payment", n, who,
-                            "$6,500 on the 15th of each month, tax-free",
-                            "Tue 15 Dec 2026", "watch"),
-                    ],
-                    Escalation: new(n, who, "High",
-                        "Pension commencement of $1,250,000 — above Payments' authority (commencements of $1,000,000 or more).",
-                        "Penny → Theo", "Start Mon 16 Nov 2026"),
-                    Approval: new(3, n, who,
-                        "Pension commencement — $1,250,000 into Caldova Pension CP-3077881",
-                        "Commencements of $1,000,000 or more",
-                        "Approve — age 65 met, $850,000 of transfer balance cap left, $38,870 minimum covered ($45,500 scheduled)",
-                        "before Mon 16 Nov 2026"),
-                    Vulnerable: null,
-                    Summary: "Account-based pension of $1,250,000 paying $6,500 a month from 15 Dec 2026; Helen as reversionary beneficiary.",
-                    Decision: "Approve the commencement (authority limit: $1,000,000 or more).",
-                    Recommendation: "Approve in Teams — every rule check passed and Cara's welcome-to-retirement letter is ready.",
-                    Today: "Approve George's $1,250,000 pension commencement in Teams ahead of the Mon 16 Nov 2026 start.");
-
-            case "hardship-tom":
-                return new CaseProfile(
-                    Stage: AwaitingApproval,
-                    Owner: "Ben (Benefits & Eligibility) → Theo",
-                    NextAction: "Vulnerable-member review, then approve the $10,000 partial release so Penny can pay on Friday.",
-                    Clocks:
-                    [
-                        new("Hardship payment", n, who,
-                            "Pay once the partial release is approved",
-                            "Target Fri 13 Nov 2026 — $7,932 net", "due"),
-                        new("Complaint (IDR) clock", n, who,
-                            "45 days for super trustee complaints (RG 271)",
-                            "Not running — starts only if Tom complains about the partial decision", "watch"),
-                    ],
-                    Escalation: new(n, who, "High",
-                        "Vulnerable member (financial hardship); $15,000 requested exceeds the $10,000 legal maximum — partial approval.",
-                        "Ben → Theo", "Pay Fri 13 Nov 2026"),
-                    Approval: new(2, n, who,
-                        "Partial hardship release — $10,000 gross of $15,000 requested",
-                        "Partial approvals and hardship releases (vulnerable member)",
-                        "Approve $10,000 — $2,068 PAYG withheld, $7,932 net; kind letter with the National Debt Helpline (1800 007 007)",
-                        "Fri 13 Nov 2026"),
-                    Vulnerable: new(n, who,
-                        "Financial hardship; visible distress (late-night application)",
-                        "Human review; kind plain-English letter; National Debt Helpline 1800 007 007 and Moneysmart; offer a call"),
-                    Summary: "Severe financial hardship — every criterion met, capped at $10,000 by law.",
-                    Decision: "Approve the partial release ($10,000 of $15,000).",
-                    Recommendation: "Approve today so $7,932 reaches Tom on Friday, and read Cara's letter for tone before it goes.",
-                    Today: "Review Tom's vulnerable-member brief and approve the $10,000 partial release so Penny can pay $7,932 on Fri 13 Nov 2026.");
-
-            case "death-benefit-robert":
-                return new CaseProfile(
-                    Stage: AwaitingApproval,
-                    Owner: "Theo (case owner)",
-                    NextAction: "Approve both death benefit payments once Ivy confirms the sale proceeds.",
-                    Clocks:
-                    [
-                        new("Pension payments", n, who,
-                            "Stop on notification of death",
-                            "Stopped on 13 Nov 2026", "ok"),
-                        new("Complaint (IDR) clock", n, who,
-                            "Up to 90 days for death benefit distribution complaints (RG 271)",
-                            "Not running — no complaint open", "watch"),
-                    ],
-                    Escalation: new(n, who, "High",
-                        "Bereavement — compassionate handling; every death benefit needs Team Leader approval.",
-                        "Theo (case owner)", "Robert asked how long this will take — keep him updated"),
-                    Approval: new(4, n, who,
-                        "Death benefit — 2 × $243,100 gross to Robert and Lily Chen (binding nomination)",
-                        "Every death benefit needs Team Leader approval",
-                        "Approve both — nomination valid to 18 Mar 2027, documents genuine; $25,622.74 withheld (17%), $217,477.26 net each",
-                        "on redemption of the portfolio"),
-                    Vulnerable: new(n, "Robert & Lily Chen",
-                        "Bereavement — their mother, Mei Chen, died on 12 Oct 2026",
-                        "Theo owns the case; Cara is the single contact; human-approved condolence letters; Marcus updated only with consent"),
-                    Summary: "Death benefit under a valid binding nomination — 50/50 to Mei Chen's two children.",
-                    Decision: "Approve both death benefit payments.",
-                    Recommendation: "Approve as soon as the sale completes; Cara calls Robert before the letters go.",
-                    Today: "Approve the Chen death benefit payments ($217,477.26 net each) once the portfolio sale completes, and keep Cara as the family's single contact.");
-
-            default:
-                return ReceivedProfile(c);
-        }
+        return new CaseProfile(
+            Stage: Implement,
+            Side: ProtectionAdvice,
+            Owner: "Uma (Underwriting & New Business) → Amelia",
+            AsAt: "Mon 16 Nov 2026 — Corella Life's underwriting decision received",
+            NextAction: "Amelia explains Corella's decision; Priya decides whether to accept the income protection exclusion by Tue 17 Nov.",
+            Clocks:
+            [
+                new("Exclusion decision", n, who,
+                    "Accepting a loading, an exclusion or a decline at underwriting is the client's decision with the adviser",
+                    "Due Tue 17 Nov 2026 — the policy would start Wed 18 Nov", "due"),
+                new("Kestrel Retail Super cover", n, who,
+                    $"Protecting Your Super (SIS Act s68AAA) — no cover after {LifeRules.PysInactivity} with no contributions unless the client elects in writing to keep it",
+                    "Would have stopped Mon 30 Nov 2026 — Priya elected in writing to keep it until the new cover starts", "ok"),
+                new("Corella Life underwriting", n, who,
+                    "Corella service standard — underwriting decision within 5 business days of the last requirement (Directory — insurers on the approved product list)",
+                    "Tele-interview Tue 10 Nov → decision Mon 16 Nov: 4 business days — met", "ok"),
+                new("Cooling-off period", n, who,
+                    $"{LifeRules.CoolingOff} from confirmation of the policy, or the end of the 5th business day after issue if earlier; not once a claim is made (Corporations Act s1019B)",
+                    "Starts when Corella issues policy CR-26118204", "watch"),
+            ],
+            Escalation: new(n, who, "Watch",
+                "Corella offered income protection with an exclusion for back and spine conditions; life, TPD and trauma are at standard rates.",
+                "Uma → Amelia", "Priya decides by Tue 17 Nov"),
+            Approvals:
+            [
+                new(10, n, who,
+                    "Accept Corella's income protection exclusion for back and spine conditions (reviewed after two symptom-free years)",
+                    "Priya, with Amelia",
+                    "Accepting a loading, an exclusion or a decline at underwriting",
+                    "Amelia explains it in plain English before anything is written down; life, TPD and trauma are unaffected",
+                    "Tue 17 Nov 2026"),
+            ],
+            Vulnerable: null,
+            Audit: new FileAudit(n, who, BestInterests, "Pass",
+            [
+                new("Objectives, financial situation and needs identified", "pass",
+                    "s961B(2)(a) — fact find from Hannah's referral: income, $680,000 mortgage, dependants, savings, budget, existing cover and health."),
+                new("Needs analysis shows the working", "pass",
+                    "Life $755,000 → $750,000; TPD $600,000; trauma $150,000; IP $6,125 a month — each step on file."),
+                new("Existing cover considered before replacing anything", "pass",
+                    "Riverbend cover kept and counted; Kestrel cover kept until the new cover starts — cancelling it is Priya's decision."),
+                new("Reasonable investigation of products", "pass",
+                    "s961B(2)(e) — three APL insurers compared on definitions and stepped and level premiums."),
+                new("Commission disclosed in dollars, with informed consent", "pass",
+                    "$1,908 upfront and $636 a year from year 2 — within the LIF caps (60% / 20%); Priya's written consent on file (s963BB, cover issued after 9 Jul 2025)."),
+                new("SoA signed by the adviser; Authority to Proceed", "pass",
+                    "Amelia signed the SoA on 6 Nov; Priya signed the Authority to Proceed on 7 Nov."),
+                new("Duty to take reasonable care explained", "pass",
+                    "Insurance Contracts Act s20B — Uma explained it before the application was lodged on 9 Nov."),
+            ]),
+            Summary: "New family protection advice with Corella Life — life $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month. SoA signed 6 Nov; Corella's decision came in on 16 Nov.",
+            Decision: "Priya decides, with Amelia, whether to accept the income protection exclusion.",
+            Recommendation: "Make sure Amelia speaks with Priya before anything is written down. The exclusion only affects income protection, and the Kestrel cover stays until the new policy starts.",
+            Today: "Make sure Amelia talks Priya through Corella's back exclusion before any letter goes — it's Priya's decision, due Tue 17 Nov.",
+            Coaching: "Priya: Olivia caught the Kestrel Protecting Your Super deadline at the fact find — check every super account for inactivity deadlines before advice, so no family loses cover while new cover is underwritten.");
     }
 
-    private static CaseProfile ReceivedProfile(CaseRecord c)
+    // 2. Grace — the block decision (Fri 6 Nov 2026).
+    private static CaseProfile Grace(CaseRecord c)
+    {
+        var n = c.CaseNumber;
+        var who = c.ClientName;
+        return new CaseProfile(
+            Stage: Verify,
+            Side: ClaimsAndCare,
+            Owner: "Felix (Financial Crime) → Theo",
+            AsAt: "Fri 6 Nov 2026 — Felix's risk assessment complete",
+            NextAction: "Theo decides the block and the referral to Lyrebird Life's fraud team; Cara calls Grace on her verified mobile 0491 570 157.",
+            Clocks:
+            [
+                new("Call Grace on her verified mobile", n, who,
+                    "Reach the policy owner on contact details verified before any change, before anything else happens",
+                    "Today — 6pm Melbourne is 8am in Florence (Grace is in Italy until 1 Dec)", "due"),
+                new("Claim lodgement", n, who,
+                    "A claim is lodged only after a person approves it",
+                    "Not lodged — held for Theo's decision", "paused"),
+            ],
+            Escalation: new(n, who, "Urgent",
+                "Suspected identity takeover: an \"urgent\" trauma claim for the full $200,000 with payment to a new account in another name, about 93 hours after a phone change of contact details; fake oncologist's report and tampered licence.",
+                "Felix → Theo", "Decide today"),
+            Approvals:
+            [
+                new(1, n, who,
+                    "Block the trauma claim and the bank change; restore Grace's verified contact details and lock portal access",
+                    Theo,
+                    "Blocking a request on financial-crime grounds, and any change to bank details",
+                    "Approve — no claim is lodged and nothing is paid; Grace's $500,000 life and $200,000 trauma cover stay untouched",
+                    "Today, Fri 6 Nov 2026"),
+                new(2, n, who,
+                    "Alert Lyrebird Life's Claims Integrity (fraud) team",
+                    Theo,
+                    "Referring suspected fraud to an insurer",
+                    "Approve — share the timeline and document findings, describing Grace as the likely victim",
+                    "Today, Fri 6 Nov 2026"),
+                new(3, n, who,
+                    "Cara's call script and reassurance letter to Grace",
+                    "Cara (Client Communications Specialist)",
+                    "Any communication to a fraud victim — Cara approves her letters",
+                    "Approve the call script now and the letter after the call; verified details only, and nothing that suggests Grace did anything wrong",
+                    "Before Cara calls at 6pm"),
+            ],
+            Vulnerable: new(n, who,
+                "Scam and identity-takeover victim, travelling overseas (Italy until 1 Dec)",
+                "Contact only on her verified mobile 0491 570 157 and grace.williams@example.com; every message approved by Theo; never imply she did anything wrong"),
+            Audit: new FileAudit(n, who, ClaimsHandling + " · financial crime controls", "Action needed",
+            [
+                new("Claim checked against the policy definition", "pass",
+                    "Lyrebird Life pays cancer claims on a confirmed specialist diagnosis with histopathology — none supplied."),
+                new("Benefits paid to the policy owner only", "pass",
+                    "Bank change to an account in another name rejected."),
+                new("Documents checked for tampering", "pass",
+                    "Oncologist's report fake; licence photo edited; bank account opened 3 Nov in another name."),
+                new("Change-of-contact-details control", "warn",
+                    "The phone change on 2 Nov passed basic checks with no code sent to the old mobile — a control gap to close."),
+                new("Client treated as the likely victim", "pass",
+                    "No accusatory language in the case notes or in Cara's drafts."),
+            ]),
+            Summary: "An \"urgent\" trauma claim for the full $200,000 on Grace's Lyrebird Life policy, with payment to a new account in another name — financial-crime risk HIGH. Grace is in Italy.",
+            Decision: "Approve the block, the restored contact details and portal lock, and the referral to Lyrebird Life's fraud team.",
+            Recommendation: "Approve now — no claim has been lodged and nothing has been paid. Then let Cara call Grace on 0491 570 157 with the approved script.",
+            Today: "Approve Grace's block and the referral to Lyrebird Life's fraud team first, then Cara's call script — she calls Grace at 6pm (8am in Florence).",
+            Coaching: "Grace: a phone change of contact details passed on basic checks alone (name, date of birth and address). The standard is a code to, or a call-back on, the verified mobile or email held before the change — and any claim, payment or bank-detail change within 30 days of a contact change is held for a call-back on that verified number.");
+    }
+
+    // 3. George — Theo's second review (total cover $2,800,000).
+    private static CaseProfile George(CaseRecord c)
+    {
+        var n = c.CaseNumber;
+        var who = c.ClientName;
+        return new CaseProfile(
+            Stage: Advise,
+            Side: ProtectionAdvice,
+            Owner: "Penny (Paraplanning) → Theo",
+            AsAt: "Advice ready — waiting on the second review before Amelia presents the SoA",
+            NextAction: "Theo's second review of the $2,800,000 business protection advice; then Amelia reviews and signs the SoA.",
+            Clocks:
+            [
+                new("Second review", n, who,
+                    "Advice with total cover of $2,000,000 or more on one case gets a second review before the SoA is presented",
+                    "Due now — $2,800,000 on the case", "due"),
+                new("Northbank Life underwriting", n, who,
+                    "Caldova lodges within 2 business days of the Authority to Proceed; Northbank's fast financial underwriting decides within 5 business days, and medical underwriting within 5 business days of the last requirement",
+                    "Not started — George: blood profile, medical examination and financial evidence; Harpreet: blood profile and financial evidence", "paused"),
+            ],
+            Escalation: new(n, who, "Watch",
+                "Total cover of $2,800,000 (buy-sell $1,200,000 each plus $400,000 key person) — second review required before the SoA.",
+                "Penny → Theo", "Before the SoA is presented"),
+            Approvals:
+            [
+                new(8, n, who,
+                    "Second review — buy-sell life and TPD of $1,200,000 each for George and Harpreet, plus $400,000 key person cover on George (total $2,800,000)",
+                    Theo,
+                    "Advice with total cover of $2,000,000 or more on one case",
+                    "Approve — sums tie to Marcus's $2,400,000 valuation and $400,000 profit estimate; ownership matches each purpose; three APL insurers compared",
+                    "Before the SoA is presented"),
+                new(9, n, who,
+                    "Statement of Advice — Northbank Life, $8,620 a year at standard rates",
+                    Amelia,
+                    "Every Statement of Advice is signed by the adviser",
+                    "Sign after the second review; the buy-sell agreement stays with their lawyer",
+                    "After Theo's review"),
+            ],
+            Vulnerable: null,
+            Audit: new FileAudit(n, who, BestInterests, "In progress",
+            [
+                new("Business objectives and needs identified", "pass",
+                    "No succession plan; valuation $2,400,000 at 30 Jun 2026 and profit at risk of about $400,000 over 18 months, both from Marcus."),
+                new("Ownership matches each purpose", "pass",
+                    "Buy-sell self-owned by each partner; key person owned by the company for a revenue purpose."),
+                new("Legal documents left to the lawyer", "pass",
+                    "Their lawyer drafts the buy-sell agreement — Caldova doesn't draft legal documents."),
+                new("Tax treatment confirmed by the accountant", "pass",
+                    "Marcus confirmed the treatment as their accountant."),
+                new("Reasonable investigation of products", "pass",
+                    "s961B(2)(e) — Northbank, Corella and Harbourline compared at standard rates."),
+                new("Second review ($2,000,000 or more)", "warn",
+                    "Waiting on Theo — $2,800,000 of total cover."),
+                new("Commission disclosed in dollars, with informed consent", "warn",
+                    "To be disclosed in the SoA and consented to in writing by George and Harpreet (s963BB — cover issued after 9 Jul 2025)."),
+                new("SoA signed by the adviser", "warn",
+                    "Amelia signs after the second review."),
+            ]),
+            Summary: "Business protection for Northcote Custom Joinery: buy-sell life and TPD of $1,200,000 each for the two 50% owners and $400,000 key person cover on George, with Northbank Life ($8,620 a year at standard rates).",
+            Decision: "Second review of advice with total cover of $2,800,000 — approve before Amelia presents and signs the SoA.",
+            Recommendation: "Approve — the sums are anchored to the accountant's valuation and profit estimate, the ownership matches each purpose and the lawyer owns the buy-sell agreement.",
+            Today: "Complete the second review of George and Harpreet's $2,800,000 business protection advice so Amelia can present the SoA.",
+            Coaching: "George: the referral pack from Marcus — valuation, profit at risk and the accountant's tax view — is the model for business protection. Ask referral partners for it up front.");
+    }
+
+    // 4. Tom — the lodgement decision (Wed 11 Nov 2026).
+    private static CaseProfile Tom(CaseRecord c)
+    {
+        var n = c.CaseNumber;
+        var who = c.ClientName;
+        return new CaseProfile(
+            Stage: Implement,
+            Side: ClaimsAndCare,
+            Owner: "Ben (Claims) → Theo",
+            AsAt: "Wed 11 Nov 2026 — claim pack ready to lodge",
+            NextAction: "Theo's vulnerable-client review and approval to lodge with Harbourline Life on Thu 12 Nov; Amelia calls Tom first.",
+            Clocks:
+            [
+                new("Claim lodgement", n, who,
+                    "Lodging any claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Caldova service standard)",
+                    "Lodge Thu 12 Nov 2026", "due"),
+                new("Waiting period", n, who,
+                    "30-day waiting period from the injury on 14 Oct 2026",
+                    "Ends 13 Nov 2026 — the benefit accrues from Fri 13 Nov", "ok"),
+                new("Harbourline's claim decision", n, who,
+                    LifeRules.CodeIncomeClaimDecision,
+                    "Harbourline's own standard: usually within 5 business days of having all information. Life Code backstop: by Wed 13 Jan 2027 (2 months from the end of the waiting period); " +
+                    LifeRules.CodeWrittenDecision, "watch"),
+                new("First benefit payment", n, who,
+                    "Paid monthly in arrears",
+                    "About 13 Dec 2026 — $5,600", "watch"),
+                new("Complaint (IDR) clock", n, who,
+                    $"Written response within {LifeRules.IdrResponse} (ASIC RG 271; Life Code cl 7.13), always in writing for a complaint about a claim's value (RG 271.75); then AFCA",
+                    "Not running — starts only if Tom complains about the benefit amount", "watch"),
+            ],
+            Escalation: new(n, who, "High",
+                "Vulnerable client (injury and financial stress); the benefit will be $5,600 a month — $1,400 less than the $7,000 he expects.",
+                "Ben → Theo", "Lodge Thu 12 Nov"),
+            Approvals:
+            [
+                new(4, n, who,
+                    "Lodge the income protection claim with Harbourline Life — expected benefit $5,600 a month (not $7,000)",
+                    Theo + " in Teams",
+                    "Lodging any claim",
+                    "Approve — evidence verified by Felix; the benefit is the lesser of $7,000 and 70% of his average monthly earnings in the 12 months before the injury",
+                    "Thu 12 Nov 2026"),
+                new(5, n, who,
+                    "Amelia calls Tom first; then Cara's letter explaining $5,600 against $7,000",
+                    "Theo (Amelia's call) · Cara (the letter)",
+                    "Vulnerable-client review; any communication to a seriously ill or injured client — Cara approves her letters",
+                    "Ask Amelia to call Tom (and Kylie) before anything is written; Cara approves the plain-English letter with his right to complain once Amelia has called",
+                    "Before the letter goes"),
+            ],
+            Vulnerable: new(n, who,
+                "Injury (shoulder surgery 21 Oct) and financial stress — self-employed, with a young family",
+                "Kylie is his support person under his written authority (insurers must recognise support persons — Life Code cl 6.13); Amelia calls first; plain English; every message approved by Theo"),
+            Audit: new FileAudit(n, who, ClaimsHandling, "Pass — note for the adviser",
+            [
+                new("Policy and benefit basis checked", "pass",
+                    "Lesser of $7,000 insured and 70% of average monthly earnings in the 12 months before disability."),
+                new("Evidence verified", "pass",
+                    "BAS, profit and loss and the surgeon's report legit (Felix)."),
+                new("Support person authority on file", "pass",
+                    "Kylie, with Tom's written authority."),
+                new("Vulnerable-client handling", "pass",
+                    "Amelia calls first; Cara's letter is approved before it goes."),
+                new("Insured benefit against earnings", "warn",
+                    "$7,000 insured against $5,600 supported — a note for Amelia's next review, not advice."),
+            ]),
+            Summary: "Income protection claim on Harbourline Life HL-23051877 after a shoulder injury: $7,000 a month insured, but the benefit follows 70% of his earnings in the 12 months before the injury — $5,600 a month.",
+            Decision: "Approve lodging the claim, and ask Amelia to call Tom personally before the letter.",
+            Recommendation: "Approve today so Ben lodges on Thursday; the $5,600 should come from Amelia in a call before it arrives in writing.",
+            Today: "Review Tom's vulnerable-client brief, approve the lodgement in Teams for Thu 12 Nov and ask Amelia to call him before Cara's letter.",
+            Coaching: "Tom: his insured benefit was set from $120,000 a year at application, but recent earnings support $5,600 a month. Prompt reviews for self-employed clients when income changes — whether to change cover is always the adviser's call.");
+    }
+
+    // 5. Robert — the lodgement decision (Mon 16 Nov 2026).
+    private static CaseProfile Robert(CaseRecord c)
+    {
+        var n = c.CaseNumber;
+        var who = c.ClientName;
+        return new CaseProfile(
+            Stage: Implement,
+            Side: ClaimsAndCare,
+            Owner: "Ben (Claims) → Theo (compassionate oversight)",
+            AsAt: "Mon 16 Nov 2026 — claim pack ready to lodge",
+            NextAction: "Theo approves lodging Mei's death claim with Corella Life today and every message to the family.",
+            Clocks:
+            [
+                new("Claim lodgement", n, who,
+                    "Every death or terminal illness claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Caldova service standard)",
+                    "Lodge today, Mon 16 Nov 2026", "due"),
+                new("Corella's claim decision", n, who,
+                    LifeRules.CodeLumpSumClaimDecision,
+                    "Corella's own standard: a dedicated case manager, a death claim decision usually within 5 business days of having all information and payment within 3 business days of acceptance. " +
+                    "Life Code backstop: by 16 May 2027; " + LifeRules.CodeWrittenDecision, "watch"),
+                new("Updates to the family", n, who,
+                    "At least every 10 business days while anything is open, from one named contact (Caldova service standard)",
+                    "Amelia is the contact; Theo approves every message", "watch"),
+                new("Riverbend Super claim ($180,000)", n, who,
+                    "A separate claim with the fund's trustee, paid under the fund's rules",
+                    "Ben helps Robert with the fund's claim form and checklist", "watch"),
+            ],
+            Escalation: new(n, who, "High",
+                "Bereavement — Mei died suddenly on 12 Oct; the death claim and every message to the family need Theo's approval.",
+                "Theo (case owner)", "Lodge today"),
+            Approvals:
+            [
+                new(6, n, who,
+                    "Lodge the death claim — Mei Chen's Corella Life policy CR-19033105, life cover $1,000,000, to Robert as nominated beneficiary",
+                    Theo + " in Teams",
+                    "Every death or terminal illness claim",
+                    "Approve — in force since March 2019, premiums paid, no exclusions, nomination valid; paid directly to Robert, not through the estate",
+                    "Mon 16 Nov 2026"),
+                new(7, n, who,
+                    "Every message to the Chen family",
+                    Theo,
+                    "Any communication to a bereaved family",
+                    "Approve each one — Amelia is the family's one named contact and calls before anything is written",
+                    "Each message"),
+            ],
+            Vulnerable: new(n, who,
+                "Bereavement — his wife Mei died suddenly on 12 Oct 2026; he is caring for Lily (12) and Max (9)",
+                "One named contact (Amelia); Theo approves every message; no jargon; nothing for the family to chase"),
+            Audit: new FileAudit(n, who, ClaimsHandling, "Pass",
+            [
+                new("Policy in force, premiums paid, no exclusions", "pass",
+                    "Corella Life CR-19033105, in force since March 2019."),
+                new("Beneficiary nomination valid", "pass",
+                    "Robert 100% — paid directly to him, not through Mei's estate."),
+                new("Non-disclosure window", "pass",
+                    $"In force for more than seven years — past the {LifeRules.MisrepresentationWindow} window for avoiding cover over a non-fraudulent misrepresentation (Insurance Contracts Act s29(3))."),
+                new("Other cover found", "pass",
+                    "Riverbend Super default death cover of $180,000 — a separate claim with the fund's trustee."),
+                new("Advice after payment", "pass",
+                    "Corella must suggest independent financial advice for an accepted lump sum of $25,000 or more (Life Code cl 5.61); Amelia offers a review only when Robert is ready."),
+                new("Compassionate handling", "pass",
+                    "One named contact; every message approved by Theo."),
+            ]),
+            Summary: "Death claim on Mei Chen's Corella Life policy — life cover of $1,000,000 to Robert as nominated beneficiary — plus $180,000 of default death cover in her Riverbend Super account.",
+            Decision: "Approve lodging the death claim, and every message to the family.",
+            Recommendation: "Approve now so Ben lodges today; Amelia calls Robert before any letter, and Ben starts the Riverbend Super checklist with him.",
+            Today: "Approve the Chen death claim in Teams so Ben lodges with Corella Life today, and keep Amelia as the family's one contact.",
+            Coaching: "Robert: Ben found Mei's $180,000 of super cover the family didn't know about. Make the search for cover inside super a standard step on every death claim.");
+    }
+
+    // Cases opened live with the Onboarding Agent — freshly received.
+    private static CaseProfile Received(CaseRecord c)
     {
         var n = c.CaseNumber;
         var who = c.ClientName;
         var t = (c.RequestType ?? string.Empty).ToLowerInvariant();
+        var isDeath = t.Contains("death");
+        var isClaim = t.Contains("claim");
+        var bankChange = t.Contains("bank");
+        var side = isClaim ? ClaimsAndCare : ProtectionAdvice;
 
         var (next, clock, expected) =
-            t.Contains("smsf") || t.Contains("rollover")
-                ? ("Benefits & Eligibility, then Financial Crime",
-                   new FloorClock("SuperStream rollover out", n, who,
-                       "3 business days once all required information is received — SVS must pass first for an SMSF",
-                       "Not started — verification pending", "paused"),
-                   "a financial-crime block or SMR if verification fails")
-            : t.Contains("pension")
-                ? ("Benefits & Eligibility",
-                   new FloorClock("Pension commencement", n, who,
-                       "Commencements of $1,000,000 or more need approval",
-                       "Amount checked at assessment", "watch"),
-                   "the commencement, if $1,000,000 or more")
-            : t.Contains("hardship")
-                ? ("Benefits & Eligibility",
-                   new FloorClock("Vulnerable-member review", n, who,
-                       "Hardship releases need human approval before payment",
-                       "Before any payment", "watch"),
-                   "the hardship release (and any partial approval)")
-            : t.Contains("death")
-                ? ("Financial Crime (documents), then Benefits & Eligibility",
-                   new FloorClock("Complaint (IDR) clock", n, who,
-                       "Up to 90 days for death benefit distribution complaints",
-                       "Not running", "watch"),
-                   "every death benefit payment")
-                : ("Financial Crime (KYC), then Benefits & Eligibility",
-                   new FloorClock("Payday Super allocation", n, who,
-                       "Allocate (or return) each SG contribution within 3 business days of receipt",
-                       "Starts when the first contribution arrives", "watch"),
-                   "nothing expected unless an exception arises");
+            isDeath
+                ? ("Financial Crime (documents), then Claims",
+                   new PracticeClock("Claim lodgement", n, who,
+                       "Every death or terminal illness claim needs a person's approval",
+                       "After the policy and document checks", "watch"),
+                   "the claim lodgement and every message to the family")
+            : isClaim
+                ? (bankChange ? "Financial Crime (bank change and documents), then Claims" : "Claims, then Financial Crime (documents)",
+                   new PracticeClock("Claim lodgement", n, who,
+                       "Lodging any claim needs a person's approval",
+                       bankChange ? "Held until the bank change is verified" : "After the policy and evidence check", bankChange ? "paused" : "watch"),
+                   bankChange ? "the claim lodgement and the bank-detail change" : "the claim lodgement")
+            : t.Contains("business")
+                ? ("Financial Crime (KYC on the company and owners), then Paraplanning",
+                   new PracticeClock("Second review", n, who,
+                       "Advice with total cover of $2,000,000 or more on one case gets a second review",
+                       "Checked once the needs analysis is done", "watch"),
+                   "the SoA (and a second review if total cover is $2,000,000 or more)")
+                : ("Financial Crime (KYC), then Paraplanning",
+                   new PracticeClock("Statement of Advice", n, who,
+                       "Every SoA is signed by the adviser",
+                       "After the needs analysis and research", "watch"),
+                   "the SoA, and any replacement of existing cover");
 
         var priority = c.Priority ?? string.Empty;
         Escalation? escalation =
@@ -491,22 +673,34 @@ public static class TeamLeaderApi
             : priority.Equals("High", StringComparison.OrdinalIgnoreCase) ? new(n, who, "High", c.PriorityReason, "Olivia → " + next, "Triage today")
             : null;
 
-        VulnerableMember? vulnerable =
-            t.Contains("hardship") ? new(n, who, "Financial hardship", "Human review; kind letter; free financial counselling details")
-            : t.Contains("death") ? new(n, who, "Bereavement", "Compassionate handling; one named contact; human-approved letters")
-            : t.Contains("smsf") ? new(n, who, "Possible scam target (rollover to an SMSF)", "Contact only on verified details held before any recent change")
+        VulnerableClient? vulnerable =
+            isDeath ? new(n, who, "Bereavement", "Compassionate handling; one named contact; every message approved by Theo")
+            : bankChange ? new(n, who, "Possible scam target (claim with a bank change)", "Contact only on details verified before any recent change; bank-detail changes need Theo's approval")
+            : isClaim ? new(n, who, "Illness or injury", "Plain English; Cara approves every letter; check for financial stress")
             : null;
 
+        var acknowledgement = new PracticeClock("Acknowledgement", n, who,
+            "Requests acknowledged, and anything not in good order explained, within 1 business day (Caldova service standard)",
+            $"Received {PracticeDates.Display(c.ReceivedDate)} — Cara's acknowledgement is drafted", "due");
+
         return new CaseProfile(
-            Stage: Received,
+            Stage: Discover,
+            Side: side,
             Owner: "Olivia (Onboarding & Requests)",
-            NextAction: $"Triage and route to {next}.",
-            Clocks: [clock],
+            AsAt: $"Received {PracticeDates.Display(c.ReceivedDate)}",
+            NextAction: $"Finish the in-good-order checklist and route to {next}.",
+            Clocks: [acknowledgement, clock],
             Escalation: escalation,
-            Approval: null,
+            Approvals: [],
             Vulnerable: vulnerable,
+            Audit: new FileAudit(n, who, isClaim ? ClaimsHandling : BestInterests, "Not yet audited",
+            [
+                new("File audit", "n/a", isClaim
+                    ? "Audited once the claim pack is ready to lodge."
+                    : "Audited once the SoA is drafted."),
+            ]),
             Summary: c.RequestSummary,
-            Decision: $"No decision yet — approval expected later for {expected}.",
+            Decision: $"No decision yet — a person approves {expected} later.",
             Recommendation: $"Route to {next}; Cara sends the acknowledgement today.");
     }
 
@@ -528,48 +722,59 @@ public static class TeamLeaderApi
     };
 
     // ── Prompt for the live Team Leader Agent ────────────────────────────────
-    private static string BuildPrompt(CaseRecord c, CaseFocus focus, FloorView floor)
+    private static string BuildPrompt(CaseRecord c, CaseFocus focus, PracticeView practice)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("TEAM LEADER FLOOR REVIEW — CALDOVA CLIENT OPERATIONS");
-        sb.AppendLine("====================================================");
+        sb.AppendLine("TEAM LEADER PRACTICE REVIEW — CALDOVA LIFE ADVICE");
+        sb.AppendLine("=================================================");
         sb.AppendLine($"Focus case     : {c.CaseNumber}");
-        sb.AppendLine($"Client         : {c.ClientName} ({c.MemberNumber})");
-        sb.AppendLine($"Product        : {c.Product}");
+        sb.AppendLine($"Client         : {c.ClientName} ({c.ClientNumber})");
+        sb.AppendLine($"Cover          : {c.Cover}");
         sb.AppendLine($"Request type   : {c.RequestType}");
         sb.AppendLine($"Received       : {c.ReceivedDate}");
-        sb.AppendLine($"Adviser        : {(string.IsNullOrWhiteSpace(c.AdviserPractice) ? c.AdviserName : $"{c.AdviserName} ({c.AdviserPractice})")}");
+        sb.AppendLine($"Adviser        : {c.AdviserName}");
+        sb.AppendLine($"Referred by    : {(string.IsNullOrWhiteSpace(c.ReferredBy) ? "Existing client" : c.ReferredBy)}");
         sb.AppendLine($"Amount         : {c.Amount}");
         sb.AppendLine($"Priority       : {c.Priority} — {c.PriorityReason}");
-        sb.AppendLine($"Stage / owner  : {focus.Stage} / {focus.Owner}");
+        sb.AppendLine($"Side / stage   : {focus.Side} / {focus.Stage} — {focus.AsAt}");
+        sb.AppendLine($"Owner          : {focus.Owner}");
         sb.AppendLine($"Request        : {c.RequestSummary}");
         sb.AppendLine();
         sb.AppendLine("KEY FACTS ON FILE (focus case)");
         foreach (var fact in focus.KeyFacts) sb.AppendLine($"- {fact}");
         sb.AppendLine();
-        sb.AppendLine($"FLOOR SNAPSHOT — {floor.AsAt}");
-        sb.AppendLine("Counts by stage: " + string.Join(", ", floor.StageCounts.Select(s => $"{s.Stage} {s.Count}")));
-        foreach (var fc in floor.Cases)
-            sb.AppendLine($"- {fc.CaseNumber} · {fc.ClientName} · {fc.RequestType} · {fc.Priority} · {fc.Stage} · owner {fc.Owner} · next: {fc.NextAction}");
+        sb.AppendLine($"PRACTICE SNAPSHOT — {practice.AsAt}");
+        sb.AppendLine("Pipeline by stage: " + string.Join(", ", practice.StageCounts.Select(s => $"{s.Stage} {s.Count}")));
+        foreach (var pc in practice.Cases)
+            sb.AppendLine($"- {pc.CaseNumber} · {pc.ClientName} · {pc.RequestType} · {pc.Side} · {pc.Priority} · {pc.Stage} · owner {pc.Owner} · next: {pc.NextAction}");
         sb.AppendLine();
-        sb.AppendLine("CLOCKS (rollover 3 business days; Payday Super allocation 3 business days; IDR 30/45/90 days; SMR 3 business days)");
-        foreach (var clock in floor.Clocks)
+        sb.AppendLine("CLOCKS");
+        foreach (var clock in practice.Clocks)
             sb.AppendLine($"- [{clock.State}] {clock.Clock} — {clock.CaseNumber} ({clock.ClientName}): {clock.Status}. Rule: {clock.Rule}");
         sb.AppendLine();
-        sb.AppendLine("ITEMS WAITING FOR HUMAN APPROVAL");
-        foreach (var a in floor.Approvals)
-            sb.AppendLine($"- {a.CaseNumber} ({a.ClientName}): {a.Item} — authority: {a.Authority}; due {a.Due}");
+        sb.AppendLine("ITEMS WAITING FOR A HUMAN DECISION");
+        foreach (var a in practice.Approvals)
+            sb.AppendLine($"- {a.CaseNumber} ({a.ClientName}): {a.Item} — approver: {a.Approver}; why a person: {a.Authority}; due {a.Due}");
         sb.AppendLine();
-        sb.AppendLine("VULNERABLE MEMBERS");
-        foreach (var v in floor.Vulnerable)
+        sb.AppendLine("VULNERABLE CLIENTS");
+        foreach (var v in practice.Vulnerable)
             sb.AppendLine($"- {v.CaseNumber} ({v.ClientName}): {v.Flag}");
+        sb.AppendLine();
+        sb.AppendLine("FILE AUDITS");
+        foreach (var audit in practice.FileAudits)
+        {
+            var open = audit.Checks.Where(k => k.Status == "warn").Select(k => k.Label).ToList();
+            sb.AppendLine($"- {audit.CaseNumber} ({audit.ClientName}) · {audit.Standard}: {audit.Result}" +
+                          (open.Count > 0 ? $" — open: {string.Join("; ", open)}" : string.Empty));
+        }
         sb.AppendLine();
         sb.AppendLine("TASK");
         sb.AppendLine("----");
-        sb.AppendLine("Review the floor as Theo's Team Leader Agent and produce your structured output: Floor Summary, Escalations, " +
-                      "Approval Queue, Quality / Coaching Insights and Recommended Priorities for Today. Lead with the focus case " +
-                      "where it matters, state each clock's status, and flag vulnerable members for a human touch. Use only the facts " +
-                      "above, cite the rule behind each approval, recommend — never decide — and never give personal financial advice.");
+        sb.AppendLine("Review the practice as Theo's Team Leader Agent and produce your structured output: Practice Summary, " +
+                      "Clocks & Escalations, Approval Queue, Vulnerable Clients, File Quality & Coaching and Recommended " +
+                      "Priorities for Today. Lead with the focus case where it matters, state each clock's status, and flag " +
+                      "vulnerable clients for a human touch. Use only the facts above, cite the rule or document behind each " +
+                      "approval, recommend — never decide — and never give personal advice.");
         return sb.ToString();
     }
 

@@ -1,6 +1,6 @@
 using 'main.bicep'
 
-param baseName = 'caldovacs'
+param baseName = 'caldovacl'
 param location = 'eastus2'
 param appServiceLocation = 'westus3'
 param principals = [

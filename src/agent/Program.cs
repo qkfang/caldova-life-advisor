@@ -2,25 +2,24 @@ using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using CaldovaSuper.Agents;
+using CaldovaLife.Agents;
 
-// Wealth Team in a Day — Caldova Wealth — .NET 10 Foundry agents
+// Advice Team in a Day — Caldova Life Advice — .NET 10 Foundry agents
 //
-// Each staff character in the Caldova Wealth client operations office is
-// implemented as a specialised Azure AI Foundry declarative agent. This
-// console host lets you drive any individual agent from the command line
-// for demo / testing purposes.
+// Each staff character at Caldova Life Advice, a Melbourne life insurance
+// advice practice, is supported by a specialised Azure AI Foundry declarative
+// agent. This console host lets you drive any one agent from the command line
+// to try a prompt or test its instructions.
 //
 // Usage:
-//   dotnet run -- --onboarding      "Adviser email: new Caldova Super account for Priya Natarajan, consolidate 2 funds"
-//   dotnet run -- --benefits        "Is Tom Bradley (47, JobSeeker 31 weeks) eligible for a $15,000 hardship release?"
-//   dotnet run -- --investments     "Compare Growth vs Balanced vs Index Balanced on a $138,200 balance"
-//   dotnet run -- --fincrime        "Full-balance rollover to a 9-day-old SMSF two days after a mobile change"
-//   dotnet run -- --transfers       "Consolidate Southern Cross Industry Super and Harbourline Retail Super"
-//   dotnet run -- --payments        "Calculate a $10,000 hardship payment, 6% tax-free, member aged 47"
-//   dotnet run -- --communications  "Draft a condolence letter to Robert Chen about his mother's death benefit"
-//   dotnet run -- --team-leader     "Summarise today's approvals and IDR clocks"
-
+//   dotnet run -- --onboarding      "Referral from Hannah Lewis (Yarra Home Loans): Priya Natarajan, 34, physiotherapist, new $680,000 mortgage, old Kestrel Retail Super account with no contributions since 30 Jul 2025"
+//   dotnet run -- --paraplanning    "Needs analysis for Priya: $680,000 mortgage, two children, $105,000 salary, $45,000 savings, $210,000 death and TPD cover in super"
+//   dotnet run -- --research        "Compare Corella, Harbourline and Lyrebird for a 34-year-old non-smoking physio: life $750,000, TPD $600,000, trauma $150,000, IP $6,125 a month"
+//   dotnet run -- --fincrime        "Urgent $200,000 trauma claim to a new account in another name, 93 hours after a phone change of mobile and email; client on a travel notice"
+//   dotnet run -- --underwriting    "What evidence will Northbank Life need for George, 52: buy-sell life and TPD $1.2m plus key person $400,000?"
+//   dotnet run -- --claims          "Tom Bradley's income protection claim: insured $7,000 a month, net business income $96,000 in the 12 months before his injury"
+//   dotnet run -- --communications  "Draft a gentle letter to Robert Chen confirming the $1,000,000 death benefit for his wife Mei"
+//   dotnet run -- --team-leader     "Summarise today's approvals, claim clocks and IDR clocks"
 var config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: false)
     .AddJsonFile("appsettings.Development.json", optional: true)
@@ -65,16 +64,16 @@ CaldovaAgent? agent = flag switch
 {
     "--onboarding"
         => new OnboardingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<OnboardingAgent>()),
-    "--benefits"
-        => new BenefitsEligibilityAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<BenefitsEligibilityAgent>()),
-    "--investments"
-        => new InvestmentAnalystAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<InvestmentAnalystAgent>()),
+    "--paraplanning"
+        => new ParaplanningAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ParaplanningAgent>()),
+    "--research"
+        => new InsuranceResearchAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<InsuranceResearchAgent>()),
     "--fincrime"
         => new FinancialCrimeAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<FinancialCrimeAgent>()),
-    "--transfers"
-        => new TransfersRolloversAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, mcpServerUri: null, logger: loggerFactory.CreateLogger<TransfersRolloversAgent>()),
-    "--payments"
-        => new PaymentsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<PaymentsAgent>()),
+    "--underwriting"
+        => new UnderwritingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, mcpServerUri: null, logger: loggerFactory.CreateLogger<UnderwritingAgent>()),
+    "--claims"
+        => new ClaimsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ClaimsAgent>()),
     "--communications"
         => new ClientCommunicationsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
     "--team-leader"
@@ -100,15 +99,20 @@ Console.WriteLine();
 
 static void PrintUsage()
 {
-    Console.WriteLine("Wealth Team in a Day — Caldova Wealth — Foundry agents");
+    Console.WriteLine("Advice Team in a Day — Caldova Life Advice — Foundry agents");
     Console.WriteLine();
     Console.WriteLine("Usage:");
     Console.WriteLine("  dotnet run -- --onboarding      \"<message>\"   Olivia — Onboarding & Requests");
-    Console.WriteLine("  dotnet run -- --benefits        \"<message>\"   Ben    — Benefits & Eligibility");
-    Console.WriteLine("  dotnet run -- --investments     \"<message>\"   Ivy    — Investment Solutions");
+    Console.WriteLine("  dotnet run -- --paraplanning    \"<message>\"   Penny  — Paraplanning");
+    Console.WriteLine("  dotnet run -- --research        \"<message>\"   Ivy    — Insurance Research");
     Console.WriteLine("  dotnet run -- --fincrime        \"<message>\"   Felix  — Financial Crime");
-    Console.WriteLine("  dotnet run -- --transfers       \"<message>\"   Rory   — Transfers & Rollovers");
-    Console.WriteLine("  dotnet run -- --payments        \"<message>\"   Penny  — Payments");
+    Console.WriteLine("  dotnet run -- --underwriting    \"<message>\"   Uma    — Underwriting & New Business");
+    Console.WriteLine("  dotnet run -- --claims          \"<message>\"   Ben    — Claims");
     Console.WriteLine("  dotnet run -- --communications  \"<message>\"   Cara   — Client Communications");
     Console.WriteLine("  dotnet run -- --team-leader     \"<message>\"   Theo   — Team Leader Office");
+    Console.WriteLine();
+    Console.WriteLine("Example:");
+    Console.WriteLine("  dotnet run -- --claims \"Tom Bradley's income protection claim: insured $7,000 a month, net business income $96,000 in the 12 months before his injury\"");
+    Console.WriteLine();
+    Console.WriteLine("Agents gather facts, check, calculate and draft. Amelia gives the advice, and people approve every decision that matters.");
 }

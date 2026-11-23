@@ -1,7 +1,7 @@
 using System.Text.Json;
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 internal record GroupChatStartRequest(string CaseNumber);
 
@@ -9,10 +9,11 @@ internal record GroupChatStartRequest(string CaseNumber);
 /// HTTP endpoints behind the "Group Chat" tab on <c>/agents/team-leader</c>.
 /// Theo (the Team Leader Agent) acts as the group-chat manager — modelled on
 /// <c>Microsoft.Agents.AI.Workflows.GroupChatManager</c> — and runs a
-/// discussion with the seven other operations specialists about a single
-/// Member Case, deciding who speaks next and when the team has a plan.
-/// When Foundry isn't configured the same endpoints stream a scripted replay
-/// built from the case facts, so the demo always completes.
+/// discussion with the seven other practice specialists (Olivia, Penny, Ivy,
+/// Felix, Uma, Ben and Cara) about a single Client Case, deciding who speaks
+/// next and when the team has a plan. When Foundry isn't configured the same
+/// endpoints stream an offline replay built from the case facts, so the page
+/// always completes offline.
 /// </summary>
 public static class TeamLeaderGroupChatApi
 {
@@ -34,20 +35,22 @@ public static class TeamLeaderGroupChatApi
         // Start a new group-chat session for a case. Returns the session id
         // straight away; orchestration runs on a background task and turns
         // are streamed via the /stream endpoint below. `mode` is "live"
-        // (Foundry agents) or "scripted" (deterministic replay).
+        // (Foundry agents) or "offline" (deterministic replay); a live
+        // session that can't reach Foundry streams a `mode` event and
+        // continues offline.
         app.MapPost("/team-leader/groupchat/start", (GroupChatStartRequest request) =>
         {
             if (string.IsNullOrWhiteSpace(request.CaseNumber))
                 return Results.BadRequest(new { error = "caseNumber is required" });
 
-            var memberCase = service.GetCase(request.CaseNumber);
-            if (memberCase is null)
+            var clientCase = service.GetCase(request.CaseNumber);
+            if (clientCase is null)
                 return Results.NotFound(new { error = $"case '{request.CaseNumber}' not found" });
 
             logger.LogInformation("Team Leader group chat starting: caseNumber={CaseNumber}, live={Live}",
-                Sanitize(memberCase.CaseNumber), service.IsConfigured);
+                Sanitize(clientCase.CaseNumber), service.IsConfigured);
 
-            var session = service.StartSession(memberCase);
+            var session = service.StartSession(clientCase);
             return Results.Ok(new
             {
                 sessionId = session.Id,

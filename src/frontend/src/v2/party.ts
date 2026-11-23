@@ -1,28 +1,29 @@
 /**
- * The roof: Caldova Wealth's party for its customers.
+ * The roof: Caldova Life Advice's party for its clients.
  *
- * A timber party deck beside the green roof, under a big CALDOVA WEALTH
- * marquee sign along the back. Members, clients and their advisers dance to
- * the DJ, get a drink at the bar, try George's retirement cake, take in the
- * lake and peek down at the brain through the skylight. Every so often the DJ
- * calls a toast (confetti over the dance floor), and fireworks go up behind
- * the sign. A storybook touch: see "The Roof" in docs/storybook.md.
+ * A timber party deck round the copper dome, under a big CALDOVA LIFE ADVICE
+ * marquee sign along the back. Clients, their families and the referral
+ * partners who sent them dance to the DJ, get a drink at the bar, try the
+ * welcome cake, take in the city and peek down at the brain through the
+ * dome's cut. Every so often the DJ calls a toast (confetti over the dance
+ * floor), and fireworks go up behind the sign. A storybook touch: see
+ * "The roof" in docs/storybook.md.
  */
 import { Color3, type Mesh, Quaternion, type StandardMaterial, TransformNode, Vector3 } from "@babylonjs/core";
 import type { ScenarioId } from "../personaData";
 import { VoxelCharacter } from "../voxelCharacter";
+import { PARTY, PARTY_DJ_PALETTE, PARTY_GUESTS, PARTY_SIGN, SIDES, type PartyGuest } from "./houseData";
 import { Batch, type Bubble, type Kit, rng } from "./kit";
-import { PARTY, PARTY_DJ_PALETTE, PARTY_GUESTS, PARTY_SIGN, SIDES, type PartyGuest } from "./lakehouseData";
-import { CHARACTER_SCALE, ROOF, ROOF_Y } from "./layout";
+import { CHARACTER_SCALE, DOME, HOUSE, INSIDE, ROOF_Y, SLAB } from "./layout";
 import type { Highlights } from "./types";
 import { SpotBook, Wanderer, type Outing, type Pt, type Spot } from "./wander";
 
-/** The deck and the green roof, where everyone stands. */
-const FLOOR = ROOF_Y + 0.68;
-/** Top of the roof slab, where the rails and posts stand. */
-const SLAB_TOP = ROOF_Y + 0.5;
-/** The walkway across the front of the party, in front of the skylight and the dance floor. */
-const CZ = -6.3;
+/** Top of the roof slab, where the deck and the sign's legs stand. */
+const SLAB_TOP = ROOF_Y + SLAB;
+/** The deck, where everyone stands. */
+const FLOOR = SLAB_TOP + 0.18;
+/** The walkway across the party, behind the dome and in front of the dance floor. */
+const CZ = -4.0;
 const BPM = 120;
 const GOLD = Color3.FromHexString("#ffc35a");
 /** The sides' colours and the levels' accents. */
@@ -36,13 +37,12 @@ const FONT: Record<string, string[]> = {
   D: ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
   O: [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
   V: ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
-  W: ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
+  I: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"],
+  F: ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
   E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
-  T: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
-  H: ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
 };
 /** The sign: voxel size, centre, bottom edge and depth position. */
-const SIGN = { v: 0.26, x: (ROOF.x0 + ROOF.x1) / 2, y: 21.0, z: 7.9, margin: 0.6 };
+const SIGN = { v: 0.26, x: 4.2, y: 21.2, z: INSIDE.z1 - 0.5, margin: 0.6 };
 
 /* ---------------- Where the guests go ---------------- */
 
@@ -50,51 +50,64 @@ const SIGN = { v: 0.26, x: (ROOF.x0 + ROOF.x1) / 2, y: 21.0, z: 7.9, margin: 0.6
 const at = (x: number, z: number, face: number, key?: string, via?: Pt[]): Spot => ({ at: [x, z], face, via: via ?? [[x, CZ]], key });
 const towards = (x: number, z: number, tx: number, tz: number): number => Math.atan2(tx - x, tz - z);
 
-const DANCE_FLOOR = { x: 3.9, z: -3.175, cols: 6, rows: 5, tile: 0.95 };
-const DJ_AT = { x: 3.9, z: 1.65 };
+const DANCE_FLOOR = { x: 4.2, z: 0.9, cols: 6, rows: 5, tile: 0.95 };
+const DJ_AT = { x: 4.2, z: 6.0 };
 const TABLES = [
-  { x: 2.0, z: -8.9 },
-  { x: 4.9, z: -9.6 },
+  { x: 2.0, z: -6.6 },
+  { x: 12.0, z: -6.6 },
 ];
-const CAKE_AT = { x: -12.4, z: -8.8 };
-const LOUNGE = { x: -16.0, z: -3.2 };
-const BAR_AT = { x: 8.0, z: -10.6 };
+const CAKE_AT = { x: -10.4, z: -1.2 };
+const LOUNGE = { x: -17.4, z: -9.0 };
+const BAR_AT = { x: 16.4, z: -1.2 };
 
 /** Front row faces the DJ, back row faces the front row. */
 const DANCE: Spot[] = [
-  at(1.75, -4.6, 0, "dance:0"),
-  at(3.9, -4.9, 0, "dance:1"),
-  at(6.05, -4.6, 0, "dance:2"),
-  at(2.85, -2.4, Math.PI, "dance:3"),
-  at(4.95, -2.4, Math.PI, "dance:4"),
+  at(2.05, -0.9, 0, "dance:0"),
+  at(4.2, -1.1, 0, "dance:1"),
+  at(6.35, -0.9, 0, "dance:2"),
+  at(3.15, 1.4, Math.PI, "dance:3"),
+  at(5.25, 1.4, Math.PI, "dance:4"),
 ];
-const BAR: Spot[] = [at(7.4, -9.4, Math.PI, "bar:0"), at(8.6, -9.4, Math.PI, "bar:1")];
+const BAR: Spot[] = [at(15.8, -2.4, 0, "bar:0"), at(17.0, -2.4, 0, "bar:1")];
 const CAKE: Spot[] = [
-  at(CAKE_AT.x, -7.6, Math.PI, "cake:0"),
-  at(-11.3, -8.2, towards(-11.3, -8.2, CAKE_AT.x, CAKE_AT.z), "cake:1"),
+  at(CAKE_AT.x, -2.5, 0, "cake:0"),
+  at(-9.0, -2.2, towards(-9.0, -2.2, CAKE_AT.x, CAKE_AT.z), "cake:1"),
 ];
-const VIEW: Spot[] = [at(-17.0, -10.6, Math.PI, "view:0"), at(-6.0, -10.6, Math.PI, "view:1"), at(-0.4, -10.6, Math.PI, "view:2")];
-const SKY: Spot[] = [at(-5.6, -5.15, 0, "sky:0"), at(-4.0, -5.15, 0, "sky:1")];
+const VIEW: Spot[] = [
+  at(INSIDE.x1 - 1.0, -9.0, Math.PI / 2, "view:0"),
+  at(INSIDE.x1 - 1.0, 2.2, Math.PI / 2, "view:1"),
+  at(-14.9, -11.6, Math.PI, "view:2"),
+];
+/** At the gallery rail round the dome's cut, looking down at the brain. */
+const DOME_PEEK: Spot[] = [40, 140].map((deg, i) => {
+  const a = (deg * Math.PI) / 180;
+  const x = DOME.x + Math.cos(a) * (DOME.r + 1.1);
+  const z = DOME.z + Math.sin(a) * (DOME.r + 1.1);
+  return at(x, z, towards(x, z, DOME.x, DOME.z), `peek:${i}`);
+});
 
-/** Each guest's home spot: a cocktail table with their party, or the lounge on the green roof. */
+/** Each guest's home spot: a cocktail table with their party, or the lounge. */
 const HOMES: Record<string, [Spot, string]> = {
-  george: [at(1.15, -8.9, Math.PI / 2, "home:george"), "their table"],
-  marcus: [at(2.85, -8.9, -Math.PI / 2, "home:marcus"), "their table"],
-  helen: [at(2.0, -8.05, Math.PI, "home:helen"), "their table"],
-  hannah: [at(4.05, -9.6, Math.PI / 2, "home:hannah"), "their table"],
-  priya: [at(5.75, -9.6, -Math.PI / 2, "home:priya"), "their table"],
-  wrap: [at(-14.8, -4.6, towards(-14.8, -4.6, LOUNGE.x, LOUNGE.z), "home:wrap"), "the lounge"],
-  portfolio: [at(-17.2, -4.6, towards(-17.2, -4.6, LOUNGE.x, LOUNGE.z), "home:portfolio"), "the lounge"],
-  member: [at(-18.5, -2.4, towards(-18.5, -2.4, LOUNGE.x, LOUNGE.z), "home:member"), "the lounge"],
+  priya: [at(TABLES[0].x - 0.85, TABLES[0].z, Math.PI / 2, "home:priya"), "their table"],
+  hannah: [at(TABLES[0].x + 0.85, TABLES[0].z, -Math.PI / 2, "home:hannah"), "their table"],
+  arjun: [at(TABLES[0].x, TABLES[0].z + 0.85, Math.PI, "home:arjun"), "their table"],
+  asha: [at(TABLES[0].x - 0.5, TABLES[0].z - 1.0, 0.4, "home:asha"), "their table"],
+  george: [at(TABLES[1].x - 0.85, TABLES[1].z, Math.PI / 2, "home:george"), "their table"],
+  marcus: [at(TABLES[1].x + 0.85, TABLES[1].z, -Math.PI / 2, "home:marcus"), "their table"],
+  helen: [at(TABLES[1].x, TABLES[1].z + 0.85, Math.PI, "home:helen"), "their table"],
+  harpreet: [at(TABLES[1].x + 0.2, TABLES[1].z - 0.9, 0, "home:harpreet"), "their table"],
+  backatwork: [at(LOUNGE.x + 1.3, LOUNGE.z - 1.2, towards(LOUNGE.x + 1.3, LOUNGE.z - 1.2, LOUNGE.x, LOUNGE.z), "home:backatwork"), "the lounge"],
+  "retired-1": [at(LOUNGE.x - 1.2, LOUNGE.z - 1.3, towards(LOUNGE.x - 1.2, LOUNGE.z - 1.3, LOUNGE.x, LOUNGE.z), "home:retired-1"), "the lounge"],
+  "retired-2": [at(LOUNGE.x - 1.4, LOUNGE.z + 1.2, towards(LOUNGE.x - 1.4, LOUNGE.z + 1.2, LOUNGE.x, LOUNGE.z), "home:retired-2"), "the lounge"],
 };
 
-const DJ_LINES = ["Next one’s a request!", "Make some noise!", "Hands up for Caldova!", "This one’s for the members!"];
+const DJ_LINES = ["Next one’s a request!", "Make some noise!", "Hands up for Caldova!", "This one’s for our clients!"];
 
 export interface Party {
   readonly root: TransformNode;
   update(dt: number): void;
   setHighlights(h: Highlights): void;
-  /** The finale's member is down at the dock, so they are not up here as well. */
+  /** The finale's client is down at the front desk, so they are not up here as well. */
   setAway(id: ScenarioId | null): void;
   /** What the party is up to right now, for the card. */
   now(): string;
@@ -149,40 +162,20 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   const oak = kit.mat("#ffffff", { texture: "oak" });
   const white = kit.mat("#f1eee6", { specular: 0.3 });
 
-  /* ---------------- The venue: deck and rails ---------------- */
-  // Timber decking over the concrete, flush with the green roof and around the skylight.
-  for (const [x0, x1, z0, z1] of [
-    [-9.75, 9.3, -11.2, -4.9],
-    [-9.75, 9.3, 0.9, 7.7],
-    [-9.75, -7.85, -4.9, 0.9],
-    [-2.15, 9.3, -4.9, 0.9],
+  /* ---------------- The deck ---------------- */
+  // Timber decking over the roof, round the dome's cut.
+  const notch = DOME.r + 0.6;
+  for (const [x0, x1] of [
+    [INSIDE.x0, DOME.x - notch],
+    [DOME.x + notch, INSIDE.x1],
   ] as const) {
-    kit.block(root, (x0 + x1) / 2, SLAB_TOP, (z0 + z1) / 2, x1 - x0, FLOOR - SLAB_TOP, z1 - z0, oak);
+    kit.block(root, (x0 + x1) / 2, SLAB_TOP, (HOUSE.z0 + 0.6 + INSIDE.z1) / 2, x1 - x0, FLOOR - SLAB_TOP, INSIDE.z1 - HOUSE.z0 - 0.6, oak);
   }
-  // A steel rail right round the roof.
-  const rx0 = ROOF.x0 + 0.12;
-  const rx1 = ROOF.x1 - 0.12;
-  const rz0 = ROOF.z0 + 0.12;
-  const rz1 = ROOF.z1 - 0.12;
-  const rail = (ax: number, az: number, bx: number, bz: number): void => {
-    const len = Math.hypot(bx - ax, bz - az);
-    const along = bx !== ax;
-    for (const [y, h, t] of [
-      [SLAB_TOP + 1.02, 0.08, 0.1],
-      [SLAB_TOP + 0.55, 0.05, 0.05],
-    ] as const) {
-      kit.block(root, (ax + bx) / 2, y, (az + bz) / 2, along ? len : t, h, along ? t : len, steel);
-    }
-    const n = Math.max(1, Math.round(len / 2.5));
-    for (let i = 0; i <= n; i++) {
-      const f = i / n;
-      kit.block(root, ax + (bx - ax) * f, SLAB_TOP, az + (bz - az) * f, 0.1, 1.1, 0.1, steel);
-    }
-  };
-  rail(rx0, rz0, rx1, rz0);
-  rail(rx0, rz1, rx1, rz1);
-  rail(rx0, rz0, rx0, rz1);
-  rail(rx1, rz0, rx1, rz1);
+  for (let x = DOME.x - notch; x < DOME.x + notch - 0.01; x += 0.5) {
+    const mid = x + 0.25 - DOME.x;
+    const z0 = Math.max(HOUSE.z0 + 0.6, DOME.z + Math.sqrt(Math.max(0, notch * notch - mid * mid)));
+    kit.block(root, x + 0.25, SLAB_TOP, (z0 + INSIDE.z1) / 2, 0.5, FLOOR - SLAB_TOP, INSIDE.z1 - z0, oak);
+  }
 
   /* ---------------- The sign ---------------- */
   // Glowing voxel letters on a navy board, framed by chasing marquee bulbs.
@@ -225,7 +218,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   for (let i = 0; i < ny; i++) bulbAt.push([left, bottom + ((top - bottom) * i) / ny]);
   bulbAt.forEach(([bx, by], i) => kit.block(root, bx, by - 0.075, boardFront - 0.06, 0.15, 0.15, 0.12, i % 2 ? bulbB : bulbA));
   // Steel legs with cross-bracing.
-  const legs = [-9.8, -4.8, 0, 4.8, 9.8].map((dx) => SIGN.x + dx);
+  const legs = [-10.6, -5.3, 0, 5.3, 10.6].map((dx) => SIGN.x + dx);
   for (const x of legs) kit.block(root, x, SLAB_TOP, SIGN.z + 0.1, 0.22, SIGN.y - SLAB_TOP, 0.22, steel);
   const beam = (ax: number, ay: number, az: number, bx: number, by: number, bz: number, t: number, mat: StandardMaterial): void => {
     const dx = bx - ax;
@@ -243,47 +236,46 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   kit.hitbox(root, SIGN.x, SIGN.y, SIGN.z - 0.1, boardW, boardH, 0.6, { type: "party" });
 
   /* ---------------- String lights and bunting ---------------- */
-  const POSTS = [-20.6, -14.4, -9.6, -4.8, 0, 3.6, 6.4, 9.1];
-  const POST_Z = ROOF.z0 + 0.25;
-  const POST_TOP = 20.8;
+  const POSTS = [-0.6, 4.4, 9.4, 14.4, 19.6];
+  const POST_Z = HOUSE.z0 + 1.6;
+  const POST_TOP = SIGN.y - 0.2;
   for (const x of POSTS) kit.block(root, x, SLAB_TOP, POST_Z, 0.14, POST_TOP - SLAB_TOP, 0.14, steel);
   const lights = kit.mat("#ffe6a8", { unlit: true, unique: true });
-  const strand = (x: number, z1: number, y1: number): void => {
-    const n = Math.round((z1 - POST_Z) / 0.75);
+  const strand = (x0: number, z0: number, y0: number, x1: number, z1: number, y1: number, sag = 0.55): void => {
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const n = Math.max(2, Math.round(len / 0.75));
     for (let i = 1; i < n; i++) {
       const f = i / n;
-      const y = POST_TOP - 0.1 + (y1 - POST_TOP + 0.1) * f - Math.sin(Math.PI * f) * 0.55;
-      kit.block(root, x, y - 0.16, POST_Z + (z1 - POST_Z) * f, 0.16, 0.16, 0.16, lights);
+      const yy = y0 + (y1 - y0) * f - Math.sin(Math.PI * f) * sag;
+      kit.block(root, x0 + (x1 - x0) * f, yy - 0.16, z0 + (z1 - z0) * f, 0.16, 0.16, 0.16, lights);
     }
   };
-  // From the front posts to the bottom of the sign, and to two back posts beyond its end.
-  for (const x of POSTS.slice(1, 6)) strand(x, boardFront - 0.05, SIGN.y);
-  for (const x of POSTS.slice(6)) {
-    kit.block(root, x, SLAB_TOP, rz1 - 0.15, 0.14, 4.1, 0.14, steel);
-    strand(x, rz1 - 0.15, SLAB_TOP + 4.0);
-  }
+  // From the front posts back to the bottom of the sign, and along the front.
+  for (const x of POSTS.slice(0, 4)) strand(x, POST_Z, POST_TOP - 0.1, Math.min(x + 1, SIGN.x + boardW / 2 - 0.5), boardFront - 0.05, SIGN.y);
+  for (let i = 0; i < POSTS.length - 1; i++) strand(POSTS[i], POST_Z, POST_TOP - 0.1, POSTS[i + 1], POST_Z, POST_TOP - 0.1, 0.4);
   // Bunting in the party colours along the front.
   const flags = PARTY_COLOURS.map((hex) => kit.mat(hex));
   const cord = kit.mat("#e5e7eb");
   let flag = 0;
+  const flagY = POST_TOP - 0.9;
   for (let i = 0; i < POSTS.length - 1; i++) {
     const a = POSTS[i];
     const b = POSTS[i + 1];
     const n = Math.max(2, Math.round((b - a) / 0.6));
     let px = a;
-    let py = 20.45;
+    let py = flagY;
     for (let j = 1; j <= n; j++) {
       const f = j / n;
       const x = a + (b - a) * f;
-      const y = 20.45 - Math.sin(Math.PI * f) * 0.25;
-      beam(px, py, POST_Z, x, y, POST_Z, 0.03, cord);
+      const yy = flagY - Math.sin(Math.PI * f) * 0.25;
+      beam(px, py, POST_Z, x, yy, POST_Z, 0.03, cord);
       if (j < n) {
-        const m = flags[flag++ % flags.length];
-        kit.block(root, x, y - 0.2, POST_Z, 0.34, 0.18, 0.03, m);
-        kit.block(root, x, y - 0.36, POST_Z, 0.16, 0.16, 0.03, m);
+        const mm = flags[flag++ % flags.length];
+        kit.block(root, x, yy - 0.2, POST_Z, 0.34, 0.18, 0.03, mm);
+        kit.block(root, x, yy - 0.36, POST_Z, 0.16, 0.16, 0.03, mm);
       }
       px = x;
-      py = y;
+      py = yy;
     }
   }
 
@@ -301,8 +293,8 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   kit.hitbox(root, df.x, FLOOR, df.z, df.cols * df.tile, 0.3, df.rows * df.tile, { type: "party" });
   // Confetti cannons at the front corners, aimed in over the floor.
   const cannons = [
-    { x: df.x - (df.cols * df.tile) / 2 - 0.35, z: -5.0, tilt: -0.45 },
-    { x: df.x + (df.cols * df.tile) / 2 + 0.35, z: -5.0, tilt: 0.45 },
+    { x: df.x - (df.cols * df.tile) / 2 - 0.35, z: df.z - (df.rows * df.tile) / 2 - 0.2, tilt: -0.45 },
+    { x: df.x + (df.cols * df.tile) / 2 + 0.35, z: df.z - (df.rows * df.tile) / 2 - 0.2, tilt: 0.45 },
   ];
   for (const c of cannons) {
     kit.block(root, c.x, FLOOR, c.z, 0.4, 0.2, 0.4, steel);
@@ -312,16 +304,17 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   /* ---------------- The DJ booth ---------------- */
   const dark = kit.mat("#1f2937");
   const black = kit.mat("#111827");
-  kit.block(root, DJ_AT.x, FLOOR, 0.5, 3.6, 1.05, 1.0, dark);
-  kit.block(root, DJ_AT.x, FLOOR + 1.05, 0.5, 3.7, 0.06, 1.08, black);
-  kit.block(root, DJ_AT.x, FLOOR + 0.92, -0.01, 3.6, 0.06, 0.02, kit.mat("#5ce1ff", { unlit: true }));
-  kit.block(root, DJ_AT.x, FLOOR + 1.11, 0.45, 0.62, 0.08, 0.5, kit.mat("#374151"));
+  const boothZ = DJ_AT.z - 1.15;
+  kit.block(root, DJ_AT.x, FLOOR, boothZ, 3.6, 1.05, 1.0, dark);
+  kit.block(root, DJ_AT.x, FLOOR + 1.05, boothZ, 3.7, 0.06, 1.08, black);
+  kit.block(root, DJ_AT.x, FLOOR + 0.92, boothZ - 0.51, 3.6, 0.06, 0.02, kit.mat("#5ce1ff", { unlit: true }));
+  kit.block(root, DJ_AT.x, FLOOR + 1.11, boothZ - 0.05, 0.62, 0.08, 0.5, kit.mat("#374151"));
   for (const [i, hex] of ["#ffc35a", "#14b8a6", "#ff8f6b"].entries()) {
-    kit.block(root, DJ_AT.x - 0.18 + i * 0.18, FLOOR + 1.19, 0.32, 0.08, 0.05, 0.08, kit.mat(hex, { unlit: true }));
+    kit.block(root, DJ_AT.x - 0.18 + i * 0.18, FLOOR + 1.19, boothZ - 0.18, 0.08, 0.05, 0.08, kit.mat(hex, { unlit: true }));
   }
   const decks: Mesh[] = [];
   for (const dx of [-0.9, 0.9]) {
-    const deck = kit.cyl(root, DJ_AT.x + dx, FLOOR + 1.11, 0.45, 0.66, 0.05, black, { tess: 18, dynamic: true });
+    const deck = kit.cyl(root, DJ_AT.x + dx, FLOOR + 1.11, boothZ - 0.05, 0.66, 0.05, black, { tess: 18, dynamic: true });
     kit.block(deck, 0.2, 0.025, 0, 0.12, 0.02, 0.08, kit.mat("#ffc35a"), { dynamic: true });
     decks.push(deck);
   }
@@ -333,25 +326,26 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     accent: "#c9a14a",
     bar: "top",
   });
-  tagline.position.set(DJ_AT.x, FLOOR + 0.48, -0.03);
+  tagline.position.set(DJ_AT.x, FLOOR + 0.48, boothZ - 0.53);
   // Speakers either side, with a woofer that kicks on the beat.
   const woofers: Mesh[] = [];
   for (const dx of [-2.5, 2.5]) {
     const sx = DJ_AT.x + dx;
-    kit.block(root, sx, FLOOR, 0.5, 0.9, 1.9, 0.8, black);
-    kit.block(root, sx, FLOOR + 1.4, 0.08, 0.3, 0.3, 0.04, dark);
-    woofers.push(kit.block(root, sx, FLOOR + 0.32, 0.08, 0.6, 0.6, 0.05, kit.mat("#374151"), { dynamic: true }));
+    kit.block(root, sx, FLOOR, boothZ, 0.9, 1.9, 0.8, black);
+    kit.block(root, sx, FLOOR + 1.4, boothZ - 0.42, 0.3, 0.3, 0.04, dark);
+    woofers.push(kit.block(root, sx, FLOOR + 0.32, boothZ - 0.42, 0.6, 0.6, 0.05, kit.mat("#374151"), { dynamic: true }));
   }
   // A lighting truss with four coloured lamps.
-  for (const dx of [-3.4, 3.4]) kit.block(root, DJ_AT.x + dx, FLOOR, 1.5, 0.16, 19.9 - FLOOR, 0.16, steel);
-  kit.block(root, DJ_AT.x, 19.9, 1.5, 6.96, 0.16, 0.16, steel);
+  const trussY = SIGN.y - 1.1;
+  for (const dx of [-3.4, 3.4]) kit.block(root, DJ_AT.x + dx, FLOOR, DJ_AT.z - 0.15, 0.16, trussY - FLOOR, 0.16, steel);
+  kit.block(root, DJ_AT.x, trussY, DJ_AT.z - 0.15, 6.96, 0.16, 0.16, steel);
   const lampMats = PARTY_COLOURS.slice(0, 4).map((hex) => kit.mat(hex, { unlit: true, unique: true }));
   lampMats.forEach((m, i) => {
-    kit.block(root, DJ_AT.x - 1.8 + i * 1.2, 19.9, 1.5, 0.06, 0.12, 0.06, steel);
-    const lamp = kit.block(root, DJ_AT.x - 1.8 + i * 1.2, 19.5, 1.5, 0.28, 0.34, 0.28, m, { dynamic: true });
+    kit.block(root, DJ_AT.x - 1.8 + i * 1.2, trussY, DJ_AT.z - 0.15, 0.06, 0.12, 0.06, steel);
+    const lamp = kit.block(root, DJ_AT.x - 1.8 + i * 1.2, trussY - 0.4, DJ_AT.z - 0.15, 0.28, 0.34, 0.28, m, { dynamic: true });
     lamp.rotation.x = 0.45;
   });
-  kit.hitbox(root, DJ_AT.x, FLOOR, 0.6, 6.2, 2.0, 1.4, { type: "party" });
+  kit.hitbox(root, DJ_AT.x, FLOOR, boothZ + 0.1, 6.2, 2.0, 1.4, { type: "party" });
 
   /* ---------------- The bar, the tables, the cake and the lounge ---------------- */
   const walnut = kit.mat("#ffffff", { texture: "walnut" });
@@ -359,11 +353,11 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   kit.block(root, BAR_AT.x, FLOOR + 1.15, BAR_AT.z, 2.56, 0.07, 0.94, white);
   kit.block(root, BAR_AT.x, FLOOR + 0.95, BAR_AT.z - 0.41, 2.4, 0.05, 0.02, kit.mat("#c9a14a", { unlit: true }));
   for (const [i, hex] of ["#14532d", "#b45309", "#cbd5e1", "#14532d", "#b45309"].entries()) {
-    kit.cyl(root, BAR_AT.x - 0.9 + i * 0.32, FLOOR + 1.22, BAR_AT.z - 0.18, 0.14, 0.44, kit.mat(hex, { specular: 0.6 }), { tess: 8 });
+    kit.cyl(root, BAR_AT.x - 0.9 + i * 0.32, FLOOR + 1.22, BAR_AT.z + 0.18, 0.14, 0.44, kit.mat(hex, { specular: 0.6 }), { tess: 8 });
   }
-  kit.cyl(root, BAR_AT.x + 0.85, FLOOR + 1.22, BAR_AT.z + 0.1, 0.38, 0.3, kit.mat("#cbd5e1", { specular: 0.8 }), { tess: 10 });
+  kit.cyl(root, BAR_AT.x + 0.85, FLOOR + 1.22, BAR_AT.z - 0.1, 0.38, 0.3, kit.mat("#cbd5e1", { specular: 0.8 }), { tess: 10 });
   const flute = kit.mat("#f6e7b0", { specular: 0.6 });
-  for (let i = 0; i < 4; i++) kit.block(root, BAR_AT.x - 0.7 + i * 0.3, FLOOR + 1.22, BAR_AT.z + 0.22, 0.1, 0.22, 0.1, flute);
+  for (let i = 0; i < 4; i++) kit.block(root, BAR_AT.x - 0.7 + i * 0.3, FLOOR + 1.22, BAR_AT.z - 0.22, 0.1, 0.22, 0.1, flute);
   const barSign = kit.label(root, {
     lines: [{ text: "BAR", size: 64, weight: 800, color: "#ffd36b" }],
     width: 0.9,
@@ -379,34 +373,34 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     kit.cyl(root, t.x, FLOOR + 1.0, t.z, 0.9, 0.05, white, { tess: 14 });
     kit.block(root, t.x - 0.15, FLOOR + 1.05, t.z + 0.1, 0.1, 0.22, 0.1, flute);
   }
-  // George's retirement cake.
+  // The welcome cake.
   kit.cyl(root, CAKE_AT.x, FLOOR, CAKE_AT.z, 1.4, 0.75, kit.mat("#f8fafc"), { tess: 16 });
-  for (const [d, h, y, hex] of [
+  for (const [d, h, yy, hex] of [
     [0.9, 0.28, 0.75, "#fff7ed"],
-    [0.66, 0.25, 1.03, "#fde68a"],
+    [0.66, 0.25, 1.03, "#99f6e4"],
     [0.42, 0.22, 1.28, "#fff7ed"],
   ] as const) {
-    kit.cyl(root, CAKE_AT.x, FLOOR + y, CAKE_AT.z, d, h, kit.mat(hex), { tess: 14 });
+    kit.cyl(root, CAKE_AT.x, FLOOR + yy, CAKE_AT.z, d, h, kit.mat(hex), { tess: 14 });
   }
   for (const dx of [-0.1, 0, 0.1]) {
     kit.block(root, CAKE_AT.x + dx, FLOOR + 1.5, CAKE_AT.z, 0.04, 0.16, 0.04, kit.mat("#f8fafc"));
     kit.block(root, CAKE_AT.x + dx, FLOOR + 1.66, CAKE_AT.z, 0.05, 0.07, 0.05, kit.mat("#ffb347", { unlit: true }));
   }
   const cakeSign = kit.label(root, {
-    lines: [{ text: "Happy retirement, George!", size: 40, weight: 700, color: "#0f1a2e" }],
-    width: 1.7,
-    px: 600,
+    lines: [{ text: "Welcome to the Caldova family", size: 40, weight: 700, color: "#0f1a2e" }],
+    width: 1.9,
+    px: 680,
     bg: "rgba(255,251,242,0.96)",
     accent: "#c9a14a",
     bar: "top",
   });
   cakeSign.position.set(CAKE_AT.x, FLOOR + 0.45, CAKE_AT.z - 0.72);
   kit.hitbox(root, CAKE_AT.x, FLOOR, CAKE_AT.z, 1.6, 1.8, 1.6, { type: "party" });
-  // The lounge on the green roof: a low table and three beanbags.
+  // The lounge: a low table and three beanbags, by the front parapet.
   kit.cyl(root, LOUNGE.x, FLOOR, LOUNGE.z, 1.2, 0.42, walnut, { tess: 14 });
   for (const [x, z, hex] of [
     [LOUNGE.x - 1.4, LOUNGE.z - 0.1, "#ff8f6b"],
-    [LOUNGE.x + 1.4, LOUNGE.z - 0.1, "#14b8a6"],
+    [LOUNGE.x + 1.4, LOUNGE.z + 0.2, "#14b8a6"],
     [LOUNGE.x, LOUNGE.z + 1.4, "#ffc35a"],
   ] as const) {
     const bag = kit.mat(hex);
@@ -415,9 +409,9 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   }
   kit.hitbox(root, LOUNGE.x, FLOOR, LOUNGE.z + 0.3, 4.0, 1.0, 3.0, { type: "party" });
   // Planters along the back of the deck.
-  for (const x of [-8.6, -1.4, 8.4]) {
-    kit.block(root, x, FLOOR, 6.9, 1.2, 0.6, 0.6, kit.mat("#d8d2c6"));
-    kit.block(root, x, FLOOR + 0.6, 6.9, 1.0, 0.4, 0.45, kit.mat("#5ea347"));
+  for (const x of [-4.6, 18.6]) {
+    kit.block(root, x, FLOOR, INSIDE.z1 - 0.7, 1.2, 0.6, 0.6, kit.mat("#d8d2c6"));
+    kit.block(root, x, FLOOR + 0.6, INSIDE.z1 - 0.7, 1.0, 0.4, 0.45, kit.mat("#5ea347"));
   }
   kit.useBatch(prev);
   batch.flush();
@@ -426,10 +420,10 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   // Each bunch is merged by colour while its node is at the origin, then moved into place.
   const bunches: TransformNode[] = [];
   for (const [i, [x, z]] of [
-    [-20.4, -10.4],
-    [-10.5, -10.3],
-    [-0.6, 1.0],
-    [8.3, 1.0],
+    [-1.2, -2.6],
+    [9.6, 2.6],
+    [-19.4, -11.8],
+    [19.6, -11.8],
   ].entries()) {
     const node = new TransformNode("v2_balloons", scene);
     node.parent = root;
@@ -466,31 +460,27 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     const mover = new TransformNode(`v2_guest_${info.id}`, scene);
     mover.parent = root;
     mover.position.y = FLOOR;
+    const scale = info.child ? CHARACTER_SCALE * 0.6 : CHARACTER_SCALE;
     const ch = new VoxelCharacter(scene, `guest:${info.id}`, info.palette);
     ch.root.parent = mover;
-    ch.root.scaling.setAll(CHARACTER_SCALE);
+    ch.root.scaling.setAll(scale);
     const glass = new TransformNode(`v2_glass_${info.id}`, scene);
     glass.parent = ch.getHandAnchor();
     glass.rotationQuaternion = new Quaternion();
-    kit.block(glass, 0, -0.04, 0.1, 0.13, 0.24, 0.13, champagne, { dynamic: true });
-    const bubble = kit.bubble(ch.root, 2.45, info.side ? SIDES[info.side].color : "#c9a14a", CHARACTER_SCALE);
-    const george = info.id === "george";
-    const choices: Array<[number, () => Outing | null]> = [
-      [3.2, () => go(freeOf(DANCE), pick(["Dancing", "Dancing to the DJ", "Showing off some moves"]), "the dance floor", [12, 22])],
-      [1.8, () => go(freeOf(BAR), pick(["Grabbing a drink", "Topping up the bubbles", "Ordering a mocktail"]), "the bar", [5, 9])],
-      [
-        george ? 1.6 : 1.0,
-        () =>
-          go(
-            freeOf(CAKE),
-            george ? pick(["Cutting his retirement cake", "Having another slice of cake"]) : "Having some retirement cake",
-            "the cake table",
-            [6, 10],
-          ),
-      ],
-      [1.0, () => go(freeOf(VIEW), pick(["Watching the boats on the lake", "Taking in the view"]), "the edge of the roof", [6, 10])],
-      [0.6, () => go(freeOf(SKY), "Peeking down at the brain", "the skylight", [5, 8])],
-    ];
+    if (!info.child) kit.block(glass, 0, -0.04, 0.1, 0.13, 0.24, 0.13, champagne, { dynamic: true });
+    const bubble = kit.bubble(ch.root, 2.45, info.side ? SIDES[info.side].color : "#c9a14a", scale);
+    const choices: Array<[number, () => Outing | null]> = info.child
+      ? [
+          [3.5, () => go(freeOf(DANCE), pick(["Dancing", "Twirling round and round"]), "the dance floor", [10, 18])],
+          [1.0, () => go(freeOf(CAKE), "Looking at the cake", "the cake table", [4, 7])],
+        ]
+      : [
+          [3.2, () => go(freeOf(DANCE), pick(["Dancing", "Dancing to the DJ", "Showing off some moves"]), "the dance floor", [12, 22])],
+          [1.8, () => go(freeOf(BAR), pick(["Grabbing a drink", "Topping up the bubbles", "Ordering a mocktail"]), "the bar", [5, 9])],
+          [1.0, () => go(freeOf(CAKE), pick(["Having some cake", "Trying the welcome cake"]), "the cake table", [6, 10])],
+          [1.0, () => go(freeOf(VIEW), pick(["Watching the trams", "Taking in the city"]), "the parapet", [6, 10])],
+          [0.6, () => go(freeOf(DOME_PEEK), "Peeking down at the brain", "the dome", [5, 8])],
+        ];
     const total = choices.reduce((s, [w]) => s + w, 0);
     const w = new Wanderer({
       body: {
@@ -515,7 +505,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
       },
       homeTask: () => pick(info.home),
       homeDwell: [8, 16],
-      speed: 2.0,
+      speed: info.child ? 1.6 : 2.0,
       book,
       rand: r,
       bubble,
@@ -532,7 +522,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
       phase: r() * Math.PI * 2,
       away: false,
       left: 0,
-      right: 0.55,
+      right: info.child ? 0 : 0.55,
     });
   });
   const guestList = [...guests.values()];
@@ -573,10 +563,10 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   const sparkDirs: Vector3[] = [];
   for (let i = 0; i < SPARKS; i++) {
     // Spread evenly over a sphere.
-    const y = 1 - ((i + 0.5) / SPARKS) * 2;
-    const rad = Math.sqrt(1 - y * y);
+    const yy = 1 - ((i + 0.5) / SPARKS) * 2;
+    const rad = Math.sqrt(1 - yy * yy);
     const a = i * 2.39996;
-    sparkDirs.push(new Vector3(Math.cos(a) * rad, y, Math.sin(a) * rad));
+    sparkDirs.push(new Vector3(Math.cos(a) * rad, yy, Math.sin(a) * rad));
   }
   const bursts: Burst[] = [0, 1].map(() => {
     const mat = kit.mat("#ffc35a", { unlit: true, unique: true });
@@ -594,8 +584,8 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     if (!b) return;
     b.state = "rising";
     b.t = 0;
-    b.peak = 30 + r() * 4;
-    b.rocket.position.set(SIGN.x + (r() - 0.5) * 18, 22, SIGN.z + 3.2);
+    b.peak = SIGN.y + 9 + r() * 4;
+    b.rocket.position.set(SIGN.x + (r() - 0.5) * 18, SIGN.y + 1, SIGN.z + 3.2);
     b.rocket.setEnabled(true);
     const c = Color3.FromHexString(pick(PARTY_COLOURS));
     b.mat.emissiveColor.copyFrom(c);
@@ -612,12 +602,13 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   let toastFor = 0;
   let cheered = false;
   let toastLine = "";
+  let toastNow = "";
   let fireIn = 4;
   let fireFor = 0;
   const launches: number[] = [];
   let djIn = 6;
   let djSays = 0;
-  const georgeHere = (): boolean => !guests.get("george")?.away;
+  const here = (id: string): boolean => !guests.get(id)?.away;
   const djSay = (text: string): void => {
     djBubble.say(text);
     djSays = 3.4;
@@ -630,6 +621,13 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     m.emissiveColor.copyFrom(c);
     m.diffuseColor.copyFrom(c);
   };
+  /** The toasts, in turn: to whoever is here with happy news, and to everyone. */
+  const TOASTS: Array<{ who?: string; line: string; now: string }> = [
+    { who: "george", line: "To George and Harpreet’s succession plan!", now: "A toast to George and Harpreet" },
+    { who: "priya", line: "To Priya and Arjun’s new home!", now: "A toast to Priya and Arjun" },
+    { line: "To all our clients and referral partners!", now: "A toast to the clients" },
+  ];
+  let toastIndex = 0;
 
   const pose = (g: Guest, ph: number, dt: number): void => {
     const body = g.ch.root;
@@ -640,7 +638,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     } else {
       const dancing = !!g.w.here?.key?.startsWith("dance:");
       let lft = 0;
-      let rgt = 0.55;
+      let rgt = g.info.child ? 0 : 0.55;
       let spread = 0;
       if (dancing) {
         const p = ph + g.phase;
@@ -668,7 +666,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
         body.rotation.y *= Math.exp(-dt * 6);
       }
       // Glasses up for the toast.
-      if (cheering()) rgt = Math.max(rgt, 2.5);
+      if (cheering() && !g.info.child) rgt = Math.max(rgt, 2.5);
       const k = Math.min(1, dt * 10);
       g.left += (lft - g.left) * k;
       g.right += (rgt - g.right) * k;
@@ -714,7 +712,16 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
         toastFor = 4.4;
         toastIn = 34 + r() * 10;
         cheered = false;
-        toastLine = georgeHere() ? "A toast to George’s retirement!" : "To all our members and clients!";
+        // The next toast whose guests are here.
+        for (let k = 0; k < TOASTS.length; k++) {
+          const t = TOASTS[(toastIndex + k) % TOASTS.length];
+          if (!t.who || here(t.who)) {
+            toastLine = t.line;
+            toastNow = t.now;
+            toastIndex = (toastIndex + k + 1) % TOASTS.length;
+            break;
+          }
+        }
         djSay(toastLine);
       }
       if (toastFor > 0) {
@@ -824,7 +831,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     },
     setAway(id: ScenarioId | null): void {
       for (const g of guestList) {
-        const away = !!id && g.info.scenario === id;
+        const away = !!id && g.info.leavesFor === id;
         if (away === g.away) continue;
         g.away = away;
         g.w.snapHome();
@@ -834,15 +841,15 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
       }
     },
     now(): string {
-      if (toastFor > 0) return georgeHere() ? "A toast to George’s retirement" : "A toast to the members and clients";
-      if (fireFor > 0) return "Fireworks over the lake";
+      if (toastFor > 0) return toastNow;
+      if (fireFor > 0) return "Fireworks over the city";
       return "Dancing to the DJ";
     },
     guestTask(id: string): string | null {
       const g = guests.get(id);
       if (!g) return null;
       if (g.away) return "Down at the front desk";
-      if (cheering() && !g.w.walking) return "Raising a glass";
+      if (cheering() && !g.w.walking) return g.info.child ? "Clapping along" : "Raising a glass";
       return g.w.task;
     },
   };

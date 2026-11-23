@@ -1,8 +1,9 @@
 /**
- * Voxel construction kit for the lakehouse.
+ * Voxel construction kit for Caldova House.
  *
  * - `mat()` caches flat-shaded materials, optionally multiplied with a tiny
- *   pixel-noise texture (grass, timber, stone…) that tiles in world units.
+ *   pixel texture (brick, render, bluestone, timber, asphalt…) that tiles in
+ *   world units.
  * - `block()` / `cyl()` build primitives that sit on a floor (y is the bottom).
  * - `label()` paints text onto a DynamicTexture plane for signs and tags.
  * - `bubble()` floats a small speech bubble over a walker to say what it is doing.
@@ -30,13 +31,18 @@ import type { InspectTarget, V2PickMetadata } from "./types";
 export type TextureKey =
   | "grass"
   | "dirt"
+  | "clay"
   | "stone"
-  | "sand"
-  | "gravel"
   | "concrete"
   | "oak"
-  | "cedar"
-  | "walnut";
+  | "walnut"
+  | "brick"
+  | "render"
+  | "bluestone"
+  | "asphalt"
+  | "paving"
+  | "parquet"
+  | "copper";
 
 export interface MatOptions {
   /** Self-illumination as a fraction of the colour (0–1). */
@@ -107,20 +113,91 @@ export function rng(seed: number): () => number {
 const TONES: Record<TextureKey, string[]> = {
   grass: ["#5f9e3f", "#67a845", "#579537", "#6fb04c", "#4f8a33", "#62a142"],
   dirt: ["#8a5a35", "#7d5030", "#94643c", "#734a2b", "#9c6b42"],
+  clay: ["#b07a4f", "#a56f46", "#ba8659", "#9c673f"],
   stone: ["#8b9097", "#7f848b", "#979ca3", "#737880", "#a1a6ad"],
-  sand: ["#e9d6a6", "#dfca97", "#f1dfb1", "#d8c38e"],
-  gravel: ["#cfc8ba", "#c3bcae", "#d9d2c4", "#b7b0a2"],
   concrete: ["#dedbd4", "#d6d3cc", "#e4e1da", "#d1cec6"],
   oak: ["#c9955c", "#c18d55", "#d19e66", "#b9844d", "#cc9a60"],
-  cedar: ["#a8683c", "#9d5f35", "#b27244", "#93572f", "#ad6c3f"],
   walnut: ["#6b4429", "#5f3c24", "#77502f", "#563520"],
+  // Melbourne red brick, laid in running bond with pale lime mortar.
+  brick: ["#a5513a", "#9a4a34", "#b05b41", "#93452f", "#a9563c"],
+  // Cream stucco render.
+  render: ["#efe3c9", "#eadcc0", "#f3e9d3", "#e6d7b9"],
+  // Dressed Victorian bluestone (basalt).
+  bluestone: ["#5d6572", "#555d6a", "#656d7b", "#4e5562"],
+  asphalt: ["#40444b", "#3a3e45", "#454950", "#363a40"],
+  paving: ["#bfc1c4", "#b7b9bc", "#c6c8cb", "#b1b3b6"],
+  parquet: ["#c08a52", "#b47f49", "#cb955c", "#a97444"],
+  copper: ["#b9733e", "#ad6834", "#c5824b", "#a0602f"],
 };
 
 function paintTexture(key: TextureKey, ctx: Ctx2D, size: number): void {
   const r = rng(key.length * 9973 + key.charCodeAt(0) * 31);
   const tones = TONES[key];
   const pick = (): string => tones[Math.floor(r() * tones.length)];
-  if (key === "oak" || key === "cedar" || key === "walnut") {
+  if (key === "brick") {
+    // Four courses of running bond: each brick 16 x 7 px with a 1 px mortar joint.
+    ctx.fillStyle = "#d9cfc1";
+    ctx.fillRect(0, 0, size, size);
+    for (let row = 0; row < 4; row++) {
+      const off = row % 2 ? 8 : 0;
+      for (let col = -1; col < 2; col++) {
+        const x = col * 16 + off;
+        ctx.fillStyle = pick();
+        ctx.fillRect(x + 1, row * 8 + 1, 15, 7);
+        // A little texture on each brick.
+        ctx.fillStyle = "rgba(0,0,0,0.08)";
+        ctx.fillRect(x + 2 + Math.floor(r() * 10), row * 8 + 2 + Math.floor(r() * 4), 3, 1);
+      }
+    }
+    return;
+  }
+  if (key === "bluestone") {
+    // Dressed blocks, 16 x 10 px, with dark joints and a pitted face.
+    ctx.fillStyle = "#3d434d";
+    ctx.fillRect(0, 0, size, size);
+    for (let row = 0; row < 4; row++) {
+      const off = row % 2 ? 8 : 0;
+      for (let col = -1; col < 2; col++) {
+        ctx.fillStyle = pick();
+        ctx.fillRect(col * 16 + off + 1, row * 8 + 1, 15, 7);
+      }
+    }
+    for (let i = 0; i < 40; i++) {
+      ctx.fillStyle = r() > 0.5 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.08)";
+      ctx.fillRect(Math.floor(r() * size), Math.floor(r() * size), 1, 1);
+    }
+    return;
+  }
+  if (key === "paving") {
+    // Square pavers with fine joints.
+    ctx.fillStyle = "#9da0a4";
+    ctx.fillRect(0, 0, size, size);
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < 2; x++) {
+        ctx.fillStyle = pick();
+        ctx.fillRect(x * 16 + 1, y * 16 + 1, 15, 15);
+      }
+    }
+    return;
+  }
+  if (key === "parquet") {
+    // Basketweave parquet: 8 px squares of three slats, turned every other square.
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        const across = (x + y) % 2 === 0;
+        for (let s = 0; s < 3; s++) {
+          ctx.fillStyle = pick();
+          if (across) ctx.fillRect(x * 8, y * 8 + s * 3, 8, 3);
+          else ctx.fillRect(x * 8 + s * 3, y * 8, 3, 8);
+        }
+        ctx.fillStyle = "rgba(60,32,12,0.35)";
+        if (across) ctx.fillRect(x * 8, y * 8 + 7, 8, 1);
+        else ctx.fillRect(x * 8 + 7, y * 8, 1, 8);
+      }
+    }
+    return;
+  }
+  if (key === "oak" || key === "walnut") {
     // Planks with staggered joints, a little grain and a dark seam.
     const rows = 8;
     const ph = size / rows;
@@ -215,7 +292,7 @@ export class Kit {
       m.emissiveColor = c.clone();
     }
     if (o.alpha !== undefined && o.alpha < 1) {
-      // Glass and water: blend without writing depth so overlapping panes stay visible.
+      // See-through parts: blend without writing depth so overlapping panes stay visible.
       m.alpha = o.alpha;
       m.disableDepthWrite = true;
     }

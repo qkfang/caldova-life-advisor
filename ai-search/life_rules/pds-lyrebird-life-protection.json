@@ -1,0 +1,36 @@
+{
+  "id": "pds-lyrebird-life-protection",
+  "title": "Lyrebird Life — Protection PDS extract",
+  "product": "Lyrebird Life Protection",
+  "version": "PDS extract — PDS dated 1 July 2026",
+  "summary": "Extract of the Product Disclosure Statement for Lyrebird Life Protection, issued by Lyrebird Life Limited: life cover with a terminal illness benefit, TPD cover, trauma cover and income protection for individuals and families. Lyrebird doesn't offer business protection (key person or buy-sell cover) or super-linking. Claims uses this extract for the trauma definitions and who is paid; Financial Crime uses it for Lyrebird's controls on changes of details and payments. General information only — it doesn't take account of anyone's objectives, financial situation or needs.",
+  "rules": "1 Life cover — pays the sum insured on death, with a terminal illness benefit paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months. The policy owner can nominate one or more beneficiaries and their shares; life cover is paid directly to the nominated beneficiaries, not through the estate.\n2 TPD cover — any occupation (inside or outside super) or own occupation (outside super only).\n3 Trauma cover — pays a lump sum when the life insured is diagnosed with a listed condition, such as cancer, heart attack, stroke or major head injury. Mental health conditions are not covered.\nCancer: a malignant tumour, shown by the uncontrolled growth and spread of malignant cells and the invasion of tissue. The diagnosis must be confirmed by a specialist medical practitioner and supported by histopathology. A GP's letter or imaging alone isn't enough.\n4 Income protection — waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65. Lyrebird pays the lesser of the insured monthly benefit and 70% of the life insured's average monthly earnings in the 12 months before the disability.\n5 Who is paid — trauma, TPD and income protection benefits are paid to the policy owner. Lyrebird pays only into an account in the name of the policy owner (or, for life cover, the nominated beneficiary). It doesn't pay benefits to third parties or into company accounts unless the company is the policy owner.\n6 Changes of contact or bank details — Lyrebird confirms each change with a code sent to the mobile or email held before the change, or with a signed request and certified ID. If bank details have changed in the 30 days before a benefit payment, Lyrebird calls the policy owner on the verified number before paying.\n7 Claims Integrity — Lyrebird's Claims Integrity team investigates suspected fraud and identity takeover. Advisers can alert the team about a policy.\n8 Premiums — stepped (rise with age) or level (start higher and rise more slowly).\n9 Applying — the policy owner and life insured must take reasonable care not to make a misrepresentation. Lyrebird won't ask for or use genetic test results.\n10 Cooling-off — 14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made.\n11 Claims — Lyrebird subscribes to the Life Insurance Code of Practice (see 'Claims rules — Life Insurance Code of Practice and income protection benefits').\n12 Adviser remuneration — Lyrebird may pay the adviser commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent.\n13 Earlier policies — the cancer definition, beneficiary nominations and payment rules described here are the same as in Lyrebird's 2019 PDS.",
+  "limits": "No business protection and no super-linking. Trauma cover doesn't cover mental health conditions and isn't available inside super. A cancer claim can't be assessed without a specialist's diagnosis supported by histopathology. Benefits are never paid to a third party or into an account in another name. Lyrebird doesn't give personal advice.",
+  "evidenceRequired": [
+    "Claim form signed by the policy owner",
+    "Certified ID of the policy owner",
+    "Trauma (cancer): specialist's report confirming the diagnosis, and the histopathology report",
+    "Bank account in the policy owner's own name (or the nominated beneficiary's, for life cover)",
+    "Any change of contact or bank details confirmed through the verified mobile or email held before the change"
+  ],
+  "sources": [],
+  "owner": "Insurance Research",
+  "tags": [
+    "pds",
+    "lyrebird-life",
+    "LB-",
+    "trauma",
+    "cancer-definition",
+    "histopathology",
+    "specialist-diagnosis",
+    "paid-to-policy-owner",
+    "no-third-party-payments",
+    "change-of-details-verification",
+    "claims-integrity",
+    "nominated-beneficiaries",
+    "no-business-protection",
+    "income-protection",
+    "cooling-off"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

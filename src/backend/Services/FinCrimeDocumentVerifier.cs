@@ -5,14 +5,14 @@ using Azure;
 using Azure.AI.ContentUnderstanding;
 using Azure.Identity;
 
-namespace CaldovaSuper.App.Services;
+namespace CaldovaLife.App.Services;
 
 /// <summary>Outcome of one authenticity check against a document.</summary>
 /// <param name="Status"><c>pass</c>, <c>fail</c>, <c>warn</c> or <c>n/a</c>.</param>
 public record FinCrimeDocumentCheck(string Name, string Status, string Detail);
 
 /// <summary>Per-document verdict plus the checks that produced it.</summary>
-/// <param name="Verdict"><c>legit</c>, <c>suspicious</c> or <c>fake</c>.</param>
+/// <param name="Verdict"><c>legit</c>, <c>suspicious</c>, <c>tampered</c> (genuine details, altered image) or <c>fake</c>.</param>
 /// <param name="Source"><c>content-understanding</c> or <c>manifest-fallback</c>.</param>
 public record FinCrimeDocumentVerification(
     string Id,
@@ -34,33 +34,43 @@ public record FinCrimeDocumentVerification(
 /// (<c>AZURE_CONTENT_UNDERSTANDING_ENDPOINT</c>, optional
 /// <c>AZURE_CONTENT_UNDERSTANDING_KEY</c> — otherwise
 /// <c>DefaultAzureCredential</c>), each specimen image is sent to a custom
-/// analyzer built on <c>prebuilt-document</c> with a shared authenticity field
-/// schema (document type, issuer, holder / account / fund name, document
-/// number, dates, MRZ, tamper indicators, security features, consistency
-/// summary). The extracted fields are then run through a deterministic checks
-/// layer that compares them with the Member Case (parties, dates of birth on
-/// file, accepted payee names, the SMSF and its ATO SVS result) and scores each
-/// document <c>legit</c> / <c>suspicious</c> / <c>fake</c> with the reasons.
+/// analyzer built on <c>prebuilt-document</c> with an authenticity field schema
+/// (document type, issuer, holder, numbers, dates, amounts, provider number,
+/// diagnosis evidence, company officers, MRZ, certification, tamper indicators
+/// and security features). The extracted fields then run through a
+/// deterministic checks layer that compares them with the Client Case (people
+/// and dates of birth on file, who a benefit may be paid to, the travel notice,
+/// the income on file and the policy's evidence rule) and scores each document
+/// <c>legit</c> / <c>suspicious</c> / <c>tampered</c> / <c>fake</c> with the reasons.
 ///
 /// Without Content Understanding (or if a call fails) the same checks run on
-/// the case-file record in the specimen manifest, so the demo always completes.
+/// the case-file record in the specimen manifest, so the page always works
+/// offline.
 /// </summary>
 public class FinCrimeDocumentVerifier
 {
     public const string SourceContentUnderstanding = "content-understanding";
     public const string SourceManifestFallback = "manifest-fallback";
 
-    private const string DefaultAnalyzerId = "caldova_fincrime_authenticity_v1";
+    private const string DefaultAnalyzerId = "caldova_life_fincrime_authenticity_v1";
 
     private static readonly string[] DocumentKinds =
     [
-        "driver-licence", "passport", "bank-statement", "smsf-registration",
-        "death-certificate", "income-support-letter", "other",
+        "driver-licence", "passport", "payslip", "medical-report", "death-certificate",
+        "bank-statement", "bas-profit-loss", "company-extract", "other",
     ];
 
     private static readonly Regex NoneRegex = new(
         @"^\s*(none|no|nil|n/?a|not applicable|none (found|detected|visible)|no (visible )?(tamper(ing)? )?indicators?( found| detected)?)\s*\.?\s*$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex NotConfirmedRegex = new(
+        @"\b(no|not|none|pending|awaiting|to follow|outstanding|without)\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    // Medicare provider number: six-digit stem, practice location character
+    // (no I, O, S or Z) and a check character from a fixed set of letters.
+    private static readonly Regex ProviderNumberRegex = new(@"^\d{6}[0-9A-HJ-NP-RT-Y][ABFHJKLTWXY]$", RegexOptions.Compiled);
 
     private static readonly string[] DateFormats =
     [
@@ -86,7 +96,7 @@ public class FinCrimeDocumentVerifier
         new(StringComparer.OrdinalIgnoreCase);
 
     // Document numbers already verified, with the case (and scenario) they were first seen on.
-    private readonly ConcurrentDictionary<string, (string CaseNumber, string SampleId)> _seenDocumentNumbers =
+    private readonly ConcurrentDictionary<string, (string CaseNumber, string ScenarioKey)> _seenDocumentNumbers =
         new(StringComparer.OrdinalIgnoreCase);
 
     public FinCrimeDocumentVerifier(
@@ -114,17 +124,17 @@ public class FinCrimeDocumentVerifier
         "Document type plausibility",
         "Name matches the case",
         "Date of birth matches the record on file",
-        "Dates plausible and current",
+        "Dates plausible and consistent",
         "No visible tamper indicators",
         "Security features or certification present",
-        "MRZ check digits valid (passports)",
+        "Number formats and check digits",
         "Electronic verification (DVS)",
-        "Counterparty checks (account age, SMSF registration, SVS)",
-        "Document not used on another member's case",
+        "Supporting-evidence checks",
+        "Document not used on another client's case",
     ];
 
     /// <summary>
-    /// Verify documents against a Member Case. Documents are analysed in
+    /// Verify documents against a Client Case. Documents are analysed in
     /// parallel; results keep the requested order. With <paramref name="useCache"/>
     /// the latest scan of the same document on the same case is reused.
     /// </summary>
@@ -140,13 +150,13 @@ public class FinCrimeDocumentVerifier
         var results = await Task.WhenAll(samples.Select(sample =>
             VerifyWithCacheAsync(record, profile, sample, useCache, cancellationToken)));
 
-        // Remember document numbers so a document reused on another member's
+        // Remember document numbers so a document reused on another client's
         // case is flagged there. First case wins.
         foreach (var sample in samples)
         {
             var number = NormaliseNumber(sample.DocumentNumber);
             if (number.Length > 0)
-                _seenDocumentNumbers.TryAdd(number, (record.CaseNumber, record.SampleId));
+                _seenDocumentNumbers.TryAdd(number, (record.CaseNumber, profile.ScenarioKey));
         }
 
         return results;
@@ -233,7 +243,7 @@ public class FinCrimeDocumentVerifier
         string? note)
     {
         var recorder = RunChecks(record, profile, sample, fields);
-        var (verdict, summary, reasons) = ScoreVerdict(recorder, sample);
+        var (verdict, summary, reasons) = ScoreVerdict(recorder, sample, fields);
         if (note is not null) reasons.Insert(0, note);
         return new FinCrimeDocumentVerification(
             Id: sample.Id,
@@ -341,31 +351,39 @@ public class FinCrimeDocumentVerifier
             {
                 Type = ContentFieldType.String,
                 Method = GenerationMethod.Classify,
-                Description = "Type of document.",
+                Description = "Type of document: driver-licence, passport, payslip, medical-report (a specialist's or doctor's report), death-certificate, bank-statement, bas-profit-loss (BAS lodgement or profit and loss summary), company-extract (company register extract) or other.",
             },
-            ["issuer"] = Text("Issuing organisation exactly as printed (licensing authority, passport authority, bank, registry, agency or register)."),
-            ["holderName"] = Text("Name the document is about: licence or passport holder, bank account name, SMSF fund name, deceased person on a death certificate, or the letter's addressee."),
-            ["documentNumber"] = Text("Primary identifier: licence number, passport number, BSB and account number as printed (masked digits stay masked), ABN, death registration number or customer reference number."),
-            ["dateOfBirth"] = Text("Date of birth printed on the document, as yyyy-MM-dd. Empty if none."),
-            ["issueDate"] = Text("Issue date, statement date or letter date, as yyyy-MM-dd. Empty if none."),
+            ["issuer"] = Text("Who issued the document, exactly as printed: licensing or passport authority, employer, medical practice and doctor, registry, bank, accountant or tax agent, or company register."),
+            ["holderName"] = Text("Name the document is about: licence or passport holder, employee, patient, deceased person, bank account name, business owner or business name, or company name."),
+            ["documentNumber"] = Text("Primary identifier as printed: licence or passport number, employee ID, medical provider number, death registration number, BSB and account number (masked digits stay masked), ABN or ACN."),
+            ["dateOfBirth"] = Text("Date of birth printed on the document (holder, patient or deceased), as yyyy-MM-dd. Empty if none."),
+            ["issueDate"] = Text("Issue date, pay date, report or letter date, statement date, extract date or date prepared, as yyyy-MM-dd. Empty if none."),
             ["expiryDate"] = Text("Expiry date, as yyyy-MM-dd. Empty if none."),
-            ["registrationDate"] = Text("ABN registration date (SMSF extract) or death registration date (death certificate), as yyyy-MM-dd. Empty if none."),
+            ["registrationDate"] = Text("Company registration date (company extract) or death registration date (death certificate), as yyyy-MM-dd. Empty if none."),
             ["dateOfDeath"] = Text("Date of death on a death certificate, as yyyy-MM-dd. Empty if none."),
-            ["accountOpenedDate"] = Text("Date the bank account was opened, or the 'customer since' date, as yyyy-MM-dd. Empty if none."),
-            ["incomeSupportSince"] = Text("Date income support started, from an income support letter, as yyyy-MM-dd. Empty if none."),
+            ["accountOpenedDate"] = Text("Date a bank account was opened, or the 'customer since' date, as yyyy-MM-dd. Empty if none."),
+            ["consultationDate"] = Text("Medical report only: the date the doctor saw the patient, or the date of the operation, as yyyy-MM-dd. Empty if none."),
+            ["periodStart"] = Text("Start of the pay period, statement period or reporting period, as yyyy-MM-dd. Empty if none."),
+            ["periodEnd"] = Text("End of the pay period, statement period or reporting period, as yyyy-MM-dd. Empty if none."),
+            ["keyAmount"] = Text("Headline amount as a plain number: annual salary on a payslip, net business income on a profit and loss summary, or closing balance on a bank statement. Empty if none."),
+            ["providerNumber"] = Text("Medical report only: the doctor's provider number exactly as printed. Empty if none."),
+            ["diagnosisEvidence"] = Text("Medical report only: what the diagnosis rests on — histopathology or pathology report, imaging (MRI, mammogram, ultrasound), an operation — and whether results are still pending. Empty if none."),
+            ["officers"] = Text("Company extract only: each director, secretary and shareholder with their role and shareholding, separated by semicolons. Empty if none."),
+            ["companyStatus"] = Text("Company extract only: the company's registration status as printed (for example Registered or Deregistered). Empty if none."),
             ["mrz"] = Text("Passport machine-readable zone: both lines exactly as printed, separated by a newline. Empty if none."),
-            ["tamperIndicators"] = Text("Visible signs the document was altered: a field re-typed in a different font, weight or baseline; patched backgrounds that interrupt the guilloche; a re-pasted or cut-out photo; a ghost image that doesn't match the main photo; missing or damaged holograms or security bands the card says it has; misspelt issuer names; impossible or inconsistent dates. Ignore the 'SPECIMEN — DEMO ONLY' watermark and stamps. Return 'none' when there are no indicators."),
+            ["certification"] = Text("Certified copy stamp, if any: who certified it and the date sighted. Empty if none."),
+            ["tamperIndicators"] = Text("Visible signs the document was altered: a pasted or low-resolution letterhead; text or dates re-typed in a different font, weight or baseline; white patches; a paragraph in a different typeface; a replaced or cut-out photo; a ghost image that doesn't match the main photo; security features interrupted by a patch; misspelt issuer names; impossible dates. Ignore the 'SPECIMEN — NOT A REAL DOCUMENT' watermark and stamps. Return 'none' when there are no indicators."),
             ["securityFeaturesPresent"] = new()
             {
                 Type = ContentFieldType.String,
                 Method = GenerationMethod.Classify,
-                Description = "Whether the security features this document type should carry are present and intact (identity documents: hologram band, microprint, ghost image, MRZ; certified copies: certification stamp and seal). Use n/a for statements, letters and register extracts.",
+                Description = "Whether the security features this document type should carry are present and intact (identity documents: hologram band, ghost image, microprint, MRZ; death certificates: registry seal and certification). Use n/a for payslips, reports, statements, summaries and extracts.",
             },
             ["consistencySummary"] = Text("One or two plain-English sentences on whether the document is internally consistent."),
         })
         {
-            Name = "caldova_fincrime_authenticity",
-            Description = "Authenticity-oriented fields for documents supporting super and wealth requests.",
+            Name = "caldova_life_fincrime_authenticity",
+            Description = "Authenticity-oriented fields for documents supporting life insurance advice and claims.",
         };
         foreach (var kind in DocumentKinds) schema.Fields["documentType"].Enum.Add(kind);
         foreach (var value in new[] { "yes", "no", "partial", "n/a" }) schema.Fields["securityFeaturesPresent"].Enum.Add(value);
@@ -373,7 +391,7 @@ public class FinCrimeDocumentVerifier
         var analyzer = new ContentAnalyzer
         {
             BaseAnalyzerId = "prebuilt-document",
-            Description = "Caldova Wealth financial-crime document authenticity: identity documents, bank statements, SMSF registration extracts, death certificates and income support letters. Every demo document carries a 'SPECIMEN — DEMO ONLY' watermark; that watermark is expected and is not a sign of tampering.",
+            Description = "Caldova Life Advice financial-crime document authenticity: identity documents, payslips, specialist medical reports, death certificates, bank statements, BAS and profit and loss summaries, and company extracts. Every specimen carries a 'SPECIMEN — NOT A REAL DOCUMENT' watermark; that watermark is expected and is not a sign of tampering.",
             Config = new ContentAnalyzerConfig { EnableOcr = true, EnableLayout = true },
             FieldSchema = schema,
         };
@@ -390,7 +408,7 @@ public class FinCrimeDocumentVerifier
         _ => "application/octet-stream",
     };
 
-    // ── Case-file record (fallback) ─────────────────────────────────────────
+    // ── Case-file record (offline fallback) ─────────────────────────────────
 
     private static Dictionary<string, string?> ManifestFields(FinCrimeSampleDocument s)
     {
@@ -399,24 +417,31 @@ public class FinCrimeDocumentVerifier
         {
             ["documentType"] = s.Kind,
             ["issuer"] = s.Issuer,
-            ["holderName"] = s.ExpectedHolderName,
+            ["holderName"] = s.HolderName,
             ["documentNumber"] = s.DocumentNumber,
-            ["dateOfBirth"] = s.ExpectedDateOfBirth,
-            ["issueDate"] = s.ExpectedIssueDate,
-            ["expiryDate"] = s.ExpectedExpiryDate,
+            ["dateOfBirth"] = s.DateOfBirth,
+            ["issueDate"] = s.IssueDate,
+            ["expiryDate"] = s.ExpiryDate,
             ["registrationDate"] = s.RegistrationDate,
             ["dateOfDeath"] = s.DateOfDeath,
             ["accountOpenedDate"] = s.AccountOpenedDate,
-            ["incomeSupportSince"] = s.IncomeSupportSince,
+            ["consultationDate"] = s.ConsultationDate,
+            ["periodStart"] = s.PeriodStart,
+            ["periodEnd"] = s.PeriodEnd,
+            ["keyAmount"] = s.KeyAmount?.ToString("0.##", CultureInfo.InvariantCulture),
+            ["keyAmountLabel"] = s.KeyAmountLabel,
+            ["providerNumber"] = s.ProviderNumber,
+            ["diagnosisEvidence"] = s.DiagnosisEvidence,
+            ["officers"] = s.Officers,
+            ["companyStatus"] = s.CompanyStatus,
             ["mrz"] = s.Mrz,
+            ["certification"] = s.Certification,
             ["tamperIndicators"] = s.TamperIndicators
-                ?? (s.Expected.Equals("fake", StringComparison.OrdinalIgnoreCase) ? s.Description : "none"),
+                ?? (s.Expected is "fake" or "tampered" ? s.Description : "none"),
             ["securityFeaturesPresent"] = s.SecurityFeatures
                 ?? (isId ? (s.Expected.Equals("legit", StringComparison.OrdinalIgnoreCase) ? "yes" : "no") : "n/a"),
             ["electronicVerification"] = s.ElectronicVerification,
         };
-        if (s.ExpectedTotal is { } total)
-            fields["closingBalance"] = total.ToString("N2", CultureInfo.InvariantCulture);
         return fields.Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
             .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
     }
@@ -465,61 +490,15 @@ public class FinCrimeDocumentVerifier
             c.Warn($"Read as '{detected}', but the case file lists it as {WithArticle(KindLabel(kind))}.", "document type doesn't match the case file");
 
         // 2. Name matches the case
-        switch (kind)
-        {
-            case "driver-licence" or "passport" or "income-support-letter":
-                if (string.IsNullOrWhiteSpace(holder))
-                    c.Warn("Name could not be read from the document.", "name unreadable");
-                else if (party is null)
-                    c.Warn($"'{holder}' is not a party on this case ({PartyList(profile)}).", "name doesn't match anyone on the case");
-                else
-                    c.Pass($"'{holder}' matches {party.Name} ({party.Role.ToLowerInvariant()}).");
-                break;
-            case "death-certificate":
-                if (string.IsNullOrWhiteSpace(holder))
-                    c.Warn("Name of the deceased could not be read.", "name unreadable");
-                else if (party is null || !party.Role.Contains("deceased", StringComparison.OrdinalIgnoreCase))
-                    c.Warn($"'{holder}' is not the deceased member on this case ({PartyList(profile)}).", "deceased doesn't match the case");
-                else
-                    c.Pass($"'{holder}' matches the deceased member, {party.Name}.");
-                break;
-            case "bank-statement":
-                if (string.IsNullOrWhiteSpace(holder))
-                {
-                    c.Warn("Account name could not be read.", "account name unreadable");
-                }
-                else if (profile.AcceptedAccountNames.FirstOrDefault(n => NamesMatch(holder, n)) is { } accepted)
-                {
-                    c.Pass($"Account name '{holder}' matches {accepted}.");
-                }
-                else
-                {
-                    var member = profile.Parties.FirstOrDefault()?.Name ?? record.ClientName;
-                    var fund = profile.ReceivingSmsf is { } smsf ? $" nor the receiving SMSF ('{smsf.FundName}')" : string.Empty;
-                    c.Warn($"Account name '{holder}' matches neither the member ({member}){fund} — payee name mismatch.", "payee name mismatch");
-                }
-                break;
-            case "smsf-registration":
-                if (profile.ReceivingSmsf is not { } receiving)
-                    c.Warn("There is no rollover to an SMSF on this case.", "SMSF not part of this case");
-                else if (!string.IsNullOrWhiteSpace(holder) && NamesMatch(holder, receiving.FundName))
-                    c.Pass($"Fund name matches the SMSF named on the request ('{receiving.FundName}').");
-                else
-                    c.Warn($"Fund name '{holder}' doesn't match the SMSF named on the request ('{receiving.FundName}').", "fund name mismatch");
-                break;
-            default:
-                c.NotApplicable();
-                break;
-        }
+        CheckName(c, kind, holder, party, profile);
 
         // 3. Date of birth matches the record on file
-        if (isId || kind is "death-certificate" or "income-support-letter")
+        if (isId || kind is "medical-report" or "death-certificate")
         {
-            var dobRaw = Get(f, "dateOfBirth");
-            var docDob = ParseDate(dobRaw);
+            var docDob = ParseDate(Get(f, "dateOfBirth"));
             if (docDob is null)
                 c.Warn("Date of birth could not be read.", "date of birth unreadable");
-            else if (party is null)
+            else if (party is null || party.IsCompany)
                 c.Warn("The named person isn't on this case, so the date of birth wasn't compared.", "date of birth not compared");
             else if (ParseDate(party.DateOfBirth) is not { } onFile)
                 c.Warn($"No date of birth on file for {party.Name}.", "no date of birth on file");
@@ -534,24 +513,27 @@ public class FinCrimeDocumentVerifier
             c.NotApplicable();
         }
 
-        // 4. Dates plausible and current
-        CheckDates(c, kind, f, received);
+        // 4. Dates plausible and consistent
+        CheckDates(c, kind, f, received, profile);
 
         // 5. No visible tamper indicators
         var tamper = Get(f, "tamperIndicators");
         if (string.IsNullOrWhiteSpace(tamper) || NoneRegex.IsMatch(tamper))
             c.Pass("No tamper indicators found.");
         else
-            c.Fail($"Tamper indicators: {Shorten(tamper, 260)}", "visible signs of alteration");
+            c.Fail($"Tamper indicators: {Shorten(tamper, 480)}", "visible signs of alteration");
 
         // 6. Security features or certification present
         var security = Normalise(Get(f, "securityFeaturesPresent"));
+        var certification = Get(f, "certification");
+        var certified = certification is null ? string.Empty : $" Certified copy — {certification}.";
         if (isId)
         {
+            var features = kind == "passport" ? "ghost image, guilloche background, MRZ" : "hologram band, ghost image, microprint";
             if (security.StartsWith("yes"))
-                c.Pass("Expected security features look intact.");
+                c.Pass($"Expected security features look intact ({features})." + certified);
             else if (security.StartsWith("partial"))
-                c.Fail("Security features are incomplete — patterns interrupted or features damaged.", "security features incomplete");
+                c.Fail("Security features are incomplete or interrupted (for example a hologram band cut by a patch, or a ghost image that doesn't match the main photo).", "security features interrupted");
             else if (security.StartsWith("no"))
                 c.Fail("Expected security features are missing or damaged.", "security features missing");
             else
@@ -559,34 +541,20 @@ public class FinCrimeDocumentVerifier
         }
         else if (kind == "death-certificate")
         {
-            if (security.StartsWith("yes"))
-                c.Pass("Certified copy: certification stamp and registry seal present.");
+            if (security.StartsWith("yes") && certification is not null)
+                c.Pass($"Registry seal present.{certified}");
+            else if (security.StartsWith("yes"))
+                c.Warn("Registry seal present, but no certification — ask for a certified copy.", "not a certified copy");
             else
-                c.Warn("No certification found — ask for a certified copy.", "not a certified copy");
+                c.Warn("No registry seal or certification found — ask for a certified copy.", "not a certified copy");
         }
         else
         {
             c.NotApplicable();
         }
 
-        // 7. MRZ check digits (passports)
-        if (kind == "passport")
-        {
-            var mrz = Get(f, "mrz");
-            var (valid, problems) = ValidateTd3(mrz);
-            if (string.IsNullOrWhiteSpace(mrz))
-                c.Warn("The machine-readable zone could not be read.", "MRZ unreadable");
-            else if (!valid)
-                c.Fail($"MRZ check digits inconsistent: {string.Join("; ", problems)}.", "MRZ check digits inconsistent");
-            else if (!MrzMatchesPrinted(mrz, Get(f, "documentNumber"), out var mismatch))
-                c.Fail($"MRZ check digits are valid but {mismatch}.", "MRZ doesn't match the printed data");
-            else
-                c.Pass("Document number, date of birth, expiry and composite check digits are all consistent with the printed data.");
-        }
-        else
-        {
-            c.NotApplicable();
-        }
+        // 7. Number formats and check digits
+        CheckNumbers(c, kind, f);
 
         // 8. Electronic verification (DVS)
         if (isId)
@@ -606,35 +574,89 @@ public class FinCrimeDocumentVerifier
             c.NotApplicable();
         }
 
-        // 9. Counterparty checks
-        CheckCounterparty(c, kind, f, profile, received);
+        // 9. Supporting-evidence checks
+        CheckEvidence(c, kind, f, profile, party, received);
 
-        // 10. Document not used on another member's case
-        var owners = _store.OwnerSampleIds(sample.Id);
+        // 10. Document not used on another client's case
         var number = NormaliseNumber(Get(f, "documentNumber") ?? sample.DocumentNumber);
-        if (owners.Count > 0 && !owners.Contains(record.SampleId, StringComparer.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(sample.Owner) &&
+            !sample.Owner.Equals(profile.ScenarioKey, StringComparison.OrdinalIgnoreCase))
         {
-            var ownerNames = string.Join(", ", owners.Select(FinCrimeCaseDocumentStore.OwnerName));
-            c.Warn($"This document is held on another member's case ({ownerNames}); one document shouldn't support two members' requests.",
-                "document belongs to another member's case");
+            c.Warn($"This document is held on another client's case ({FinCrimeCaseDocumentStore.ClientNameFor(sample.Owner)}); one document shouldn't support two clients' requests.",
+                "document belongs to another client's case");
         }
         else if (number.Length > 0 &&
                  _seenDocumentNumbers.TryGetValue(number, out var seen) &&
                  !seen.CaseNumber.Equals(record.CaseNumber, StringComparison.OrdinalIgnoreCase) &&
-                 !seen.SampleId.Equals(record.SampleId, StringComparison.OrdinalIgnoreCase))
+                 !seen.ScenarioKey.Equals(profile.ScenarioKey, StringComparison.OrdinalIgnoreCase))
         {
             c.Warn($"Document number {Get(f, "documentNumber")} was already submitted on case {seen.CaseNumber}.",
                 "document already used on another case");
         }
         else
         {
-            c.Pass("Not seen on any other member's case.");
+            c.Pass("Not seen on any other client's case.");
         }
 
         return c;
     }
 
-    private static void CheckDates(CheckRecorder c, string kind, IReadOnlyDictionary<string, string?> f, DateTime received)
+    private static void CheckName(CheckRecorder c, string kind, string? holder, FinCrimeCaseParty? party, FinCrimeCaseProfile profile)
+    {
+        switch (kind)
+        {
+            case "driver-licence" or "passport" or "payslip" or "medical-report" or "bas-profit-loss":
+                if (string.IsNullOrWhiteSpace(holder))
+                    c.Warn("Name could not be read from the document.", "name unreadable");
+                else if (party is null || party.IsCompany)
+                    c.Warn($"'{holder}' isn't a person on this case ({PartyList(profile)}).", "name doesn't match anyone on the case");
+                else
+                    c.Pass($"'{holder}' matches {party.Name} — {LowerFirst(party.Role)}.");
+                break;
+            case "death-certificate":
+                if (string.IsNullOrWhiteSpace(holder))
+                    c.Warn("Name of the deceased could not be read.", "name unreadable");
+                else if (party is null || !party.Role.Contains("deceased", StringComparison.OrdinalIgnoreCase))
+                    c.Warn($"'{holder}' isn't the life insured on this case ({PartyList(profile)}).", "deceased doesn't match the case");
+                else
+                    c.Pass($"'{holder}' matches {party.Name} — {LowerFirst(party.Role)}.");
+                break;
+            case "bank-statement":
+                if (string.IsNullOrWhiteSpace(holder))
+                {
+                    c.Warn("Account name could not be read.", "account name unreadable");
+                }
+                else if (profile.AcceptedPayees.FirstOrDefault(n => NamesMatch(holder, n)) is { } accepted)
+                {
+                    c.Pass($"Account name '{holder}' matches {accepted}, who the benefit is payable to.");
+                }
+                else
+                {
+                    var payee = profile.AcceptedPayees.FirstOrDefault() ?? "the client";
+                    var payeeParty = FindParty(profile, payee);
+                    var payeeRole = payeeParty is null ? string.Empty
+                        : payeeParty.Role.Contains("policy owner", StringComparison.OrdinalIgnoreCase) ? ", the policy owner"
+                        : payeeParty.Role.Contains("beneficiary", StringComparison.OrdinalIgnoreCase) ? ", the nominated beneficiary"
+                        : string.Empty;
+                    c.Warn($"Account name '{holder}' doesn't match {payee}{payeeRole}. Benefits are paid to the policy owner or the nominated beneficiary — a new account in another name can't be used.",
+                        "account name doesn't match the policy owner");
+                }
+                break;
+            case "company-extract":
+                if (string.IsNullOrWhiteSpace(holder))
+                    c.Warn("Company name could not be read.", "company name unreadable");
+                else if (party is null || !party.IsCompany)
+                    c.Warn($"'{holder}' isn't the company on this case ({PartyList(profile)}).", "company doesn't match the case");
+                else
+                    c.Pass($"'{holder}' matches the company on the case ({LowerFirst(party.Role)}).");
+                break;
+            default:
+                c.NotApplicable();
+                break;
+        }
+    }
+
+    private static void CheckDates(CheckRecorder c, string kind, IReadOnlyDictionary<string, string?> f, DateTime received, FinCrimeCaseProfile profile)
     {
         switch (kind)
         {
@@ -654,28 +676,40 @@ public class FinCrimeDocumentVerifier
                     c.Pass($"Issued {Dmy(issue)}, expires {Dmy(expiry)} — current when the request was received.");
                 break;
             }
-            case "bank-statement":
+            case "payslip":
             {
-                var statement = ParseDate(Get(f, "issueDate"));
-                if (statement is null)
-                    c.Warn("Statement date could not be read.", "statement date unreadable");
-                else if (statement > received)
-                    c.Warn($"Statement dated {Dmy(statement)} — after the request date.", "statement dated after the request");
-                else if ((received - statement.Value).TotalDays > 92)
-                    c.Warn($"Statement dated {Dmy(statement)} — more than three months before the request.", "statement out of date");
+                var paid = ParseDate(Get(f, "issueDate"));
+                var start = ParseDate(Get(f, "periodStart"));
+                var end = ParseDate(Get(f, "periodEnd"));
+                if (paid is null)
+                    c.Warn("Pay date could not be read.", "pay date unreadable");
+                else if (end is not null && (end > paid || (start is not null && start > end)))
+                    c.Fail($"Pay period {Dmy(start)} – {Dmy(end)} doesn't fit the pay date {Dmy(paid)}.", "impossible dates");
+                else if (paid > received)
+                    c.Warn($"Pay date {Dmy(paid)} — after the request date.", "payslip dated after the request");
+                else if ((received - paid.Value).TotalDays > 92)
+                    c.Warn($"Pay date {Dmy(paid)} — more than three months before the request.", "payslip out of date");
                 else
-                    c.Pass($"Statement dated {Dmy(statement)} — within three months of the request.");
+                    c.Pass($"Pay date {Dmy(paid)} for the period {Dmy(start)} – {Dmy(end)} — recent and consistent.");
                 break;
             }
-            case "smsf-registration":
+            case "medical-report":
             {
-                var registered = ParseDate(Get(f, "registrationDate"));
-                if (registered is null)
-                    c.Warn("Registration date could not be read.", "registration date unreadable");
-                else if (registered > received)
-                    c.Warn($"Registered {Dmy(registered)} — after the request date.", "registration after the request");
+                var report = ParseDate(Get(f, "issueDate"));
+                var seen = ParseDate(Get(f, "consultationDate"));
+                var travel = profile.TravelNotice;
+                var first = FirstName(profile.Parties.FirstOrDefault()?.Name ?? "the client");
+                if (report is null)
+                    c.Warn("Report date could not be read.", "report date unreadable");
+                else if (seen is not null && seen > report)
+                    c.Fail($"Consultation ({Dmy(seen)}) is after the report date ({Dmy(report)}).", "impossible dates");
+                else if (report > received)
+                    c.Warn($"Report dated {Dmy(report)} — after the request date.", "report dated after the request");
+                else if (seen is not null && travel is not null && seen >= travel.From && seen <= travel.To)
+                    c.Warn($"Consultation dated {Dmy(seen)}, but the travel notice puts {first} in {travel.Place} from {Dmy(travel.From)} to {Dmy(travel.To)} (recorded at {travel.RecordedAt}).",
+                        "consultation date conflicts with the travel notice");
                 else
-                    c.Pass($"Registered {Dmy(registered)}, before the request date.");
+                    c.Pass($"Report dated {Dmy(report)}{(seen is null ? string.Empty : $"; patient seen or treated {Dmy(seen)}")} — consistent with the request.");
                 break;
             }
             case "death-certificate":
@@ -692,21 +726,46 @@ public class FinCrimeDocumentVerifier
                     c.Pass($"Died {Dmy(death)}; registered {Dmy(registered)}; notified {Dmy(received)}.");
                 break;
             }
-            case "income-support-letter":
+            case "bank-statement":
             {
-                var letter = ParseDate(Get(f, "issueDate"));
-                if (letter is null)
-                {
-                    c.Warn("Letter date could not be read.", "letter date unreadable");
-                    break;
-                }
-                var days = (int)(received - letter.Value).TotalDays;
-                if (days < 0)
-                    c.Warn($"Letter dated {Dmy(letter)} — after the application.", "letter dated after the application");
-                else if (days > 21)
-                    c.Warn($"Letter dated {Dmy(letter)} — {days} days before the application; it needs to be dated within 21 days.", "income support letter out of date");
+                var statement = ParseDate(Get(f, "issueDate"));
+                if (statement is null)
+                    c.Warn("Statement date could not be read.", "statement date unreadable");
+                else if (statement > received)
+                    c.Warn($"Statement dated {Dmy(statement)} — after the request date.", "statement dated after the request");
+                else if ((received - statement.Value).TotalDays > 92)
+                    c.Warn($"Statement dated {Dmy(statement)} — more than three months before the request.", "statement out of date");
                 else
-                    c.Pass($"Letter dated {Dmy(letter)} — {days} day{(days == 1 ? "" : "s")} before the application (within 21 days).");
+                    c.Pass($"Statement dated {Dmy(statement)} — within three months of the request.");
+                break;
+            }
+            case "bas-profit-loss":
+            {
+                var start = ParseDate(Get(f, "periodStart"));
+                var end = ParseDate(Get(f, "periodEnd"));
+                var prepared = ParseDate(Get(f, "issueDate"));
+                if (start is null || end is null)
+                    c.Warn("The reporting period could not be read.", "reporting period unreadable");
+                else if (end < start || end > received)
+                    c.Fail($"Reporting period {Dmy(start)} – {Dmy(end)} doesn't fit the request date ({Dmy(received)}).", "impossible dates");
+                else if (prepared is not null && prepared > received)
+                    c.Warn($"Prepared {Dmy(prepared)} — after the request date.", "prepared after the request");
+                else
+                    c.Pass($"Covers {Dmy(start)} – {Dmy(end)} ({Math.Round((end.Value - start.Value).TotalDays / 30.44)} months); prepared {Dmy(prepared)}.");
+                break;
+            }
+            case "company-extract":
+            {
+                var extracted = ParseDate(Get(f, "issueDate"));
+                var registered = ParseDate(Get(f, "registrationDate"));
+                if (extracted is null)
+                    c.Warn("Extract date could not be read.", "extract date unreadable");
+                else if (registered is not null && registered > extracted)
+                    c.Fail($"Registered {Dmy(registered)} — after the extract date ({Dmy(extracted)}).", "impossible dates");
+                else if ((received - extracted.Value).TotalDays > 92)
+                    c.Warn($"Extract dated {Dmy(extracted)} — more than three months old.", "extract not current");
+                else
+                    c.Pass($"Extracted {Dmy(extracted)} — current; company registered {Dmy(registered)}.");
                 break;
             }
             default:
@@ -715,11 +774,92 @@ public class FinCrimeDocumentVerifier
         }
     }
 
-    private static void CheckCounterparty(
-        CheckRecorder c, string kind, IReadOnlyDictionary<string, string?> f, FinCrimeCaseProfile profile, DateTime received)
+    private static void CheckNumbers(CheckRecorder c, string kind, IReadOnlyDictionary<string, string?> f)
     {
         switch (kind)
         {
+            case "passport":
+            {
+                var mrz = Get(f, "mrz");
+                var (valid, problems) = ValidateTd3(mrz);
+                if (string.IsNullOrWhiteSpace(mrz))
+                    c.Warn("The machine-readable zone could not be read.", "MRZ unreadable");
+                else if (!valid)
+                    c.Fail($"MRZ check digits inconsistent: {string.Join("; ", problems)}.", "MRZ check digits inconsistent");
+                else if (!MrzMatchesPrinted(mrz, Get(f, "documentNumber"), out var mismatch))
+                    c.Fail($"MRZ check digits are valid but {mismatch}.", "MRZ doesn't match the printed data");
+                else
+                    c.Pass("MRZ check digits (document number, date of birth, expiry and composite) are consistent with the printed data.");
+                break;
+            }
+            case "medical-report":
+            {
+                var provider = Get(f, "providerNumber");
+                var compact = Regex.Replace(provider ?? string.Empty, @"\s", string.Empty).ToUpperInvariant();
+                if (compact.Length == 0)
+                    c.Warn("No provider number on the report.", "no provider number");
+                else if (ProviderNumberRegex.IsMatch(compact))
+                    c.Pass($"Provider number {provider} is in the Medicare provider number format (a six-digit stem, a practice location character and a check character).");
+                else
+                    c.Fail($"Provider number '{provider}' isn't in the format of a Medicare provider number (a six-digit stem, a practice location character and a check character).",
+                        "provider number in the wrong format");
+                break;
+            }
+            case "company-extract":
+            {
+                var digits = Regex.Replace(Get(f, "documentNumber") ?? string.Empty, @"\D", string.Empty);
+                if (digits.Length == 9)
+                    c.Pass($"ACN {Group3(digits)} is in the nine-digit ACN format.");
+                else
+                    c.Warn($"Company number '{Get(f, "documentNumber")}' isn't a nine-digit ACN.", "company number unclear");
+                break;
+            }
+            case "bas-profit-loss":
+            {
+                var digits = Regex.Replace(Get(f, "documentNumber") ?? string.Empty, @"\D", string.Empty);
+                if (digits.Length == 11)
+                    c.Pass($"ABN {digits[..2]} {Group3(digits[2..])} is in the 11-digit ABN format.");
+                else
+                    c.Warn($"Business number '{Get(f, "documentNumber")}' isn't an 11-digit ABN.", "ABN unclear");
+                break;
+            }
+            default:
+                c.NotApplicable();
+                break;
+        }
+    }
+
+    private static void CheckEvidence(
+        CheckRecorder c, string kind, IReadOnlyDictionary<string, string?> f, FinCrimeCaseProfile profile,
+        FinCrimeCaseParty? party, DateTime received)
+    {
+        switch (kind)
+        {
+            case "medical-report":
+            {
+                var evidence = Get(f, "diagnosisEvidence");
+                var needsHistopathology = profile.EvidenceRule?.Contains("histopathology", StringComparison.OrdinalIgnoreCase) == true;
+                if (needsHistopathology)
+                {
+                    var confirmed = evidence is not null &&
+                                    evidence.Contains("histopath", StringComparison.OrdinalIgnoreCase) &&
+                                    !NotConfirmedRegex.IsMatch(evidence);
+                    if (confirmed)
+                        c.Pass($"Histopathology confirms the diagnosis ({evidence}).");
+                    else
+                        c.Fail($"No histopathology. {profile.EvidenceRule} The report relies on: {evidence ?? "nothing stated"}.",
+                            "no histopathology");
+                }
+                else if (evidence is null)
+                {
+                    c.Warn("The report doesn't say what the diagnosis is based on.", "diagnosis evidence not shown");
+                }
+                else
+                {
+                    c.Pass($"Diagnosis supported by: {evidence}.");
+                }
+                break;
+            }
             case "bank-statement":
             {
                 var opened = ParseDate(Get(f, "accountOpenedDate"));
@@ -730,52 +870,52 @@ public class FinCrimeDocumentVerifier
                 }
                 var days = (int)(received - opened.Value).TotalDays;
                 if (days is >= 0 and <= 30)
-                    c.Warn($"Account opened {Dmy(opened)} — {days} days before the request (newly opened account).", "newly opened account");
+                    c.Warn($"Account opened {Dmy(opened)} — {days} day{(days == 1 ? "" : "s")} before the request (newly opened account).", "newly opened account");
                 else
                     c.Pass($"Account open since {Dmy(opened)}.");
                 break;
             }
-            case "smsf-registration":
+            case "payslip" or "bas-profit-loss":
             {
-                var parts = new List<string>();
-                var concerns = new List<string>();
-                if (ParseDate(Get(f, "registrationDate")) is { } registered)
-                {
-                    var days = (int)(received - registered).TotalDays;
-                    if (days is >= 0 and <= 30)
-                    {
-                        parts.Add($"ABN registered {Dmy(registered)} — {days} days before the request (newly registered SMSF)");
-                        concerns.Add("newly registered SMSF");
-                    }
-                    else
-                    {
-                        parts.Add($"ABN registered {Dmy(registered)}");
-                    }
-                }
-                if (profile.ReceivingSmsf is { } smsf)
-                {
-                    parts.Add("ATO SVS: " + string.Join(", ", new[]
-                    {
-                        (smsf.AbnIsRegisteredSmsf ? "✓" : "✗") + " registered SMSF",
-                        (smsf.MemberTfnLinked ? "✓" : "✗") + " member's TFN linked",
-                        (smsf.BankDetailsMatch ? "✓" : "✗") + " bank details match",
-                        (smsf.EsaMatches ? "✓" : "✗") + " ESA matches",
-                    }));
-                    if (!smsf.AbnIsRegisteredSmsf || !smsf.MemberTfnLinked || !smsf.BankDetailsMatch || !smsf.EsaMatches)
-                        concerns.Add("SVS mismatch");
-                }
+                var amount = ParseAmount(Get(f, "keyAmount"));
+                var label = Get(f, "keyAmountLabel") ?? (kind == "payslip" ? "Annual salary" : "Net business income");
+                var source = kind == "payslip" ? "the income in the fact find" : "the earnings on the claim";
+                if (amount is null)
+                    c.Warn($"{label} could not be read.", "income not shown");
+                else if (profile.IncomeOnFile is not { } onFile || onFile <= 0)
+                    c.Pass($"{label} {Money(amount.Value)} — internally consistent.");
+                else if (Math.Abs(amount.Value - onFile) / onFile <= 0.05m)
+                    c.Pass($"{label} {Money(amount.Value)} matches {source} ({Money(onFile)}).");
                 else
-                {
-                    parts.Add("no SVS result on this case");
-                    concerns.Add("no SVS result");
-                }
-                var detail = string.Join("; ", parts) + ".";
-                if (concerns.Count > 0)
-                    c.Warn(detail, string.Join(", ", concerns));
-                else
-                    c.Pass(detail);
+                    c.Warn($"{label} {Money(amount.Value)} doesn't match {source} ({Money(onFile)}).", "income doesn't match the case");
                 break;
             }
+            case "company-extract":
+            {
+                var status = Get(f, "companyStatus");
+                var officers = Get(f, "officers") ?? string.Empty;
+                var owners = profile.Parties.Where(p => !p.IsCompany &&
+                    (p.Role.Contains("director", StringComparison.OrdinalIgnoreCase) ||
+                     p.Role.Contains("shareholder", StringComparison.OrdinalIgnoreCase))).ToList();
+                var missing = owners.Where(p => !ContainsName(officers, p.Name)).Select(p => p.Name).ToList();
+                if (status is not null && !status.Contains("registered", StringComparison.OrdinalIgnoreCase))
+                    c.Fail($"Company status is '{status}' — not registered.", "company not registered");
+                else if (status is not null && status.Contains("deregistered", StringComparison.OrdinalIgnoreCase))
+                    c.Fail($"Company status is '{status}'.", "company deregistered");
+                else if (officers.Length == 0)
+                    c.Warn("Office holders and members could not be read.", "office holders unreadable");
+                else if (missing.Count > 0)
+                    c.Warn($"Not on the extract: {string.Join(", ", missing)}.", "office holders don't match the case");
+                else
+                    c.Pass($"Status {status ?? "not shown"}. Office holders and members match the case — {officers}. Beneficial owners: {string.Join(" and ", owners.Select(o => o.Name))}.");
+                break;
+            }
+            case "death-certificate":
+                if (party is not null && party.Role.Contains("life insured", StringComparison.OrdinalIgnoreCase))
+                    c.Pass($"The deceased is the life insured on the policy ({party.Role}).");
+                else
+                    c.NotApplicable("No life insured on this case to compare with.");
+                break;
             default:
                 c.NotApplicable();
                 break;
@@ -783,14 +923,18 @@ public class FinCrimeDocumentVerifier
     }
 
     private static (string Verdict, string Summary, List<string> Reasons) ScoreVerdict(
-        CheckRecorder c, FinCrimeSampleDocument sample)
+        CheckRecorder c, FinCrimeSampleDocument sample, IReadOnlyDictionary<string, string?> fields)
     {
         var reasons = c.Checks
             .Where(x => x.Status is "fail" or "warn")
             .Select(x => $"{x.Name}: {x.Detail}")
             .ToList();
 
-        var verdict = c.FailHeadlines.Count > 0 ? "fake"
+        // A failed identity document whose details still verify with the issuer
+        // is a genuine document that has been altered (e.g. a replaced photo).
+        var detailsVerify = IsIdentityDocument(sample.Kind) &&
+                            (Get(fields, "electronicVerification")?.StartsWith("match", StringComparison.OrdinalIgnoreCase) ?? false);
+        var verdict = c.FailHeadlines.Count > 0 ? (detailsVerify ? "tampered" : "fake")
                     : c.WarnHeadlines.Count > 0 ? "suspicious"
                     : "legit";
 
@@ -802,9 +946,11 @@ public class FinCrimeDocumentVerifier
             c.WarnHeadlines.Add("flagged on the case file");
         }
 
+        var headlines = c.FailHeadlines.Concat(c.WarnHeadlines).Distinct().ToList();
         var summary = verdict switch
         {
-            "fake" => "Likely altered — " + string.Join("; ", c.FailHeadlines.Concat(c.WarnHeadlines).Distinct()) + ".",
+            "fake" => "Likely fake — " + string.Join("; ", headlines) + ".",
+            "tampered" => "Tampered — " + string.Join("; ", headlines) + ". The details match the issuer's record, but the image has been altered.",
             "suspicious" => "Needs verification — " + string.Join("; ", c.WarnHeadlines.Distinct()) + ".",
             _ => "Consistent with a genuine document — every applicable check passed.",
         };
@@ -817,19 +963,22 @@ public class FinCrimeDocumentVerifier
         kind.Equals("driver-licence", StringComparison.OrdinalIgnoreCase) ||
         kind.Equals("passport", StringComparison.OrdinalIgnoreCase);
 
-    private static string KindLabel(string kind) => kind switch
+    /// <summary>Plain-English label for a document kind ("driver licence", "BAS and profit and loss summary").</summary>
+    public static string KindLabel(string kind) => kind switch
     {
         "driver-licence" => "driver licence",
         "passport" => "passport",
-        "bank-statement" => "bank statement",
-        "smsf-registration" => "SMSF registration extract",
+        "payslip" => "payslip",
+        "medical-report" => "medical report",
         "death-certificate" => "death certificate",
-        "income-support-letter" => "income support letter",
+        "bank-statement" => "bank statement",
+        "bas-profit-loss" => "BAS and profit and loss summary",
+        "company-extract" => "company extract",
         _ => kind.Replace('-', ' '),
     };
 
     private static string WithArticle(string noun) =>
-        (Regex.IsMatch(noun, "^(SMSF|[aeiouAEIOU])") ? "an " : "a ") + noun;
+        (Regex.IsMatch(noun, "^[aeiouAEIOU]") ? "an " : "a ") + noun;
 
     private static string? Get(IReadOnlyDictionary<string, string?> fields, string key) =>
         fields.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) ? v : null;
@@ -842,6 +991,25 @@ public class FinCrimeDocumentVerifier
     private static string NormaliseNumber(string? value) =>
         Regex.Replace(value ?? string.Empty, @"[^A-Za-z0-9*]", string.Empty).ToUpperInvariant();
 
+    private static string Group3(string digits) =>
+        Regex.Replace(digits, @"(\d{3})(?=\d)", "$1 ");
+
+    private static string FirstName(string name) =>
+        name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? name;
+
+    private static string LowerFirst(string s) =>
+        string.IsNullOrEmpty(s) || (s.Length > 1 && char.IsUpper(s[1])) ? s : char.ToLowerInvariant(s[0]) + s[1..];
+
+    private static string Money(decimal amount) =>
+        amount.ToString(amount == Math.Round(amount) ? "$#,##0" : "$#,##0.00", CultureInfo.InvariantCulture);
+
+    private static decimal? ParseAmount(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var cleaned = Regex.Replace(raw, @"[^0-9.\-]", string.Empty);
+        return decimal.TryParse(cleaned, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? value : null;
+    }
+
     private static FinCrimeCaseParty? FindParty(FinCrimeCaseProfile profile, string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
@@ -850,7 +1018,15 @@ public class FinCrimeDocumentVerifier
     }
 
     private static string PartyList(FinCrimeCaseProfile profile) =>
-        string.Join(", ", profile.Parties.Select(p => $"{p.Name} — {p.Role.ToLowerInvariant()}"));
+        string.Join(", ", profile.Parties.Select(p => p.Name));
+
+    /// <summary>True when every word of <paramref name="name"/> appears in <paramref name="text"/>.</summary>
+    private static bool ContainsName(string text, string name)
+    {
+        var words = new HashSet<string>(Normalise(text).Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        var tokens = Normalise(name).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length > 0 && tokens.All(words.Contains);
+    }
 
     /// <summary>
     /// Names match when they normalise to the same text, or share at least two

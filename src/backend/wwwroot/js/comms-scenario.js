@@ -1,9 +1,18 @@
 // Client Communications page — "Try it out" wiring (case list, Cara's case
-// summary and the member / adviser / SMS drafts).
+// summary, notes and the drafts for every audience: client letters, call
+// scripts, referral-partner updates and SMS).
 // Loaded as a permanent script from App.razor so init runs reliably on full
 // page load AND on Blazor enhanced navigation.
 
     (function () {
+        // Draft groups, in the order they appear on the page.
+        const GROUPS = [
+            { audience: 'client', icon: '✉️', label: 'Client letters & summaries' },
+            { audience: 'call', icon: '📞', label: 'Calls — scripts and talking points' },
+            { audience: 'partner', icon: '🤝', label: 'Referral partner' },
+            { audience: 'sms', icon: '📱', label: 'SMS' }
+        ];
+
         function init() {
         const root = document.querySelector('.comms-panel');
         if (!root || root.dataset.wired === '1') return;
@@ -28,10 +37,12 @@
         const flagsList = $('#comms-flags-list');
         const approvalPill = $('#comms-approval-pill');
         const approvalReason = $('#comms-approval-reason');
-        const memberDraftsEl = $('#comms-drafts-member');
-        const adviserDraftsEl = $('#comms-drafts-adviser');
-        const smsDraftsEl = $('#comms-drafts-sms');
+        const notesEl = $('#comms-notes');
         const adviserNoteEl = $('#comms-adviser-note');
+        const partnerNoteEl = $('#comms-partner-note');
+        const sourcesEl = $('#comms-sources');
+        const approverEl = $('#comms-approver');
+        const groupsEl = $('#comms-draft-groups');
         const engageScope = $('.engage-tabs-scope');
 
         let selectedCase = null;
@@ -71,8 +82,8 @@
             }
         }
 
-        function isDirect(adviserName) {
-            return !adviserName || /^\s*none/i.test(adviserName);
+        function referredByText(referredBy) {
+            return !referredBy || /^\s*(none|existing)/i.test(referredBy) ? 'Existing client' : referredBy;
         }
 
         async function selectCase(caseNumber) {
@@ -91,15 +102,15 @@
                 selectedCase = await res.json();
                 const c = selectedCase;
                 $('#comms-case-client').textContent = [c.clientName, c.clientEmail].filter(Boolean).join(' · ');
-                $('#comms-case-member').textContent = c.memberNumber || '—';
+                $('#comms-case-number').textContent = c.clientNumber || '—';
                 $('#comms-case-type').textContent = c.requestType || '—';
                 $('#comms-case-priority').textContent = `${c.priority || '—'}${c.priorityReason ? ' — ' + c.priorityReason : ''}`;
-                $('#comms-case-adviser').textContent = isDirect(c.adviserName)
-                    ? 'None — direct member'
-                    : `${c.adviserName}${c.adviserPractice ? ' (' + c.adviserPractice + ')' : ''}`;
+                $('#comms-case-adviser').textContent = c.adviserName || '—';
+                $('#comms-case-referred').textContent = referredByText(c.referredBy);
                 $('#comms-case-pref').textContent = c.preferredContact || '—';
-                $('#comms-case-request').textContent = c.requestSummary || '—';
                 $('#comms-case-amount').textContent = c.amount || '—';
+                $('#comms-case-cover').textContent = c.cover || '—';
+                $('#comms-case-request').textContent = c.requestSummary || '—';
                 caseSummaryEl.hidden = false;
                 // Reveal step 2 (engage agent) now that a case is picked.
                 step2El.hidden = false;
@@ -161,7 +172,7 @@
                 `</div>` +
                 `<div class="comms-draft-meta">` +
                     `<span class="k">To</span><span>${escapeHtml(d.recipient)}</span>` +
-                    (d.subject ? `<span class="k">Subject</span><span>${escapeHtml(d.subject)}</span>` : '') +
+                    (d.subject ? `<span class="k">${d.audience === 'call' ? 'Purpose' : 'Subject'}</span><span>${escapeHtml(d.subject)}</span>` : '') +
                 `</div>` +
                 `<div class="comms-channel-body agent-md${isSms ? ' comms-sms' : ''}"></div>` +
                 (isSms ? `<div class="comms-sms-count">${escapeHtml(smsInfo(d.body))}</div>` : '') +
@@ -173,27 +184,46 @@
             const body = card.querySelector('.comms-channel-body');
             if (isSms) {
                 body.textContent = d.body || '';
-            } else {
+            } else if (typeof window.zcRenderMarkdown === 'function') {
                 window.zcRenderMarkdown(body, d.body || '');
+            } else {
+                body.textContent = d.body || '';
             }
             return card;
         }
 
         function renderDrafts(data) {
             const drafts = data.drafts || [];
-            const groups = { member: memberDraftsEl, adviser: adviserDraftsEl, sms: smsDraftsEl };
-            Object.values(groups).forEach(el => { el.innerHTML = ''; });
-            drafts.forEach(d => {
-                const target = groups[d.audience] || memberDraftsEl;
-                target.appendChild(renderDraft(d));
+            groupsEl.innerHTML = '';
+            const known = GROUPS.map(g => g.audience);
+            const groups = GROUPS.concat(
+                [...new Set(drafts.map(d => d.audience).filter(a => !known.includes(a)))]
+                    .map(a => ({ audience: a, icon: '📝', label: a })));
+            groups.forEach(g => {
+                const items = drafts.filter(d => d.audience === g.audience);
+                if (!items.length) return;
+                const section = document.createElement('div');
+                section.className = 'comms-audience';
+                section.innerHTML =
+                    `<div class="comms-audience-head"><span aria-hidden="true">${g.icon}</span> ${escapeHtml(g.label)}` +
+                    `<span class="comms-audience-count">${items.length} draft${items.length > 1 ? 's' : ''}</span></div>`;
+                items.forEach(d => section.appendChild(renderDraft(d)));
+                groupsEl.appendChild(section);
             });
-            if (data.adviserNote) {
-                adviserNoteEl.hidden = false;
-                adviserNoteEl.textContent = data.adviserNote;
-            } else {
-                adviserNoteEl.hidden = true;
-                adviserNoteEl.textContent = '';
-            }
+            approverEl.textContent = data.approver || '—';
+        }
+
+        function renderNotes(data) {
+            const adviserNote = data.adviserNote || '';
+            const partnerNote = data.partnerNote || '';
+            const sources = data.sources || [];
+            adviserNoteEl.hidden = !adviserNote;
+            $('#comms-adviser-note-text').textContent = adviserNote;
+            partnerNoteEl.hidden = !partnerNote;
+            $('#comms-partner-note-text').textContent = partnerNote;
+            sourcesEl.hidden = !sources.length;
+            $('#comms-sources-list').innerHTML = sources.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+            notesEl.hidden = !adviserNote && !partnerNote && !sources.length;
         }
 
         function renderSummary(data) {
@@ -213,7 +243,9 @@
                 : '<li>No vulnerability indicators on this case.</li>';
             approvalPill.textContent = data.humanApprovalRequired ? 'Human approval required' : 'Spot-check only';
             approvalPill.className = 'comms-approval-pill ' + (data.humanApprovalRequired ? 'required' : 'optional');
-            approvalReason.textContent = data.humanApprovalReason || '';
+            approvalReason.textContent = [data.humanApprovalReason, data.approver ? 'Approver: ' + data.approver + '.' : '']
+                .filter(Boolean).join(' ');
+            renderNotes(data);
         }
 
         async function processCase() {
@@ -221,7 +253,7 @@
             processBtn.disabled = true;
             processStatus.hidden = false;
             processStatus.className = 'comms-status';
-            processStatus.innerHTML = '<span class="spinner"></span>Cara is reading the case and drafting for the member and adviser…';
+            processStatus.innerHTML = '<span class="spinner"></span>Cara is reading the case and drafting for each audience…';
             hideResults();
 
             try {
@@ -242,13 +274,13 @@
 
                 processStatus.className = 'comms-status';
                 if (data.agentConfigured && data.agentNotes) {
-                    processStatus.textContent = 'Client Communications Agent drafted the updates — Cara\'s live narrative is in the Agent Narrative tab; the review-ready drafts are below.';
+                    processStatus.textContent = 'Client Communications Agent drafted the messages — Cara\'s live narrative is in the Agent Narrative tab; the review-ready drafts are below.';
                 } else if (data.agentConfigured) {
                     processStatus.className = 'comms-status error';
                     processStatus.textContent = 'Live agent unavailable' + (data.agentError ? ' (' + data.agentError + ')' : '') +
-                        ' — showing Cara\'s deterministic drafts.';
+                        ' — showing Cara\'s offline drafts.';
                 } else {
-                    processStatus.textContent = 'Drafted (Foundry agent not configured — showing Cara\'s scripted drafts).';
+                    processStatus.textContent = 'Drafted offline (Foundry agent not configured) — Cara\'s drafts for this case are below.';
                 }
 
                 renderSummary(data);
@@ -279,8 +311,8 @@
 
         init();
 
-        if (!window.__commsDemoEnhancedHook) {
-            window.__commsDemoEnhancedHook = true;
+        if (!window.__commsScenarioEnhancedHook) {
+            window.__commsScenarioEnhancedHook = true;
             const hook = () => init();
             if (typeof Blazor !== 'undefined' && typeof Blazor.addEventListener === 'function') {
                 Blazor.addEventListener('enhancedload', hook);

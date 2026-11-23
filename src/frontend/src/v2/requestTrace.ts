@@ -1,26 +1,20 @@
 /**
- * The finale: one member request travelling through the whole house.
+ * The finale: one client request travelling through the whole house.
  *
- * It starts at the dock: the member arrives by water taxi and signs at the
- * front desk (dock.ts). Once the form is signed, the request appears at the
- * desk and sets off. Each step starts with a person on Level 2, dips down to
- * their agent on Level 1 and the engine-room component that agent leans on,
- * then comes back up for the human decision. The result rises to the brain
- * on Level 3, where Maya's idea is measured. Steps come from the scenario
- * beats in scenarios/*.json, which mirror docs/scenario-N-*.md.
+ * It starts at the front desk: the client arrives by tram and signs under the
+ * verandah (frontDesk.ts). Once the form is signed, the request appears at
+ * the desk and sets off. Each step starts with a person on Level 2, dips down
+ * to their agent on Level 1 and the engine-room component that agent leans
+ * on, then comes back up for the human decision. The result rises to the
+ * brain on Level 3, where Maya's idea is measured. Steps come from the
+ * scenario beats in scenarios/*.json, which mirror docs/scenario-N-*.md.
  */
 import { Mesh, TransformNode, Vector3 } from "@babylonjs/core";
-import {
-  CUSTOMER_PERSONAS,
-  STAFF_PERSONAS,
-  findStaffByRole,
-  type ScenarioId,
-  type StaffRole,
-} from "../personaData";
-import { getScenario } from "../scenarios";
-import type { Dock } from "./dock";
+import { CLIENT_PERSONAS, STAFF_PERSONAS, findStaffByRole, type ScenarioId, type StaffRole } from "../personaData";
+import { getScenario, type BeatAction } from "../scenarios";
+import type { FrontDesk } from "./frontDesk";
+import { AGENTS, ARRIVALS, SCENARIO_SIDE, SIDES, infraInfo, sideBadge, type InfraId, type SideId } from "./houseData";
 import type { Kit } from "./kit";
-import { AGENTS, ARRIVALS, SCENARIO_SIDE, SIDES, infraInfo, sideBadge, type InfraId, type SideId } from "./lakehouseData";
 import type { Anchor } from "./types";
 
 export interface TraceFocus {
@@ -34,26 +28,28 @@ export interface TraceFocus {
 export interface TraceStep {
   index: number;
   total: number;
-  kind: "arrive" | "work" | "handoff" | "result";
+  kind: "arrive" | "work" | "brief" | "result";
   who: string;
   route: string[];
   text: string;
   color: string;
-  /** Which side of the business this step belongs to, for the trace panel's chip. */
+  /** Which side of the practice this step belongs to, for the trace panel's chip. */
   side?: { label: string; color: string };
 }
 
 export interface TraceHooks {
   step(step: TraceStep): void;
   focus(f: TraceFocus | null): void;
-  /** "dock": the house together, looking at the dock. "trace": the house pulled apart for the request. */
-  stage(stage: "dock" | "trace"): void;
+  /** "desk": the house together, looking at the front desk. "trace": the house pulled apart for the request. */
+  stage(stage: "desk" | "trace"): void;
   done(): void;
 }
 
 interface Stop {
   kind: TraceStep["kind"];
   staffId?: string;
+  /** For a brief stop: what the person does there. */
+  verb?: string;
   text: string;
 }
 
@@ -71,23 +67,25 @@ interface Waypoint {
 
 const ROLES = new Set<string>(STAFF_PERSONAS.map((p) => p.role));
 const SPEED = 24;
+/** Beats that are a quick word from the person, not a trip down to their agent. */
+const BRIEF: Partial<Record<BeatAction, string>> = { "claims-confirm": "confirms" };
 
 /** Turn a scenario's beats into stops: one per person, merging their consecutive beats. */
 export function buildStops(id: ScenarioId): Stop[] {
   const def = getScenario(id);
-  const lodge = def.beats.find((b) => b.action === "lodge-at-reception")?.narration ?? def.beats[0]?.narration ?? "";
+  const lodge = def.beats.find((b) => b.action === "lodge-at-front-desk")?.narration ?? def.beats[0]?.narration ?? "";
   const stops: Stop[] = [{ kind: "arrive", text: lodge }];
   for (const beat of def.beats) {
     if (!ROLES.has(beat.at)) continue;
     const staff = findStaffByRole(beat.at as StaffRole);
-    const handoff = beat.action === "benefits-handoff";
+    const verb = BRIEF[beat.action];
     const last = stops[stops.length - 1];
     if (last.staffId === staff.id) {
       last.text += ` ${beat.narration}`;
-      if (!handoff) last.kind = "work";
+      if (!verb) last.kind = "work";
       continue;
     }
-    stops.push({ kind: handoff ? "handoff" : "work", staffId: staff.id, text: beat.narration });
+    stops.push({ kind: verb ? "brief" : "work", staffId: staff.id, verb, text: beat.narration });
   }
   stops.push({ kind: "result", text: `${def.result.icon} ${def.result.headline}. ${def.result.summary}` });
   return stops;
@@ -106,9 +104,9 @@ export class RequestTrace {
   private running = false;
   private finished = false;
   private readonly target = new Vector3();
-  private requestSide: SideId = "super";
-  private scenario: ScenarioId = "retirement";
-  /** Announces the first step as soon as the member's water taxi sets off. */
+  private requestSide: SideId = "protection";
+  private scenario: ScenarioId = "family";
+  /** Announces the first step as soon as the client's tram sets off. */
   private arrival: (() => void) | null = null;
   paused = false;
   speed = 1;
@@ -117,7 +115,7 @@ export class RequestTrace {
     private readonly kit: Kit,
     private readonly resolve: (key: string) => Anchor | undefined,
     private readonly hooks: TraceHooks,
-    private readonly dock: Dock,
+    private readonly desk: FrontDesk,
   ) {
     const scene = kit.scene;
     this.orb = new TransformNode("v2_traceOrb", scene);
@@ -145,26 +143,26 @@ export class RequestTrace {
   start(id: ScenarioId): void {
     this.scenario = id;
     const stops = buildStops(id);
-    const customer = CUSTOMER_PERSONAS.find((c) => c.id === id);
+    const client = CLIENT_PERSONAS.find((c) => c.id === id);
     this.requestSide = SCENARIO_SIDE[id];
     this.waypoints = [];
     this.arrival = null;
-    stops.forEach((stop, index) => this.addStop(stop, index, stops.length, customer?.name ?? "", customer?.color ?? "#ffc35a"));
+    stops.forEach((stop, index) => this.addStop(stop, index, stops.length, client?.name ?? "", client?.color ?? "#ffc35a"));
     this.wp = 0;
     this.dwell = 0;
     this.arrived = false;
     this.finished = false;
     this.running = true;
     this.paused = false;
-    // The request appears at the front desk once the member has signed.
+    // The request appears at the front desk once the client has signed.
     this.orb.setEnabled(false);
     for (const m of this.trail) m.setEnabled(false);
-    this.dock.arrive(id);
-    this.hooks.stage("dock");
+    this.desk.arrive(id);
+    this.hooks.stage("desk");
     this.announceArrival();
   }
 
-  /** Step 1 is told while the member is still on the water, before the request exists. */
+  /** Step 1 is told while the client is still on the tram, before the request exists. */
   private announceArrival(): void {
     this.arrival?.();
   }
@@ -174,7 +172,7 @@ export class RequestTrace {
     this.finished = false;
     this.orb.setEnabled(false);
     for (const m of this.trail) m.setEnabled(false);
-    this.dock.ambient();
+    this.desk.ambient();
     this.hooks.focus(null);
   }
 
@@ -182,7 +180,7 @@ export class RequestTrace {
   skip(): void {
     if (!this.running || this.finished) return;
     if (this.waypoints[this.wp]?.gate && !this.arrived) {
-      this.dock.fastForward();
+      this.desk.fastForward();
       return;
     }
     for (let i = this.wp + 1; i < this.waypoints.length; i++) {
@@ -212,9 +210,9 @@ export class RequestTrace {
     this.core.scaling.setAll(1 + Math.sin(performance.now() / 160) * 0.08);
     const gate = this.waypoints[this.wp];
     if (gate?.gate && !this.arrived) {
-      // The dock plays the arrival at the finale's speed, and holds still when paused.
-      this.dock.timeScale = this.paused ? 0 : this.speed;
-      if (!this.dock.signed) return;
+      // The front desk plays the arrival at the finale's speed, and holds still when paused.
+      this.desk.timeScale = this.paused ? 0 : this.speed;
+      if (!this.desk.signed) return;
       this.targetOf(gate, this.orb.position);
       this.orb.setEnabled(true);
       this.arrived = true;
@@ -289,7 +287,7 @@ export class RequestTrace {
     return { label: `${sideBadge(side)}${calledIn ? " · called in" : ""}`, color: SIDES[side].color };
   }
 
-  private addStop(stop: Stop, index: number, total: number, member: string, memberColor: string): void {
+  private addStop(stop: Stop, index: number, total: number, client: string, clientColor: string): void {
     const read = Math.min(7.5, Math.max(3.2, stop.text.length * 0.045));
     const announce = (who: string, route: string[], color: string, side?: TraceStep["side"]): void =>
       this.hooks.step({ index, total, kind: stop.kind, who, route, text: stop.text, color, side });
@@ -298,8 +296,13 @@ export class RequestTrace {
       const arrival = ARRIVALS[this.scenario];
       const side = SIDES[this.requestSide];
       const impostor = arrival.visitor === "impostor";
-      const visitor = impostor ? "Someone" : member;
-      const who = impostor ? `Someone · signing in ${member.split(" ")[0]}’s name` : `${member} · arrives by water taxi`;
+      const first = client.split(" ")[0];
+      const visitor = impostor ? "Someone" : client;
+      const who = impostor
+        ? `Someone · signing in ${first}’s name`
+        : arrival.companion
+          ? `${client} and ${arrival.companion.name.split(" ")[0]} · arrive by tram`
+          : `${client} · arrives by tram`;
       this.arrival = () => {
         this.hooks.focus({ desk: true });
         this.hooks.step({
@@ -307,9 +310,9 @@ export class RequestTrace {
           total,
           kind: "arrive",
           who,
-          route: [visitor, "Front desk", "Form Extraction agent"],
+          route: [visitor, "Front desk", "Fact Find Extraction agent"],
           text: `${arrival.line} ${stop.text}`,
-          color: memberColor,
+          color: clientColor,
           side: { label: `${side.name} request`, color: side.color },
         });
       };
@@ -344,14 +347,14 @@ export class RequestTrace {
     const who = `${staff.name} · ${staff.department}`;
     const side = this.sideChip(agent.side);
 
-    if (stop.kind === "handoff") {
+    if (stop.kind === "brief") {
       this.waypoints.push({
         anchor: person,
         dwell: read,
         first: true,
         enter: () => {
           this.hooks.focus({ staff: staff.id });
-          announce(who, [staff.name, "hands over"], staff.color, side);
+          announce(who, [staff.name, stop.verb ?? "checks in"], staff.color, side);
         },
       });
       return;

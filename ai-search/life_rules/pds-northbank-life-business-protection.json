@@ -1,0 +1,38 @@
+{
+  "id": "pds-northbank-life-business-protection",
+  "title": "Northbank Life — Business Protection PDS extract",
+  "product": "Northbank Business Protection",
+  "version": "PDS extract — PDS dated 1 July 2026",
+  "summary": "Extract of the Product Disclosure Statement for Northbank Business Protection, issued by Northbank Life Limited: buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting. Northbank's personal covers are in a separate PDS. Paraplanning uses this extract to structure business protection, Insurance Research to compare it, and Underwriting & New Business for the medical and financial requirements. General information only — it doesn't take account of anyone's objectives, financial situation or needs, and Northbank doesn't give tax or legal advice.",
+  "rules": "1 Buy-sell cover — life and TPD cover (trauma optional) on each business owner, sized to that owner's share of the business value, so the remaining owners can buy the share and the departing owner or their family receives its value.\nOwnership options: self-ownership — each owner owns the policy on their own life and the benefit is paid to them, their nominated beneficiaries or their estate, with the buy-sell agreement setting out how the share is transferred; or cross-ownership — each owner owns a policy on the other owners' lives.\nNorthbank requires a buy-sell agreement prepared by the owners' lawyer. Northbank doesn't draft or review legal agreements. TPD on buy-sell and key person cover is assessed on an own-occupation basis: the life insured is unlikely ever to work in their own occupation again because of illness or injury. The buy-sell agreement's TPD trigger should use the same definition.\n2 Key person cover — life and TPD cover (trauma optional) on a person whose death or disability would cost the business money. The business owns the policy and receives the benefit. The purpose is recorded at application: revenue (to replace lost profit while a replacement is found and trained) or capital (for example to repay business debt). The sum insured is supported by the accountant's estimate of the loss.\n3 Financial underwriting — Northbank accepts the business valuation and the last two years' financial statements prepared by the business's accountant as financial evidence, and usually decides within 5 business days.\n4 Medical underwriting (total life or TPD cover on one life) — tele-interview for every application; blood profile from age 46 above $1,000,000; blood profile and medical examination from age 51 above $1,500,000.\n5 Underwriting outcomes — standard rates, a loading (a percentage added to the premium, for example +25%), an exclusion, or a decline. Northbank reviews a loading or exclusion on request after two years if the life insured's health results improve.\n6 Premiums — stepped (rise with age) or level (start higher and rise more slowly). The business pays key person premiums; under self-ownership each owner pays the premiums for their own buy-sell policy.\n7 Applying — the policy owner and life insured must take reasonable care not to make a misrepresentation. Northbank won't ask for or use genetic test results.\n8 Cooling-off — 14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made.\n9 Tax — the tax treatment of premiums and benefits depends on who owns the policy and why it was taken out. Northbank recommends that the business confirm it with its accountant.\n10 Claims — Northbank subscribes to the Life Insurance Code of Practice (see 'Claims rules — Life Insurance Code of Practice and income protection benefits').\n11 Adviser remuneration — Northbank may pay the adviser commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent.",
+  "limits": "Buy-sell sums insured can't exceed the owner's share of the business value supported by the financial evidence; key person sums insured can't exceed the loss estimated by the business's accountant. Northbank doesn't draft buy-sell agreements and doesn't give tax or legal advice. Business protection isn't available inside super. Benefits are paid only into an account in the policy owner's name (the business, for key person cover).",
+  "evidenceRequired": [
+    "Company extract showing the owners and their shareholdings",
+    "Business valuation from the accountant",
+    "Last two years' financial statements",
+    "Accountant's estimate of the loss (key person cover)",
+    "Blood profile and medical examination where the thresholds apply",
+    "Buy-sell agreement prepared by the owners' lawyer"
+  ],
+  "sources": [],
+  "owner": "Insurance Research",
+  "tags": [
+    "pds",
+    "northbank-life",
+    "NB-",
+    "business-protection",
+    "buy-sell",
+    "self-ownership",
+    "cross-ownership",
+    "key-person",
+    "revenue-purpose",
+    "capital-purpose",
+    "fast-financial-underwriting",
+    "valuation",
+    "financial-statements",
+    "loading-review-two-years",
+    "medical-thresholds",
+    "cooling-off"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

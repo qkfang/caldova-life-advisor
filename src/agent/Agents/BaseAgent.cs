@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
-namespace CaldovaSuper.Agents;
+namespace CaldovaLife.Agents;
 
 public record SearchCitation(string Title, string Url);
 
@@ -43,8 +43,8 @@ public record AgentTraceResult(
 /// <summary>
 /// Tracks an MCP tool call that is awaiting human approval before it can run.
 /// Used by the step-style <see cref="BaseAgent.StartRunAsync"/> / <see cref="BaseAgent.ChatAsync"/>
-/// / <see cref="BaseAgent.ContinueRunAsync"/> flow ported from the
-/// demo-foundry-document-intelligence repo.
+/// / <see cref="BaseAgent.ContinueRunAsync"/> flow ported from the Foundry
+/// document-intelligence sample repo.
 /// </summary>
 public record PendingToolApproval(string ResponseId, string ApprovalItemId, string ServerLabel);
 
@@ -55,8 +55,8 @@ public record PendingToolApproval(string ResponseId, string ApprovalItemId, stri
 public record AgentStepResult(string? Result, PendingToolApproval? Pending, string? ResponseId);
 
 /// <summary>
-/// Base wrapper around an Azure AI Foundry declarative agent. Each operations-office
-/// staff character is implemented as a subclass of <see cref="CaldovaAgent"/>
+/// Base wrapper around an Azure AI Foundry declarative agent. Each Caldova Life
+/// Advice staff character is implemented as a subclass of <see cref="CaldovaAgent"/>
 /// (which in turn inherits from this <see cref="BaseAgent"/>) so that every
 /// agent shares the same response-handling, MCP approval and citation logic.
 ///
@@ -172,11 +172,10 @@ public abstract class BaseAgent
     /// <summary>
     /// Resumes a previous agent run by chaining a new user message off
     /// <paramref name="previousResponseId"/> and then auto-approving any
-    /// further MCP tool calls until the model finishes. Used by the
-    /// Payments Agent's "approve in popup" flow so the human-approval
-    /// decision flows back to the same agent in the same conversation and
-    /// it can call the payment-release MCP tool to actually release the
-    /// payment.
+    /// further MCP tool calls until the model finishes. Used by the Claims
+    /// Agent's "approve in popup" flow so the human-approval decision flows
+    /// back to the same agent in the same conversation and it can call the
+    /// claim-lodgement MCP tool to actually lodge the claim.
     /// </summary>
     public async Task<AgentTraceResult> ChatWithTraceAsync(string previousResponseId, string message)
     {
@@ -230,7 +229,7 @@ public abstract class BaseAgent
     /// <summary>
     /// Streams the agent's response and also yields a final <see cref="AgentStreamingCompleted"/>
     /// event carrying the full <see cref="AgentTraceResult"/> (text, citations, every
-    /// output item, response id, and duration). This is what the "Try It Out" tab on each
+    /// output item, response id, and duration). This is what the "Try it out" tab on each
     /// agent page uses so it can render text deltas live and then finalise the
     /// agent-notes panel and Engage Agent sub-tabs once the run is complete.
     /// </summary>
@@ -439,7 +438,7 @@ public abstract class BaseAgent
     /// Starts a step-style run where the caller is expected to handle MCP tool
     /// approval requests externally (e.g. surface them to a human reviewer in a UI).
     /// Mirrors the StartRunAsync / ChatAsync / ContinueRunAsync flow from the
-    /// demo-foundry-document-intelligence repo's BaseAgent.
+    /// BaseAgent in the Foundry document-intelligence sample repo.
     /// </summary>
     public Task<AgentStepResult> StartRunAsync(string message)
     {

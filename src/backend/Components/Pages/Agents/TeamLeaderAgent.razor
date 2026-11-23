@@ -1,22 +1,26 @@
 @page "/agents/team-leader"
 
-<PageTitle>Team Leader Agent — Wealth Team in a Day</PageTitle>
+<PageTitle>Team Leader Agent — Advice Team in a Day</PageTitle>
 
 <div class="agent-header" style="--accent: #14b8a6">
-    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the agent console</a>
     <div class="agent-header-row">
         <div class="agent-header-icon">🧭</div>
         <div>
             <div class="agent-header-dept">Team Leader Office</div>
             <h1>Team Leader Agent</h1>
-            <div class="agent-header-persona">Theo — Client Operations Team Leader</div>
-            <p class="tagline">Watches the whole floor — SLAs, IDR clocks and approvals.</p>
+            <div class="agent-header-persona">Theo — Practice Team Leader</div>
+            <p class="tagline">Leads both teams — the pipeline, claim and complaint clocks, approvals and file quality.</p>
+            <div class="agent-header-tags">
+                <span class="agent-header-tag">All stages</span>
+                <span class="agent-header-tag side-shared">Shared by both sides</span>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="agent-tab-scope" style="--accent: #14b8a6">
-    <nav class="agent-tabs" role="tablist" aria-label="Team Leader demos">
+    <nav class="agent-tabs" role="tablist" aria-label="Team Leader views">
         <button type="button" class="agent-tab active" data-tab="try" role="tab" aria-selected="true" tabindex="0">Try it out</button>
         <button type="button" class="agent-tab" data-tab="groupchat" role="tab" aria-selected="false" tabindex="-1">Group Chat</button>
     </nav>
@@ -29,9 +33,9 @@
                 <span class="leader-step-num">1</span>
                 <h3>Pick a case</h3>
             </div>
-            <p class="muted">The case you pick becomes Theo's focus.</p>
+            <p class="muted">The case you pick becomes Theo's focus; the dashboard covers the whole practice.</p>
             <div class="leader-case-row">
-                <select id="leader-case-select" aria-label="Member Case">
+                <select id="leader-case-select" aria-label="Client Case">
                     <option value="">— Select a case —</option>
                 </select>
                 <button type="button" id="leader-refresh-btn" class="leader-secondary"
@@ -45,11 +49,13 @@
                 <div class="leader-case-num" id="leader-case-num"></div>
                 <div class="leader-case-grid">
                     <div><span class="k">Client</span><span id="leader-case-client"></span></div>
-                    <div><span class="k">Member no.</span><span id="leader-case-member"></span></div>
+                    <div><span class="k">Client no.</span><span id="leader-case-number"></span></div>
                     <div><span class="k">Request type</span><span id="leader-case-type"></span></div>
                     <div><span class="k">Received</span><span id="leader-case-received"></span></div>
                     <div><span class="k">Adviser</span><span id="leader-case-adviser"></span></div>
+                    <div><span class="k">Referred by</span><span id="leader-case-referred"></span></div>
                     <div><span class="k">Amount</span><span id="leader-case-amount"></span></div>
+                    <div><span class="k">Cover</span><span id="leader-case-cover"></span></div>
                     <div class="span-2"><span class="k">Priority</span><span id="leader-case-priority"></span></div>
                     <div class="span-2"><span class="k">Request</span><span id="leader-case-request"></span></div>
                 </div>
@@ -62,7 +68,7 @@
                 <span class="leader-step-num">2</span>
                 <h3>Engage Team Leader Agent</h3>
             </div>
-            <button id="leader-process-btn" type="button" disabled>Review the floor with Theo</button>
+            <button id="leader-process-btn" type="button" disabled>Review the practice with Theo</button>
             <div id="leader-process-status" class="leader-status" hidden></div>
 
             <div class="engage-tabs-scope" data-engage-role="team-leader">
@@ -119,23 +125,29 @@
             </div>
         </div>
 
-        <!-- Step 3 — floor dashboard -->
+        <!-- Step 3 — practice dashboard -->
         <div class="leader-step" data-step="3" id="leader-results" hidden>
             <div class="leader-step-head">
                 <span class="leader-step-num">3</span>
-                <h3>Floor dashboard</h3>
+                <h3>Practice dashboard</h3>
             </div>
             <p class="muted tl-asat-line" id="leader-asat"></p>
 
             <div class="tl-focus" id="leader-focus"></div>
 
             <div class="tl-section">
-                <h4>Cases by stage</h4>
+                <h4>Pipeline by lifecycle stage</h4>
                 <div class="tl-tiles" id="leader-stage-tiles"></div>
+                <div class="tl-table-wrap">
+                    <table class="tl-table">
+                        <thead><tr><th>Stage</th><th>Case</th><th>Side</th><th>Owner</th><th>Next action</th></tr></thead>
+                        <tbody id="leader-pipeline-body"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="tl-section">
-                <h4>SLA &amp; complaint clocks</h4>
+                <h4>Underwriting, claim &amp; complaint clocks</h4>
                 <div class="tl-table-wrap">
                     <table class="tl-table">
                         <thead><tr><th>Clock</th><th>Case</th><th>Rule</th><th>Status</th></tr></thead>
@@ -150,25 +162,30 @@
             </div>
 
             <div class="tl-section">
-                <h4>Approval queue — waiting on Theo</h4>
+                <h4>Approval queue — waiting on a person</h4>
                 <div class="tl-table-wrap">
                     <table class="tl-table">
-                        <thead><tr><th>#</th><th>Case</th><th>Approval</th><th>Why it needs a human</th><th>Recommendation</th><th>Due</th></tr></thead>
+                        <thead><tr><th>#</th><th>Case</th><th>Decision</th><th>Approver</th><th>Why a person decides</th><th>Recommendation</th><th>Due</th></tr></thead>
                         <tbody id="leader-approvals-body"></tbody>
                     </table>
                 </div>
-                <p class="muted tl-note">Theo's agent recommends; Theo decides. Payment approvals are actioned in Microsoft Teams.</p>
+                <p class="muted tl-note">Theo's agent recommends; people decide. Amelia signs every SoA; claim lodgements are approved in Microsoft Teams.</p>
             </div>
 
             <div class="tl-grid-2">
                 <div class="tl-section">
-                    <h4>Vulnerable members</h4>
+                    <h4>Vulnerable clients</h4>
                     <ul class="tl-list" id="leader-vulnerable"></ul>
                 </div>
                 <div class="tl-section">
-                    <h4>Quality &amp; coaching insights</h4>
+                    <h4>Coaching insights</h4>
                     <ul class="tl-list" id="leader-coaching"></ul>
                 </div>
+            </div>
+
+            <div class="tl-section">
+                <h4>File-quality audits</h4>
+                <div class="tl-audits" id="leader-audits"></div>
             </div>
 
             <div class="tl-section">
@@ -188,9 +205,9 @@
                 <span class="leader-step-num">1</span>
                 <h3>Pick a case</h3>
             </div>
-            <p class="muted">Theo and the seven specialists discuss it together.</p>
+            <p class="muted">Theo and the seven specialists review it together.</p>
             <div class="leader-case-row">
-                <select id="gc-case-select" aria-label="Member Case">
+                <select id="gc-case-select" aria-label="Client Case">
                     <option value="">— Select a case —</option>
                 </select>
                 <button type="button" id="gc-refresh-btn" class="leader-secondary"
@@ -218,7 +235,7 @@
                 <span class="leader-step-num">2</span>
                 <h3>Start the group chat</h3>
             </div>
-            <p class="muted">Theo asks one specialist at a time, then closes with a plan.</p>
+            <p class="muted">Theo asks one specialist at a time, records each human decision, then closes with a plan.</p>
 
             <div class="gc-roster" id="gc-roster" aria-label="Participants"></div>
 
@@ -230,7 +247,7 @@
         <div class="leader-step gc-transcript-step" data-step="3" id="gc-transcript-step" hidden>
             <div class="leader-step-head">
                 <span class="leader-step-num">3</span>
-                <h3>Live transcript</h3>
+                <h3>Transcript</h3>
                 <span class="tl-asat" id="gc-mode"></span>
             </div>
             <div id="gc-transcript" class="gc-transcript" aria-live="polite"></div>
@@ -355,7 +372,7 @@
     }
     @@keyframes leader-spin { to { transform: rotate(360deg); } }
 
-    /* ── Floor dashboard ─────────────────────────────────────────────── */
+    /* ── Practice dashboard ──────────────────────────────────────────── */
     .tl-asat {
         margin-left: auto;
         font-size: 0.72rem;
@@ -478,6 +495,45 @@
     .tl-priorities li { margin-bottom: 0.3rem; }
     .tl-priorities li::marker { color: color-mix(in srgb, var(--leader-accent) 60%, #0b1f3a); font-weight: 700; }
 
+    .tl-tiles + .tl-table-wrap { margin-top: 0.75rem; }
+    .tl-tile .stage-tag { margin-left: 0; }
+    .tl-side {
+        display: inline-block;
+        padding: 0.05rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem; font-weight: 700;
+        white-space: nowrap;
+        border: 1px solid rgba(16, 38, 72, 0.2);
+        background: #fff;
+        color: #1d2939;
+    }
+    .tl-side.protection { background: color-mix(in srgb, var(--cw-teal, #14b8a6) 14%, #fff); border-color: color-mix(in srgb, var(--cw-teal, #14b8a6) 50%, transparent); }
+    .tl-side.claims { background: color-mix(in srgb, var(--cw-gold, #c9a14a) 16%, #fff); border-color: color-mix(in srgb, var(--cw-gold, #c9a14a) 55%, transparent); }
+    .tl-side.shared { background: color-mix(in srgb, var(--cw-lilac, #8b9cf7) 16%, #fff); border-color: color-mix(in srgb, var(--cw-lilac, #8b9cf7) 55%, transparent); }
+
+    .tl-audits { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.6rem; }
+    .tl-audit {
+        background: #f6f7f9;
+        border: 1px solid rgba(16, 38, 72, 0.112);
+        border-radius: 10px;
+        padding: 0.6rem 0.75rem;
+    }
+    .tl-audit.is-focus {
+        border-color: color-mix(in srgb, var(--leader-accent) 55%, transparent);
+        background: color-mix(in srgb, var(--leader-accent) 9%, #f6f7f9);
+    }
+    .tl-audit-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem; margin-bottom: 0.15rem; }
+    .tl-audit-head strong { color: #0b1f3a; font-size: 0.86rem; }
+    .tl-audit-head .tl-badge { margin-left: auto; margin-right: 0; }
+    .tl-audit-standard { font-size: 0.74rem; color: var(--cw-muted, #5d6b7e); margin-bottom: 0.35rem; }
+    .tl-checks { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; line-height: 1.45; }
+    .tl-checks li { display: flex; gap: 0.4rem; margin-bottom: 0.2rem; color: #344054; }
+    .tl-checks .mark { flex: 0 0 1rem; text-align: center; font-weight: 700; }
+    .tl-checks li.pass .mark { color: #0f7032; }
+    .tl-checks li.warn .mark { color: #954f12; }
+    .tl-checks li.na .mark { color: var(--cw-muted, #5d6b7e); }
+    .tl-checks .lbl { color: #0b1f3a; font-weight: 600; }
+
     /* ── Group Chat panel ─────────────────────────────────────────────── */
     .groupchat-panel { --leader-accent: #14b8a6; }
 
@@ -548,4 +604,5 @@
     .gc-msg.gc-info { border-left-color: rgba(16, 38, 72, 0.24); font-style: italic; }
     .gc-msg.gc-error { border-left-color: #f87171; background: rgba(127, 29, 29, 0.25); }
     .gc-msg.gc-conclude { border-left-color: #34d399; background: color-mix(in srgb, #34d399 10%, #f6f7f9); }
+    .gc-msg.gc-decide { border-left-color: #f59e0b; background: color-mix(in srgb, #f59e0b 10%, #f6f7f9); }
 </style>

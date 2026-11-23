@@ -1,42 +1,43 @@
 /**
  * JSON-driven scenario definitions: one `<id>.json` file per scenario in
  * this folder, mirroring `docs/scenario-N-*.md`. Each holds:
- *  - The case facts: case number, amounts and outcome.
- *  - Beat list — the narration for every step, in the order the case moves
- *    through the team, starting with the request being lodged.
- *  - The result — how the case ends.
+ *  - The case facts: case number, headline amounts and outcome.
+ *  - Beat list: the narration for every step, in the order the case moves
+ *    through the practice, starting with the request at the front desk.
+ *  - The result: how the case ends.
  *
- * The lakehouse finale (`v2/requestTrace.ts`) turns each beat into a stop on
- * the request's route through the house, so one JSON edit changes the
+ * The Caldova House finale (`v2/requestTrace.ts`) turns each beat into a stop
+ * on the request's route through the house, so one JSON edit changes the
  * finale's narration.
  */
 import type { ScenarioId, StaffRole } from "../personaData";
 
-import onboarding from "./onboarding.json";
-import protection from "./protection.json";
-import retirement from "./retirement.json";
-import hardship from "./hardship.json";
+import family from "./family.json";
+import fraud from "./fraud.json";
+import business from "./business.json";
+import income from "./income.json";
 import bereavement from "./bereavement.json";
 
 /** `rejected` covers declined and blocked cases; `result.status` holds the label. */
 export type ScenarioOutcome = "approved" | "rejected" | "partial";
 
 export type BeatAction =
-  | "lodge-at-reception"
+  | "lodge-at-front-desk"
   | "onboarding-pickup"
   | "onboarding-route"
-  | "benefits-pickup"
-  | "benefits-process"
-  | "investment-review"
   | "fincrime-review"
-  | "transfers-coordinate"
+  | "paraplanning-needs"
+  | "paraplanning-soa"
+  | "research-compare"
   | "team-leader-review"
-  | "benefits-handoff"
-  | "payment"
+  | "underwriting"
+  | "claims-assess"
+  | "claims-lodge"
+  | "claims-confirm"
   | "comms-notify";
 
-/** Who works the beat: a staff role, or the client lodging the request. */
-export type BeatFocus = StaffRole | "customer";
+/** Who works the beat: a staff role, or the client making the request. */
+export type BeatFocus = StaffRole | "client";
 
 export interface ScenarioBeatJson {
   at: BeatFocus;
@@ -44,20 +45,15 @@ export interface ScenarioBeatJson {
   narration: string;
 }
 
-/** Case status label recorded by Payments when the outcome is decided. */
-export type CaseDecisionStatus =
-  | "completed"
-  | "partially approved"
-  | "declined"
-  | "blocked";
+/** Case status label once the outcome is decided. */
+export type CaseDecisionStatus = "completed" | "partially approved" | "declined" | "blocked";
 
 /** How the case ends. The finale's last stop shows the icon, headline and summary. */
 export interface ScenarioResultJson {
-  /** Case status once Payments records the outcome. */
   status: CaseDecisionStatus;
   /** One-line outcome. */
   headline: string;
-  /** The headline figure (e.g. "$7,932 net"). */
+  /** The headline figure (e.g. "$5,600 a month"). */
   figure: string;
   icon: string;
   /** Outcome line with the full detail. */
@@ -68,13 +64,13 @@ export interface ScenarioDefinition {
   id: ScenarioId;
   /** The N in `docs/scenario-N-*.md`. */
   scenarioNumber: number;
-  /** Case number, matching the seeded entries in the backend `CaseStore.SeedDefaults`. */
+  /** Case number, matching the seeded entries in the backend `CaseStore`. */
   caseId: string;
-  customerId: ScenarioId;
-  /** Amount requested on the case. */
+  clientId: ScenarioId;
+  /** The headline amount on the case: the cover recommended, claimed or insured. */
   amount: number;
-  /** Gross amount paid, invested or commenced at the payment step (0 when blocked). */
-  paidAmount: number;
+  /** The cover put in force, or the benefit accepted or paid, at the end (0 when blocked). */
+  outcomeAmount: number;
   outcome: ScenarioOutcome;
   beats: ScenarioBeatJson[];
   result: ScenarioResultJson;
@@ -82,10 +78,10 @@ export interface ScenarioDefinition {
 
 /** Single source of truth for every scenario. */
 export const SCENARIOS: Record<ScenarioId, ScenarioDefinition> = {
-  onboarding: onboarding as ScenarioDefinition,
-  protection: protection as ScenarioDefinition,
-  retirement: retirement as ScenarioDefinition,
-  hardship: hardship as ScenarioDefinition,
+  family: family as ScenarioDefinition,
+  fraud: fraud as ScenarioDefinition,
+  business: business as ScenarioDefinition,
+  income: income as ScenarioDefinition,
   bereavement: bereavement as ScenarioDefinition,
 };
 

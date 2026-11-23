@@ -1,14 +1,15 @@
-# Creates / updates the two Azure AI Search indexes used by Wealth Team in a Day
-# (Caldova Wealth) and uploads the mock JSON documents from the sibling folders:
-#   wealth_knowledge  <- wealth_knowledge/*.json (case files + operational guides)
-#                        + wealth_rules/*.json projected onto the knowledge schema
-#   wealth_rules      <- wealth_rules/*.json (product & rule documents)
+# Creates / updates the two Azure AI Search indexes used by Advice Team in a Day
+# (Caldova Life Advice) and uploads the JSON documents from the sibling folders:
+#   life_knowledge  <- life_knowledge/*.json (client case files + practice guides)
+#                      + life_rules/*.json projected onto the knowledge schema
+#   life_rules      <- life_rules/*.json (insurer PDS extracts, Caldova's FSG and
+#                      APL, and the rule guides)
 # Adapted from https://github.com/qkfang/quant-agent/blob/main/ai-search/setup-index.ps1.
 
-$SearchServiceName = "search-caldovacs"     # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacs)
-$ResourceGroupName = "rg-caldova-super"
-$IndexPrefix = "wealth"
-$FoundryEndpoint = "https://aif-caldovacs.cognitiveservices.azure.com"  # Update to match foundryAccountEndpoint output
+$SearchServiceName = "search-caldovacl"     # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacl)
+$ResourceGroupName = "rg-caldova-life"
+$IndexPrefix = "life"
+$FoundryEndpoint = "https://aif-caldovacl.cognitiveservices.azure.com"  # Update to match foundryAccountEndpoint output
 
 $ErrorActionPreference = "Stop"
 
@@ -41,8 +42,8 @@ function New-SearchIndex {
 }
 
 function ConvertTo-KnowledgeDocument {
-    # The Foundry agents query only the wealth_knowledge index, so every
-    # wealth_rules document is also uploaded there in the knowledge schema and
+    # The Foundry agents query only the life_knowledge index, so every
+    # life_rules document is also uploaded there in the knowledge schema and
     # can be retrieved and cited by its title.
     param([object]$RuleDoc)
 
@@ -50,6 +51,7 @@ function ConvertTo-KnowledgeDocument {
     if ($RuleDoc.rules) { $sections += "Key rules: $($RuleDoc.rules)" }
     if ($RuleDoc.limits) { $sections += "Limits and exceptions: $($RuleDoc.limits)" }
     if ($RuleDoc.evidenceRequired) { $sections += "Evidence required: $(@($RuleDoc.evidenceRequired) -join '; ')" }
+    if ($RuleDoc.sources) { $sections += "Sources: $(@($RuleDoc.sources) -join '; ')" }
     $sections += "Product: $($RuleDoc.product). Version: $($RuleDoc.version). Owner: $($RuleDoc.owner)."
 
     [pscustomobject]@{
@@ -58,7 +60,7 @@ function ConvertTo-KnowledgeDocument {
         category     = "Product & Rules"
         requestType  = "All"
         caseNumber   = ""
-        memberNumber = ""
+        clientNumber = ""
         content      = ($sections -join "`n`n")
         severity     = "reference"
         department   = $RuleDoc.owner
@@ -105,10 +107,10 @@ function Upload-Documents {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# --- wealth_knowledge index ------------------------------------------------
-# Member case files (one or more per demo scenario), operational guides
-# (financial-crime red flags, authority matrix, fund directory, NIGO checklist)
-# and a knowledge-schema copy of every product & rule document.
+# --- life_knowledge index --------------------------------------------------
+# Client case files (four or five per scenario), practice guides (in-good-order
+# checklist, financial crime red flags, authority matrix, APL insurer
+# directory) and a knowledge-schema copy of every product & rule document.
 $knowledgeIndexName = "${IndexPrefix}_knowledge"
 $knowledgeIndexDef = @{
     name   = $knowledgeIndexName
@@ -118,7 +120,7 @@ $knowledgeIndexDef = @{
         @{ name = "category"; type = "Edm.String"; searchable = $true; filterable = $true; facetable = $true }
         @{ name = "requestType"; type = "Edm.String"; filterable = $true; facetable = $true }
         @{ name = "caseNumber"; type = "Edm.String"; filterable = $true; searchable = $true }
-        @{ name = "memberNumber"; type = "Edm.String"; filterable = $true; searchable = $true }
+        @{ name = "clientNumber"; type = "Edm.String"; filterable = $true; searchable = $true }
         @{ name = "content"; type = "Edm.String"; searchable = $true; analyzer = "en.microsoft" }
         @{ name = "severity"; type = "Edm.String"; filterable = $true; facetable = $true }
         @{ name = "department"; type = "Edm.String"; filterable = $true; facetable = $true }
@@ -180,11 +182,12 @@ $knowledgeIndexDef = @{
 }
 
 New-SearchIndex -IndexName $knowledgeIndexName -IndexDefinition $knowledgeIndexDef
-Upload-Documents -IndexName $knowledgeIndexName -DocumentFolder (Join-Path $scriptDir "wealth_knowledge") -RulesFolder (Join-Path $scriptDir "wealth_rules")
+Upload-Documents -IndexName $knowledgeIndexName -DocumentFolder (Join-Path $scriptDir "life_knowledge") -RulesFolder (Join-Path $scriptDir "life_rules")
 
-# --- wealth_rules index ----------------------------------------------------
-# Caldova product & rule documents (PDS, IDPS guide, trust deed, super-law rule
-# summaries, fee schedule, managed portfolio menu) in their structured form.
+# --- life_rules index ------------------------------------------------------
+# Insurer PDS extracts, Caldova's FSG and approved product list, and the rule
+# guides (advice, insurance inside super, underwriting, claims, tax and
+# commission) in their structured form, with their legal sources.
 $rulesIndexName = "${IndexPrefix}_rules"
 $rulesIndexDef = @{
     name   = $rulesIndexName
@@ -197,6 +200,7 @@ $rulesIndexDef = @{
         @{ name = "rules"; type = "Edm.String"; searchable = $true; analyzer = "en.microsoft" }
         @{ name = "limits"; type = "Edm.String"; searchable = $true; analyzer = "en.microsoft" }
         @{ name = "evidenceRequired"; type = "Collection(Edm.String)"; searchable = $true; filterable = $true; facetable = $true }
+        @{ name = "sources"; type = "Collection(Edm.String)"; searchable = $true }
         @{ name = "owner"; type = "Edm.String"; filterable = $true }
         @{ name = "tags"; type = "Collection(Edm.String)"; searchable = $true; filterable = $true; facetable = $true }
         @{ name = "lastUpdated"; type = "Edm.DateTimeOffset"; filterable = $true; sortable = $true }
@@ -257,6 +261,6 @@ $rulesIndexDef = @{
 }
 
 New-SearchIndex -IndexName $rulesIndexName -IndexDefinition $rulesIndexDef
-Upload-Documents -IndexName $rulesIndexName -DocumentFolder (Join-Path $scriptDir "wealth_rules")
+Upload-Documents -IndexName $rulesIndexName -DocumentFolder (Join-Path $scriptDir "life_rules")
 
 Write-Host "`nSetup complete. Indexes '${IndexPrefix}_knowledge' and '${IndexPrefix}_rules' created with semantic search and vector search enabled."

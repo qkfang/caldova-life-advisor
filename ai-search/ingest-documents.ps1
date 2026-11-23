@@ -1,24 +1,24 @@
-# Re-uploads documents from wealth_knowledge/ and wealth_rules/ into the
-# Azure AI Search indexes provisioned by setup-index.ps1. Use this after
-# editing or adding mock case-file, guide or product/rule JSON files.
+# Re-uploads documents from life_knowledge/ and life_rules/ into the Azure AI
+# Search indexes provisioned by setup-index.ps1. Use this after editing,
+# adding, renaming or removing a case-file, guide or product/rule JSON file.
 #
 # What it does:
 #   1. Validates every *.json file under each folder before upload (fail-fast
-#      JSON parse + required-field check), so a malformed mock document
-#      can't quietly take down a whole index batch.
+#      JSON parse, required-field check, and the id must equal the file name),
+#      so a malformed document can't quietly take down a whole index batch.
 #   2. Echoes each file as it is uploaded with its document id so you can
-#      cross-reference the mock documents (e.g. case-req-20261111-ops004-hardship-application).
-#   3. Uploads every wealth_rules document twice: as-is into wealth_rules, and
-#      projected onto the knowledge schema into wealth_knowledge — the only
+#      cross-reference the documents (e.g. case-req-20261111-lif004-benefit-calculation).
+#   3. Uploads every life_rules document twice: as-is into life_rules, and
+#      projected onto the knowledge schema into life_knowledge — the only
 #      index the Foundry agents query — so agents can cite rules by title.
 #   4. Prints a per-index summary at the end (count and any individual
 #      document failures returned by the indexer in the merge response).
-#   5. Deletes the case files filed under the scenario cases' old numbers
-#      (REQ-yyyyMMdd-DEMOnn, now REQ-yyyyMMdd-OPSnnn), since an upload can only
-#      add or replace documents. Once they are gone this is a no-op.
+#   5. Deletes documents whose JSON file has been removed or renamed, since an
+#      upload can only add or replace documents. When the index matches the
+#      folders this is a no-op.
 
-$SearchServiceName = "search-caldovacs"   # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacs)
-$IndexPrefix = "wealth"
+$SearchServiceName = "search-caldovacl"   # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacl)
+$IndexPrefix = "life"
 
 $ErrorActionPreference = "Stop"
 
@@ -32,7 +32,7 @@ $headers = @{
 }
 
 # Required fields per index — kept in sync with setup-index.ps1. Used as a
-# pre-flight sanity check so a mock doc with a typo in (say) `id` doesn't
+# pre-flight sanity check so a document with a typo in (say) `id` doesn't
 # silently land as a partial document.
 $requiredFields = @{
     "${IndexPrefix}_knowledge" = @("id", "title", "category", "requestType", "content", "tags", "lastUpdated")
@@ -61,18 +61,24 @@ function Read-AndValidateDocument {
         return $null
     }
 
+    if ($doc.id -ne $File.BaseName) {
+        Write-Warning "    [SKIP] $($File.Name) — id '$($doc.id)' must equal the file name without .json"
+        return $null
+    }
+
     return $doc
 }
 
 function ConvertTo-KnowledgeDocument {
-    # Same projection as setup-index.ps1: maps a wealth_rules document onto the
-    # wealth_knowledge schema so it can be retrieved and cited by its title.
+    # Same projection as setup-index.ps1: maps a life_rules document onto the
+    # life_knowledge schema so it can be retrieved and cited by its title.
     param([object]$RuleDoc)
 
     $sections = @($RuleDoc.summary)
     if ($RuleDoc.rules) { $sections += "Key rules: $($RuleDoc.rules)" }
     if ($RuleDoc.limits) { $sections += "Limits and exceptions: $($RuleDoc.limits)" }
     if ($RuleDoc.evidenceRequired) { $sections += "Evidence required: $(@($RuleDoc.evidenceRequired) -join '; ')" }
+    if ($RuleDoc.sources) { $sections += "Sources: $(@($RuleDoc.sources) -join '; ')" }
     $sections += "Product: $($RuleDoc.product). Version: $($RuleDoc.version). Owner: $($RuleDoc.owner)."
 
     [pscustomobject]@{
@@ -81,7 +87,7 @@ function ConvertTo-KnowledgeDocument {
         category     = "Product & Rules"
         requestType  = "All"
         caseNumber   = ""
-        memberNumber = ""
+        clientNumber = ""
         content      = ($sections -join "`n`n")
         severity     = "reference"
         department   = $RuleDoc.owner
@@ -155,32 +161,47 @@ function Upload-Documents {
     }
 }
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+function Remove-StaleDocuments {
+    # Document ids equal the JSON file names, so any id in the index without a
+    # matching file belongs to a document that was removed or renamed.
+    param([string]$IndexName, [string[]]$Folders)
 
-function Remove-RetiredCaseDocuments {
-    # Each renamed case file's old id, e.g. case-req-20261103-ops001-… was case-req-20261103-demo01-….
-    param([string]$IndexName, [string]$DocumentFolder)
+    $localIds = @($Folders | ForEach-Object { Get-ChildItem -Path $_ -Filter "*.json" } | ForEach-Object { $_.BaseName })
+    if ($localIds.Count -eq 0) { return }
 
-    $retired = @(Get-ChildItem -Path $DocumentFolder -Filter "case-req-*-ops00*.json" |
-        ForEach-Object { $_.BaseName -replace '-ops00(\d)-', '-demo0$1-' })
-    if ($retired.Count -eq 0) { return }
+    $listUri = "$searchEndpoint/indexes/${IndexName}/docs?api-version=$apiVersion&search=*&`$select=id&`$top=1000"
+    try {
+        $indexedIds = @((Invoke-RestMethod -Uri $listUri -Method Get -Headers $headers).value | ForEach-Object { $_.id })
+    }
+    catch {
+        Write-Warning "  Could not list the documents in '$IndexName': $_"
+        return
+    }
 
-    $body = @{ value = @($retired | ForEach-Object { @{ "@search.action" = "delete"; id = $_ } }) } | ConvertTo-Json -Depth 5
+    $stale = @($indexedIds | Where-Object { $localIds -notcontains $_ })
+    if ($stale.Count -eq 0) { return }
+
+    $body = @{ value = @($stale | ForEach-Object { @{ "@search.action" = "delete"; id = $_ } }) } | ConvertTo-Json -Depth 5
     $uri = "$searchEndpoint/indexes/${IndexName}/docs/index?api-version=$apiVersion"
     try {
         Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body | Out-Null
-        Write-Host "  Removed any of $($retired.Count) case files still filed under the old REQ-…-DEMOnn case numbers."
+        Write-Host "  Removed $($stale.Count) document(s) with no JSON file: $($stale -join ', ')"
     }
     catch {
-        Write-Warning "  Failed to remove old case files from '$IndexName': $_"
+        Write-Warning "  Failed to remove stale documents from '$IndexName': $_"
     }
 }
 
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$knowledgeFolder = Join-Path $scriptDir "${IndexPrefix}_knowledge"
+$rulesFolder = Join-Path $scriptDir "${IndexPrefix}_rules"
+
 Write-Host "Ingesting documents into '${IndexPrefix}_knowledge' (case files, guides and projected rules)..."
-Remove-RetiredCaseDocuments -IndexName "${IndexPrefix}_knowledge" -DocumentFolder (Join-Path $scriptDir "wealth_knowledge")
-Upload-Documents -IndexName "${IndexPrefix}_knowledge" -DocumentFolder (Join-Path $scriptDir "wealth_knowledge") -RulesFolder (Join-Path $scriptDir "wealth_rules")
+Remove-StaleDocuments -IndexName "${IndexPrefix}_knowledge" -Folders @($knowledgeFolder, $rulesFolder)
+Upload-Documents -IndexName "${IndexPrefix}_knowledge" -DocumentFolder $knowledgeFolder -RulesFolder $rulesFolder
 
 Write-Host "`nIngesting documents into '${IndexPrefix}_rules'..."
-Upload-Documents -IndexName "${IndexPrefix}_rules" -DocumentFolder (Join-Path $scriptDir "wealth_rules")
+Remove-StaleDocuments -IndexName "${IndexPrefix}_rules" -Folders @($rulesFolder)
+Upload-Documents -IndexName "${IndexPrefix}_rules" -DocumentFolder $rulesFolder
 
 Write-Host "`nDocument ingestion complete."

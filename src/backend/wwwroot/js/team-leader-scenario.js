@@ -1,4 +1,4 @@
-// Team Leader page — "Try it out" (floor dashboard) and "Group Chat" wiring.
+// Team Leader page — "Try it out" (practice dashboard) and "Group Chat" wiring.
 // Loaded as a permanent script from App.razor so init runs reliably on full
 // page load AND on Blazor enhanced navigation (inline <script> tags inside
 // razor pages do not re-execute on enhanced nav).
@@ -7,15 +7,36 @@
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
         }
 
-        function isDirect(adviserName) {
-            return !adviserName || /^\s*none/i.test(adviserName);
+        function referredByText(referredBy) {
+            return !referredBy || /^\s*(none|existing)/i.test(referredBy) ? 'Existing client' : referredBy;
+        }
+
+        // "2026-11-03" → "Tue 3 Nov 2026" (Australian format); anything else unchanged.
+        function formatDate(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+            if (!m) return iso || '—';
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            const day = d.toLocaleDateString('en-AU', { weekday: 'short' });
+            const month = d.toLocaleDateString('en-AU', { month: 'short' });
+            return `${day} ${d.getDate()} ${month} ${d.getFullYear()}`;
         }
 
         function caseOptionLabel(c) {
             return `${escapeHtml(c.caseNumber)} — ${escapeHtml(c.clientName)} (${escapeHtml(c.requestType)})`;
         }
 
-        // ── Try it out: floor dashboard ────────────────────────────────────
+        function stageClass(stage) {
+            return 'stage-tag stage-' + String(stage || '').toLowerCase();
+        }
+
+        function sideClass(side) {
+            const s = String(side || '').toLowerCase();
+            if (s.startsWith('protection')) return 'tl-side protection';
+            if (s.startsWith('claims')) return 'tl-side claims';
+            return 'tl-side shared';
+        }
+
+        // ── Try it out: practice dashboard ─────────────────────────────────
         function init() {
         const root = document.querySelector('.leader-panel');
         if (!root || root.dataset.wired === '1') return;
@@ -45,13 +66,13 @@
             }
             $('#leader-case-num').textContent = c.caseNumber;
             $('#leader-case-client').textContent = c.clientName || '—';
-            $('#leader-case-member').textContent = c.memberNumber || '—';
+            $('#leader-case-number').textContent = c.clientNumber || '—';
             $('#leader-case-type').textContent = c.requestType || '—';
-            $('#leader-case-received').textContent = c.receivedDate || '—';
-            $('#leader-case-adviser').textContent = isDirect(c.adviserName)
-                ? 'None — direct member'
-                : `${c.adviserName}${c.adviserPractice ? ' (' + c.adviserPractice + ')' : ''}`;
+            $('#leader-case-received').textContent = formatDate(c.receivedDate);
+            $('#leader-case-adviser').textContent = c.adviserName || '—';
+            $('#leader-case-referred').textContent = referredByText(c.referredBy);
             $('#leader-case-amount').textContent = c.amount || '—';
+            $('#leader-case-cover').textContent = c.cover || '—';
             $('#leader-case-priority').textContent = `${c.priority || '—'}${c.priorityReason ? ' — ' + c.priorityReason : ''}`;
             $('#leader-case-request').textContent = c.requestSummary || '—';
             cardEl.hidden = false;
@@ -71,7 +92,7 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const cases = await res.json();
                 if (!cases.length) {
-                    selectEl.innerHTML = '<option value="">— No cases on the floor —</option>';
+                    selectEl.innerHTML = '<option value="">— No cases in the practice —</option>';
                     emptyEl.hidden = false;
                     return;
                 }
@@ -113,38 +134,60 @@
             return `<td class="tl-case">${escapeHtml(caseNumber)}<small>${escapeHtml(clientName)}</small></td>`;
         }
 
+        function resultBadge(result) {
+            const r = String(result || '').toLowerCase();
+            const cls = r.startsWith('pass') ? 'ok' : r.startsWith('action') ? 'due' : r.startsWith('in progress') ? 'running' : 'watch';
+            return `<span class="tl-badge ${cls}">${escapeHtml(result)}</span>`;
+        }
+
         function renderFocus(f) {
             const facts = (f.keyFacts || []).map(k => `<li>${escapeHtml(k)}</li>`).join('');
             $('#leader-focus').innerHTML =
                 `<div class="tl-focus-head">` +
                     `<span class="tl-focus-label">Theo's focus</span>` +
                     `<span class="tl-focus-title">${escapeHtml(f.caseNumber)} · ${escapeHtml(f.clientName)} · ${escapeHtml(f.requestType)}</span>` +
-                    `<span class="tl-badge watch">${escapeHtml(f.stage)}</span>` +
+                    `<span class="${stageClass(f.stage)}">${escapeHtml(f.stage)}</span>` +
+                    `<span class="${sideClass(f.side)}">${escapeHtml(f.side)}</span>` +
                 `</div>` +
                 `<div class="tl-focus-grid">` +
+                    `<div><span class="k">As at</span>${escapeHtml(f.asAt)}</div>` +
                     `<div><span class="k">Owner</span>${escapeHtml(f.owner)}</div>` +
-                    `<div><span class="k">Decision for Theo</span>${escapeHtml(f.decision)}</div>` +
                     `<div class="span-2"><span class="k">Where it stands</span>${escapeHtml(f.summary)}</div>` +
-                    `<div class="span-2"><span class="k">Recommendation</span>${escapeHtml(f.recommendation)}</div>` +
+                    `<div class="span-2"><span class="k">Decision</span>${escapeHtml(f.decision)}</div>` +
+                    `<div class="span-2"><span class="k">Theo's agent recommends</span>${escapeHtml(f.recommendation)}</div>` +
                     (facts ? `<div class="span-2"><span class="k">Key facts on file</span><ul class="tl-facts">${facts}</ul></div>` : '') +
                 `</div>`;
         }
 
-        function renderFloor(data) {
-            const floor = data.floor || {};
+        function renderPractice(data) {
+            const practice = data.practice || {};
             const focusNumber = data.caseNumber;
 
-            $('#leader-asat').textContent = floor.asAt || '';
+            $('#leader-asat').textContent = practice.asAt || '';
             renderFocus(data.focus || {});
 
-            $('#leader-stage-tiles').innerHTML = (floor.stageCounts || []).map(s =>
-                `<div class="tl-tile${s.count > 0 && s.stage === 'Awaiting approval' ? ' hot' : ''}">` +
+            const counts = practice.stageCounts || [];
+            const busiest = Math.max(0, ...counts.map(s => s.count || 0));
+            $('#leader-stage-tiles').innerHTML = counts.map(s =>
+                `<div class="tl-tile${s.count > 0 && s.count === busiest ? ' hot' : ''}">` +
                     `<span class="tl-tile-count">${escapeHtml(s.count)}</span>` +
-                    `<span class="tl-tile-stage">${escapeHtml(s.stage)}</span>` +
+                    `<span class="${stageClass(s.stage)}">${escapeHtml(s.stage)}</span>` +
                     `<span class="tl-tile-hint">${escapeHtml(s.hint)}</span>` +
                 `</div>`).join('');
 
-            const clocks = floor.clocks || [];
+            const pipeline = practice.cases || [];
+            $('#leader-pipeline-body').innerHTML = pipeline.length
+                ? pipeline.map(p =>
+                    `<tr class="${focusClass(p.caseNumber, focusNumber)}">` +
+                        `<td><span class="${stageClass(p.stage)}">${escapeHtml(p.stage)}</span></td>` +
+                        caseCell(p.caseNumber, p.clientName) +
+                        `<td><span class="${sideClass(p.side)}">${escapeHtml(p.side)}</span></td>` +
+                        `<td>${escapeHtml(p.owner)}</td>` +
+                        `<td>${escapeHtml(p.nextAction)}</td>` +
+                    `</tr>`).join('')
+                : '<tr><td colspan="5">No open cases.</td></tr>';
+
+            const clocks = practice.clocks || [];
             $('#leader-clocks-body').innerHTML = clocks.length
                 ? clocks.map(c =>
                     `<tr class="${focusClass(c.caseNumber, focusNumber)}">` +
@@ -155,7 +198,7 @@
                     `</tr>`).join('')
                 : '<tr><td colspan="4">No clocks running.</td></tr>';
 
-            const escalations = floor.escalations || [];
+            const escalations = practice.escalations || [];
             $('#leader-escalations').innerHTML = escalations.length
                 ? escalations.map(e =>
                     `<li class="${focusClass(e.caseNumber, focusNumber)}">` +
@@ -163,32 +206,53 @@
                         `<strong>${escapeHtml(e.clientName)}</strong> · ${escapeHtml(e.caseNumber)} — ${escapeHtml(e.reason)}` +
                         `<span class="tl-esc-meta">Owner: ${escapeHtml(e.owner)} · ${escapeHtml(e.clock)}</span>` +
                     `</li>`).join('')
-                : '<li>No escalations on the floor.</li>';
+                : '<li>No escalations in the practice.</li>';
 
-            const approvals = floor.approvals || [];
+            const approvals = practice.approvals || [];
             $('#leader-approvals-body').innerHTML = approvals.length
-                ? approvals.map(a =>
+                ? approvals.map((a, i) =>
                     `<tr class="${focusClass(a.caseNumber, focusNumber)}">` +
-                        `<td><strong>${escapeHtml(a.priority)}</strong></td>` +
+                        `<td><strong>${i + 1}</strong></td>` +
                         caseCell(a.caseNumber, a.clientName) +
                         `<td>${escapeHtml(a.item)}</td>` +
+                        `<td>${escapeHtml(a.approver)}</td>` +
                         `<td>${escapeHtml(a.authority)}</td>` +
                         `<td>${escapeHtml(a.recommendation)}</td>` +
                         `<td>${escapeHtml(a.due)}</td>` +
                     `</tr>`).join('')
-                : '<tr><td colspan="6">Nothing waiting for approval.</td></tr>';
+                : '<tr><td colspan="7">Nothing waiting for a decision.</td></tr>';
 
-            const vulnerable = floor.vulnerable || [];
+            const vulnerable = practice.vulnerable || [];
             $('#leader-vulnerable').innerHTML = vulnerable.length
                 ? vulnerable.map(v =>
                     `<li class="${focusClass(v.caseNumber, focusNumber)}">` +
                         `<strong>${escapeHtml(v.clientName)}</strong> · ${escapeHtml(v.caseNumber)} — ${escapeHtml(v.flag)}` +
                         `<span class="tl-meta">${escapeHtml(v.handling)}</span>` +
                     `</li>`).join('')
-                : '<li>No vulnerable members flagged.</li>';
+                : '<li>No vulnerable clients flagged.</li>';
 
-            $('#leader-coaching').innerHTML = (floor.coaching || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
-            $('#leader-priorities').innerHTML = (floor.priorities || []).map(p => `<li>${escapeHtml(p)}</li>`).join('');
+            $('#leader-coaching').innerHTML = (practice.coaching || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
+
+            const audits = practice.fileAudits || [];
+            $('#leader-audits').innerHTML = audits.length
+                ? audits.map(a =>
+                    `<article class="tl-audit ${focusClass(a.caseNumber, focusNumber)}">` +
+                        `<div class="tl-audit-head"><strong>${escapeHtml(a.clientName)}</strong>` +
+                        `<span class="tl-case">${escapeHtml(a.caseNumber)}</span>${resultBadge(a.result)}</div>` +
+                        `<div class="tl-audit-standard">${escapeHtml(a.standard)}</div>` +
+                        `<ul class="tl-checks">` +
+                            (a.checks || []).map(k => {
+                                const st = String(k.status || '').toLowerCase();
+                                const cls = st === 'pass' ? 'pass' : st === 'warn' ? 'warn' : 'na';
+                                const mark = cls === 'pass' ? '✓' : cls === 'warn' ? '!' : '–';
+                                return `<li class="${cls}"><span class="mark" aria-hidden="true">${mark}</span>` +
+                                    `<span><span class="lbl">${escapeHtml(k.label)}</span> — ${escapeHtml(k.note)}</span></li>`;
+                            }).join('') +
+                        `</ul>` +
+                    `</article>`).join('')
+                : '<p class="muted">No files to audit.</p>';
+
+            $('#leader-priorities').innerHTML = (practice.priorities || []).map(p => `<li>${escapeHtml(p)}</li>`).join('');
         }
 
         async function processCase() {
@@ -196,7 +260,7 @@
             processBtn.disabled = true;
             processStatus.hidden = false;
             processStatus.className = 'leader-status';
-            processStatus.innerHTML = '<span class="spinner"></span>Theo\'s agent is reviewing the floor…';
+            processStatus.innerHTML = '<span class="spinner"></span>Theo\'s agent is reviewing the practice…';
             resultsEl.hidden = true;
 
             try {
@@ -217,16 +281,16 @@
 
                 processStatus.className = 'leader-status';
                 if (data.agentConfigured && data.agentNotes) {
-                    processStatus.textContent = 'Team Leader Agent reviewed the floor — the live briefing is in the Agent Narrative tab; the dashboard below is built from the case data.';
+                    processStatus.textContent = 'Team Leader Agent reviewed the practice — the live briefing is in the Agent Narrative tab; the dashboard below is built from the case data.';
                 } else if (data.agentConfigured) {
                     processStatus.className = 'leader-status error';
                     processStatus.textContent = 'Live agent unavailable' + (data.agentError ? ' (' + data.agentError + ')' : '') +
-                        ' — showing the floor dashboard built from the case data.';
+                        ' — showing the practice dashboard built from the case data.';
                 } else {
-                    processStatus.textContent = 'Floor dashboard built from the case data (Foundry agent not configured — no live narrative).';
+                    processStatus.textContent = 'Offline: practice dashboard built from the case data (Foundry agent not configured — no live narrative).';
                 }
 
-                renderFloor(data);
+                renderPractice(data);
                 resultsEl.hidden = false;
                 resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -236,7 +300,7 @@
                 }
             } catch (err) {
                 processStatus.className = 'leader-status error';
-                processStatus.textContent = 'Failed to review the floor: ' + err.message;
+                processStatus.textContent = 'Failed to review the practice: ' + err.message;
             } finally {
                 processBtn.disabled = !selectedCase;
             }
@@ -282,7 +346,7 @@
                 $('#gc-case-num').textContent = c.caseNumber;
                 $('#gc-case-client').textContent = c.clientName || '—';
                 $('#gc-case-type').textContent = c.requestType || '—';
-                $('#gc-case-received').textContent = c.receivedDate || '—';
+                $('#gc-case-received').textContent = formatDate(c.receivedDate);
                 $('#gc-case-priority').textContent = `${c.priority || '—'}${c.priorityReason ? ' — ' + c.priorityReason : ''}`;
                 $('#gc-case-request').textContent = c.requestSummary || '—';
                 cardEl.hidden = false;
@@ -301,7 +365,7 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const cases = await res.json();
                     if (!cases.length) {
-                        selectEl.innerHTML = '<option value="">— No cases on the floor —</option>';
+                        selectEl.innerHTML = '<option value="">— No cases in the practice —</option>';
                         emptyEl.hidden = false;
                         return;
                     }
@@ -335,7 +399,7 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const parts = await res.json();
                     rosterEl.innerHTML =
-                        `<span class="gc-chip leader">Theo — Client Operations Team Leader (chair)</span>` +
+                        `<span class="gc-chip leader">Theo — Practice Team Leader (chair)</span>` +
                         parts.map(p =>
                             `<span class="gc-chip">${escapeHtml(p.persona)} — ${escapeHtml(p.role)}</span>`
                         ).join('');
@@ -351,10 +415,12 @@
                 if (isLeader) cls.push('gc-leader');
                 if (turn.kind === 'info') cls.push('gc-info');
                 if (turn.kind === 'error') cls.push('gc-error');
+                if (turn.kind === 'decide') cls.push('gc-decide');
                 if (turn.kind === 'conclude') cls.push('gc-conclude');
 
                 const kindLabel = ({
                     info: 'orchestration', ask: 'asks', reply: 'replies',
+                    decide: 'records a human decision',
                     conclude: 'concludes with a plan', error: 'error'
                 })[turn.kind] || turn.kind;
 
@@ -395,7 +461,7 @@
 
                     modeEl.textContent = data.mode === 'live'
                         ? 'Live Foundry agents'
-                        : 'Scripted replay — Foundry not configured';
+                        : 'Offline replay — Foundry not configured';
                     statusEl.innerHTML = '<span class="spinner"></span>Theo is chairing the discussion…';
                     transcriptStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -404,6 +470,11 @@
                     sse.onmessage = ev => {
                         let turn;
                         try { turn = JSON.parse(ev.data); } catch { return; }
+                        if (turn.kind === 'mode') {
+                            // The live agents couldn't be reached — the review continues offline.
+                            if (turn.text === 'offline') modeEl.textContent = 'Offline replay — live agents unavailable';
+                            return;
+                        }
                         if (turn.kind === 'done') {
                             sse.close();
                             activeStream = null;
@@ -440,8 +511,8 @@
         init();
         initGroupChat();
 
-        if (!window.__teamLeaderDemoEnhancedHook) {
-            window.__teamLeaderDemoEnhancedHook = true;
+        if (!window.__teamLeaderScenarioEnhancedHook) {
+            window.__teamLeaderScenarioEnhancedHook = true;
             const hook = () => { init(); initGroupChat(); };
             if (typeof Blazor !== 'undefined' && typeof Blazor.addEventListener === 'function') {
                 Blazor.addEventListener('enhancedload', hook);

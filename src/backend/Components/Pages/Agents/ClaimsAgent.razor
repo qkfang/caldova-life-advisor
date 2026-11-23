@@ -1,113 +1,123 @@
-@page "/agents/payments"
+@page "/agents/claims"
 
-<PageTitle>Payments Agent — Wealth Team in a Day</PageTitle>
+<PageTitle>Claims Agent — Advice Team in a Day</PageTitle>
 
 <div class="agent-header" style="--accent: #a855f7">
-    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to the operations office</a>
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> Back to Caldova House</a>
     <div class="agent-header-row">
-        <div class="agent-header-icon">💳</div>
+        <div class="agent-header-icon">🤝</div>
         <div>
-            <div class="agent-header-dept">Payments</div>
-            <h1>Payments Agent</h1>
-            <div class="agent-header-persona">Penny — Payments Officer</div>
-            <p class="tagline">Gets the tax right, then waits for the human approval.</p>
+            <div class="agent-header-dept">Claims · Claims &amp; Care</div>
+            <h1>Claims Agent</h1>
+            <div class="agent-header-persona">Ben — Benefit Claims Advocate</div>
+            <p class="tagline">Makes the claim as easy as it can be — and lodges it only after a person approves.</p>
         </div>
     </div>
 </div>
 
 <div class="agent-tab-scope" style="--accent: #a855f7">
-    <section class="panel payments-panel" style="--accent: #a855f7">
-        <div id="payments-deeplink" class="payments-deeplink" hidden></div>
+    <section class="panel claims-panel" style="--accent: #a855f7">
+        <div id="claims-deeplink" class="claims-deeplink" hidden></div>
 
         <!-- Step 1 — pick a case -->
-        <div class="payments-step" data-step="1">
-            <div class="payments-step-head">
-                <span class="payments-step-num">1</span>
-                <h3>Pick a case</h3>
+        <div class="claims-step" data-step="1">
+            <div class="claims-step-head">
+                <span class="claims-step-num">1</span>
+                <h3>Pick a Client Case</h3>
             </div>
-            <div class="payments-case-picker">
-                <select id="payments-case-select" class="payments-select" aria-label="Member Case">
+            <div class="claims-case-picker">
+                <select id="claims-case-select" class="claims-select" aria-label="Client Case">
                     <option value="">— Loading cases —</option>
                 </select>
-                <button id="payments-refresh-btn" type="button" class="payments-refresh" title="Reload cases">↻</button>
+                <button id="claims-refresh-btn" type="button" class="claims-refresh" title="Reload cases">↻</button>
             </div>
-            <div id="payments-case-empty" class="payments-status" hidden>
+            <div id="claims-case-empty" class="claims-status" hidden>
                 No cases in memory yet. Open one with the <a href="/agents/onboarding">Onboarding Agent</a> first.
             </div>
-            <div id="payments-case-summary" class="payments-summary" hidden>
-                <div class="payments-summary-grid">
-                    <div><span class="k">Case</span><span id="payments-case-num"></span></div>
-                    <div><span class="k">Member</span><span id="payments-case-member"></span></div>
-                    <div><span class="k">Product</span><span id="payments-case-product"></span></div>
-                    <div><span class="k">Request</span><span id="payments-case-type"></span></div>
-                    <div><span class="k">Received</span><span id="payments-case-received"></span></div>
-                    <div><span class="k">Adviser</span><span id="payments-case-adviser"></span></div>
-                    <div><span class="k">Amount</span><span id="payments-case-amount"></span></div>
-                    <div><span class="k">Priority</span><span id="payments-case-priority"></span></div>
-                    <div class="span-2"><span class="k">Summary</span><span id="payments-case-summary-text"></span></div>
+            <div id="claims-case-summary" class="claims-summary" hidden>
+                <div class="claims-summary-grid">
+                    <div><span class="k">Case</span><span id="claims-case-num"></span></div>
+                    <div><span class="k">Client</span><span id="claims-case-client"></span></div>
+                    <div><span class="k">Cover</span><span id="claims-case-cover"></span></div>
+                    <div><span class="k">Request</span><span id="claims-case-type"></span></div>
+                    <div><span class="k">Received</span><span id="claims-case-received"></span></div>
+                    <div><span class="k">Adviser</span><span id="claims-case-adviser"></span></div>
+                    <div><span class="k">Amount</span><span id="claims-case-amount"></span></div>
+                    <div><span class="k">Priority</span><span id="claims-case-priority"></span></div>
+                    <div class="span-2"><span class="k">Summary</span><span id="claims-case-summary-text"></span></div>
                 </div>
+            </div>
+            <div id="claims-not-a-claim" class="claims-note-box" hidden>
+                <div class="claims-note-title">Nothing to claim on this case</div>
+                <p id="claims-not-a-claim-text"></p>
+                <div class="claims-links" id="claims-not-a-claim-links"></div>
             </div>
         </div>
 
-        <!-- Step 2 — payment inputs -->
-        <div class="payments-step" data-step="2" id="payments-inputs-step" hidden>
-            <div class="payments-step-head">
-                <span class="payments-step-num">2</span>
-                <h3>Confirm payment inputs</h3>
+        <!-- Step 2 — claim details -->
+        <div class="claims-step" data-step="2" id="claims-inputs-step" hidden>
+            <div class="claims-step-head">
+                <span class="claims-step-num">2</span>
+                <h3>Confirm the claim details</h3>
             </div>
-            <p class="muted">Defaults come from the case and the eligibility decision — edit any value.</p>
-            <div id="payments-inputs-hint" class="payments-hint" hidden></div>
-            <form id="payments-inputs-form" class="payments-form" autocomplete="off">
+            <p class="muted">Defaults come from the Client Case and the policy schedule — edit any value to see how the checks change.</p>
+            <div id="claims-inputs-hint" class="claims-hint" hidden></div>
+
+            <div class="claims-policy-card" id="claims-policy-card">
+                <div class="claims-card-label">Policy schedule</div>
+                <dl class="claims-facts" id="claims-policy-facts"></dl>
+            </div>
+
+            <form id="claims-inputs-form" class="claims-form" autocomplete="off">
                 <fieldset>
-                    <legend>Payment</legend>
-                    <div class="payments-grid">
-                        <label>Payment type<select name="paymentType"></select></label>
-                        <label>Gross amount (AUD)<input type="number" name="grossAmount" min="0" step="0.01" /></label>
-                        <label data-field="requested">Amount requested (AUD)<input type="number" name="requestedAmount" min="0" step="0.01" /></label>
-                        <label data-field="commencement">Pension commencement amount (AUD)<input type="number" name="commencementAmount" min="0" step="0.01" /></label>
-                        <label class="span-2">Payment date<input type="text" name="paymentDate" /></label>
+                    <legend>Claim</legend>
+                    <div class="claims-grid">
+                        <label>Claim type<select name="claimType"></select></label>
+                        <label><span id="claims-event-label">Date of the event</span> (dd/mm/yyyy)<input type="text" name="eventDate" placeholder="dd/mm/yyyy" /></label>
+                        <label class="span-2" data-field="lump"><span id="claims-sum-label">Sum insured (AUD)</span><input type="number" name="sumInsured" min="0" step="1" /></label>
+                        <label data-field="death">Beneficiary's share (%)<input type="number" name="beneficiarySharePercent" min="0" max="100" step="0.01" /></label>
                     </div>
+                    <div class="claims-event" id="claims-event-text"></div>
+                </fieldset>
+                <fieldset data-field="income">
+                    <legend>Income protection — benefit inputs</legend>
+                    <div class="claims-grid">
+                        <label>Insured monthly benefit (AUD)<input type="number" name="insuredMonthly" min="0" step="1" /></label>
+                        <label>Waiting period (days)<input type="number" name="waitingPeriodDays" min="0" max="730" step="1" /></label>
+                        <label class="span-2"><span id="claims-earnings-label">Earnings in the 12 months before the disability (AUD)</span><input type="number" name="annualEarnings" min="0" step="1" /></label>
+                    </div>
+                    <div class="claims-event" id="claims-earnings-text"></div>
                 </fieldset>
                 <fieldset>
-                    <legend>Tax</legend>
-                    <div class="payments-grid">
-                        <label data-field="tax">Tax-free component (%)<input type="number" name="taxFreePercent" min="0" max="100" step="0.01" /></label>
-                        <label>Member age<input type="number" name="memberAge" min="0" max="120" step="1" /></label>
-                        <label class="span-2">Tax status<select name="taxStatus"></select></label>
+                    <legend>Claimant</legend>
+                    <div class="claims-grid">
+                        <label>Claimant's name<input type="text" name="claimantName" /></label>
+                        <label>Relationship to the policy<select name="claimantRelationship"></select></label>
                     </div>
+                    <div class="claims-onfile" id="claims-claimant-onfile"></div>
                 </fieldset>
-                <fieldset id="payments-payees-fieldset">
-                    <legend>Payee(s) — bank details masked</legend>
-                    <div class="payments-payee-head" aria-hidden="true">
-                        <span>Name on the account</span><span>BSB</span><span>Account</span><span>Share %</span>
-                    </div>
-                    <div id="payments-payee-rows"></div>
-                    <div id="payments-payees-onfile" class="payments-onfile"></div>
-                </fieldset>
-                <div id="payments-no-payee" class="payments-no-payee" hidden>
-                    No outbound payee — the money is coming into the member's own Caldova account.
-                </div>
                 <fieldset>
-                    <legend>Case approval — from Benefits &amp; Eligibility</legend>
-                    <div class="payments-grid">
-                        <label>Decision<select name="caseApprovalStatus"></select></label>
-                        <label>Approved amount (AUD)<input type="number" name="approvedAmount" min="0" step="0.01" /></label>
+                    <legend>Bank account for the benefit — masked</legend>
+                    <div class="claims-grid claims-grid-3">
+                        <label>Name on the account<input type="text" name="accountName" /></label>
+                        <label>BSB<input type="text" name="bsb" /></label>
+                        <label>Account<input type="text" name="account" /></label>
                     </div>
-                    <div id="payments-case-decision" class="payments-decision"></div>
+                    <div class="claims-onfile" id="claims-account-onfile"></div>
                 </fieldset>
             </form>
         </div>
 
         <!-- Step 3 — engage the agent -->
-        <div class="payments-step" data-step="3" id="payments-process-step" hidden>
-            <div class="payments-step-head">
-                <span class="payments-step-num">3</span>
-                <h3>Engage the Payments Agent</h3>
+        <div class="claims-step" data-step="3" id="claims-process-step" hidden>
+            <div class="claims-step-head">
+                <span class="claims-step-num">3</span>
+                <h3>Engage the Claims Agent</h3>
             </div>
-            <button id="payments-process-btn" type="button">Process with Payments Agent</button>
-            <div id="payments-process-status" class="payments-status" hidden></div>
+            <button id="claims-process-btn" type="button">Process with Claims Agent</button>
+            <div id="claims-process-status" class="claims-status" hidden></div>
 
-            <div class="engage-tabs-scope" data-engage-role="payments">
+            <div class="engage-tabs-scope" data-engage-role="claims">
                 <div class="engage-tabs" role="tablist">
                     <button type="button" class="engage-tab-btn active" data-engage-tab="narrative">Agent Narrative</button>
                     <button type="button" class="engage-tab-btn" data-engage-tab="reference">Reference</button>
@@ -154,93 +164,143 @@
 
                 <div class="engage-tab-panel" data-engage-tab="output">
                     <div class="engage-info-block">
-                        <h4>Raw agent output (text, citations and every output item, including the payments_* MCP tool calls)</h4>
+                        <h4>Raw agent output (text, citations and every output item, including the claims_* MCP tool calls)</h4>
                         <div class="json-viewer engage-output-body"><div class="engage-empty">Engage the agent to see the full raw response.</div></div>
                     </div>
                 </div>
             </div>
 
-            <div id="payments-result" class="payments-result" hidden>
-                <div class="payments-card payments-calc">
-                    <div class="payments-card-label" id="payments-calc-title">Payment calculation</div>
-                    <div class="payments-calc-scroll">
-                        <table class="payments-calc-table">
-                            <thead id="payments-calc-head"></thead>
-                            <tbody id="payments-calc-body"></tbody>
+            <div id="claims-result" class="claims-result" hidden>
+                <div class="claims-two-col">
+                    <div class="claims-card">
+                        <div class="claims-card-label">Claimant checks</div>
+                        <ul id="claims-claimant-checks" class="claims-checks-list"></ul>
+                    </div>
+                    <div class="claims-card">
+                        <div class="claims-card-label">Policy checks</div>
+                        <ul id="claims-policy-checks" class="claims-checks-list"></ul>
+                    </div>
+                </div>
+
+                <div class="claims-card">
+                    <div class="claims-card-label">Claim pack</div>
+                    <div class="claims-table-scroll">
+                        <table class="claims-pack-table">
+                            <thead><tr><th>Document</th><th>Status</th><th>Note</th></tr></thead>
+                            <tbody id="claims-pack-body"></tbody>
                         </table>
                     </div>
-                    <div class="payments-net" id="payments-net">
-                        <span class="k" id="payments-net-label">Net payment</span>
-                        <span id="payments-net-amount"></span>
-                    </div>
-                    <dl class="payments-context" id="payments-context"></dl>
-                    <div class="payments-rule" id="payments-calc-rule"></div>
                 </div>
 
-                <div class="payments-card">
-                    <div class="payments-card-label">Cross-checks</div>
-                    <ul id="payments-checks-list" class="payments-checks-list"></ul>
+                <div class="claims-card claims-benefit">
+                    <div class="claims-card-label" id="claims-benefit-title">Expected benefit</div>
+                    <div class="claims-table-scroll">
+                        <table class="claims-benefit-table">
+                            <tbody id="claims-benefit-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="claims-net" id="claims-benefit-result">
+                        <span class="k" id="claims-benefit-result-label">Expected benefit</span>
+                        <span id="claims-benefit-result-value"></span>
+                    </div>
+                    <ul class="claims-benefit-notes" id="claims-benefit-notes"></ul>
+                    <div class="claims-rule" id="claims-benefit-rule"></div>
                 </div>
 
-                <div class="payments-callout payments-approval" id="payments-approval">
-                    <div class="payments-callout-head">
-                        <span class="payments-step-num small">!</span>
-                        <span class="payments-callout-title">Human approval</span>
-                        <span class="payments-pill" id="payments-approval-pill"></span>
+                <div class="claims-two-col">
+                    <div class="claims-card" id="claims-timeframes-card">
+                        <div class="claims-card-label">Insurer timeframes — Life Insurance Code of Practice</div>
+                        <dl class="claims-facts claims-facts-stack" id="claims-timeframes"></dl>
                     </div>
-                    <ul id="payments-approval-reasons" class="payments-reasons"></ul>
-                    <p class="payments-approver" id="payments-approval-approver"></p>
+                    <div class="claims-card" id="claims-notes-card">
+                        <div class="claims-card-label">Notes</div>
+                        <div id="claims-notes" class="claims-notes"></div>
+                    </div>
                 </div>
 
-                <!-- Outbound payment: Microsoft Teams approval, then release -->
-                <div class="payments-callout payments-teams" id="payments-teams" hidden>
-                    <div class="payments-callout-head">
-                        <span class="payments-step-num small teams">T</span>
-                        <span class="payments-callout-title">Microsoft Teams approval</span>
-                        <span class="payments-pill" id="payments-teams-pill"></span>
-                    </div>
-                    <p class="payments-teams-msg" id="payments-teams-msg"></p>
-                    <div class="payments-teams-preview" id="payments-teams-preview"></div>
-                    <div class="payments-teams-meta">
-                        <div><span class="k">Approval id</span> <code id="payments-teams-approvalid"></code></div>
-                        <div><span class="k">Approval link</span> <a id="payments-teams-link" href="#" target="_blank" rel="noopener">open</a></div>
-                    </div>
-                    <div class="payments-actions">
-                        <button type="button" id="payments-popup-btn" class="payments-popup">Open approval popup</button>
-                        <button type="button" id="payments-release-btn" class="payments-release" disabled>Release payment</button>
-                    </div>
-                    <div class="payments-release-hint" id="payments-release-hint">Release unlocks once the approval is recorded.</div>
-                    <div class="payments-teams-status" id="payments-teams-status" hidden></div>
+                <div class="claims-card" id="claims-activity-card" hidden>
+                    <div class="claims-card-label">What happened — activity on the client's file</div>
+                    <ol id="claims-activity" class="claims-timeline"></ol>
                 </div>
 
-                <!-- Blocked case: nothing can be released -->
-                <div class="payments-callout payments-blocked" id="payments-blocked" hidden>
-                    <div class="payments-callout-head">
-                        <span class="payments-step-num small blocked">✕</span>
-                        <span class="payments-callout-title">Release blocked — no funds leave the account</span>
-                        <span class="payments-pill status-blocked">Blocked</span>
+                <div class="claims-callout claims-approval" id="claims-approval">
+                    <div class="claims-callout-head">
+                        <span class="claims-step-num small">!</span>
+                        <span class="claims-callout-title">Human approval</span>
+                        <span class="claims-pill" id="claims-approval-pill"></span>
                     </div>
-                    <p id="payments-blocked-text"></p>
-                    <p class="payments-blocked-record" id="payments-blocked-record"></p>
-                    <div class="payments-actions">
-                        <button type="button" id="payments-blocked-release" class="payments-release" disabled>Release payment</button>
-                    </div>
-                    <div class="payments-release-hint" id="payments-blocked-hint"></div>
+                    <ul id="claims-approval-reasons" class="claims-reasons"></ul>
+                    <p class="claims-recommendation" id="claims-recommendation"></p>
+                    <p class="claims-approver" id="claims-approval-approver"></p>
                 </div>
 
-                <!-- Inbound money: invest on arrival, nothing to release -->
-                <div class="payments-callout payments-inbound" id="payments-inbound" hidden>
-                    <div class="payments-callout-head">
-                        <span class="payments-step-num small inbound">↓</span>
-                        <span class="payments-callout-title">No outbound payment — invest on arrival</span>
-                        <span class="payments-pill optional">No approval needed</span>
+                <!-- Microsoft Teams approval (lodgement or block), then lodgement -->
+                <div class="claims-callout claims-teams" id="claims-teams" hidden>
+                    <div class="claims-callout-head">
+                        <span class="claims-step-num small teams">T</span>
+                        <span class="claims-callout-title" id="claims-teams-title">Microsoft Teams approval</span>
+                        <span class="claims-pill" id="claims-teams-pill"></span>
                     </div>
-                    <p id="payments-inbound-text"></p>
+                    <p class="claims-teams-msg" id="claims-teams-msg"></p>
+                    <div class="claims-teams-preview" id="claims-teams-preview"></div>
+                    <div class="claims-teams-meta">
+                        <div><span class="k">Approval id</span> <code id="claims-teams-approvalid"></code></div>
+                        <div><span class="k">Approval link</span> <a id="claims-teams-link" href="#" target="_blank" rel="noopener">open</a></div>
+                    </div>
+                    <div class="claims-actions">
+                        <button type="button" id="claims-popup-btn" class="claims-popup">Open approval popup</button>
+                        <button type="button" id="claims-lodge-btn" class="claims-lodge" disabled>Lodge claim</button>
+                    </div>
+                    <div class="claims-lodge-hint" id="claims-lodge-hint">Lodging unlocks once the approval is recorded.</div>
+                    <div class="claims-teams-status" id="claims-teams-status" hidden></div>
                 </div>
 
-                <div class="payments-card payments-notes">
-                    <div class="payments-card-label" id="payments-confirmation-title">Payment confirmation draft</div>
-                    <div id="payments-confirmation" class="agent-md"></div>
+                <!-- Lodged: reference and what happened next -->
+                <div class="claims-callout claims-lodged" id="claims-lodged" hidden>
+                    <div class="claims-callout-head">
+                        <span class="claims-step-num small lodged">✓</span>
+                        <span class="claims-callout-title" id="claims-lodged-title">Claim lodged</span>
+                        <span class="claims-pill" id="claims-outcome-pill" hidden></span>
+                    </div>
+                    <p id="claims-lodged-text"></p>
+                    <ol class="claims-timeline" id="claims-outcome-timeline"></ol>
+                    <p class="claims-outcome-summary" id="claims-outcome-summary" hidden></p>
+                </div>
+
+                <!-- Referred: no lodgement; the block is the Team Leader's decision -->
+                <div class="claims-callout claims-referred" id="claims-referred" hidden>
+                    <div class="claims-callout-head">
+                        <span class="claims-step-num small blocked">✕</span>
+                        <span class="claims-callout-title" id="claims-referred-title">Not lodged — referred to Financial Crime</span>
+                        <span class="claims-pill status-pending" id="claims-referred-pill">Awaiting Theo</span>
+                    </div>
+                    <p id="claims-referred-text"></p>
+                    <div class="claims-protected" id="claims-protected" hidden>
+                        <div class="claims-protected-amount" id="claims-protected-amount"></div>
+                        <div class="claims-protected-note" id="claims-protected-note"></div>
+                    </div>
+                    <div class="claims-actions">
+                        <button type="button" id="claims-referred-lodge" class="claims-lodge" disabled>Lodge claim</button>
+                    </div>
+                    <div class="claims-lodge-hint" id="claims-referred-hint"></div>
+                </div>
+
+                <!-- Hold: not ready to lodge -->
+                <div class="claims-callout claims-hold" id="claims-hold" hidden>
+                    <div class="claims-callout-head">
+                        <span class="claims-step-num small hold">…</span>
+                        <span class="claims-callout-title">Not ready to lodge</span>
+                        <span class="claims-pill optional">No approval raised</span>
+                    </div>
+                    <p id="claims-hold-text"></p>
+                    <div class="claims-actions">
+                        <button type="button" class="claims-lodge" disabled>Lodge claim</button>
+                    </div>
+                </div>
+
+                <div class="claims-card claims-update-card">
+                    <div class="claims-card-label" id="claims-update-title">Claim update draft (for Cara)</div>
+                    <div id="claims-update" class="agent-md"></div>
                 </div>
             </div>
         </div>
@@ -248,293 +308,336 @@
     </section>
 </div>
 
-<!-- Approval popup: the in-page stand-in for the Approve / Reject
-     actions on the Microsoft Teams card. Approving resumes the same
-     Payments Agent conversation so it can call payments_releasePayment. -->
-<div id="payments-approval-modal" class="payments-modal" hidden role="dialog" aria-modal="true" aria-labelledby="payments-modal-title">
-    <div class="payments-modal-backdrop" data-modal-dismiss></div>
-    <div class="payments-modal-card" role="document">
-        <button type="button" class="payments-modal-close" data-modal-dismiss aria-label="Close">×</button>
-        <div class="payments-modal-header">
-            <span class="payments-modal-badge">!</span>
+<!-- Approval popup: the in-page stand-in for the Approve / Reject actions
+     on the Microsoft Teams card. Approving a lodgement resumes the same
+     Claims Agent conversation so it can call claims_lodgeClaim. -->
+<div id="claims-approval-modal" class="claims-modal" hidden role="dialog" aria-modal="true" aria-labelledby="claims-modal-title">
+    <div class="claims-modal-backdrop" data-modal-dismiss></div>
+    <div class="claims-modal-card" role="document">
+        <button type="button" class="claims-modal-close" data-modal-dismiss aria-label="Close">×</button>
+        <div class="claims-modal-header">
+            <span class="claims-modal-badge">!</span>
             <div>
-                <h3 id="payments-modal-title">Payment approval required</h3>
-                <div class="payments-modal-sub">Caldova Wealth — Payment approval · Microsoft Teams</div>
+                <h3 id="claims-modal-title">Claim lodgement approval</h3>
+                <div class="claims-modal-sub" id="claims-modal-sub">Caldova Life Advice — Claim lodgement approval · Microsoft Teams</div>
             </div>
         </div>
-        <div class="payments-modal-deeplink" id="payments-modal-deeplink" hidden></div>
-        <div class="payments-modal-why">Why approval is needed</div>
-        <ul class="payments-modal-reasons" id="payments-modal-reasons"></ul>
-        <div class="payments-modal-meta">
-            <div><span class="k">Case</span><span id="payments-modal-case"></span></div>
-            <div><span class="k">Approval id</span><code id="payments-modal-approval-id"></code></div>
-            <div class="span-2"><span class="k">Member</span><span id="payments-modal-member"></span></div>
-            <div class="span-2"><span class="k">Payment type</span><span id="payments-modal-type"></span></div>
-            <div class="span-2"><span class="k">Payee</span><span id="payments-modal-payee"></span></div>
-            <div><span class="k">Gross</span><span id="payments-modal-gross"></span></div>
-            <div><span class="k">Tax withheld</span><span id="payments-modal-tax"></span></div>
-            <div class="span-2 amount-row"><span class="k">Net payment</span><strong id="payments-modal-net"></strong></div>
+        <div class="claims-modal-deeplink" id="claims-modal-deeplink" hidden></div>
+        <div class="claims-modal-why">Why approval is needed</div>
+        <ul class="claims-modal-reasons" id="claims-modal-reasons"></ul>
+        <div class="claims-modal-meta">
+            <div><span class="k">Case</span><span id="claims-modal-case"></span></div>
+            <div><span class="k">Approval id</span><code id="claims-modal-approval-id"></code></div>
+            <div class="span-2"><span class="k">Client</span><span id="claims-modal-client"></span></div>
+            <div class="span-2"><span class="k">Policy</span><span id="claims-modal-policy"></span></div>
+            <div class="span-2"><span class="k">Claim</span><span id="claims-modal-type"></span></div>
+            <div class="span-2"><span class="k">Payee</span><span id="claims-modal-payee"></span></div>
+            <div class="span-2 amount-row"><span class="k" id="claims-modal-benefit-label">Expected benefit</span><strong id="claims-modal-benefit"></strong></div>
         </div>
-        <p class="payments-modal-explainer">
-            Stands in for <strong>Approve</strong> on the Teams card. Release stays locked until the approval is recorded.
+        <div class="claims-modal-why">Recommendation</div>
+        <p class="claims-modal-recommendation" id="claims-modal-recommendation"></p>
+        <p class="claims-modal-explainer" id="claims-modal-explainer">
+            Stands in for <strong>Approve</strong> on the Teams card. Lodging stays locked until the approval is recorded.
         </p>
-        <div class="payments-modal-status" id="payments-modal-status" hidden></div>
-        <div class="payments-modal-agent" id="payments-modal-agent" hidden>
-            <div class="payments-modal-agent-label">Agent reply after approval</div>
-            <div class="agent-md" id="payments-modal-agent-body"></div>
+        <div class="claims-modal-status" id="claims-modal-status" hidden></div>
+        <div class="claims-modal-agent" id="claims-modal-agent" hidden>
+            <div class="claims-modal-agent-label">Agent reply after approval</div>
+            <div class="agent-md" id="claims-modal-agent-body"></div>
         </div>
-        <div class="payments-modal-actions">
-            <button type="button" id="payments-modal-reject-btn" class="payments-modal-reject">Reject</button>
-            <button type="button" id="payments-modal-cancel-btn" class="payments-modal-cancel" data-modal-dismiss>Close</button>
-            <button type="button" id="payments-modal-approve-btn" class="payments-modal-approve">Approve</button>
-            <button type="button" id="payments-modal-release-btn" class="payments-modal-release" disabled>Release payment</button>
+        <div class="claims-modal-actions">
+            <button type="button" id="claims-modal-reject-btn" class="claims-modal-reject">Reject</button>
+            <button type="button" id="claims-modal-cancel-btn" class="claims-modal-cancel" data-modal-dismiss>Close</button>
+            <button type="button" id="claims-modal-approve-btn" class="claims-modal-approve">Approve</button>
+            <button type="button" id="claims-modal-lodge-btn" class="claims-modal-lodge" disabled>Lodge claim</button>
         </div>
     </div>
 </div>
 
 <style>
-    .payments-panel, .payments-modal { --pay-accent: #a855f7; --pay-teams: #5b5fc7; }
-    .payments-panel [hidden], .payments-modal[hidden], .payments-modal [hidden] { display: none !important; }
-    .payments-panel .muted code { background: rgba(168, 85, 247, 0.14); padding: 1px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .claims-panel, .claims-modal { --clm-accent: #a855f7; --clm-teams: #5b5fc7; }
+    .claims-panel [hidden], .claims-modal[hidden], .claims-modal [hidden] { display: none !important; }
 
     /* ── Steps ────────────────────────────────────────────────── */
-    .payments-step {
+    .claims-step {
         border: 1px solid rgba(16, 38, 72, 0.112);
         background: #f9fafb;
         border-radius: 12px;
         padding: 0.95rem 1.1rem 1rem 1.1rem;
         margin-top: 0.9rem;
     }
-    .payments-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
-    .payments-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
-    .payments-step-num {
+    .claims-step-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .claims-step-head h3 { margin: 0; color: #0b1f3a; font-size: 1rem; }
+    .claims-step-num {
         display: inline-grid; place-items: center; flex: 0 0 auto;
         width: 1.55rem; height: 1.55rem; border-radius: 50%;
-        background: color-mix(in srgb, var(--pay-accent) 22%, #f6f7f9);
-        border: 1px solid color-mix(in srgb, var(--pay-accent) 55%, transparent);
-        color: color-mix(in srgb, var(--pay-accent) 60%, #0b1f3a); font-size: 0.78rem; font-weight: 700;
+        background: color-mix(in srgb, var(--clm-accent) 22%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--clm-accent) 55%, transparent);
+        color: color-mix(in srgb, var(--clm-accent) 60%, #0b1f3a); font-size: 0.78rem; font-weight: 700;
     }
-    .payments-step-num.small { width: 1.4rem; height: 1.4rem; font-size: 0.7rem; }
-    .payments-step-num.teams { background: rgba(91, 95, 199, 0.3); border-color: rgba(129, 133, 230, 0.7); color: #2c51e5; }
-    .payments-step-num.blocked { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.6); color: #c11818; }
-    .payments-step-num.inbound { background: rgba(14, 165, 233, 0.2); border-color: rgba(14, 165, 233, 0.6); color: #126891; }
-    .payments-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
+    .claims-step-num.small { width: 1.4rem; height: 1.4rem; font-size: 0.7rem; }
+    .claims-step-num.teams { background: rgba(91, 95, 199, 0.3); border-color: rgba(129, 133, 230, 0.7); color: #2c51e5; }
+    .claims-step-num.blocked { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.6); color: #c11818; }
+    .claims-step-num.lodged { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.6); color: #0f7032; }
+    .claims-step-num.hold { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.6); color: #954f12; }
+    .claims-step .muted { color: var(--cw-muted, #5d6b7e); font-size: 0.9rem; margin: 0.35rem 0 0.7rem 0; }
 
-    .payments-deeplink {
+    .claims-deeplink {
         margin: 0.3rem 0 0.4rem 0; padding: 0.6rem 0.85rem; border-radius: 10px; font-size: 0.88rem;
         background: rgba(91, 95, 199, 0.16); border: 1px solid rgba(129, 133, 230, 0.45); color: #1d2939;
     }
-    .payments-deeplink.error { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); color: #c11818; }
+    .claims-deeplink.error { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); color: #c11818; }
 
-    .payments-case-picker { display: flex; gap: 0.5rem; align-items: center; }
-    .payments-select, .payments-form select, .payments-form input, .payments-payee-row input {
+    .claims-case-picker { display: flex; gap: 0.5rem; align-items: center; }
+    .claims-select, .claims-form select, .claims-form input {
         background: #ffffff;
         border: 1px solid rgba(16, 38, 72, 0.136);
         border-radius: 6px; color: #0b1f3a; font-size: 0.9rem;
         padding: 0.5rem 0.65rem; font-family: inherit;
     }
-    .payments-select { flex: 1; min-width: 0; }
-    .payments-select:focus, .payments-form select:focus, .payments-form input:focus, .payments-payee-row input:focus {
-        outline: none; border-color: var(--pay-accent);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--pay-accent) 25%, transparent);
+    .claims-select { flex: 1; min-width: 0; }
+    .claims-select:focus, .claims-form select:focus, .claims-form input:focus {
+        outline: none; border-color: var(--clm-accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--clm-accent) 25%, transparent);
     }
-    .payments-refresh {
+    .claims-refresh {
         background: transparent; color: #344054;
         border: 1px solid rgba(16, 38, 72, 0.198); border-radius: 6px;
         padding: 0.45rem 0.7rem; font-size: 0.95rem; cursor: pointer;
     }
-    .payments-refresh:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
+    .claims-refresh:hover { background: rgba(16, 38, 72, 0.035); color: #0b1f3a; }
 
-    .payments-summary {
+    .claims-summary {
         margin-top: 0.7rem; background: #f6f7f9;
         border: 1px solid rgba(16, 38, 72, 0.112); border-radius: 8px; padding: 0.7rem 0.85rem;
     }
-    .payments-summary-grid {
+    .claims-summary-grid {
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.85rem;
         font-size: 0.85rem; color: #344054;
     }
-    .payments-summary-grid .span-2 { grid-column: span 2; }
-    .payments-summary-grid .k {
+    .claims-summary-grid .span-2 { grid-column: span 2; }
+    .claims-summary-grid .k {
         display: inline-block; min-width: 76px; color: var(--cw-muted, #5d6b7e); font-weight: 600;
         text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em; margin-right: 0.5rem;
     }
 
-    /* ── Inputs ───────────────────────────────────────────────── */
-    .payments-hint {
-        margin: 0 0 0.7rem 0; padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.86rem; line-height: 1.45;
-        background: color-mix(in srgb, var(--pay-accent) 10%, #f6f7f9);
-        border: 1px solid color-mix(in srgb, var(--pay-accent) 30%, transparent); color: #1d2939;
+    .claims-note-box {
+        margin-top: 0.7rem; padding: 0.75rem 0.9rem; border-radius: 10px;
+        background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.32); color: #12405e;
     }
-    .payments-form fieldset {
+    .claims-note-title { font-weight: 700; font-size: 0.92rem; color: #0b1f3a; }
+    .claims-note-box p { margin: 0.3rem 0 0.5rem 0; font-size: 0.88rem; line-height: 1.5; }
+    .claims-links { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .claims-links a {
+        display: inline-block; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
+        background: #ffffff; border: 1px solid rgba(14, 165, 233, 0.45); color: #126891; text-decoration: none;
+    }
+    .claims-links a:hover { background: rgba(14, 165, 233, 0.12); }
+
+    /* ── Inputs ───────────────────────────────────────────────── */
+    .claims-hint {
+        margin: 0 0 0.7rem 0; padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.86rem; line-height: 1.45;
+        background: color-mix(in srgb, var(--clm-accent) 10%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--clm-accent) 30%, transparent); color: #1d2939;
+    }
+    .claims-policy-card {
+        background: #ffffff; border: 1px solid rgba(16, 38, 72, 0.112); border-radius: 10px;
+        padding: 0.7rem 0.9rem; margin-bottom: 0.75rem;
+    }
+    .claims-facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1rem; margin: 0; font-size: 0.85rem; }
+    .claims-facts dt { color: var(--cw-muted, #5d6b7e); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; padding-top: 0.12rem; }
+    .claims-facts dd { margin: 0; color: #1d2939; line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
+    .claims-facts-stack { grid-template-columns: 1fr; gap: 0.15rem; }
+    .claims-facts-stack dt { padding-top: 0.45rem; }
+    .claims-form fieldset {
         border: 1px solid rgba(16, 38, 72, 0.099); border-radius: 10px;
         padding: 0.55rem 0.85rem 0.8rem 0.85rem; margin: 0 0 0.7rem 0;
     }
-    .payments-form legend {
+    .claims-form legend {
         float: none; width: auto; margin: 0; padding: 0 0.35rem;
         font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: #8428e4;
     }
-    .payments-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.85rem; }
-    .payments-grid .span-2 { grid-column: span 2; }
-    .payments-form label {
+    .claims-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.85rem; }
+    .claims-grid-3 { grid-template-columns: 2fr 1fr 1.2fr; }
+    .claims-grid .span-2 { grid-column: span 2; }
+    .claims-form label {
         display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
         color: var(--cw-muted, #5d6b7e); font-weight: 700;
     }
-    .payments-form label input, .payments-form label select {
+    .claims-form label input, .claims-form label select {
         display: block; width: 100%; margin-top: 0.3rem; text-transform: none; letter-spacing: normal; font-weight: 400;
     }
-    .payments-payee-head, .payments-payee-row {
-        display: grid; grid-template-columns: 2.2fr 1fr 1.2fr 0.8fr; gap: 0.5rem; align-items: center;
-    }
-    .payments-payee-head {
-        font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;
-        color: var(--cw-muted, #5d6b7e); margin: 0.2rem 0 0.3rem 0;
-    }
-    .payments-payee-row { margin-bottom: 0.4rem; }
-    .payments-payee-row input { width: 100%; min-width: 0; }
-    .payments-onfile { margin-top: 0.35rem; font-size: 0.8rem; color: var(--cw-muted, #5d6b7e); line-height: 1.7; }
-    .payments-onfile-chip {
+    .claims-event { margin-top: 0.5rem; font-size: 0.84rem; line-height: 1.5; color: #344054; }
+    .claims-event:empty { display: none; }
+    .claims-onfile { margin-top: 0.45rem; font-size: 0.8rem; color: var(--cw-muted, #5d6b7e); line-height: 1.7; }
+    .claims-onfile:empty { display: none; }
+    .claims-chip {
         display: inline-block; margin: 0 0.3rem 0.2rem 0; padding: 0.1rem 0.55rem; border-radius: 999px;
         background: #f6f7f9; border: 1px solid rgba(16, 38, 72, 0.136); color: #344054;
     }
-    .payments-onfile-chip em { font-style: normal; color: var(--cw-muted, #5d6b7e); margin-left: 0.35rem; }
-    .payments-no-payee {
-        margin: 0 0 0.7rem 0; padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.86rem;
-        background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.3); color: #126794;
-    }
-    .payments-decision { margin-top: 0.55rem; font-size: 0.84rem; line-height: 1.5; color: #344054; }
-    .payments-decision .muted { display: block; font-size: 0.78rem; margin-top: 0.2rem; }
+    .claims-chip em { font-style: normal; color: var(--cw-muted, #5d6b7e); margin-left: 0.35rem; }
+    .claims-chip.alert { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.4); color: #a51616; }
 
     /* ── Engage ───────────────────────────────────────────────── */
-    #payments-process-btn {
+    #claims-process-btn {
         background: var(--cw-primary); color: #fff; border: none; border-radius: 999px;
         padding: 0.55rem 1.1rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 0.35rem;
     }
-    #payments-process-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    #payments-process-btn:hover:not(:disabled) { filter: brightness(1.08); }
-    .payments-status { margin-top: 0.6rem; font-size: 0.88rem; color: #344054; }
-    .payments-status.error { color: #c11818; }
-    .payments-status.warn { color: #954f12; }
-    .payments-panel .spinner, .payments-modal .spinner {
+    #claims-process-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    #claims-process-btn:hover:not(:disabled) { filter: brightness(1.08); }
+    .claims-status { margin-top: 0.6rem; font-size: 0.88rem; color: #344054; }
+    .claims-status.error { color: #c11818; }
+    .claims-status.warn { color: #954f12; }
+    .claims-panel .spinner, .claims-modal .spinner {
         display: inline-block; width: 12px; height: 12px;
         border: 2px solid rgba(16, 38, 72, 0.25); border-top-color: #0b1f3a;
         border-radius: 50%; margin-right: 6px; vertical-align: middle;
-        animation: payments-spin 0.7s linear infinite;
+        animation: claims-spin 0.7s linear infinite;
     }
-    @@keyframes payments-spin { to { transform: rotate(360deg); } }
+    @@keyframes claims-spin { to { transform: rotate(360deg); } }
 
     /* ── Results ──────────────────────────────────────────────── */
-    .payments-result { margin-top: 0.85rem; display: grid; gap: 0.85rem; }
-    .payments-card {
+    .claims-result { margin-top: 0.85rem; display: grid; gap: 0.85rem; }
+    .claims-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    .claims-card {
         background: #f6f7f9; border: 1px solid rgba(16, 38, 72, 0.112);
-        border-radius: 10px; padding: 0.85rem 1rem;
+        border-radius: 10px; padding: 0.85rem 1rem; min-width: 0;
     }
-    .payments-card-label {
+    .claims-card-label {
         font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.12em;
         color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.5rem;
     }
-    .payments-calc-scroll { overflow-x: auto; }
-    .payments-calc-table {
-        width: 100%; border-collapse: collapse; font-size: 0.88rem; color: #1d2939;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-    .payments-calc-table th {
-        text-align: left; font-family: inherit; font-size: 0.7rem; color: #8428e4; font-weight: 700;
-        padding: 0.25rem 0.2rem 0.4rem 0.2rem; border-bottom: 1px solid rgba(16, 38, 72, 0.136);
-    }
-    .payments-calc-table th.amount, .payments-calc-table td.amount { text-align: right; white-space: nowrap; padding-left: 1rem; }
-    .payments-calc-table td { padding: 0.32rem 0.2rem; border-bottom: 1px dashed rgba(16, 38, 72, 0.112); }
-    .payments-calc-table td.neg { color: #c11818; }
-    .payments-calc-table td.pos { color: #0f7032; }
-    .payments-calc-table tr.kind-component td:first-child { padding-left: 1rem; color: #475467; }
-    .payments-calc-table tr.kind-total td { border-bottom: none; padding-top: 0.55rem; font-weight: 700; }
-
-    .payments-net {
-        margin-top: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap;
-        padding: 0.55rem 0.85rem; border-radius: 8px;
-        background: color-mix(in srgb, var(--pay-accent) 14%, #f6f7f9);
-        border: 1px solid color-mix(in srgb, var(--pay-accent) 45%, transparent);
-    }
-    .payments-net.mode-protected { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); }
-    .payments-net.mode-inbound { background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.4); }
-    .payments-net .k { color: #344054; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
-    #payments-net-amount {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 1.1rem; font-weight: 700; color: #0b1f3a; text-align: right;
-    }
-    .payments-context { margin: 0.7rem 0 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1rem; }
-    .payments-context div { min-width: 0; }
-    .payments-context dt { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cw-muted, #5d6b7e); font-weight: 700; }
-    .payments-context dd { margin: 0.1rem 0 0 0; font-size: 0.85rem; color: #1d2939; line-height: 1.4; }
-    .payments-rule { margin-top: 0.6rem; font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
-
-    .payments-checks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-    .payments-check { display: flex; gap: 0.6rem; align-items: flex-start; }
-    .payments-check-icon {
+    .claims-checks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+    .claims-check { display: flex; gap: 0.6rem; align-items: flex-start; }
+    .claims-check-icon {
         flex: 0 0 auto; display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; border-radius: 50%;
         font-size: 0.75rem; font-weight: 800; margin-top: 0.05rem;
     }
-    .payments-check.status-pass .payments-check-icon { background: rgba(34, 197, 94, 0.18); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.45); }
-    .payments-check.status-fail .payments-check-icon { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.45); }
-    .payments-check.status-warn .payments-check-icon { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.45); }
-    .payments-check.status-na .payments-check-icon { background: rgba(148, 163, 184, 0.16); color: #1d2939; border: 1px solid rgba(16, 38, 72, 0.24); }
-    .payments-check-body { min-width: 0; flex: 1; }
-    .payments-check-head { display: flex; flex-wrap: wrap; gap: 0.35rem 0.7rem; align-items: baseline; color: #0b1f3a; font-size: 0.9rem; }
-    .payments-check-value { font-size: 0.78rem; font-weight: 700; color: #8229e5; }
-    .payments-check.status-fail .payments-check-value { color: #c11818; }
-    .payments-check.status-pass .payments-check-value { color: #0f7032; }
-    .payments-check.status-warn .payments-check-value { color: #954f12; }
-    .payments-check-detail { font-size: 0.84rem; color: #344054; line-height: 1.45; margin-top: 0.15rem; }
-    .payments-check-source { font-size: 0.74rem; color: var(--cw-muted, #5d6b7e); margin-top: 0.15rem; }
+    .claims-check.status-pass .claims-check-icon { background: rgba(34, 197, 94, 0.18); color: #0f7032; border: 1px solid rgba(34, 197, 94, 0.45); }
+    .claims-check.status-fail .claims-check-icon { background: rgba(239, 68, 68, 0.18); color: #c11818; border: 1px solid rgba(239, 68, 68, 0.45); }
+    .claims-check.status-warn .claims-check-icon { background: rgba(245, 158, 11, 0.18); color: #954f12; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .claims-check.status-na .claims-check-icon { background: rgba(148, 163, 184, 0.16); color: #1d2939; border: 1px solid rgba(16, 38, 72, 0.24); }
+    .claims-check-body { min-width: 0; flex: 1; }
+    .claims-check-head { display: flex; flex-wrap: wrap; gap: 0.25rem 0.7rem; align-items: baseline; color: #0b1f3a; font-size: 0.9rem; }
+    .claims-check-value { font-size: 0.78rem; font-weight: 700; color: #8229e5; }
+    .claims-check.status-fail .claims-check-value { color: #c11818; }
+    .claims-check.status-pass .claims-check-value { color: #0f7032; }
+    .claims-check.status-warn .claims-check-value { color: #954f12; }
+    .claims-check-detail { font-size: 0.84rem; color: #344054; line-height: 1.45; margin-top: 0.15rem; }
+    .claims-check-source { font-size: 0.74rem; color: var(--cw-muted, #5d6b7e); margin-top: 0.15rem; }
 
-    .payments-callout {
-        border-radius: 10px; padding: 0.75rem 0.95rem;
-        background: color-mix(in srgb, var(--pay-accent) 8%, #f6f7f9);
-        border: 1px solid color-mix(in srgb, var(--pay-accent) 30%, transparent);
+    .claims-table-scroll { overflow-x: auto; }
+    .claims-pack-table, .claims-benefit-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; color: #1d2939; }
+    .claims-pack-table th {
+        text-align: left; font-size: 0.7rem; color: #8428e4; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 0.25rem 0.4rem 0.4rem 0.2rem; border-bottom: 1px solid rgba(16, 38, 72, 0.136);
     }
-    .payments-callout p { margin: 0.25rem 0 0 0; color: #344054; font-size: 0.88rem; line-height: 1.45; }
-    .payments-callout-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
-    .payments-callout-title { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; }
-    .payments-reasons { margin: 0.2rem 0 0 0; padding-left: 1.2rem; color: #344054; font-size: 0.87rem; line-height: 1.5; }
-    .payments-approver { font-size: 0.82rem !important; color: #8428e4 !important; }
-    .payments-pill {
+    .claims-pack-table td { padding: 0.4rem 0.4rem 0.4rem 0.2rem; border-bottom: 1px dashed rgba(16, 38, 72, 0.112); vertical-align: top; line-height: 1.4; }
+    .claims-pack-table td:first-child { font-weight: 600; color: #0b1f3a; min-width: 160px; }
+    .claims-pack-status {
+        display: inline-block; white-space: nowrap; padding: 0.08rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+        background: rgba(148, 163, 184, 0.16); color: #1d2939; border: 1px solid rgba(16, 38, 72, 0.2);
+    }
+    .claims-pack-status.st-verified, .claims-pack-status.st-received { background: rgba(34, 197, 94, 0.14); color: #0f7032; border-color: rgba(34, 197, 94, 0.4); }
+    .claims-pack-status.st-prepared { background: rgba(168, 85, 247, 0.14); color: #7a22d6; border-color: rgba(168, 85, 247, 0.4); }
+    .claims-pack-status.st-later, .claims-pack-status.st-to-come { background: rgba(245, 158, 11, 0.12); color: #8a4a10; border-color: rgba(245, 158, 11, 0.4); }
+    .claims-pack-status.st-missing, .claims-pack-status.st-referred { background: rgba(239, 68, 68, 0.12); color: #b11717; border-color: rgba(239, 68, 68, 0.4); }
+
+    .claims-benefit-table { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .claims-benefit-table td { padding: 0.32rem 0.2rem; border-bottom: 1px dashed rgba(16, 38, 72, 0.112); }
+    .claims-benefit-table td.amount { text-align: right; white-space: nowrap; padding-left: 1rem; }
+    .claims-benefit-table tr.kind-step td:first-child { padding-left: 1rem; color: #475467; }
+    .claims-benefit-table tr.kind-note td { color: #475467; font-size: 0.82rem; }
+    .claims-benefit-table tr.kind-deduct td.amount { color: #c11818; }
+    .claims-benefit-table tr.kind-total td { border-bottom: none; padding-top: 0.55rem; font-weight: 700; }
+    .claims-benefit-table tr.kind-total td.amount { color: #0f7032; }
+    .claims-net {
+        margin-top: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap;
+        padding: 0.55rem 0.85rem; border-radius: 8px;
+        background: color-mix(in srgb, var(--clm-accent) 14%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--clm-accent) 45%, transparent);
+    }
+    .claims-net.mode-protected { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); }
+    .claims-net .k { color: #344054; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+    #claims-benefit-result-value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 1.1rem; font-weight: 700; color: #0b1f3a; text-align: right;
+    }
+    .claims-benefit-notes { margin: 0.6rem 0 0 0; padding-left: 1.1rem; font-size: 0.85rem; color: #344054; line-height: 1.5; }
+    .claims-benefit-notes li { margin-bottom: 0.2rem; }
+    .claims-benefit-notes:empty { display: none; }
+    .claims-rule { margin-top: 0.5rem; font-size: 0.78rem; color: var(--cw-muted, #5d6b7e); }
+
+    .claims-notes { display: grid; gap: 0.5rem; }
+    .claims-note {
+        padding: 0.5rem 0.7rem; border-radius: 8px; font-size: 0.85rem; line-height: 1.45; color: #1d2939;
+        background: #ffffff; border: 1px solid rgba(16, 38, 72, 0.12); border-left-width: 4px;
+    }
+    .claims-note strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.15rem; color: #0b1f3a; }
+    .claims-note.tone-adviser { border-left-color: #c9a14a; }
+    .claims-note.tone-care { border-left-color: #ec4899; }
+    .claims-note.tone-info { border-left-color: #0ea5e9; }
+
+    .claims-timeline { margin: 0.2rem 0 0 0; padding-left: 1.2rem; font-size: 0.86rem; color: #1d2939; line-height: 1.5; }
+    .claims-timeline li { margin-bottom: 0.3rem; }
+    .claims-timeline li strong { color: #0b1f3a; }
+    .claims-timeline:empty { display: none; }
+
+    .claims-callout {
+        border-radius: 10px; padding: 0.75rem 0.95rem;
+        background: color-mix(in srgb, var(--clm-accent) 8%, #f6f7f9);
+        border: 1px solid color-mix(in srgb, var(--clm-accent) 30%, transparent);
+    }
+    .claims-callout p { margin: 0.25rem 0 0 0; color: #344054; font-size: 0.88rem; line-height: 1.45; }
+    .claims-callout-head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
+    .claims-callout-title { color: #0b1f3a; font-weight: 700; font-size: 0.92rem; }
+    .claims-reasons { margin: 0.2rem 0 0 0; padding-left: 1.2rem; color: #344054; font-size: 0.87rem; line-height: 1.5; }
+    .claims-recommendation { font-weight: 600; color: #1d2939 !important; }
+    .claims-approver { font-size: 0.82rem !important; color: #8428e4 !important; }
+    .claims-pill {
         margin-left: auto; padding: 0.15rem 0.7rem; border-radius: 999px;
         font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
         background: rgba(148, 163, 184, 0.18); color: #1d2939; border: 1px solid rgba(16, 38, 72, 0.24);
     }
-    .payments-pill.required { background: rgba(239, 68, 68, 0.18); color: #c11818; border-color: rgba(239, 68, 68, 0.4); }
-    .payments-pill.standard { background: rgba(168, 85, 247, 0.18); color: #8229e5; border-color: rgba(168, 85, 247, 0.45); }
-    .payments-pill.optional { background: rgba(34, 197, 94, 0.16); color: #0f7032; border-color: rgba(34, 197, 94, 0.4); }
-    .payments-pill.status-pending { background: rgba(91, 95, 199, 0.22); color: #2c51e5; border-color: rgba(129, 133, 230, 0.5); }
-    .payments-pill.status-approved { background: rgba(34, 197, 94, 0.18); color: #0f7032; border-color: rgba(34, 197, 94, 0.4); }
-    .payments-pill.status-rejected, .payments-pill.status-blocked { background: rgba(239, 68, 68, 0.18); color: #c11818; border-color: rgba(239, 68, 68, 0.4); }
-    .payments-pill.status-released { background: rgba(168, 85, 247, 0.2); color: #8229e5; border-color: rgba(168, 85, 247, 0.5); }
-    .payments-pill.status-cancelled { background: rgba(148, 163, 184, 0.16); color: #1d2939; }
+    .claims-pill.required { background: rgba(239, 68, 68, 0.18); color: #c11818; border-color: rgba(239, 68, 68, 0.4); }
+    .claims-pill.optional { background: rgba(245, 158, 11, 0.16); color: #8a4a10; border-color: rgba(245, 158, 11, 0.4); }
+    .claims-pill.status-pending { background: rgba(91, 95, 199, 0.22); color: #2c51e5; border-color: rgba(129, 133, 230, 0.5); }
+    .claims-pill.status-approved, .claims-pill.status-lodged, .claims-pill.outcome-completed { background: rgba(34, 197, 94, 0.18); color: #0f7032; border-color: rgba(34, 197, 94, 0.4); }
+    .claims-pill.status-rejected, .claims-pill.status-blocked, .claims-pill.outcome-blocked { background: rgba(239, 68, 68, 0.18); color: #c11818; border-color: rgba(239, 68, 68, 0.4); }
+    .claims-pill.outcome-partially-approved { background: rgba(245, 158, 11, 0.2); color: #8a4a10; border-color: rgba(245, 158, 11, 0.5); }
+    .claims-pill.status-cancelled { background: rgba(148, 163, 184, 0.16); color: #1d2939; }
 
-    .payments-teams { background: color-mix(in srgb, #5b5fc7 10%, #f6f7f9); border-color: rgba(129, 133, 230, 0.4); }
-    .payments-blocked { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.35); }
-    .payments-inbound { background: rgba(14, 165, 233, 0.07); border-color: rgba(14, 165, 233, 0.35); }
-    .payments-blocked-record { font-size: 0.8rem !important; color: var(--cw-muted, #5d6b7e) !important; }
-    .payments-teams-msg code { background: rgba(91, 95, 199, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
-    .payments-teams-meta {
+    .claims-teams { background: color-mix(in srgb, #5b5fc7 10%, #f6f7f9); border-color: rgba(129, 133, 230, 0.4); }
+    .claims-lodged { background: rgba(34, 197, 94, 0.07); border-color: rgba(34, 197, 94, 0.35); }
+    .claims-referred { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.35); }
+    .claims-hold { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.35); }
+    .claims-outcome-summary { font-weight: 700; color: #0b1f3a !important; }
+    .claims-protected {
+        margin-top: 0.6rem; padding: 0.65rem 0.85rem; border-radius: 8px;
+        background: #ffffff; border: 1px solid rgba(34, 197, 94, 0.45);
+    }
+    .claims-protected-amount { font-size: 1.05rem; font-weight: 800; color: #0f7032; }
+    .claims-protected-note { font-size: 0.86rem; color: #344054; margin-top: 0.15rem; }
+    .claims-teams-msg code { background: rgba(91, 95, 199, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
+    .claims-teams-meta {
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 0.85rem; margin: 0.6rem 0 0.2rem 0;
         font-size: 0.82rem; color: #344054;
     }
-    .payments-teams-meta .k { color: var(--cw-muted, #5d6b7e); font-weight: 600; text-transform: uppercase; font-size: 0.64rem; letter-spacing: 0.08em; margin-right: 0.35rem; }
-    .payments-teams-meta code { background: #f6f7f9; padding: 1px 6px; border-radius: 4px; }
-    .payments-teams-meta a { color: #2c51e5; word-break: break-all; }
-    .payments-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
-    .payments-actions button {
+    .claims-teams-meta .k { color: var(--cw-muted, #5d6b7e); font-weight: 600; text-transform: uppercase; font-size: 0.64rem; letter-spacing: 0.08em; margin-right: 0.35rem; }
+    .claims-teams-meta code { background: #f6f7f9; padding: 1px 6px; border-radius: 4px; }
+    .claims-teams-meta a { color: #2c51e5; word-break: break-all; }
+    .claims-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+    .claims-actions button {
         border: none; border-radius: 8px; padding: 0.45rem 0.95rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;
     }
-    .payments-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .payments-popup { background: rgba(129, 133, 230, 0.25); color: #1d2939; border: 1px solid rgba(129, 133, 230, 0.5) !important; }
-    .payments-release { background: var(--cw-success); color: #fff; border-radius: 999px; }
-    .payments-release-hint { margin-top: 0.35rem; font-size: 0.8rem; color: var(--cw-muted, #5d6b7e); }
-    .payments-teams-status { margin-top: 0.45rem; font-size: 0.85rem; color: #344054; }
-    .payments-teams-status.error { color: #c11818; }
+    .claims-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .claims-popup { background: rgba(129, 133, 230, 0.25); color: #1d2939; border: 1px solid rgba(129, 133, 230, 0.5) !important; }
+    .claims-lodge { background: var(--cw-success); color: #fff; border-radius: 999px !important; }
+    .claims-lodge-hint { margin-top: 0.35rem; font-size: 0.8rem; color: var(--cw-muted, #5d6b7e); }
+    .claims-teams-status { margin-top: 0.45rem; font-size: 0.85rem; color: #344054; }
+    .claims-teams-status.error { color: #c11818; }
 
     /* Microsoft Teams channel post + Adaptive Card preview */
-    .payments-teams-preview { margin-top: 0.6rem; border-radius: 10px; overflow: hidden; border: 1px solid rgba(129, 133, 230, 0.35); background: #f2f4f7; }
+    .claims-teams-preview { margin-top: 0.6rem; border-radius: 10px; overflow: hidden; border: 1px solid rgba(129, 133, 230, 0.35); background: #f2f4f7; }
     .tp-channel-head {
         display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.75rem; font-size: 0.78rem;
         background: #f2f4f7; color: #434be8; border-bottom: 1px solid rgba(129, 133, 230, 0.25);
@@ -549,7 +652,7 @@
     .tp-post-body { min-width: 0; flex: 1; }
     .tp-author { font-size: 0.82rem; font-weight: 700; color: #0b1f3a; margin-bottom: 0.35rem; }
     .tp-app { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: #f2f4f7; color: #474ede; border-radius: 4px; padding: 0.05rem 0.35rem; margin-left: 0.3rem; }
-    .tp-card { background: #f2f4f7; border: 1px solid #e4e7ec; border-radius: 8px; padding: 0.75rem 0.85rem; color: #0b1f3a; }
+    .tp-card { background: #ffffff; border: 1px solid #e4e7ec; border-radius: 8px; padding: 0.75rem 0.85rem; color: #0b1f3a; }
     .tp-card-title { font-size: 1rem; font-weight: 800; color: #0b1f3a; }
     .tp-card-sub { font-size: 0.76rem; color: #5358b0; margin-bottom: 0.55rem; }
     .tp-facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 0.9rem; margin: 0 0 0.6rem 0; font-size: 0.84rem; }
@@ -557,6 +660,9 @@
     .tp-facts dd { margin: 0; color: #1d2939; min-width: 0; overflow-wrap: anywhere; }
     .tp-why-title { font-weight: 800; font-size: 0.84rem; color: #0b1f3a; }
     .tp-why { margin: 0.2rem 0 0.45rem 0; padding-left: 1.1rem; font-size: 0.84rem; color: #1d2939; }
+    .tp-checks { margin: 0.2rem 0 0.45rem 0; padding-left: 0; list-style: none; font-size: 0.82rem; color: #1d2939; }
+    .tp-checks li { margin-bottom: 0.1rem; }
+    .tp-rec { margin: 0.2rem 0 0.45rem 0; font-size: 0.84rem; color: #1d2939; }
     .tp-note { font-size: 0.74rem; color: #5358b0; margin-bottom: 0.6rem; }
     .tp-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
     .tp-btn {
@@ -569,77 +675,81 @@
     .tp-btn.tp-reject { border-color: rgba(239, 68, 68, 0.7); color: #c11818; }
     .tp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .tp-decided { font-size: 0.84rem; font-weight: 700; padding: 0.35rem 0.6rem; border-radius: 6px; background: rgba(148, 163, 184, 0.14); color: #1d2939; }
-    .tp-decided.tp-approved, .tp-decided.tp-released { background: rgba(34, 197, 94, 0.14); color: #0e7030; }
+    .tp-decided.tp-approved, .tp-decided.tp-lodged { background: rgba(34, 197, 94, 0.14); color: #0e7030; }
+    .tp-decided.tp-blocked { background: rgba(239, 68, 68, 0.12); color: #a51616; }
     .tp-decided.tp-rejected { background: rgba(239, 68, 68, 0.14); color: #c11818; }
 
-    .payments-notes .agent-md { font-size: 0.9rem; }
+    .claims-update-card .agent-md { font-size: 0.9rem; }
 
     /* ── Approval popup ───────────────────────────────────────── */
-    .payments-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.2rem; }
-    .payments-modal-backdrop { position: absolute; inset: 0; background: rgba(8, 22, 44, 0.72); backdrop-filter: blur(3px); }
-    .payments-modal-card {
-        position: relative; z-index: 1; width: min(600px, 100%);
-        background: linear-gradient(180deg, #ffffff, #ffffff);
-        border: 1px solid color-mix(in srgb, var(--pay-accent) 45%, rgba(16, 38, 72, 0.155));
+    .claims-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.2rem; }
+    .claims-modal-backdrop { position: absolute; inset: 0; background: rgba(8, 22, 44, 0.72); backdrop-filter: blur(3px); }
+    .claims-modal-card {
+        position: relative; z-index: 1; width: min(620px, 100%);
+        background: #ffffff;
+        border: 1px solid color-mix(in srgb, var(--clm-accent) 45%, rgba(16, 38, 72, 0.155));
         border-radius: 14px; box-shadow: 0 22px 60px rgba(16, 24, 40, 0.12), 0 0 0 1px rgba(168, 85, 247, 0.15);
         padding: 1.2rem 1.3rem 1.1rem 1.3rem; color: #0b1f3a;
         max-height: calc(100vh - 2.4rem); overflow-y: auto;
     }
-    .payments-modal-close {
+    .claims-modal-close {
         position: absolute; top: 0.5rem; right: 0.6rem; background: transparent; color: #475467;
         border: none; font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px;
     }
-    .payments-modal-close:hover { background: rgba(16, 38, 72, 0.042); color: #0b1f3a; }
-    .payments-modal-header { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem; }
-    .payments-modal-header h3 { margin: 0; font-size: 1.05rem; color: #0b1f3a; }
-    .payments-modal-sub { font-size: 0.76rem; color: #2c51e5; }
-    .payments-modal-badge {
+    .claims-modal-close:hover { background: rgba(16, 38, 72, 0.042); color: #0b1f3a; }
+    .claims-modal-header { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem; }
+    .claims-modal-header h3 { margin: 0; font-size: 1.05rem; color: #0b1f3a; }
+    .claims-modal-sub { font-size: 0.76rem; color: #2c51e5; }
+    .claims-modal-badge {
         display: inline-grid; place-items: center; flex: 0 0 auto; width: 1.8rem; height: 1.8rem; border-radius: 50%;
         background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.55); color: #c11818; font-weight: 800;
     }
-    .payments-modal-deeplink {
+    .claims-modal-deeplink {
         margin-bottom: 0.6rem; padding: 0.45rem 0.7rem; border-radius: 8px; font-size: 0.84rem;
         background: rgba(91, 95, 199, 0.18); border: 1px solid rgba(129, 133, 230, 0.45); color: #1d2939;
     }
-    .payments-modal-why { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--cw-muted, #5d6b7e); }
-    .payments-modal-reasons { margin: 0.25rem 0 0.75rem 0; padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.5; color: #1d2939; }
-    .payments-modal-meta {
+    .claims-modal-why { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--cw-muted, #5d6b7e); }
+    .claims-modal-reasons { margin: 0.25rem 0 0.75rem 0; padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.5; color: #1d2939; }
+    .claims-modal-recommendation { margin: 0.2rem 0 0.7rem 0; font-size: 0.88rem; line-height: 1.45; color: #1d2939; font-weight: 600; }
+    .claims-modal-meta {
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem 1rem; font-size: 0.85rem;
         background: #f6f7f9; border: 1px solid rgba(16, 38, 72, 0.112); border-radius: 8px;
         padding: 0.65rem 0.85rem; margin-bottom: 0.7rem;
     }
-    .payments-modal-meta .span-2 { grid-column: span 2; }
-    .payments-modal-meta .k {
+    .claims-modal-meta .span-2 { grid-column: span 2; }
+    .claims-modal-meta .k {
         display: block; color: var(--cw-muted, #5d6b7e); font-weight: 700; text-transform: uppercase;
         font-size: 0.62rem; letter-spacing: 0.1em; margin-bottom: 0.15rem;
     }
-    .payments-modal-meta code { background: #f6f7f9; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; }
-    .payments-modal-meta .amount-row strong { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.15rem; color: #0b1f3a; }
-    .payments-modal-explainer { margin: 0 0 0.7rem 0; font-size: 0.82rem; color: #344054; line-height: 1.45; }
-    .payments-modal-status { margin-bottom: 0.6rem; font-size: 0.88rem; color: #344054; }
-    .payments-modal-status.error { color: #c11818; }
-    .payments-modal-agent {
+    .claims-modal-meta code { background: #f6f7f9; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; }
+    .claims-modal-meta .amount-row strong { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.15rem; color: #0b1f3a; }
+    .claims-modal-explainer { margin: 0 0 0.7rem 0; font-size: 0.82rem; color: #344054; line-height: 1.45; }
+    .claims-modal-status { margin-bottom: 0.6rem; font-size: 0.88rem; color: #344054; }
+    .claims-modal-status.error { color: #c11818; }
+    .claims-modal-agent {
         background: #f6f7f9; border: 1px solid rgba(16, 38, 72, 0.112); border-radius: 8px;
         padding: 0.65rem 0.85rem; margin-bottom: 0.7rem; max-height: 240px; overflow-y: auto;
     }
-    .payments-modal-agent-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.4rem; }
-    .payments-modal-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: flex-end; margin-top: 0.3rem; }
-    .payments-modal-actions button { border: none; border-radius: 8px; padding: 0.55rem 1.1rem; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
-    .payments-modal-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .payments-modal-cancel { background: rgba(120, 150, 200, 0.14); color: #1d2939; }
-    .payments-modal-reject { background: var(--cw-danger); color: #fff; border-radius: 999px; }
-    .payments-modal-approve { background: var(--cw-primary); color: #fff; border-radius: 999px; }
-    .payments-modal-release { background: var(--cw-success); color: #fff; border-radius: 999px; }
-    .payments-modal-actions button:hover:not(:disabled) { filter: brightness(1.08); }
+    .claims-modal-agent-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--cw-muted, #5d6b7e); font-weight: 700; margin-bottom: 0.4rem; }
+    .claims-modal-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: flex-end; margin-top: 0.3rem; }
+    .claims-modal-actions button { border: none; border-radius: 8px; padding: 0.55rem 1.1rem; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+    .claims-modal-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .claims-modal-cancel { background: rgba(120, 150, 200, 0.14); color: #1d2939; }
+    .claims-modal-reject { background: var(--cw-danger); color: #fff; border-radius: 999px !important; }
+    .claims-modal-approve { background: var(--cw-primary); color: #fff; border-radius: 999px !important; }
+    .claims-modal-lodge { background: var(--cw-success); color: #fff; border-radius: 999px !important; }
+    .claims-modal-actions button:hover:not(:disabled) { filter: brightness(1.08); }
 
+    @@media (max-width: 900px) {
+        .claims-two-col { grid-template-columns: 1fr; }
+    }
     @@media (max-width: 820px) {
-        .payments-summary-grid, .payments-grid, .payments-context, .payments-teams-meta { grid-template-columns: 1fr; }
-        .payments-summary-grid .span-2, .payments-grid .span-2 { grid-column: span 1; }
-        .payments-payee-head { display: none; }
-        .payments-payee-row { grid-template-columns: 1fr 1fr; }
+        .claims-summary-grid, .claims-grid, .claims-grid-3, .claims-teams-meta { grid-template-columns: 1fr; }
+        .claims-summary-grid .span-2, .claims-grid .span-2 { grid-column: span 1; }
+        .claims-facts { grid-template-columns: 1fr; }
     }
     @@media (max-width: 600px) {
-        .payments-modal-meta { grid-template-columns: 1fr; }
-        .payments-modal-meta .span-2 { grid-column: span 1; }
+        .claims-modal-meta { grid-template-columns: 1fr; }
+        .claims-modal-meta .span-2 { grid-column: span 1; }
     }
 </style>

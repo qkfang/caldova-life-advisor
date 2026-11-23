@@ -1,37 +1,41 @@
 using System.Collections.Concurrent;
-using CaldovaSuper.App.Models;
+using CaldovaLife.App.Models;
 
-namespace CaldovaSuper.App.Services;
+namespace CaldovaLife.App.Services;
 
 /// <summary>
-/// One Member Case — the shared record every agent in the Caldova client
-/// operations office reads from. Minted by the Onboarding demo (or seeded at
-/// start-up) and looked up by case number on every other agent page.
+/// One Client Case — the shared record every agent at Caldova Life Advice
+/// reads from. Opened by the Onboarding Agent's "Try it out" flow (or seeded
+/// at start-up) and looked up by case number on every other agent page.
 /// </summary>
 /// <param name="CaseNumber">Case number, <c>REQ-YYYYMMDD-XXXXXX</c>.</param>
 /// <param name="SampleId">Id of the <see cref="RequestSample"/> the case came from.</param>
-/// <param name="ClientName">Member / client name (for a death benefit, the claimant).</param>
-/// <param name="MemberNumber">Caldova member or account number (e.g. <c>CS-1058220</c>, <c>CP-3019042</c>).</param>
-/// <param name="Product">Product and tier (e.g. "Caldova Super — Select").</param>
+/// <param name="ClientName">Client name (for a death claim, the claimant).</param>
+/// <param name="ClientEmail">Verified email for the client or claimant.</param>
+/// <param name="ClientPhone">Verified phone for the client or claimant.</param>
+/// <param name="ClientNumber">Caldova client number(s), e.g. <c>CL-104582</c>.</param>
+/// <param name="Cover">Existing or requested cover, on one line.</param>
 /// <param name="RequestType">One of the canonical request types (see <see cref="RequestTypes"/>).</param>
 /// <param name="ReceivedDate">Date the request was received (<c>yyyy-MM-dd</c>).</param>
-/// <param name="AdviserName">Financial adviser on the account, or "None (direct member)".</param>
-/// <param name="AdviserPractice">Advice practice, or empty for direct members.</param>
+/// <param name="AdviserName">Always Caldova's adviser, "Amelia, Senior Risk Adviser".</param>
+/// <param name="ReferredBy">Referral partner and firm, or "Existing client".</param>
 /// <param name="RequestSummary">One-paragraph plain-English summary of the request.</param>
-/// <param name="Amount">Headline amount in AUD, formatted (e.g. "AUD 15,000 requested").</param>
+/// <param name="Amount">Headline figure in AUD (e.g. "$680,000 joint mortgage to protect").</param>
+/// <param name="PreferredContact">How (and through whom) the client wants to be contacted.</param>
 /// <param name="Priority">"Standard", "High" or "Urgent".</param>
+/// <param name="PriorityReason">Why the case has that priority, including any vulnerability.</param>
 public record CaseRecord(
     string CaseNumber,
     string SampleId,
     string ClientName,
     string ClientEmail,
     string ClientPhone,
-    string MemberNumber,
-    string Product,
+    string ClientNumber,
+    string Cover,
     string RequestType,
     string ReceivedDate,
     string AdviserName,
-    string AdviserPractice,
+    string ReferredBy,
     string RequestSummary,
     string Amount,
     string PreferredContact,
@@ -39,29 +43,29 @@ public record CaseRecord(
     string PriorityReason,
     DateTimeOffset CreatedAt);
 
-/// <summary>Canonical request types used across the demo.</summary>
+/// <summary>Canonical request types used across the practice (one per scenario).</summary>
 public static class RequestTypes
 {
-    public const string NewAccount = "New account & consolidation";
-    public const string RolloverOutSmsf = "Rollover out to SMSF";
-    public const string PensionCommencement = "Pension commencement";
-    public const string FinancialHardship = "Financial hardship release";
-    public const string DeathBenefit = "Death benefit claim";
+    public const string NewProtectionAdvice = "New protection advice";
+    public const string TraumaClaimBankChange = "Trauma claim and bank change";
+    public const string BusinessProtectionAdvice = "Business protection advice";
+    public const string IncomeProtectionClaim = "Income protection claim";
+    public const string DeathClaim = "Death claim";
 }
 
 /// <summary>
-/// In-memory store of Member Cases. The Onboarding demo mints a fresh case
-/// number on every <see cref="Add"/> call; later agents look the case up by
-/// case number.
+/// In-memory store of Client Cases. The Onboarding Agent's "Try it out" flow
+/// mints a fresh case number on every <see cref="Add"/> call; later agents
+/// look the case up by case number.
 /// </summary>
 public class CaseStore
 {
     /// <summary>
-    /// Suffix tag of the five seeded scenario cases (<c>REQ-yyyyMMdd-OPSnnn</c>).
-    /// Live case numbers never contain an "O" (see <see cref="GenerateCaseNumber"/>),
+    /// Suffix tag of the five seeded scenario cases (<c>REQ-yyyyMMdd-LIFnnn</c>).
+    /// Live case numbers never contain an "I" (see <see cref="GenerateCaseNumber"/>),
     /// so the tag can't clash with a case opened live.
     /// </summary>
-    private const string ScenarioTag = "OPS";
+    private const string ScenarioTag = "LIF";
 
     /// <summary>True for the five seeded scenario cases, false for cases opened live.</summary>
     public static bool IsScenarioCaseNumber(string caseNumber) =>
@@ -98,8 +102,8 @@ public class CaseStore
     /// <see cref="RequestSampleCatalog"/> (the five canonical scenarios) so
     /// every downstream agent page has cases to pick from the moment the app
     /// starts. Case numbers are deterministic —
-    /// <c>REQ-{received yyyyMMdd}-OPS{nnn}</c> — and match the case ids used by
-    /// the 3D frontend scenario scripts (e.g. <c>REQ-20261103-OPS001</c>).
+    /// <c>REQ-{received yyyyMMdd}-LIF{nnn}</c> — and match the case ids used by
+    /// the Caldova House frontend scenarios (e.g. <c>REQ-20261103-LIF001</c>).
     /// No-op if the store already contains records.
     /// </summary>
     public void SeedDefaults()
@@ -143,12 +147,12 @@ public class CaseStore
             ClientName: f.ClientName,
             ClientEmail: f.ClientEmail,
             ClientPhone: f.ClientPhone,
-            MemberNumber: f.MemberNumber,
-            Product: f.Product,
+            ClientNumber: f.ClientNumber,
+            Cover: f.Cover,
             RequestType: f.RequestType,
             ReceivedDate: f.ReceivedDate,
             AdviserName: f.AdviserName,
-            AdviserPractice: f.AdviserPractice,
+            ReferredBy: f.ReferredBy,
             RequestSummary: f.RequestSummary,
             Amount: f.Amount,
             PreferredContact: f.PreferredContact,
@@ -157,9 +161,10 @@ public class CaseStore
             CreatedAt: createdAt);
 
     /// <summary>
-    /// Generate a case number of the form <c>REQ-YYYYMMDD-XXXXXX</c>. The
-    /// 6-character suffix uses cryptographically-strong randomness so two
-    /// near-simultaneous submissions cannot collide.
+    /// Generate a case number of the form <c>REQ-YYYYMMDD-XXXXXX</c>, dated in
+    /// Melbourne time (Caldova's home). The 6-character suffix uses
+    /// cryptographically-strong randomness so two near-simultaneous submissions
+    /// cannot collide.
     /// </summary>
     private static string GenerateCaseNumber()
     {
@@ -171,7 +176,18 @@ public class CaseStore
         {
             chars[i] = alphabet[buf[i] % alphabet.Length];
         }
-        var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd");
+        var stamp = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Melbourne).ToString("yyyyMMdd");
         return $"REQ-{stamp}-{new string(chars)}";
+    }
+
+    private static readonly TimeZoneInfo Melbourne = FindMelbourne();
+
+    private static TimeZoneInfo FindMelbourne()
+    {
+        foreach (var id in new[] { "Australia/Melbourne", "AUS Eastern Standard Time" })
+        {
+            if (TimeZoneInfo.TryFindSystemTimeZoneById(id, out var zone)) return zone;
+        }
+        return TimeZoneInfo.Utc;
     }
 }

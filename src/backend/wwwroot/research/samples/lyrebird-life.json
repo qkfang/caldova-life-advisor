@@ -1,0 +1,371 @@
+{
+  "documentType": "Insurer product sheet",
+  "insurer": "Lyrebird Life",
+  "shortName": "Lyrebird",
+  "code": "LB",
+  "policyPrefix": "LB-",
+  "productName": "Lyrebird Life Protection",
+  "superPlan": "Life and any-occupation TPD can be held inside super — no super-linking",
+  "pdsTitle": "Lyrebird Life — Protection PDS extract",
+  "asAt": "2026-07-01",
+  "aplListing": "Personal protection",
+  "fictionNote": "Summary of the Lyrebird Life — Protection PDS extract (PDS dated 1 July 2026) for Caldova's research. Read the PDS extract before relying on any wording.",
+  "summary": "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals and families. A precise cancer definition backed by histopathology, and strong controls on changes of contact and bank details. No business protection and no super-linking.",
+  "strengths": [
+    "Strong controls: each change of contact or bank details is confirmed through the mobile or email held before the change, with a call-back before paying into bank details changed in the last 30 days",
+    "A Claims Integrity team that investigates suspected fraud and identity takeover",
+    "Benefits paid only into the policy owner's own account (or the nominated beneficiary's, for life cover)"
+  ],
+  "watchPoints": [
+    "No super-linking — own-occupation TPD is only on a policy outside super",
+    "No business protection (no key person or buy-sell cover)",
+    "The PDS extract offers no review of exclusions"
+  ],
+  "premiumStyles": {
+    "stepped": "Stepped premiums rise with age.",
+    "level": "Level premiums start higher and rise more slowly."
+  },
+  "coverTypes": [
+    {
+      "cover": "Life cover (with terminal illness benefit)",
+      "key": "life",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "Life cover is paid directly to nominated beneficiaries."
+    },
+    {
+      "cover": "TPD — any occupation",
+      "key": "tpd-any",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "Inside or outside super."
+    },
+    {
+      "cover": "TPD — own occupation",
+      "key": "tpd-own",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Outside super only; no super-linking."
+    },
+    {
+      "cover": "Trauma cover",
+      "key": "trauma",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Listed conditions such as cancer, heart attack, stroke or major head injury; mental health conditions aren't covered."
+    },
+    {
+      "cover": "Income protection",
+      "key": "ip",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65."
+    }
+  ],
+  "definitions": [
+    {
+      "key": "terminal-illness",
+      "title": "Terminal illness benefit",
+      "cover": "Life cover",
+      "wording": "The sum insured is paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.",
+      "plainEnglish": "If two doctors (one a specialist) say death is likely within 24 months, the life cover is paid early."
+    },
+    {
+      "key": "tpd-any-occupation",
+      "title": "TPD — any occupation",
+      "cover": "TPD",
+      "wording": "Any-occupation TPD can be held inside or outside super.",
+      "plainEnglish": "Pays only if you can never work again in any job that suits you."
+    },
+    {
+      "key": "tpd-own-occupation",
+      "title": "TPD — own occupation",
+      "cover": "TPD",
+      "wording": "Own-occupation TPD is available outside super only.",
+      "plainEnglish": "Pays if you can never go back to your own job — on a policy held outside super."
+    },
+    {
+      "key": "tpd-super-linking",
+      "title": "Super-linking",
+      "cover": "TPD",
+      "wording": "Lyrebird doesn't offer super-linking.",
+      "plainEnglish": "No linking — own-occupation TPD is a separate policy paid from your own money."
+    },
+    {
+      "key": "trauma-cancer",
+      "title": "Trauma — cancer",
+      "cover": "Trauma cover",
+      "wording": "Cancer: a malignant tumour, shown by the uncontrolled growth and spread of malignant cells and the invasion of tissue. The diagnosis must be confirmed by a specialist medical practitioner and supported by histopathology. A GP's letter or imaging alone isn't enough. Mental health conditions are not covered by trauma cover.",
+      "plainEnglish": "A cancer claim needs a specialist's diagnosis backed by a pathology report on the tumour tissue (histopathology)."
+    },
+    {
+      "key": "trauma-claim-evidence",
+      "title": "Trauma claims — what Lyrebird needs",
+      "cover": "Trauma cover",
+      "wording": "Claim form signed by the policy owner; certified ID of the policy owner; for cancer, the specialist's report confirming the diagnosis and the histopathology report; a bank account in the policy owner's own name; and any change of contact or bank details confirmed through the verified mobile or email held before the change.",
+      "plainEnglish": "A claim form signed by the policy owner, their ID, the specialist's and histopathology reports, and their own bank account."
+    },
+    {
+      "key": "benefit-payment",
+      "title": "Who is paid",
+      "cover": "All covers",
+      "wording": "Trauma, TPD and income protection benefits are paid to the policy owner. Lyrebird pays only into an account in the name of the policy owner (or, for life cover, the nominated beneficiary). It doesn't pay benefits to third parties or into company accounts unless the company is the policy owner.",
+      "plainEnglish": "The money only goes into the policy owner's own account — never to someone else's or a company's account."
+    },
+    {
+      "key": "contact-changes",
+      "title": "Changes of contact or bank details",
+      "cover": "All covers",
+      "wording": "Lyrebird confirms each change with a code sent to the mobile or email held before the change, or with a signed request and certified ID. If bank details have changed in the 30 days before a benefit payment, Lyrebird calls the policy owner on the verified number before paying.",
+      "plainEnglish": "Changes are confirmed through the details held before the change, and new bank details trigger a call-back before any payment."
+    },
+    {
+      "key": "claims-integrity",
+      "title": "Claims Integrity team",
+      "cover": "All covers",
+      "wording": "Lyrebird's Claims Integrity team investigates suspected fraud and identity takeover. Advisers can alert the team about a policy.",
+      "plainEnglish": "Lyrebird has a team that looks into suspected fraud and identity takeover."
+    },
+    {
+      "key": "nominated-beneficiaries",
+      "title": "Nominated beneficiaries",
+      "cover": "Life cover",
+      "wording": "The policy owner can nominate one or more beneficiaries and their shares; life cover is paid directly to the nominated beneficiaries, not through the estate.",
+      "plainEnglish": "Life cover goes straight to the people named on the policy."
+    },
+    {
+      "key": "ip-benefit-basis",
+      "title": "Income protection — monthly benefit",
+      "cover": "Income protection",
+      "wording": "Lyrebird pays the lesser of the insured monthly benefit and 70% of the life insured's average monthly earnings in the 12 months before the disability.",
+      "plainEnglish": "Pays up to 70% of what you earned in the 12 months before you became unable to work, capped at the insured amount."
+    },
+    {
+      "key": "ip-periods",
+      "title": "Income protection — waiting and benefit periods",
+      "cover": "Income protection",
+      "wording": "Waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65.",
+      "plainEnglish": "Payments start after the waiting period you choose and can last until age 65."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Exclusions",
+      "cover": "All covers",
+      "wording": "The PDS extract doesn't offer a review of exclusions.",
+      "plainEnglish": "There's no set way to have an exclusion reviewed."
+    },
+    {
+      "key": "earlier-policies",
+      "title": "Earlier policies",
+      "cover": "All covers",
+      "wording": "The cancer definition, beneficiary nominations and payment rules described here are the same as in Lyrebird's 2019 PDS.",
+      "plainEnglish": "Policies issued under the 2019 PDS have the same cancer definition and payment rules."
+    }
+  ],
+  "features": [
+    {
+      "key": "contact-changes",
+      "title": "Verified changes of details",
+      "detail": "Codes to the details held before a change; call-back before paying into new bank details."
+    },
+    {
+      "key": "claims-integrity",
+      "title": "Claims Integrity team",
+      "detail": "Investigates suspected fraud and identity takeover; advisers can alert it."
+    },
+    {
+      "key": "cooling-off",
+      "title": "Cooling-off",
+      "detail": "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made."
+    },
+    {
+      "key": "genetic",
+      "title": "No genetic test results",
+      "detail": "The insurer won't ask for or use genetic test results."
+    },
+    {
+      "key": "remuneration",
+      "title": "Adviser remuneration",
+      "detail": "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent."
+    }
+  ],
+  "exclusions": [
+    {
+      "cover": "Trauma cover",
+      "detail": "Mental health conditions aren't covered; trauma isn't available inside super."
+    },
+    {
+      "cover": "Trauma cover",
+      "detail": "A cancer claim can't be assessed without a specialist's diagnosis supported by histopathology."
+    },
+    {
+      "cover": "All covers",
+      "detail": "No business protection and no super-linking."
+    },
+    {
+      "cover": "All covers",
+      "detail": "Benefits are never paid to a third party or into an account in another name."
+    }
+  ],
+  "quotes": [
+    {
+      "scenario": "family-protection",
+      "caseNumber": "REQ-20261103-LIF001",
+      "quoteReference": "LB-Q-261104-7720",
+      "quotedOn": "2026-11-04",
+      "livesInsured": "Priya Natarajan, 34, female, non-smoker, physiotherapist",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 3690,
+      "insideSuperYear1": 512,
+      "outsideSuperYear1": 3178,
+      "structure": "Life cover inside super; own-occupation TPD as a stand-alone policy outside super (no super-linking), trauma and income protection outside super.",
+      "covers": [
+        {
+          "cover": "Life cover (with terminal illness)",
+          "sumInsured": "$750,000",
+          "ownership": "Inside super",
+          "year1Premium": 512,
+          "levelYear1Premium": 664
+        },
+        {
+          "cover": "TPD — own occupation (stand-alone)",
+          "sumInsured": "$600,000",
+          "ownership": "Outside super",
+          "year1Premium": 668,
+          "levelYear1Premium": 866
+        },
+        {
+          "cover": "Trauma cover",
+          "sumInsured": "$150,000",
+          "ownership": "Outside super",
+          "year1Premium": 705,
+          "levelYear1Premium": 915
+        },
+        {
+          "cover": "Income protection",
+          "sumInsured": "$6,125 a month · 90-day waiting period · to age 65",
+          "ownership": "Outside super",
+          "year1Premium": 1805,
+          "levelYear1Premium": 2345
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 4790,
+        "insideSuperYear1": 664,
+        "outsideSuperYear1": 4126,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "tpd-own-occupation",
+          "result": "meets",
+          "note": "Own-occupation TPD on a policy held outside super only."
+        },
+        {
+          "key": "ip-benefit-basis",
+          "result": "meets",
+          "note": "Lesser of the insured $6,125 a month and 70% of average monthly earnings in the 12 months before the disability."
+        },
+        {
+          "key": "ip-periods",
+          "result": "meets",
+          "note": "90-day waiting period and benefit period to age 65."
+        },
+        {
+          "key": "tpd-super-linking",
+          "result": "gap",
+          "note": "No super-linking — own-occupation TPD is a separate policy outside super, paid from cash flow."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "gap",
+          "note": "No exclusion review in the PDS extract."
+        },
+        {
+          "key": "ip-long-claims",
+          "result": "meets",
+          "note": "The PDS extract sets out no change of definition during the benefit period."
+        },
+        {
+          "key": "trauma-cancer",
+          "result": "partly",
+          "note": "Cancer must be confirmed by a specialist and supported by histopathology — a GP's letter or imaging alone isn't enough."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Lyrebird's actual future premiums can change.",
+        "agesLabel": "Priya's age",
+        "years": [
+          {
+            "year": 1,
+            "ages": "34",
+            "stepped": 3690,
+            "level": 4790
+          },
+          {
+            "year": 2,
+            "ages": "35",
+            "stepped": 3904,
+            "level": 4838
+          },
+          {
+            "year": 3,
+            "ages": "36",
+            "stepped": 4138,
+            "level": 4886
+          },
+          {
+            "year": 4,
+            "ages": "37",
+            "stepped": 4395,
+            "level": 4935
+          },
+          {
+            "year": 5,
+            "ages": "38",
+            "stepped": 4676,
+            "level": 4984
+          },
+          {
+            "year": 6,
+            "ages": "39",
+            "stepped": 4985,
+            "level": 5034
+          },
+          {
+            "year": 7,
+            "ages": "40",
+            "stepped": 5324,
+            "level": 5084
+          },
+          {
+            "year": 8,
+            "ages": "41",
+            "stepped": 5697,
+            "level": 5135
+          },
+          {
+            "year": 9,
+            "ages": "42",
+            "stepped": 6107,
+            "level": 5186
+          },
+          {
+            "year": 10,
+            "ages": "43",
+            "stepped": 6559,
+            "level": 5238
+          }
+        ]
+      }
+    }
+  ],
+  "notQuoted": [
+    {
+      "scenario": "business-protection",
+      "caseNumber": "REQ-20261109-LIF003",
+      "reason": "Lyrebird Life doesn't offer business protection (key person or buy-sell cover), so it wasn't quoted."
+    }
+  ]
+}

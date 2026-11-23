@@ -1,4 +1,4 @@
 
-az group create --name 'rg-caldova-super' --location 'eastus2'
+az group create --name 'rg-caldova-life' --location 'eastus2'
 
-az deployment group create --name 'caldova-super-deploy' --resource-group 'rg-caldova-super' --template-file './main.bicep' --parameters './main.bicepparam'
+az deployment group create --name 'caldova-life-deploy' --resource-group 'rg-caldova-life' --template-file './main.bicep' --parameters './main.bicepparam'

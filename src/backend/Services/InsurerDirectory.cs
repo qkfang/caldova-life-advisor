@@ -1,283 +1,279 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CaldovaSuper.App.Services;
+namespace CaldovaLife.App.Services;
 
 /// <summary>
-/// One counterparty Caldova moves money to or from: another super fund (by
-/// USI), a self-managed super fund (by ABN and ESA), the ATO, another
-/// platform, a group insurer, or Caldova's own pension division.
+/// One evidence requirement an insurer asks for at underwriting, triggered by
+/// the life insured's age and the cover applied for. A rule with no threshold
+/// applies to every application in its age band.
 /// </summary>
-/// <param name="Name">Counterparty name.</param>
-/// <param name="Usi">Unique superannuation identifier, when the counterparty is an APRA fund.</param>
-/// <param name="Abn">Australian business number (fictional).</param>
-/// <param name="Type">Plain-English counterparty type.</param>
-/// <param name="Channel">How requests are exchanged (SuperStream, internal, ATO online services…).</param>
-/// <param name="Contact">Operational contact for chasing.</param>
-/// <param name="Esa">Electronic service address (SMSFs).</param>
-/// <param name="TypicalTurnaroundDays">Typical business days to complete once a request is complete.</param>
-/// <param name="TurnaroundNote">How the turnaround is measured.</param>
-/// <param name="InsuranceHeld">Insurance cover known to be held in this fund for a Caldova member (ends on a full rollover).</param>
-/// <param name="Notes">Counterparty notes for the Transfers &amp; Rollovers team.</param>
-public record FundDirectoryEntry(
+/// <param name="Requirement">What the insurer needs, e.g. "Blood profile".</param>
+/// <param name="Category">"Personal statement", "Medical" or "Financial".</param>
+/// <param name="MinAge">Youngest age (last birthday) the rule applies to.</param>
+/// <param name="MaxAge">Oldest age the rule applies to.</param>
+/// <param name="LifeTpdAbove">Triggered when total life or TPD cover on one life is above this amount.</param>
+/// <param name="TraumaAbove">Triggered when trauma cover on the life insured is above this amount.</param>
+/// <param name="IncomeProtectionMonthlyAbove">Triggered when the income protection monthly benefit is above this amount (0 = any income protection).</param>
+/// <param name="BusinessCover">Triggered when the business cover applied for includes this kind ("buy-sell" or "key person").</param>
+/// <param name="Turnaround">Typical time to complete the requirement.</param>
+/// <param name="ArrangedBy">Who arranges it.</param>
+public record RequirementRule(
+    string Requirement,
+    string Category,
+    int MinAge,
+    int MaxAge,
+    decimal? LifeTpdAbove,
+    decimal? TraumaAbove,
+    decimal? IncomeProtectionMonthlyAbove,
+    string? BusinessCover,
+    string Turnaround,
+    string ArrangedBy);
+
+/// <summary>
+/// One insurer on Caldova Life Advice's approved product list (APL), as the
+/// Underwriting &amp; New Business team sees it — mirrors "Directory — insurers
+/// on the approved product list" in the <c>life_knowledge</c> index:
+/// covers, contacts, service standards, underwriting thresholds and the
+/// Caldova cases with that insurer. Every insurer and contact is fictional.
+/// </summary>
+public record InsurerDirectoryEntry(
     string Name,
-    string? Usi,
-    string? Abn,
-    string Type,
-    string Channel,
-    string Contact,
-    string? Esa,
-    int TypicalTurnaroundDays,
-    string TurnaroundNote,
-    string? InsuranceHeld,
+    string ShortName,
+    string PolicyPrefix,
+    string Profile,
+    string Covers,
+    string NewBusinessContact,
+    string UnderwritingContact,
+    string ClaimsContact,
+    string? ClaimsIntegrityContact,
+    IReadOnlyList<string> ServiceLevels,
+    string UnderwritingMethod,
+    IReadOnlyList<RequirementRule> RequirementRules,
+    string IncomeEvidence,
+    string CoolingOff,
     string Notes,
+    string CaldovaCases,
     IReadOnlyList<string> Keywords);
 
-/// <summary>
-/// The fictional ATO record for a registered SMSF, used to simulate the ATO
-/// SMSF verification service (SVS). Bank details are held masked, as the
-/// demo never needs full numbers.
-/// </summary>
-public record SmsfRegistryRecord(
-    string FundName,
-    string Abn,
-    DateOnly RegisteredOn,
-    string ComplianceStatus,
-    IReadOnlyList<string> LinkedMembers,
-    string BankBsbPrefix,
-    string BankAccountName,
-    string Esa);
-
-/// <summary>One line of an SMSF verification result.</summary>
-public record SvsCheck(string Check, bool Passed, string Detail);
-
-/// <summary>Result of an SMSF verification (ATO SVS) check before a rollover to an SMSF.</summary>
-public record SvsResult(
-    string Abn,
-    string? FundName,
-    bool Registered,
-    string? RegisteredOn,
-    int? DaysSinceRegistration,
-    string? ComplianceStatus,
-    IReadOnlyList<SvsCheck> Checks,
-    bool Passed,
-    string Outcome,
-    string Recommendation);
+/// <summary>One requirement returned by <see cref="InsurerDirectory.CheckRequirements"/>.</summary>
+public record RequirementResult(
+    string Requirement,
+    string Category,
+    string Reason,
+    string Turnaround,
+    string ArrangedBy);
 
 /// <summary>
-/// Deterministic, in-memory directory of the counterparties used by the
-/// Transfers &amp; Rollovers agent (Rory) — external funds by USI, SMSFs, the
-/// ATO, another platform, a group insurer and Caldova Pension. Backs the
-/// <c>lookupFunds</c> and <c>verifySmsf</c> MCP tools and the deterministic
-/// <c>/transfers/process</c> flow. All names, USIs and ABNs are fictional.
+/// The evidence an insurer needs for one life insured, for the age and the
+/// cover applied for (the <c>underwriting_checkRequirements</c> MCP tool).
 /// </summary>
-public static class FundDirectory
+public record RequirementCheck(
+    string Insurer,
+    string PolicyPrefix,
+    string? LifeInsured,
+    int Age,
+    decimal LifeSumInsured,
+    decimal TpdSumInsured,
+    decimal TraumaSumInsured,
+    decimal IncomeProtectionMonthly,
+    string? BusinessCover,
+    IReadOnlyList<RequirementResult> Requirements,
+    IReadOnlyList<string> Reminders);
+
+/// <summary>
+/// Deterministic, in-memory directory of the four insurers on Caldova's APL
+/// — Harbourline Life (<c>HL-</c>), Corella Life (<c>CR-</c>), Lyrebird Life
+/// (<c>LB-</c>) and Northbank Life (<c>NB-</c>) — mirroring the
+/// <c>life_knowledge</c> directory document. Backs the
+/// <c>underwriting_lookupInsurer</c> and <c>underwriting_checkRequirements</c>
+/// MCP tools and the deterministic <c>/underwriting/*</c> flow.
+/// </summary>
+public static class InsurerDirectory
 {
-    public const string CaldovaUsi = "CDV0101AU";
-    public const string CaldovaAbn = "11 222 333 444";
-    public const string CaldovaFundName = "Caldova Superannuation Master Fund";
+    /// <summary>Exact knowledge-base title of the directory document.</summary>
+    public const string KnowledgeBaseTitle = "Directory — insurers on the approved product list";
 
-    public static readonly FundDirectoryEntry SouthernCross = new(
-        Name: "Southern Cross Industry Super",
-        Usi: "SCI0001AU",
-        Abn: "21 345 678 901",
-        Type: "Industry fund (APRA-regulated)",
-        Channel: "SuperStream rollover — requested by USI through the SuperStream gateway",
-        Contact: "Rollovers team · rollovers@southerncrosssuper.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 3,
-        TurnaroundNote: "Must pay within 3 business days of receiving a complete request (SIS reg 6.34A); usually 2–3 days.",
-        InsuranceHeld: "Death & TPD cover of $520,000 for Priya Natarajan (member 88213045) — ends when the account closes on a full rollover",
-        Notes: "Default group cover is insured by Kestrel Group Life. Get written confirmation from the member or adviser (or replacement cover) before requesting a full rollover from a member who holds cover.",
-        Keywords: new[] { "industry", "southern cross", "sci", "insurance", "tpd" });
+    /// <summary>What Uma does when an insurer misses its service standard.</summary>
+    public const string ChasingRule =
+        "If an insurer misses its service standard, Uma (underwriting) or Ben (claims) chases by email and phone and tells the client " +
+        "what is happening. Escalate to Theo, the Practice Team Leader, after 10 business days without a response.";
 
-    public static readonly FundDirectoryEntry Harbourline = new(
-        Name: "Harbourline Retail Super",
-        Usi: "HRB0007AU",
-        Abn: "32 456 789 012",
-        Type: "Retail fund (APRA-regulated)",
-        Channel: "SuperStream rollover — requested by USI through the SuperStream gateway",
-        Contact: "Transfers desk · transfers@harbourlinesuper.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 2,
-        TurnaroundNote: "Must pay within 3 business days of receiving a complete request (SIS reg 6.34A); usually 2 days.",
-        InsuranceHeld: null,
-        Notes: "No insurance on Priya Natarajan's account (member HR-4471902). Accepts electronic rollover requests; sends the rollover benefit statement with the payment.",
-        Keywords: new[] { "retail", "harbourline", "hrb" });
+    private const string Pathology = "Collected at an accredited pathology centre; results usually in 2–3 business days.";
+    private const string Examination = "Nurse or doctor visit booked through the insurer's medical panel.";
+    private const string TeleInterview = "Phone interview with the insurer's underwriting team.";
+    private const string CoolingOff14 = "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it's issued; not available once a claim has been made (Corporations Act s1019B).";
 
-    public static readonly FundDirectoryEntry Ato = new(
-        Name: "Australian Taxation Office (ATO)",
-        Usi: null,
-        Abn: null,
-        Type: "Regulator",
-        Channel: "SuperStream gateway · SMSF verification service (SVS) · transfer balance account reporting",
-        Contact: "ATO online services for super funds",
-        Esa: null,
-        TypicalTurnaroundDays: 1,
-        TurnaroundNote: "SVS answers in real time; transfer balance account reports are lodged electronically.",
-        InsuranceHeld: null,
-        Notes: "Before any rollover to an SMSF, run the SVS (SIS reg 6.33E): registered SMSF ABN and status, member's TFN linked, bank details and ESA match. A transfer balance credit is reported when a retirement-phase pension starts. The ATO also sends members SMSF rollover and change-of-details alerts.",
-        Keywords: new[] { "ato", "tax", "regulator", "svs", "tbar", "transfer balance", "superstream", "smsf verification" });
+    private static RequirementRule TeleInterviewRule(string shortName) =>
+        new("Tele-interview (personal statement)", "Personal statement", 18, 70, null, null, null, null, TeleInterview, $"{shortName} underwriting team");
 
-    public static readonly FundDirectoryEntry GwFamilySmsf = new(
-        Name: "GW Family Superannuation Fund",
-        Usi: null,
-        Abn: "98 765 432 109",
-        Type: "Self-managed super fund (SMSF)",
-        Channel: "SuperStream rollover to the SMSF's electronic service address (ESA)",
-        Contact: "As stated on the request: mobile 0491 570 158 · grace.w.super@mailbox.example (changed 2 Nov 2026 — not verified)",
-        Esa: "smsfmsg-gwfsf (as stated on the request)",
-        TypicalTurnaroundDays: 3,
-        TurnaroundNote: "The 3-business-day clock only starts once the SMSF verification passes and all required information is received.",
-        InsuranceHeld: null,
-        Notes: "ABN registered on 28 Oct 2026. Bank account on the request is in the name \"G Williams Holdings Pty Ltd\" (BSB 062-***, account ****7781). SVS: the member's TFN isn't linked and the bank details and ESA don't match the ATO's records.",
-        Keywords: new[] { "smsf", "self-managed", "self managed", "gw family", "grace williams" });
+    private static RequirementRule Medical(string requirement, int minAge, decimal? lifeTpdAbove, string turnaround) =>
+        new(requirement, "Medical", minAge, 70, lifeTpdAbove, null, null, null, turnaround, "Insurer's medical panel");
 
-    public static readonly FundDirectoryEntry CaldovaPension = new(
-        Name: "Caldova Pension (internal)",
-        Usi: CaldovaUsi,
-        Abn: CaldovaAbn,
-        Type: $"Internal — {CaldovaFundName}",
-        Channel: "Internal transfer from Caldova Super (accumulation) to Caldova Pension — no SuperStream message",
-        Contact: "Caldova Pensions team · pensions@caldova.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 0,
-        TurnaroundNote: "Runs on the pension commencement date.",
-        InsuranceHeld: null,
-        Notes: "Accumulation-to-pension transfers stay inside the fund. Pension commencements of $1,000,000 or more need Team Leader approval first. A transfer balance credit is reported to the ATO when the pension starts.",
-        Keywords: new[] { "caldova", "pension", "internal", "account-based", "cdv" });
+    public static readonly InsurerDirectoryEntry HarbourlineLife = new(
+        Name: "Harbourline Life",
+        ShortName: "Harbourline",
+        PolicyPrefix: "HL-",
+        Profile: "Insurer on Caldova's APL — the Harbourline Protection Plan. No super-linking.",
+        Covers: "Life (with terminal illness benefit), TPD (any occupation inside or outside super; own occupation outside super only), trauma, income protection; key person and buy-sell cover. No super-linking.",
+        NewBusinessContact: "New business · newbusiness@harbourlinelife.example.com.au · (03) 5550 1100",
+        UnderwritingContact: "Underwriting · underwriting@harbourlinelife.example.com.au · (03) 5550 1101",
+        ClaimsContact: "Claims · claims@harbourlinelife.example.com.au · (03) 5550 1102",
+        ClaimsIntegrityContact: null,
+        ServiceLevels: new[]
+        {
+            "Application acknowledged within 1 business day.",
+            "Underwriting decision within 5 business days of the last requirement.",
+            "A named claims consultant within 2 business days of a claim.",
+            "Income protection claim decision usually within 5 business days of receiving all information.",
+        },
+        UnderwritingMethod: "Tele-interview for every application; blood profile and medical examination by age and total life or TPD cover on one life; income evidence for income protection.",
+        RequirementRules: new[]
+        {
+            TeleInterviewRule("Harbourline"),
+            Medical("Blood profile", 46, 1_000_000m, Pathology),
+            Medical("Medical examination", 51, 1_500_000m, Examination),
+            new("Income evidence for income protection", "Financial", 18, 70, null, null, 0m, null,
+                "Supplied by the client (or their accountant) with the application.", "Client"),
+        },
+        IncomeEvidence: "Latest payslip (employees) or two years' tax returns or BAS and profit and loss statements (self-employed).",
+        CoolingOff: CoolingOff14,
+        Notes: "Income protection pays the lesser of the insured monthly benefit and 70% of average monthly earnings in the 12 months before the disability (policies issued from 1 Oct 2021).",
+        CaldovaCases: "Income protection HL-23051877 (Tom Bradley, REQ-20261111-LIF004 — lodged 12 Nov 2026, accepted 19 Nov 2026).",
+        Keywords: new[] { "harbourline", "hl", "income protection", "ip", "self-employed", "key person", "buy-sell" });
 
-    public static readonly FundDirectoryEntry Bluegum = new(
-        Name: "Bluegum Public Sector Super",
-        Usi: "BPS0003AU",
-        Abn: "43 567 890 123",
-        Type: "Public sector fund (APRA-regulated)",
-        Channel: "SuperStream rollover — requested by USI through the SuperStream gateway",
-        Contact: "Member exits · exits@bluegumsuper.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 3,
-        TurnaroundNote: "3 business days for accumulation interests once the request is complete.",
-        InsuranceHeld: null,
-        Notes: "Defined benefit members need an exit benefit statement before a rollover can be requested; accumulation members roll over through SuperStream as normal.",
-        Keywords: new[] { "public sector", "government", "defined benefit", "bluegum" });
+    public static readonly InsurerDirectoryEntry CorellaLife = new(
+        Name: "Corella Life",
+        ShortName: "Corella",
+        PolicyPrefix: "CR-",
+        Profile: "Insurer on Caldova's APL — the Corella Protection Plan and the Corella Super Plan, with super-linking.",
+        Covers: "Life (with terminal illness benefit), TPD, trauma, income protection; super-linking — life and any-occupation TPD inside Corella's super plan, with an own-occupation TPD extension, trauma and income protection outside super linked to it; key person and buy-sell cover.",
+        NewBusinessContact: "New business · newbusiness@corellalife.example.com.au · (03) 5550 1200",
+        UnderwritingContact: "Underwriting · underwriting@corellalife.example.com.au · (03) 5550 1201",
+        ClaimsContact: "Claims · claims@corellalife.example.com.au · (03) 5550 1202",
+        ClaimsIntegrityContact: null,
+        ServiceLevels: new[]
+        {
+            "Tele-interview booked within 2 business days of the application.",
+            "Underwriting decision within 5 business days of the last requirement.",
+            "A dedicated case manager for every death and terminal illness claim.",
+            "Death claim decision usually within 5 business days of receiving all information, with payment within 3 business days of acceptance.",
+        },
+        UnderwritingMethod: "Tele-interview for every application. Ages 18–45: tele-interview only up to $1,500,000 life or TPD, $500,000 trauma or $10,000 a month income protection; above those amounts or from age 46, a blood profile; from age 51 above $1,500,000, a medical examination.",
+        RequirementRules: new[]
+        {
+            TeleInterviewRule("Corella"),
+            new("Blood profile", "Medical", 18, 45, 1_500_000m, null, null, null, Pathology, "Insurer's medical panel"),
+            new("Blood profile", "Medical", 18, 45, null, 500_000m, null, null, Pathology, "Insurer's medical panel"),
+            new("Blood profile", "Medical", 18, 45, null, null, 10_000m, null, Pathology, "Insurer's medical panel"),
+            Medical("Blood profile", 46, null, Pathology),
+            Medical("Medical examination", 51, 1_500_000m, Examination),
+        },
+        IncomeEvidence: "Earnings are confirmed at claim time; Caldova keeps the client's latest payslip from the fact find on file.",
+        CoolingOff: CoolingOff14,
+        Notes: "Corella reviews an income protection exclusion on request after two symptom-free years. The own-occupation TPD extension can't be bought on its own — it's linked to any-occupation TPD inside the Corella Super Plan.",
+        CaldovaCases: "CR-26118204 (Priya Natarajan, REQ-20261103-LIF001 — tele-interview 10 Nov 2026, decision 16 Nov 2026); CR-19033105 (Mei Chen, REQ-20261113-LIF005 — death claim lodged 16 Nov 2026, accepted 20 Nov 2026, paid 23 Nov 2026).",
+        Keywords: new[] { "corella", "cr", "family", "families", "physiotherapist", "super", "super-linked", "super-linking", "own occupation", "tpd", "key person", "buy-sell" });
 
-    public static readonly FundDirectoryEntry MurrayRiver = new(
-        Name: "Murray River Mutual Super",
-        Usi: "MRM0012AU",
-        Abn: "54 678 901 234",
-        Type: "Industry fund (APRA-regulated)",
-        Channel: "SuperStream rollover — requested by USI through the SuperStream gateway",
-        Contact: "Rollovers · rollovers@murrayriversuper.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 3,
-        TurnaroundNote: "Must pay within 3 business days of receiving a complete request (SIS reg 6.34A).",
-        InsuranceHeld: null,
-        Notes: "Most members hold default death, TPD and income protection cover — always check for cover that would end before requesting a full rollover.",
-        Keywords: new[] { "industry", "murray", "income protection", "insurance" });
+    public static readonly InsurerDirectoryEntry LyrebirdLife = new(
+        Name: "Lyrebird Life",
+        ShortName: "Lyrebird",
+        PolicyPrefix: "LB-",
+        Profile: "Insurer on Caldova's APL — Lyrebird Life Protection for individuals and families. No business protection.",
+        Covers: "Life (with terminal illness benefit), TPD, trauma and income protection for individuals and families. No business protection.",
+        NewBusinessContact: "New business · newbusiness@lyrebirdlife.example.com.au · (03) 5550 1300",
+        UnderwritingContact: "Underwriting · underwriting@lyrebirdlife.example.com.au · (03) 5550 1301",
+        ClaimsContact: "Claims · claims@lyrebirdlife.example.com.au · (03) 5550 1302",
+        ClaimsIntegrityContact: "Claims Integrity (fraud) team · integrity@lyrebirdlife.example.com.au · (03) 5550 1303 — for alerts about suspected fraud or identity takeover; Caldova alerts it only after the Practice Team Leader approves.",
+        ServiceLevels: new[]
+        {
+            "Underwriting decision within 7 business days of the last requirement.",
+            "Trauma claim decision usually within 10 business days of receiving all information.",
+        },
+        UnderwritingMethod: "Tele-interview for every application; blood profile and medical examination by age and total life or TPD cover on one life.",
+        RequirementRules: new[]
+        {
+            TeleInterviewRule("Lyrebird"),
+            Medical("Blood profile", 46, 750_000m, Pathology),
+            Medical("Medical examination", 51, 1_250_000m, Examination),
+        },
+        IncomeEvidence: "Earnings evidence for income protection is checked at claim time.",
+        CoolingOff: CoolingOff14,
+        Notes: "Trauma cancer claims need a specialist's diagnosis supported by histopathology. Lyrebird pays only into an account in the policy owner's name (or the nominated beneficiary's, for life cover).",
+        CaldovaCases: "LB-19004417 (Grace Williams, REQ-20261106-LIF002 — fraud team alerted 6 Nov 2026; no claim lodged).",
+        Keywords: new[] { "lyrebird", "lb", "trauma", "cancer", "families", "fraud", "integrity" });
 
-    public static readonly FundDirectoryEntry Kingfisher = new(
-        Name: "Kingfisher Wrap",
-        Usi: "KFW0004AU",
-        Abn: "65 789 012 345",
-        Type: "Wrap platform (in-specie transfers)",
-        Channel: "In-specie transfer — off-market share transfers and managed fund re-registration, plus a rollover benefit statement",
-        Contact: "Platform transitions · transitions@kingfisherwrap.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 15,
-        TurnaroundNote: "Australian listed shares usually take 3–4 business days once forms are complete; managed funds 2–4 weeks; international shares can take up to 3 months.",
-        InsuranceHeld: null,
-        Notes: "In-specie transfers need a rollover benefit statement (RBS) and signed transfer forms. Pension in-specie transfers move through a temporary accumulation account.",
-        Keywords: new[] { "platform", "wrap", "in-specie", "in specie", "shares", "kingfisher" });
+    public static readonly InsurerDirectoryEntry NorthbankLife = new(
+        Name: "Northbank Life",
+        ShortName: "Northbank",
+        PolicyPrefix: "NB-",
+        Profile: "Insurer on Caldova's APL — strongest in business protection (Northbank Business Protection).",
+        Covers: "Life (with terminal illness benefit), TPD, trauma and income protection; buy-sell cover (owned by each owner on their own life, or cross-owned) and key person cover (revenue or capital purpose, owned by the business).",
+        NewBusinessContact: "New business · business@northbanklife.example.com.au · (03) 5550 1400",
+        UnderwritingContact: "Underwriting · underwriting@northbanklife.example.com.au · (03) 5550 1401",
+        ClaimsContact: "Claims · claims@northbanklife.example.com.au · (03) 5550 1402",
+        ClaimsIntegrityContact: null,
+        ServiceLevels: new[]
+        {
+            "Fast financial underwriting — accepts the accountant's valuation and the last two years' financial statements as financial evidence, with a financial underwriting decision within 5 business days.",
+            "Medical underwriting decision within 5 business days of the last requirement.",
+        },
+        UnderwritingMethod: "Tele-interview for every application; blood profile and medical examination by age and total life or TPD cover on one life; financial evidence for all business protection.",
+        RequirementRules: new[]
+        {
+            TeleInterviewRule("Northbank"),
+            Medical("Blood profile", 46, 1_000_000m, Pathology),
+            Medical("Medical examination", 51, 1_500_000m, Examination),
+            new("Financial evidence — buy-sell (business valuation and two years' financial statements)", "Financial", 18, 70, null, null, null, "buy-sell",
+                "Supplied by the business's accountant; financial underwriting decision within 5 business days.", "Business's accountant"),
+            new("Financial evidence — key person (two years' financial statements and the accountant's estimate of the loss)", "Financial", 18, 70, null, null, null, "key person",
+                "Supplied by the business's accountant; financial underwriting decision within 5 business days.", "Business's accountant"),
+        },
+        IncomeEvidence: "Financial evidence for all business protection: business valuation and two years' financial statements (buy-sell); two years' financial statements and the accountant's estimate of the loss (key person).",
+        CoolingOff: CoolingOff14,
+        Notes: "Loadings and exclusions are reviewed on request after two years if the client's health results improve. Northbank requires a buy-sell agreement prepared by the owners' lawyer and doesn't draft one.",
+        CaldovaCases: "NB-26300418 (George Papadopoulos, buy-sell), NB-26300419 (Harpreet Kaur, buy-sell) and NB-26300420 (key person on George, owned by Northcote Custom Joinery Pty Ltd) — REQ-20261109-LIF003, in force 20 Nov 2026.",
+        Keywords: new[] { "northbank", "nb", "business", "business protection", "buy-sell", "buy sell", "key person", "company" });
 
-    public static readonly FundDirectoryEntry KestrelLife = new(
-        Name: "Kestrel Group Life",
-        Usi: null,
-        Abn: "76 890 123 456",
-        Type: "Group life insurer",
-        Channel: "Insurer notifications and cover enquiries — email and secure portal",
-        Contact: "Group cover team · groupcover@kestrellife.example.com.au",
-        Esa: null,
-        TypicalTurnaroundDays: 5,
-        TurnaroundNote: "Cover confirmations usually within 5 business days.",
-        InsuranceHeld: null,
-        Notes: "Insures Southern Cross Industry Super members' default Death & TPD cover. Replacement cover inside Caldova Super would need new underwriting — the adviser arranges it before the old cover ends.",
-        Keywords: new[] { "insurer", "insurance", "life", "tpd", "kestrel", "group cover" });
-
-    public static readonly FundDirectoryEntry NguyenSmsf = new(
-        Name: "Nguyen Family Superannuation Fund",
-        Usi: null,
-        Abn: "87 654 321 098",
-        Type: "Self-managed super fund (SMSF)",
-        Channel: "SuperStream rollover to the SMSF's electronic service address (ESA)",
-        Contact: "Trustees: Linh and Bao Nguyen (via their SMSF administrator)",
-        Esa: "ledgerlink-smsf",
-        TypicalTurnaroundDays: 3,
-        TurnaroundNote: "3 business days once the SMSF verification passes and all required information is received.",
-        InsuranceHeld: null,
-        Notes: "Established SMSF (registered 14 Mar 2019, complying). Example of a clean SMSF verification.",
-        Keywords: new[] { "smsf", "self-managed", "self managed", "nguyen" });
-
-    private static readonly IReadOnlyList<FundDirectoryEntry> _all = new[]
+    private static readonly IReadOnlyList<InsurerDirectoryEntry> _all = new[]
     {
-        SouthernCross, Harbourline, Ato, GwFamilySmsf, CaldovaPension,
-        Bluegum, MurrayRiver, Kingfisher, KestrelLife, NguyenSmsf
+        HarbourlineLife, CorellaLife, LyrebirdLife, NorthbankLife
     };
 
-    // Fictional ATO SMSF register used by the SVS simulation.
-    private static readonly IReadOnlyList<SmsfRegistryRecord> _smsfRegister = new[]
-    {
-        new SmsfRegistryRecord(
-            FundName: "GW Family Superannuation Fund",
-            Abn: "98765432109",
-            RegisteredOn: new DateOnly(2026, 10, 28),
-            ComplianceStatus: "Registered — status not determined",
-            LinkedMembers: Array.Empty<string>(),
-            BankBsbPrefix: "013",
-            BankAccountName: "GW Family Superannuation Fund",
-            Esa: "quickledger-smsf"),
-        new SmsfRegistryRecord(
-            FundName: "Nguyen Family Superannuation Fund",
-            Abn: "87654321098",
-            RegisteredOn: new DateOnly(2019, 3, 14),
-            ComplianceStatus: "Complying",
-            LinkedMembers: new[] { "Linh Nguyen", "Bao Nguyen" },
-            BankBsbPrefix: "083",
-            BankAccountName: "Nguyen Family Superannuation Fund",
-            Esa: "ledgerlink-smsf"),
-    };
-
-    public static IReadOnlyList<FundDirectoryEntry> All => _all;
+    /// <summary>The four insurers on Caldova's approved product list.</summary>
+    public static IReadOnlyList<InsurerDirectoryEntry> All => _all;
 
     /// <summary>
-    /// Search the directory by name, USI, ABN or keyword (e.g. "smsf", "ATO",
-    /// "insurer"). Several terms can be combined ("SCI0001AU HRB0007AU").
-    /// An empty query returns the whole directory.
+    /// Search the directory by insurer name, policy prefix (<c>HL</c>,
+    /// <c>CR</c>, <c>LB</c>, <c>NB</c>, or a full policy number such as
+    /// <c>CR-26118204</c>) or keyword ("business protection", "trauma",
+    /// "income protection"). An empty query or "all" returns the whole APL.
     /// </summary>
-    public static IReadOnlyList<FundDirectoryEntry> Lookup(string? query)
+    public static IReadOnlyList<InsurerDirectoryEntry> Lookup(string? query)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Equals("all", StringComparison.OrdinalIgnoreCase)
+            || query.Trim().Equals("apl", StringComparison.OrdinalIgnoreCase))
             return _all;
 
         var q = query.Trim().ToLowerInvariant();
-        var digits = Digits(q);
         var tokens = Regex.Split(q, @"[\s,;|/]+")
-            .Where(t => t.Length >= 2 && t is not "and" and not "the" and not "fund" and not "super")
+            .Where(t => t.Length >= 2 && t is not "and" and not "the" and not "life" and not "cover" and not "insurer")
             .ToList();
 
         var scored = _all.Select(e =>
         {
             var score = 0;
             var name = e.Name.ToLowerInvariant();
-            if (name.Contains(q)) score += 10;
-            if (e.Usi is not null && q.Contains(e.Usi.ToLowerInvariant())) score += 10;
-            if (e.Abn is not null && digits.Length >= 9 && digits.Contains(Digits(e.Abn))) score += 10;
+            if (q.Contains(name) || name.Contains(q)) score += 10;
             foreach (var t in tokens)
             {
-                if (name.Contains(t)) score += 3;
-                if (e.Usi is not null && e.Usi.Equals(t, StringComparison.OrdinalIgnoreCase)) score += 10;
-                if (e.Type.Contains(t, StringComparison.OrdinalIgnoreCase)) score += 2;
-                if (e.Keywords.Any(k => k.Contains(t) || t.Contains(k))) score += 2;
+                if (name.Contains(t)) score += 4;
+                var prefix = e.PolicyPrefix.TrimEnd('-').ToLowerInvariant();
+                if (t == prefix || t.StartsWith(prefix + "-", StringComparison.Ordinal)) score += 10;
+                if (e.Keywords.Any(k => k.Equals(t, StringComparison.OrdinalIgnoreCase))) score += 3;
+                else if (t.Length >= 4 && e.Keywords.Any(k => k.Contains(t))) score += 2;
             }
+            if (e.Keywords.Any(k => k.Contains(' ') && q.Contains(k))) score += 3;
             return (Entry: e, Score: score);
         });
 
@@ -287,122 +283,143 @@ public static class FundDirectory
             .ToList();
     }
 
-    /// <summary>Find a counterparty by its exact USI or ABN.</summary>
-    public static FundDirectoryEntry? FindById(string? usiOrAbn)
+    /// <summary>Find an insurer by name, short name or policy prefix; null if not on the APL.</summary>
+    public static InsurerDirectoryEntry? Find(string? nameOrPrefix)
     {
-        if (string.IsNullOrWhiteSpace(usiOrAbn)) return null;
-        var digits = Digits(usiOrAbn);
+        if (string.IsNullOrWhiteSpace(nameOrPrefix)) return null;
+        var q = nameOrPrefix.Trim();
         return _all.FirstOrDefault(e =>
-            (e.Usi is not null && e.Usi.Equals(usiOrAbn.Trim(), StringComparison.OrdinalIgnoreCase)) ||
-            (e.Abn is not null && digits.Length >= 9 && Digits(e.Abn) == digits));
+                   e.Name.Equals(q, StringComparison.OrdinalIgnoreCase)
+                   || e.ShortName.Equals(q, StringComparison.OrdinalIgnoreCase)
+                   || e.PolicyPrefix.TrimEnd('-').Equals(q.TrimEnd('-'), StringComparison.OrdinalIgnoreCase)
+                   || q.StartsWith(e.PolicyPrefix, StringComparison.OrdinalIgnoreCase))
+               ?? Lookup(q).FirstOrDefault();
     }
 
     /// <summary>
-    /// Simulate the ATO SMSF verification service (SIS reg 6.33E) for a
-    /// rollover to an SMSF: is the ABN a registered SMSF, is the member's TFN
-    /// linked to it, and do the bank details and ESA on the request match the
-    /// ATO's records. Like the real service, it reports match / no match and
-    /// never reveals the ATO-held details.
+    /// The evidence <paramref name="insurer"/> needs for one life insured,
+    /// given their age and the cover applied for. Thresholds apply to the
+    /// total life or TPD cover on one life — every policy on the same life
+    /// (for example buy-sell plus key person) is added together.
     /// </summary>
-    /// <param name="asAt">Date of the rollover request (defaults to today) — used to flag newly registered SMSFs.</param>
-    public static SvsResult VerifySmsf(
-        string? abn, string? memberName, string? bsb, string? accountName, string? esa, DateOnly? asAt = null)
+    public static RequirementCheck CheckRequirements(
+        InsurerDirectoryEntry insurer,
+        int age,
+        decimal lifeSumInsured,
+        decimal tpdSumInsured = 0m,
+        decimal traumaSumInsured = 0m,
+        decimal incomeProtectionMonthly = 0m,
+        string? businessCover = null,
+        bool selfEmployed = false,
+        string? lifeInsured = null)
     {
-        var abnDigits = Digits(abn ?? string.Empty);
-        var displayAbn = abnDigits.Length == 11
-            ? $"{abnDigits[..2]} {abnDigits[2..5]} {abnDigits[5..8]} {abnDigits[8..]}"
-            : (abn ?? string.Empty).Trim();
-        var record = _smsfRegister.FirstOrDefault(r => r.Abn == abnDigits);
-        var date = asAt ?? DateOnly.FromDateTime(DateTime.Today);
+        var business = (businessCover ?? string.Empty).Trim();
+        var hasBusiness = business.Length > 0 && !business.Equals("none", StringComparison.OrdinalIgnoreCase);
+        var lifeTpd = Math.Max(lifeSumInsured, tpdSumInsured);
+        var results = new List<RequirementResult>();
 
-        if (record is null)
+        foreach (var rule in insurer.RequirementRules)
         {
-            return new SvsResult(
-                Abn: displayAbn,
-                FundName: null,
-                Registered: false,
-                RegisteredOn: null,
-                DaysSinceRegistration: null,
-                ComplianceStatus: null,
-                Checks: new[]
-                {
-                    new SvsCheck("ABN is a registered SMSF", false, "No SMSF is registered with this ABN."),
-                },
-                Passed: false,
-                Outcome: "FAIL — not a registered SMSF",
-                Recommendation: "Do not roll over. Hold the request, send nothing to the receiving fund and refer it to Financial Crime.");
+            if (age < rule.MinAge || age > rule.MaxAge) continue;
+
+            string? reason = null;
+            if (rule.LifeTpdAbove is decimal lt)
+            {
+                if (lifeTpd > lt)
+                    reason = $"Age {age} with {Money(lifeTpd)} of life or TPD cover on one life — {insurer.ShortName} asks for this {AgeBand(rule)} above {Money(lt)}.";
+            }
+            else if (rule.TraumaAbove is decimal ta)
+            {
+                if (traumaSumInsured > ta)
+                    reason = $"Trauma cover of {Money(traumaSumInsured)} — above {insurer.ShortName}'s tele-interview-only limit of {Money(ta)} {AgeBand(rule)}.";
+            }
+            else if (rule.IncomeProtectionMonthlyAbove is decimal ip)
+            {
+                if (incomeProtectionMonthly > ip)
+                    reason = ip == 0m
+                        ? $"Income protection of {Money(incomeProtectionMonthly)} a month — {insurer.ShortName} needs {(selfEmployed ? "two years' tax returns or BAS and profit and loss statements (self-employed)" : "the latest payslip (employee)")}."
+                        : $"Income protection of {Money(incomeProtectionMonthly)} a month — above {insurer.ShortName}'s tele-interview-only limit of {Money(ip)} a month {AgeBand(rule)}.";
+            }
+            else if (rule.BusinessCover is string kind)
+            {
+                if (hasBusiness && business.Contains(kind, StringComparison.OrdinalIgnoreCase))
+                    reason = $"{char.ToUpperInvariant(kind[0])}{kind[1..]} cover — {insurer.ShortName} needs financial evidence for all business protection.";
+            }
+            else
+            {
+                reason = rule.MinAge > 18
+                    ? $"Age {age} — {insurer.ShortName} asks for this from age {rule.MinAge}."
+                    : $"Every {insurer.ShortName} application.";
+            }
+
+            if (reason is null) continue;
+            if (results.Any(r => r.Requirement.Equals(rule.Requirement, StringComparison.OrdinalIgnoreCase))) continue;
+            results.Add(new RequirementResult(rule.Requirement, rule.Category, reason, rule.Turnaround, rule.ArrangedBy));
         }
 
-        var days = date.DayNumber - record.RegisteredOn.DayNumber;
-        var newlyRegistered = days is >= 0 and < 90;
-        var registeredDetail = $"Registered on {record.RegisteredOn.ToString("d MMM yyyy", CultureInfo.InvariantCulture)}" +
-            (newlyRegistered ? $" — only {days} day{(days == 1 ? string.Empty : "s")} before this request" : string.Empty) +
-            $". ATO status: {record.ComplianceStatus}.";
-
-        var member = Normalise(memberName);
-        var linked = member.Length > 0 && record.LinkedMembers.Any(m => Normalise(m) == member);
-        var bsbPrefix = Digits(bsb ?? string.Empty);
-        var bankMatch = bsbPrefix.Length >= 3
-            && bsbPrefix[..3] == record.BankBsbPrefix
-            && Normalise(accountName) == Normalise(record.BankAccountName);
-        var esaMatch = !string.IsNullOrWhiteSpace(esa)
-            && string.Equals(Regex.Replace(esa, @"\s*\(.*\)\s*$", string.Empty).Trim(), record.Esa, StringComparison.OrdinalIgnoreCase);
-
-        var checks = new[]
+        var reminders = new List<string>
         {
-            new SvsCheck("ABN is a registered SMSF", true, registeredDetail),
-            new SvsCheck("Member's TFN is linked to the SMSF", linked,
-                linked ? $"{memberName} is a member of this SMSF." : $"{(string.IsNullOrWhiteSpace(memberName) ? "The member" : memberName)}'s TFN is not linked to this SMSF."),
-            new SvsCheck("Bank details match the ATO's records", bankMatch,
-                bankMatch
-                    ? "BSB and account name match."
-                    : $"The account on the request (BSB {MaskBsb(bsb)}, \"{accountName}\") doesn't match the account the ATO holds for this SMSF."),
-            new SvsCheck("Electronic service address (ESA) matches", esaMatch,
-                esaMatch ? "ESA matches." : $"The ESA on the request (\"{esa}\") doesn't match the ESA registered with the ATO."),
-            new SvsCheck("No date of death recorded for the member", true, "None recorded."),
+            "Explain the duty to take reasonable care before the first health or lifestyle question.",
+            "Never ask for or use genetic test results — the client doesn't need to disclose them.",
+            "The insurer may ask for a GP or specialist report if an answer needs more detail.",
+            "Don't cancel or reduce any existing cover until the new cover is accepted and in force — that's the client's decision with Amelia.",
         };
 
-        var failed = checks.Count(c => !c.Passed);
-        var passed = failed == 0;
-        return new SvsResult(
-            Abn: displayAbn,
-            FundName: record.FundName,
-            Registered: true,
-            RegisteredOn: record.RegisteredOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            DaysSinceRegistration: days,
-            ComplianceStatus: record.ComplianceStatus,
-            Checks: checks,
-            Passed: passed,
-            Outcome: passed ? "PASS — SMSF verified" : $"FAIL — {failed} of {checks.Length} checks failed",
-            Recommendation: passed
-                ? "The SMSF details verify. The rollover can proceed once the usual identity and financial-crime checks are complete — rollovers to an SMSF still need human approval."
-                : "Do not roll over. Hold the request, send nothing to the receiving fund and refer it to Financial Crime. The 3-business-day clock doesn't start until all required information is verified.");
+        return new RequirementCheck(
+            Insurer: insurer.Name,
+            PolicyPrefix: insurer.PolicyPrefix,
+            LifeInsured: string.IsNullOrWhiteSpace(lifeInsured) ? null : lifeInsured.Trim(),
+            Age: age,
+            LifeSumInsured: lifeSumInsured,
+            TpdSumInsured: tpdSumInsured,
+            TraumaSumInsured: traumaSumInsured,
+            IncomeProtectionMonthly: incomeProtectionMonthly,
+            BusinessCover: hasBusiness ? business : null,
+            Requirements: results,
+            Reminders: reminders);
     }
 
-    /// <summary>JSON-friendly view of a directory entry (used by lookupFunds and the page).</summary>
-    public static object ToView(FundDirectoryEntry e) => new
+    private static string AgeBand(RequirementRule r) =>
+        r.MaxAge >= 70
+            ? (r.MinAge <= 18 ? "at any age" : $"from age {r.MinAge}")
+            : $"for ages {r.MinAge}–{r.MaxAge}";
+
+    /// <summary>Plain-English summary of an insurer's evidence thresholds, one line per rule.</summary>
+    public static IReadOnlyList<string> ThresholdSummary(InsurerDirectoryEntry e) =>
+        e.RequirementRules.Select(r =>
+        {
+            var band = AgeBand(r);
+            if (r.LifeTpdAbove is decimal lt) return $"{r.Requirement}: {band}, above {Money(lt)} of life or TPD cover on one life.";
+            if (r.TraumaAbove is decimal ta) return $"{r.Requirement}: {band}, trauma cover above {Money(ta)}.";
+            if (r.IncomeProtectionMonthlyAbove is decimal ip)
+                return ip == 0m ? $"{r.Requirement}: {e.IncomeEvidence}" : $"{r.Requirement}: {band}, income protection above {Money(ip)} a month.";
+            if (r.BusinessCover is string kind) return $"{r.Requirement}: every {kind} application.";
+            return r.MinAge > 18 ? $"{r.Requirement}: {band}, any amount." : $"{r.Requirement}: every application.";
+        }).ToList();
+
+    /// <summary>JSON-friendly view of a directory entry (used by the MCP tool and the page).</summary>
+    public static object ToView(InsurerDirectoryEntry e) => new
     {
         name = e.Name,
-        usi = e.Usi,
-        abn = e.Abn,
-        type = e.Type,
-        channel = e.Channel,
-        contact = e.Contact,
-        esa = e.Esa,
-        typicalTurnaroundDays = e.TypicalTurnaroundDays,
-        turnaroundNote = e.TurnaroundNote,
-        insuranceHeld = e.InsuranceHeld,
-        notes = e.Notes
+        policyPrefix = e.PolicyPrefix,
+        profile = e.Profile,
+        covers = e.Covers,
+        newBusinessContact = e.NewBusinessContact,
+        underwritingContact = e.UnderwritingContact,
+        claimsContact = e.ClaimsContact,
+        claimsIntegrityContact = e.ClaimsIntegrityContact,
+        serviceLevels = e.ServiceLevels,
+        underwritingMethod = e.UnderwritingMethod,
+        underwritingThresholds = ThresholdSummary(e),
+        incomeEvidence = e.IncomeEvidence,
+        coolingOff = e.CoolingOff,
+        notes = e.Notes,
+        caldovaCases = e.CaldovaCases,
+        chasing = ChasingRule
     };
 
-    private static string Digits(string s) => new(s.Where(char.IsAsciiDigit).ToArray());
-
-    private static string Normalise(string? s) =>
-        Regex.Replace((s ?? string.Empty).ToLowerInvariant(), @"[^a-z0-9]+", " ").Trim();
-
-    private static string MaskBsb(string? bsb)
-    {
-        var d = Digits(bsb ?? string.Empty);
-        return d.Length >= 3 ? $"{d[..3]}-***" : "not supplied";
-    }
+    internal static string Money(decimal v) =>
+        v == decimal.Truncate(v)
+            ? v.ToString("C0", CultureInfo.GetCultureInfo("en-AU"))
+            : v.ToString("C2", CultureInfo.GetCultureInfo("en-AU"));
 }

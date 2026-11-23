@@ -1,4 +1,4 @@
-// Header dropdowns (<details class="pnav-dd">) behave like a fund site's
+// Header dropdowns (<details class="pnav-dd">) behave like a
 // mega-menu: only one open at a time, and they close on outside click,
 // on Escape and when a link inside them is followed. Also collapses the
 // mobile menu after a link is chosen.

@@ -1,25 +1,25 @@
 /**
  * Each staff member's step in a request: its title, the staff role that
  * owns it, the two specialised assistants of that person's agent (matching
- * docs/foundry_agents.md) and the matching `src/backend` agent page. The
- * lakehouse uses it for each agent's assistants on Level 1, and
- * `APP_BASE_URL` for links to the agent pages.
+ * docs/foundry_agents.md) and the matching `src/backend` agent page. Caldova
+ * House uses it for each agent's assistants on Level 1, and `APP_BASE_URL`
+ * for links to the agent pages.
  */
 import type { StaffRole } from "./personaData";
 
 export type StageKey =
-  | "onboarding-pickup"
-  | "benefits-pickup"
-  | "consult:Investment Analyst"
-  | "consult:Financial Crime Investigator"
-  | "consult:Transfers & Rollovers Coordinator"
-  | "consult:Client Operations Team Leader"
-  | "payment"
-  | "comms-notify";
+  | "onboarding"
+  | "paraplanning"
+  | "research"
+  | "fincrime"
+  | "underwriting"
+  | "claims"
+  | "comms"
+  | "lead";
 
 /**
  * Base URL for the companion `src/backend` Blazor site that hosts the
- * per-agent walkthrough pages (`/agents/{id}`).
+ * per-agent pages (`/agents/{id}`).
  *
  * Read from the `VITE_APP_BASE_URL` Vite app setting at build time. The
  * default value lives in `src/frontend/.env`; override it with an
@@ -27,12 +27,11 @@ export type StageKey =
  * `.github/workflows/21_deploy_frontend.yml` workflow for deployments.
  */
 export const APP_BASE_URL: string = (
-  (import.meta as unknown as { env?: Record<string, string> }).env
-    ?.VITE_APP_BASE_URL ?? ""
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_APP_BASE_URL ?? ""
 ).replace(/\/+$/, "");
 
-/** Stage configuration — title, staff role, AI sub-agents, and the matching
- * `src/backend` agent route id used to deep-link the walkthrough page. */
+/** Stage configuration: title, staff role, AI assistants, and the matching
+ * `src/backend` agent route id used to link the agent's page. */
 export const STAGE_CONFIG: Record<
   StageKey,
   {
@@ -44,126 +43,108 @@ export const STAGE_CONFIG: Record<
     agents: { name: string; description: string }[];
   }
 > = {
-  "onboarding-pickup": {
+  onboarding: {
     title: "Onboarding & Requests",
     role: "Onboarding & Requests Officer",
     appAgentId: "onboarding",
     agents: [
       {
-        name: "Agent Olivia #1 — Form Extraction",
+        name: "Agent Olivia #1 — Fact Find Extraction",
         description:
-          "Reads adviser emails, application forms and member requests, and extracts every field into the Member Case for Olivia.",
+          "Reads enquiry emails, referral forms, fact-find questionnaires and claim notifications, and extracts goals, dependants, debts, income, occupation, health basics and existing cover into the Client Case.",
       },
       {
-        name: "Agent Olivia #2 — NIGO Checklist",
+        name: "Agent Olivia #2 — In-Good-Order Checklist",
         description:
-          "Runs the not-in-good-order checklist — ID, TFN, signatures, fee consent, nominations, investment and insurance elections — and sets the priority.",
+          "Checks the FSG was given, privacy and health-information consent, ID, the authority to obtain existing policy details, commission and fee consent, and any support-person authority, then sets the priority and flags vulnerability.",
       },
     ],
   },
-  "benefits-pickup": {
-    title: "Benefits & Eligibility",
-    role: "Benefits & Eligibility Assessor",
-    appAgentId: "benefits-eligibility",
+  paraplanning: {
+    title: "Paraplanning",
+    role: "Paraplanner",
+    appAgentId: "paraplanning",
     agents: [
       {
-        name: "Agent Ben #1 — Eligibility Rules",
+        name: "Agent Penny #1 — Needs Analysis",
         description:
-          "Checks conditions of release, hardship criteria, the transfer balance cap and minimum drawdowns, citing the PDS, trust deed and SIS clause.",
+          "Calculates life, TPD, trauma and income protection needs from debts, dependants, income and existing cover, and shows the working.",
       },
       {
-        name: "Agent Ben #2 — Nominations & Consent",
+        name: "Agent Penny #2 — SoA Drafting",
         description:
-          "Validates BDBNs and SIS dependants, adviser fee consent (s99FA) and TMD fit, and drafts the approve / partial / decline recommendation.",
+          "Drafts the Statement of Advice for Amelia: scope, strategy, ownership inside or outside super, best-interests steps, replacement analysis, and premiums and commission in dollars.",
       },
     ],
   },
-  "consult:Investment Analyst": {
-    title: "Investment Review",
-    role: "Investment Analyst",
-    appAgentId: "investment-analyst",
+  research: {
+    title: "Insurance Research",
+    role: "Insurance Research Analyst",
+    appAgentId: "insurance-research",
     agents: [
       {
-        name: "Agent Ivy #1 — Portfolio Fit",
-        description:
-          "Checks the model portfolio against the client's risk profile and Statement of Advice, and plans redemptions and cash buckets.",
+        name: "Agent Ivy #1 — Policy Comparison",
+        description: "Compares the insurers on the approved product list on definitions, features and exclusions.",
       },
       {
-        name: "Agent Ivy #2 — Fee Comparison",
+        name: "Agent Ivy #2 — Premium Quotes",
         description:
-          "Compares model portfolios on fees in dollars, returns and risk, and builds the client workbook and chart.",
+          "Compares stepped and level premiums over time, and builds the comparison workbook and chart.",
       },
     ],
   },
-  "consult:Financial Crime Investigator": {
-    title: "Financial Crime Review",
+  fincrime: {
+    title: "Financial Crime",
     role: "Financial Crime Investigator",
     appAgentId: "financial-crime",
     agents: [
       {
-        name: "Agent Felix #1 — ID Authenticity",
+        name: "Agent Felix #1 — Document Authenticity",
         description:
-          "Scans ID documents, bank statements and certificates for signs of tampering.",
+          "Scans IDs, medical reports, death certificates, payslips, BAS and bank statements for signs of tampering, using Azure Content Understanding.",
       },
       {
         name: "Agent Felix #2 — Risk Timeline",
         description:
-          "Builds the account-activity timeline, screens PEP and sanctions lists, and explains the risk score with recommended holds and call-backs.",
+          "Builds the timeline of contact and bank-detail changes, devices and claim patterns, explains the risk score, and recommends holds and call-backs.",
       },
     ],
   },
-  "consult:Transfers & Rollovers Coordinator": {
-    title: "Transfers & Rollovers",
-    role: "Transfers & Rollovers Coordinator",
-    appAgentId: "transfers-rollovers",
+  underwriting: {
+    title: "Underwriting & New Business",
+    role: "Underwriting Coordinator",
+    appAgentId: "underwriting",
     agents: [
       {
-        name: "Agent Rory #1 — Fund Lookup & SVS",
+        name: "Agent Uma #1 — Application & Disclosure",
         description:
-          "Finds external funds by USI, verifies SMSFs with the ATO SMSF verification service, and warns about insurance cover lost on rollover.",
+          "Prepares the application and walks the client through the duty to take reasonable care.",
       },
       {
-        name: "Agent Rory #2 — Rollover Requests",
+        name: "Agent Uma #2 — Underwriting Requirements",
         description:
-          "Generates the SuperStream rollover or transfer request, tracks the 3-business-day SLA and chases counterparties.",
+          "Tracks medicals, blood tests, GP reports and financial evidence, chases the insurer, explains loadings and exclusions, and generates the application summary PDF.",
       },
     ],
   },
-  "consult:Client Operations Team Leader": {
-    title: "Team Leader Review",
-    role: "Client Operations Team Leader",
-    appAgentId: "team-leader",
+  claims: {
+    title: "Claims",
+    role: "Benefit Claims Advocate",
+    appAgentId: "claims",
     agents: [
       {
-        name: "Agent Theo #1 — SLA & Escalations",
+        name: "Agent Ben #1 — Policy & Evidence Check",
         description:
-          "Monitors queues, rollover SLAs and IDR clocks, and surfaces the cases that need a decision.",
+          "Checks the definition, the waiting period, the exclusions and the evidence, and builds the claim pack.",
       },
       {
-        name: "Agent Theo #2 — Approvals & Quality",
+        name: "Agent Ben #2 — Benefit & Lodgement",
         description:
-          "Prepares approval recommendations for declines, blocks and vulnerable-member cases, and samples closed cases for quality.",
+          "Calculates the expected benefit, raises the Microsoft Teams approval and lodges the claim only after approval, then tracks the insurer’s Code of Practice timeframes.",
       },
     ],
   },
-  payment: {
-    title: "Payments",
-    role: "Payments Officer",
-    appAgentId: "payments",
-    agents: [
-      {
-        name: "Agent Penny #1 — Benefit Calculator",
-        description:
-          "Splits tax-free and taxable components, and calculates PAYG withholding and the net payment.",
-      },
-      {
-        name: "Agent Penny #2 — Payment Controls",
-        description:
-          "Validates payee and bank details, checks authority limits, raises the Microsoft Teams approval card, and releases money only after approval.",
-      },
-    ],
-  },
-  "comms-notify": {
+  comms: {
     title: "Client Communications",
     role: "Client Communications Specialist",
     appAgentId: "client-communications",
@@ -171,12 +152,28 @@ export const STAGE_CONFIG: Record<
       {
         name: "Agent Cara #1 — Letters & Updates",
         description:
-          "Drafts member letters, adviser updates and SMS in plain English, matched to the case outcome.",
+          "Drafts plain-English letters, SoA summaries, underwriting and claim updates, SMS and referral-partner updates, sharing only what the client agreed to.",
       },
       {
         name: "Agent Cara #2 — Tone & Compliance",
         description:
-          "Checks tone for bereavement, hardship and scam victims, and confirms required disclosures and IDR/AFCA rights — never personal advice.",
+          "Checks the tone for illness, claims, scams and bereavement, and confirms required disclosures and IDR and AFCA rights. Never personal advice.",
+      },
+    ],
+  },
+  lead: {
+    title: "Team Leader Office",
+    role: "Practice Team Leader",
+    appAgentId: "team-leader",
+    agents: [
+      {
+        name: "Agent Theo #1 — Pipeline & SLAs",
+        description: "Watches the advice pipeline, the underwriting and claim clocks, and the IDR clocks.",
+      },
+      {
+        name: "Agent Theo #2 — Approvals & File Quality",
+        description:
+          "Prepares the approval queue (SoAs, replacements, claims, blocks and second reviews of $2,000,000 or more) and audits files against the best interests duty.",
       },
     ],
   },

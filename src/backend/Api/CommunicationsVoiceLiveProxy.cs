@@ -1,9 +1,10 @@
 using System.Net.WebSockets;
+using System.Text;
 using Azure.Core;
 using Azure.Identity;
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 /// <summary>
 /// Browser ↔ Azure AI Foundry Voice Live API WebSocket proxy that powers
@@ -15,8 +16,9 @@ namespace CaldovaSuper.App.Api;
 /// reusing the Azure OpenAI Realtime event schema. It accepts a Foundry
 /// <c>agent-name</c> + <c>agent-project-name</c> so the live call is driven
 /// by Cara's conversational voice agent
-/// (<c>client-communications-voice-agent</c>) — members and advisers talk to
-/// Caldova Wealth's Client Communications Specialist directly.
+/// (<c>client-communications-voice-agent</c>) — clients, families and
+/// referral partners talk to Caldova Life Advice's Client Communications
+/// Specialist directly.
 ///
 /// Browsers can't set <c>Authorization</c> headers on a <c>new WebSocket()</c>,
 /// so this proxy:
@@ -28,6 +30,11 @@ namespace CaldovaSuper.App.Api;
 /// 3. Opens a <see cref="ClientWebSocket"/> to the Voice Live endpoint.
 /// 4. Pumps frames bidirectionally between the two sockets until either
 ///    side closes.
+///
+/// <c>/communications/voice-live/session</c> gives the browser what to send
+/// once the call opens: Cara's voice, her greeting prompt and — when a case
+/// is picked — the verified caller's case context, built from the same case
+/// facts as Cara's written drafts.
 /// </summary>
 public static class CommunicationsVoiceLiveProxy
 {
@@ -46,6 +53,15 @@ public static class CommunicationsVoiceLiveProxy
     private const string CommunicationsAgentRole = "communications-voice";
     private const string AzureAiScope = "https://ai.azure.com/.default";
     private const string CognitiveServicesScope = "https://cognitiveservices.azure.com/.default";
+
+    // Azure neural voice used for Cara on Voice Live calls.
+    private const string CaraVoice = "en-US-Ava:DragonHDLatestNeural";
+
+    // Sent as the first user item on a new call (followed by response.create)
+    // so the caller hears Cara straight away.
+    private const string GreetingPrompt =
+        "Please greet me as Cara from Caldova Life Advice and ask how you can help today. " +
+        "Keep it to one or two short, warm sentences.";
 
     public static void MapCommunicationsVoiceLiveEndpoints(
         this WebApplication app,
@@ -67,7 +83,23 @@ public static class CommunicationsVoiceLiveProxy
                 resourceHost = host,
                 projectName = project,
                 agentId = CommunicationsAgentId,
-                apiVersion = VoiceLiveApiVersion
+                apiVersion = VoiceLiveApiVersion,
+                voice = CaraVoice,
+                greeting = GreetingPrompt
+            });
+        });
+
+        // Session set-up for a live call: Cara's voice, the greeting prompt
+        // and the verified caller's case context (when a case is picked).
+        app.MapGet("/communications/voice-live/session", (string? caseNumber, CaseStore store) =>
+        {
+            var record = string.IsNullOrWhiteSpace(caseNumber) ? null : store.Get(caseNumber);
+            return Results.Ok(new
+            {
+                voice = CaraVoice,
+                greeting = GreetingPrompt,
+                caseNumber = record?.CaseNumber,
+                caseContext = record is null ? null : BuildCaseContext(record)
             });
         });
 
@@ -284,6 +316,30 @@ public static class CommunicationsVoiceLiveProxy
             }
         }
         catch { /* swallow */ }
+    }
+
+    /// <summary>
+    /// The verified caller's case context, sent as the first conversation
+    /// item on a live call. Built from the same facts as Cara's drafts.
+    /// </summary>
+    private static string BuildCaseContext(CaseRecord c)
+    {
+        var bundle = ClientCommunicationsDrafter.Build(c);
+        var sb = new StringBuilder();
+        sb.AppendLine("Context for this call — don't read it aloud unless asked. The caller's identity has already been verified.");
+        sb.AppendLine($"Case number: {c.CaseNumber}");
+        sb.AppendLine($"Caller: {c.ClientName} (client number {c.ClientNumber})");
+        sb.AppendLine($"Cover: {c.Cover}");
+        sb.AppendLine($"Request type: {c.RequestType}, received {c.ReceivedDate}");
+        sb.AppendLine($"Adviser: {c.AdviserName}");
+        sb.AppendLine($"Where the case stands: {bundle.Stage} ({bundle.Outcome})");
+        sb.AppendLine($"What happened: {bundle.Summary.WhatHappened}");
+        sb.AppendLine("What happens next: " + string.Join(" ", bundle.Summary.WhatsNext));
+        if (bundle.VulnerabilityFlags.Count > 0)
+            sb.AppendLine("Handle with care: " + string.Join(" ", bundle.VulnerabilityFlags));
+        sb.AppendLine("Only use these facts. Never give personal advice — Amelia, the adviser, does that. Never change contact or bank details " +
+                      "or lodge a claim on a call.");
+        return sb.ToString();
     }
 
     /// <summary>

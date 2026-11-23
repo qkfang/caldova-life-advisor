@@ -1,0 +1,32 @@
+{
+  "id": "guide-in-good-order-checklist",
+  "title": "Guide — in-good-order checklist for advice and claims",
+  "category": "Practice Guide",
+  "requestType": "All",
+  "caseNumber": "",
+  "clientNumber": "",
+  "content": "Checklist used by Onboarding & Requests — Olivia and the Onboarding Agent's In-Good-Order Checklist assistant — to decide whether a request is in good order before the Client Case is routed. Each item is marked ✅ in good order or ⚠️ needs action, with the reason. A request that isn't in good order is never rejected: Caldova tells the client or referral partner exactly what is missing within 1 business day and keeps everything else moving (Caldova standard).\n\nA. Every request\n1 Identity — certified ID or electronic verification; name, date of birth and address match the file. For a company: the company extract and ID for each beneficial owner. Every new client goes to Financial Crime for KYC, including PEP and sanctions screening.\n2 Contact and bank details — verified mobile and email on file. Any change to contact or bank details in the last 30 days goes to Financial Crime before anything else is actioned.\n3 Privacy and health-information consent — signed. Health information is sensitive: record only what the request needs and share it only with the people who need it.\n4 Support person or representative — the client's written authority before Caldova discusses the case with anyone else, such as a spouse helping with a claim.\n5 Referral consent — the client agreed to the referral, and to what the referral partner may be told: usually the outcome only, never health details.\n6 TFN — only where a form needs it (for example cover inside super); always masked as *** *** 123 and never repeated.\n7 Vulnerability — serious illness, injury, financial stress, bereavement, a scam, age or cognitive decline: flag for human handling and set the priority.\n\nB. New advice — personal, family or business\n1 Financial Services Guide given, or the client pointed to the FSG information on Caldova's website.\n2 Fact find complete — goals, dependants, debts, income, occupation, smoker status, health basics, existing cover (insurer, policy number, sums insured, inside or outside super, premiums) and the budget for premiums.\n3 Authority to obtain existing policy and super fund details from insurers and funds.\n4 Existing cover check — flag to Paraplanning anything that may stop, such as cover on a super account that has received no amount for 16 continuous months (it stops under Protecting Your Super unless the person elects in writing to keep it), and anything the advice might replace. Replacing or cancelling cover is always a human decision.\n5 Business protection — company extract and ownership; the business valuation from the accountant; the last two years' financial statements; the accountant's estimate of any key person loss; the owners' lawyer for the buy-sell agreement (Caldova doesn't draft legal documents).\n6 Commission and fees — the commission shown in dollars in the Statement of Advice, and the client's informed consent in writing with the disclosures the law requires, with a copy for the client (see 'Commission rules — LIF caps, clawback and consent').\n7 Second review — total cover of $2,000,000 or more on one case goes to Theo for a second review before the application.\n8 Sign-off — the SoA signed by Amelia, and the Authority to Proceed signed by the client.\n9 Application — the duty to take reasonable care explained before any health question; genetic test results never asked for; the 14-day cooling-off period explained (see 'Underwriting and the duty to take reasonable care').\n\nC. Claims\n1 Claim notification — who is claiming and their relationship to the life insured, the policy number, what happened and when, and the treating doctors.\n2 Policy found and in force on the date of the event; premiums paid.\n3 Evidence by claim type:\n• Income protection — claim form; the treating doctor's or surgeon's report; earnings evidence for the 12 months before the disability (BAS, profit and loss statement, tax returns or payslips).\n• Trauma — the specialist's report confirming the diagnosis, with the evidence the policy definition asks for (for cancer, a specialist's diagnosis supported by histopathology).\n• TPD — the treating doctors' reports, and work and earnings history.\n• Terminal illness — the medical certification the policy definition asks for.\n• Death — a certified copy of the death certificate, the claimant's certified ID, the policy number and the nominated beneficiary (or estate) details.\n4 Payment account — in the name of the policy owner or the nominated beneficiary; never a third party or a different name. A bank-detail change needs verification and human approval.\n5 Approval — Theo approves every claim before Ben lodges it, through the Teams approval card.\n6 Other cover — check for other cover the client or family may not know about, such as default cover in super, and tell the claimant.\n\nCommon reasons a request isn't in good order: no written commission consent; existing cover details missing; earnings evidence for the wrong period; a medical report without the evidence the definition needs; a payment account in another name; a support person without written authority; a contact or bank-detail change shortly before a claim.",
+  "severity": "medium",
+  "department": "Onboarding & Requests",
+  "tags": [
+    "in-good-order",
+    "checklist",
+    "onboarding",
+    "fact-find",
+    "identity-verification",
+    "kyc",
+    "health-information-consent",
+    "support-person",
+    "referral-consent",
+    "existing-cover-check",
+    "protecting-your-super",
+    "commission-consent",
+    "second-review",
+    "claim-evidence",
+    "histopathology",
+    "earnings-evidence",
+    "payment-account",
+    "vulnerable-client"
+  ],
+  "lastUpdated": "2026-11-01T00:00:00Z"
+}

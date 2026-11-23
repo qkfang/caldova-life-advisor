@@ -1,22 +1,22 @@
 <#
 .SYNOPSIS
-    Kills running Caldova Wealth demo processes that lock build outputs.
+    Stops running Advice Team in a Day (Caldova Life Advice) processes that lock build outputs.
 
 .DESCRIPTION
     During iterative development, `dotnet build` / `dotnet run` against the
     backend often fails with MSB3026/MSB3027 errors like:
 
         The process cannot access the file
-        'C:\...\src\backend\bin\Debug\net10.0\cs-agent.dll' because it is
-        being used by another process. The file is locked by: "cs-backend (12345)"
+        'C:\...\src\backend\bin\Debug\net10.0\cl-agent.dll' because it is
+        being used by another process. The file is locked by: "cl-backend (12345)"
 
     This happens when a previous `dotnet run` (or the debugger) is still
     holding the DLLs. This script stops any matching processes so the next
     build can succeed.
 
     By default it targets:
-      - cs-backend
-      - cs-agent
+      - cl-backend
+      - cl-agent
       - dotnet (only when running one of the above projects)
 
 .PARAMETER IncludeAllDotnet
@@ -36,7 +36,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$targetNames = @('cs-backend', 'cs-agent')
+$targetNames = @('cl-backend', 'cl-agent')
 $killed = @()
 
 # 1. Direct process names (the published / built executables).
@@ -61,9 +61,9 @@ foreach ($d in $dotnetProcs) {
     if (-not $cmd) { continue }
 
     $isOurs = $IncludeAllDotnet -or
-              ($cmd -match 'cs-backend') -or
-              ($cmd -match 'cs-agent') -or
-              ($cmd -match 'caldova-super')
+              ($cmd -match 'cl-backend') -or
+              ($cmd -match 'cl-agent') -or
+              ($cmd -match 'caldova-life')
 
     if ($isOurs) {
         try {
@@ -79,7 +79,7 @@ foreach ($d in $dotnetProcs) {
 }
 
 if ($killed.Count -eq 0) {
-    Write-Host "No matching Caldova Wealth demo processes were running." -ForegroundColor Green
+    Write-Host "No matching Caldova Life Advice processes were running." -ForegroundColor Green
 }
 else {
     # Give the OS a moment to release file handles.

@@ -1,21 +1,20 @@
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 /// <summary>
 /// Deterministic draft generator for the Client Communications "Try it out"
-/// demo (Cara). The five seeded scenario cases (switching on
-/// <see cref="CaseRecord.SampleId"/>) are shown at the point Cara writes the
-/// outcome, with her case summary (sentiment, what happened, what's next)
-/// and ready-to-review drafts for both audiences of an adviser-led platform —
-/// the member (letter or email), the adviser (only when the account has one)
-/// and an SMS. Cases opened live by the Onboarding demo get a type-aware
-/// "request received" acknowledgement instead. Every draft carries tone
-/// notes and a compliance check: no personal advice, next steps, timeframes,
-/// contact details and complaint rights (Caldova's internal dispute
-/// resolution first, then AFCA), plus the hardship, fraud-victim and
-/// bereavement specifics. The demo therefore always has realistic output,
-/// even when the live Foundry agent is not configured; when it is, the
+/// tab (Cara). The five seeded scenario cases are shown at the point Cara
+/// writes the outcome, with her case summary (sentiment, what happened,
+/// what's next) and ready-to-review drafts for every audience the case needs:
+/// the client (letters, a plain-English policy summary), call scripts for
+/// Cara or Amelia, referral-partner updates limited to what the client
+/// consented to share, and an SMS. Cases opened live with the Onboarding
+/// Agent get a type-aware acknowledgement instead. Every draft carries tone
+/// notes and a compliance check — no personal advice, facts that match the
+/// case, required disclosures, complaint rights (IDR, then AFCA), privacy of
+/// health information — and the human approval it needs. The page therefore
+/// always has realistic output offline; when Foundry is configured the live
 /// agent's streamed narrative is shown alongside these drafts.
 /// </summary>
 internal static class ClientCommunicationsDrafter
@@ -24,8 +23,8 @@ internal static class ClientCommunicationsDrafter
     internal record ComplianceCheck(string Label, string Status, string Note);
 
     /// <summary>
-    /// One ready-to-review communication. <c>Audience</c> is <c>member</c>,
-    /// <c>adviser</c> or <c>sms</c> (used by the page to group the cards).
+    /// One ready-to-review communication. <c>Audience</c> is <c>client</c>,
+    /// <c>call</c>, <c>partner</c> or <c>sms</c> (used by the page to group the cards).
     /// </summary>
     internal record Draft(
         string Id,
@@ -47,6 +46,10 @@ internal static class ClientCommunicationsDrafter
         string WhatHappened,
         IReadOnlyList<string> WhatsNext);
 
+    /// <param name="Approver">Who approves the drafts before anything is sent.</param>
+    /// <param name="PartnerNote">Why there is no referral-partner update, when there isn't one.</param>
+    /// <param name="AdviserNote">An internal note for Amelia — never advice, never sent to the client.</param>
+    /// <param name="Sources">Knowledge documents (<c>life_knowledge</c> titles) the drafts rely on.</param>
     internal record DraftBundle(
         string Stage,
         string Outcome,
@@ -54,152 +57,226 @@ internal static class ClientCommunicationsDrafter
         IReadOnlyList<string> VulnerabilityFlags,
         bool HumanApprovalRequired,
         string HumanApprovalReason,
+        string Approver,
         IReadOnlyList<Draft> Drafts,
-        string? AdviserNote);
+        string? PartnerNote,
+        string? AdviserNote,
+        IReadOnlyList<string> Sources);
 
-    // Fictional Caldova contact number — from the ACMA range reserved for
-    // creative works, so it can never reach a real business.
-    private const string CaldovaPhone = "1300 975 707";
-    private const string ServiceHours = "8:30am–6:00pm Melbourne time, Monday to Friday";
-    private const string AfcaContact = "1800 931 678 · www.afca.org.au · info@afca.org.au · GPO Box 3, Melbourne VIC 3001";
-    private const string Signature =
-        "Cara\nClient Communications Specialist\nCaldova Wealth · Caldova House, Flinders Lane, Melbourne VIC 3000";
+    private const string Phone = PracticeContacts.Phone;
+    private const string Hours = PracticeContacts.Hours;
 
-    private const string SpotCheckReason =
-        "Spot-check — routine communication with no decline, partial approval or vulnerability.";
+    private const string AmeliaSignature =
+        "Amelia\nSenior Risk Adviser\nCaldova Life Advice · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone + " · " + PracticeContacts.AmeliaEmail;
+    private const string CaraSignature =
+        "Cara\nClient Communications Specialist\nCaldova Life Advice · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone;
 
-    internal static DraftBundle Build(CaseRecord r) => !IsScenarioCase(r)
-        ? Generic(r)
-        : (r.SampleId ?? string.Empty).ToLowerInvariant() switch
-        {
-            "onboarding-priya" => Priya(r),
-            "rollover-grace" => Grace(r),
-            "pension-george" => George(r),
-            "hardship-tom" => Tom(r),
-            "death-benefit-robert" => Robert(r),
-            _ => Generic(r)
-        };
+    private const string SpotCheck =
+        "Spot-check — routine message with no vulnerability, decline or partial outcome.";
+    private const string TheoApproves = "Theo (Practice Team Leader)";
+    private const string CaraApproves = "Cara (Client Communications Specialist)";
 
-    // ── 1. Priya — welcome + adviser update (BDBN witness, insurance) ──────────
+    // Knowledge document titles (life_knowledge index).
+    private const string DocFsg = "Caldova Life Advice — Financial Services Guide and remuneration";
+    private const string DocAdviceRules = "Advice rules — best interests duty, SoA and replacement advice";
+    private const string DocSuperRules = "Insurance inside super — permitted cover, Protecting Your Super and opt-in rules";
+    private const string DocUnderwriting = "Underwriting and the duty to take reasonable care";
+    private const string DocClaimsRules = "Claims rules — Life Insurance Code of Practice and income protection benefits";
+    private const string DocTax = "Tax on life insurance — premiums and benefits";
+    private const string DocFinCrime = "Guide — financial crime red flags and controls for life insurance";
+    private const string DocMatrix = "Matrix — authority, approvals and escalation";
+    private const string DocInGoodOrder = "Guide — in-good-order checklist for advice and claims";
+    private const string DocHarbourline = "Harbourline Life — Protection PDS extract";
+    private const string DocCorella = "Corella Life — Protection PDS extract";
+    private const string DocLyrebird = "Lyrebird Life — Protection PDS extract";
+    private const string DocNorthbank = "Northbank Life — Business Protection PDS extract";
+
+    internal static DraftBundle Build(CaseRecord r) => LifeScenarioCases.KeyOf(r) switch
+    {
+        LifeScenarioCases.Priya => Priya(r),
+        LifeScenarioCases.Grace => Grace(r),
+        LifeScenarioCases.George => George(r),
+        LifeScenarioCases.Tom => Tom(r),
+        LifeScenarioCases.Robert => Robert(r),
+        _ => Generic(r)
+    };
+
+    /// <summary>
+    /// True for the five seeded scenario cases (<c>REQ-yyyyMMdd-LIFnnn</c>),
+    /// which are shown at the point Cara writes the outcome. Cases opened
+    /// live with the Onboarding Agent are freshly received.
+    /// </summary>
+    internal static bool IsScenarioCase(CaseRecord r) => LifeScenarioCases.KeyOf(r) is not null;
+
+    // ── 1. Priya — welcome letter, policy summary, outcome-only note to Hannah ─
     private static DraftBundle Priya(CaseRecord r)
     {
         var summary = new CaseSummary(
-            SentimentLabel: "Positive · busy",
+            SentimentLabel: "Relieved · busy",
             Sentiment:
-                "Priya has just started a new job and wants it done digitally and properly: \"I've got super scattered across old jobs — I just want one account, set up properly.\" " +
-                "Low anxiety, high expectations — she'll appreciate short sections and two clear actions. " +
-                "Hannah (her adviser) wants a clean onboarding and a precise list of what's still needed.",
+                "Priya is practical and busy — a physiotherapist with a toddler, a new mortgage and a second baby due in March. " +
+                "She'll want to know her family is covered from today, what the back exclusion means in plain words, and that there's nothing else she has to do. " +
+                "Hannah only needs to know that cover is in place.",
             WhatHappened:
-                "Hannah Lewis CFP® (Yarra Private Wealth) sent Priya's application pack on 3 November 2026. " +
-                "Priya's Caldova Super (Select) account CS-2049817 is open and invested in the Caldova Managed Portfolio — Growth, " +
-                "with her $3,300 p.a. ongoing advice fee set up under a signed consent that meets SIS s99FA. " +
-                "The Harbourline Retail Super rollover (about $41,800) has been requested through SuperStream. " +
-                "The Southern Cross Industry Super rollover (about $96,400) is on hold because it would end her $520,000 Death & TPD cover, " +
-                "and her nomination for Arjun has only one witness, so it's treated as non-binding until she re-signs it.",
+                "Hannah Lewis (Yarra Home Loans) referred Priya on 3 Nov 2026 after she and Arjun bought their Coburg home. Amelia's advice — SoA signed 6 Nov, " +
+                "Authority to Proceed 7 Nov — put in place life cover of $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month with Corella Life. " +
+                "Corella accepted life, TPD and trauma at standard rates and offered income protection with an exclusion for back and spine conditions, which Priya accepted " +
+                "with Amelia on 17 Nov. Policy CR-26118204 started on Wed 18 Nov 2026. Her Kestrel Retail Super cover was kept until the new cover started.",
             WhatsNext:
             [
-                "Harbourline rollover (~$41,800): due within 3 business days of Harbourline having all required information; invested in Growth on arrival with 1% kept in the Caldova Cash Account.",
-                "Southern Cross rollover (~$96,400): on hold until Hannah and Priya confirm in writing that ending the $520,000 Death & TPD cover is intended, or replacement cover is in place.",
-                "Nomination: Priya re-signs in front of two adult witnesses who aren't beneficiaries — until then the trustee treats it as non-binding.",
-                "Priya gives her new employer Caldova's details (USI CDV0101AU, member number CS-2049817) so her Super Guarantee lands in the new account.",
+                "Send the welcome letter and the plain-English policy summary to Priya — spot-check only.",
+                $"Cooling-off: {LifeRules.CoolingOff} from when Priya receives confirmation of the policy (or the end of the fifth business day after it's issued, if earlier) — not once a claim is made.",
+                "Send Hannah an outcome-only note — Priya consented to share the outcome, so no cover details and no health details.",
+                "Any change to the Kestrel Retail Super cover from here is Priya's decision with Amelia — Cara doesn't suggest one.",
+                "Corella will review the back exclusion after two symptom-free years — note the review on Priya's file.",
             ]);
 
-        var memberEmail = new Draft(
-            Id: "member-welcome",
-            Audience: "member",
-            AudienceLabel: "Member email — welcome",
-            Channel: "Email",
-            Recipient: $"{r.ClientName} <{r.ClientEmail}> · cc Hannah Lewis CFP® (Yarra Private Wealth)",
-            Subject: "Welcome to Caldova Super, Priya — your member number is CS-2049817",
+        var welcome = new Draft(
+            Id: "client-welcome",
+            Audience: "client",
+            AudienceLabel: "Welcome letter",
+            Channel: "Letter (by email)",
+            Recipient: $"{r.ClientName} <{r.ClientEmail}>",
+            Subject: "Welcome to Caldova, Priya — your family's cover starts today",
             Body: $"""
-                Hi Priya,
+                Dear Priya,
 
-                Welcome to Caldova Super — and congratulations on the new role. Your account is open and ready to go.
+                Congratulations on your new home — and welcome to Caldova Life Advice. I'm pleased to confirm that your new cover with Corella Life starts today, **Wednesday 18 November 2026**, so you, Arjun and Asha are protected as your family grows.
 
-                **Your account at a glance**
-                - Member number: **CS-2049817**
-                - Product: Caldova Super (Select)
-                - Investment: Caldova Managed Portfolio — Growth, as set out in Hannah's Statement of Advice (1% stays in your Caldova Cash Account to cover fees)
-                - Adviser: Hannah Lewis CFP®, Yarra Private Wealth
+                **Your cover at a glance**
 
-                **Bringing your old super across**
-                - **Harbourline Retail Super (about $41,800):** we've requested this rollover. Funds have 3 business days to send it once they have everything they need, and we'll invest it as soon as it arrives.
-                - **Southern Cross Industry Super (about $96,400):** we've put this one on hold for now. Your Southern Cross account includes **$520,000 of Death & TPD insurance cover, and that cover ends if the account is rolled over.** Hannah will talk it through with you — we'll only go ahead once you've confirmed in writing that you're happy for the cover to end, or that replacement cover is in place.
+                | Cover | Amount | Where it's held |
+                |---|---|---|
+                | Life cover (with a terminal illness benefit) | $750,000 | Inside super — Corella Life's super plan |
+                | TPD cover (total and permanent disability) | $600,000 | Inside super, with an own-occupation extension held outside super and linked to it |
+                | Trauma cover | $150,000 | Outside super |
+                | Income protection | $6,125 a month after a 90-day waiting period, to age 65 | Outside super |
 
-                **Two quick things for you**
-                1. **Give your new employer our details** so your super goes straight to your new account: Caldova Superannuation Master Fund · USI CDV0101AU · ABN 11 222 333 444 · member number CS-2049817.
-                2. **Re-sign your death benefit nomination.** Your nomination for Arjun has one witness signature, and the law needs two adult witnesses who aren't named as beneficiaries. Until it's re-signed we'll treat it as non-binding. Hannah has a fresh form for you.
+                Your policy number is **CR-26118204**. I've attached a plain-English summary that explains what each cover does — and the one exclusion on your income protection.
 
-                **What happens next**
-                We'll email you when each rollover arrives and is invested. You can follow progress at any time in your Caldova online account (case reference {r.CaseNumber}).
+                **What you'll pay**
+                - Inside super: **$858 a year**, paid from your Corella Life super plan, which is funded by a rollover from your Riverbend Super account — not from your pay.
+                - Outside super: **$2,322 a year ($193.50 a month)** for the own-occupation TPD extension, trauma cover and income protection.
+                - Your premiums are stepped, so they'll usually rise each year as you get older.
 
-                **Questions?**
-                Reply to this email, speak with Hannah, or call us on {CaldovaPhone} ({ServiceHours}).
+                **Your existing super cover**
+                - Your Riverbend Super death and TPD cover of $210,000 stays in place — we counted it when we worked out how much new cover you need.
+                - We kept your $50,000 Kestrel Retail Super cover in place until today, so there was no gap. Please talk to me before you make any change to it.
 
-                {SuperComplaints("reply to this email")}
+                **If you change your mind**
+                {LifeRules.CoolingOffPlain} Corella's policy documents explain how to cancel.
+
+                **If you ever need to claim**
+                Call us first on {Phone}. Ben, our Benefit Claims Advocate, will help you with every step.
+
+                {Complaints("call me or reply to this email")}
 
                 Warm regards,
-                {Signature}
+                {AmeliaSignature}
                 """,
             Tone:
-                "Warm and congratulatory, then crisp and practical for a busy professional: short sections, two numbered actions, " +
-                "and 'BDBN' explained as a 'death benefit nomination'. The insurance warning is stated plainly and the decision is left with Priya and Hannah.",
+                "Warm and congratulatory (a new home, a growing family), then crisp for a busy professional: one table, three short sections, " +
+                "and every term — TPD, own occupation, stepped premiums — explained in a few words.",
             Compliance:
             [
-                Pass("No personal advice", "The insurance decision and investment choice stay with Priya and her adviser."),
-                Pass("Insurance-loss warning", "States that $520,000 Death & TPD cover ends if Southern Cross is rolled over — before it proceeds."),
-                Pass("Next steps & timeframes", "Two actions for Priya; rollovers due within 3 business days of the old fund having all information."),
-                Pass("Contact details", $"{CaldovaPhone}, reply-to email and her adviser."),
-                Pass("Complaint rights", "Caldova IDR (45 days for super) first, then AFCA with full contact details."),
-                Pass("Privacy", "No TFN or bank details in the email."),
+                Pass("No new advice", "Confirms the cover Amelia advised in the signed SoA; any change to the Kestrel cover goes back to Amelia."),
+                Pass("Facts match the policy", "CR-26118204 from 18 Nov 2026; sums insured and premiums as issued by Corella."),
+                Pass("Required disclosures", $"Premiums in dollars (stepped), a cooling-off period of {LifeRules.CoolingOff} (Corporations Act s1019B), how to claim, complaint rights."),
+                Pass("Complaint rights", $"Caldova first (written response within {LifeRules.IdrResponse}), then AFCA with contact details."),
+                Pass("Health information", "Only Priya's own cover terms — the exclusion is explained in the attached summary."),
             ],
             ApprovalRequired: false,
-            ApprovalReason: SpotCheckReason);
+            ApprovalReason: SpotCheck);
 
-        var adviserEmail = new Draft(
-            Id: "adviser-update",
-            Audience: "adviser",
-            AudienceLabel: "Adviser update",
+        var policySummary = new Draft(
+            Id: "client-policy-summary",
+            Audience: "client",
+            AudienceLabel: "Plain-English policy summary",
+            Channel: "Attachment to the welcome letter",
+            Recipient: $"{r.ClientName} — attached to the welcome letter",
+            Subject: "Your Corella Life cover in plain English — policy CR-26118204",
+            Body: $"""
+                **Your Corella Life cover in plain English**
+                Policy CR-26118204 · starts Wednesday 18 November 2026 · life insured: Priya Natarajan
+
+                **Life cover — $750,000**
+                Paid through your super for your family if you die. Corella also pays it early if two doctors, one of them a specialist, certify that you're likely to die within 24 months (Corella's terminal illness benefit). It's there to clear the $680,000 home loan, help with the children's education and give your family time.
+
+                **TPD cover — $600,000**
+                Paid if illness or injury means you're unlikely ever to work again.
+                - Inside super, the test is whether you could work in any job you're suited to by your education, training or experience.
+                - Your own-occupation extension, held outside super and linked to your super cover, means a claim can also be paid if you're unlikely ever to work again as a physiotherapist. A claim is checked against the super cover first, and the two parts never pay more than $600,000 in total.
+
+                **Trauma cover — $150,000**
+                Paid if a specialist confirms you have one of the serious conditions listed in the policy, such as cancer, a heart attack or a stroke. It helps with time off work, medical costs and Arjun's time off to look after you. Mental health conditions aren't covered, and the policy sets out the exact definitions.
+
+                **Income protection — up to $6,125 a month**
+                Pays a monthly benefit if illness or injury stops you working, once you've been off work for the 90-day waiting period, and for as long as you can't work, up to age 65. It pays the lower of $6,125 and 70% of your average monthly earnings in the 12 months before you stopped work, monthly in arrears. Payments count as taxable income.
+
+                **The one exclusion — back and spine conditions**
+                Corella won't pay income protection for back or spine conditions. This is because of the back strain you told Corella about in your application.
+                - It applies to income protection only. Your life, TPD and trauma cover are not affected.
+                - Everything else about your income protection works as normal.
+                - Corella will review the exclusion after two symptom-free years — we'll help you ask for the review. If Corella removes it, your income protection covers back and spine conditions from the review date.
+
+                **What you pay in year 1**
+
+                | | A year |
+                |---|---|
+                | Inside super — life $468 and TPD $390 | $858 |
+                | Outside super — own-occupation TPD extension $222, trauma $640 and income protection $1,460 | $2,322 ($193.50 a month) |
+                | **Total** | **$3,180** |
+
+                Premiums are stepped — they usually rise each year as you get older. Income protection premiums held outside super are generally tax-deductible; your tax adviser can confirm how this applies to you.
+
+                **Good to know**
+                - Your sums insured go up each year in line with CPI unless you tell Corella you don't want the increase — your premium rises with them.
+                - Keep your premiums up to date so your cover stays in place.
+                - If you need to claim, call us first on {Phone} — we'll help you with every step.
+                - This summary doesn't replace your policy documents. The full terms, definitions and exclusions are in Corella Life's product disclosure statement and your policy schedule.
+                """,
+            Tone:
+                "Plain English, one heading per cover, short sentences. The exclusion gets its own section and is explained without alarm: what it is, why, " +
+                "what it doesn't affect and when it will be reviewed.",
+            Compliance:
+            [
+                Pass("Exclusion explained", "What's excluded, why, which cover it affects and the review after two symptom-free years."),
+                Pass("Matches the PDS", $"Terminal illness, TPD (super-linked), trauma, income protection and exclusion review as described in {DocCorella}."),
+                Pass("Premiums in dollars", "Year-1 split inside and outside super; stepped premiums explained."),
+                Pass("Tax stated carefully", "IP payments are taxable income; premiums generally deductible — confirm with a tax adviser."),
+                Pass("No new advice", "Describes the cover in place; no recommendations."),
+            ],
+            ApprovalRequired: false,
+            ApprovalReason: SpotCheck);
+
+        var hannah = new Draft(
+            Id: "partner-update",
+            Audience: "partner",
+            AudienceLabel: "Referral partner update — outcome only",
             Channel: "Email",
-            Recipient: "Hannah Lewis CFP® <hannah.lewis@yarraprivate.example.com.au> · Yarra Private Wealth (ADV-10442)",
-            Subject: "Priya Natarajan (CS-2049817) — account open; 2 actions needed: nomination re-sign & insurance confirmation",
+            Recipient: "Hannah Lewis <hannah.lewis@yarrahomeloans.example.com.au> · Yarra Home Loans",
+            Subject: "Priya Natarajan — cover in place",
             Body: $"""
                 Hi Hannah,
 
-                Thanks for Priya Natarajan's application pack (received 3 November 2026). Here's where case {r.CaseNumber} stands.
+                Thank you again for introducing Priya to us. With her permission, I'm letting you know that the protection cover we recommended for her is now in place, from 18 November 2026.
 
-                **Done**
-                - Caldova Super (Select) account **CS-2049817** opened. Identity (DVS) and TFN confirmed; KYC/AML screening clear.
-                - Investment: 100% Caldova Managed Portfolio — Growth, consistent with your SoA dated 28 October 2026 (risk profile: Growth); 1% retained in the Caldova Cash Account.
-                - Ongoing advice fee: $3,300 p.a. incl. GST ($275 a month) set up under Priya's signed consent — meets SIS s99FA (written, signed and dated, amount, services, 12-month term, can be withdrawn). It will need Priya's written renewal each year.
-                - **Harbourline Retail Super** (USI HRB0007AU, member HR-4471902, ~$41,800): rollover requested via SuperStream — due within 3 business days of Harbourline having all required information.
+                Priya asked us to share the outcome only, so I won't go into the details of her cover or her application. If you'd like to know more, she's happy for you to ask her directly.
 
-                **Action needed from you (2 items)**
-                1. **Binding death benefit nomination.** The nomination for Arjun Mehta (100%) has only one witness. SIS reg 6.17A needs two witnesses aged 18 or over who aren't named in the notice. Please have Priya re-sign; until then the trustee will treat it as non-binding.
-                2. **Insurance confirmation — Southern Cross Industry Super** (USI SCI0001AU, member 88213045, ~$96,400). This account holds $520,000 Death & TPD cover, which ends on rollover, and the insurance-loss acknowledgement on the application wasn't ticked. We're holding this rollover until you and Priya confirm in writing that she understands the cover will end, or that replacement cover is in place.
-
-                **For your file**
-                - Our Investment Analyst's workbook compares Growth, Balanced and Index Balanced on $138,200 with fees in dollars (about $1,175, $1,120 and $843 a year in Caldova fees). It's attached to the case.
-                - We've emailed Priya a welcome with her member number, our fund details for her employer (USI CDV0101AU) and a note about re-signing her nomination.
-
-                Any questions, reply here or call the Adviser Desk on {CaldovaPhone}.
+                It's always a pleasure to look after your clients — thank you for thinking of us.
 
                 Kind regards,
-                {Signature}
+                {AmeliaSignature}
                 """,
-            Tone:
-                "Professional and concise — adviser language with the rule cited for each action, numbered so nothing is missed. " +
-                "States facts and what we need; the advice (insurance, investment) stays with Hannah.",
+            Tone: "Warm and brief — a thank-you to a referral partner that shares the outcome and nothing more.",
             Compliance:
             [
-                Pass("No personal advice", "Facts and rule citations only — the insurance and investment decisions are the adviser's."),
-                Pass("Authority to share", "Hannah is the adviser of record on the account (ADV-10442)."),
-                Pass("Next steps & timeframes", "Two numbered adviser actions; Harbourline due within 3 business days of having all information."),
-                Pass("Rules cited", "SIS s99FA (fee consent) and SIS reg 6.17A (binding nomination witnesses)."),
-                Pass("Privacy", "TFN and bank details not repeated."),
+                Pass("Consent scope", "Priya's written consent covers the outcome only — no sums insured, premiums or insurer details."),
+                Pass("No health information", "Nothing about her application, health disclosures or the exclusion."),
+                Pass("Privacy", "No personal details beyond her name and the outcome."),
             ],
             ApprovalRequired: false,
-            ApprovalReason: SpotCheckReason);
+            ApprovalReason: "Spot-check — confirm Priya's consent is on file before sending.");
 
         var sms = new Draft(
             Id: "sms",
@@ -208,657 +285,771 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Welcome Priya! Your super account CS-2049817 is open. Check your email for your employer details and 2 quick next steps. Questions? {CaldovaPhone}",
-            Tone: "Short and friendly; points to the email for the detail.",
+            Body: $"Caldova: Hi Priya, your Corella Life cover started today (18 Nov). Your welcome letter and policy summary are in your email. Questions? {Phone}",
+            Tone: "Short and friendly; points to the letter for the detail.",
             Compliance:
             [
-                Pass("Non-sensitive", "Member number only — no balances, TFN or bank details."),
-                Pass("Points to the full message", "The welcome email carries next steps and complaint rights."),
-                Pass("Contact details", CaldovaPhone),
+                Pass("Non-sensitive", "No amounts, health details or policy terms by SMS."),
+                Pass("Points to the full letter", "The letter carries the cover, premiums, cooling-off and complaint rights."),
+                Pass("Contact details", Phone),
             ],
             ApprovalRequired: false,
-            ApprovalReason: SpotCheckReason);
+            ApprovalReason: SpotCheck);
 
         return new DraftBundle(
-            Stage: "Account opened — consolidation in progress",
+            Stage: "Cover in force from 18 Nov 2026",
             Outcome: "Completed",
             Summary: summary,
             VulnerabilityFlags: [],
             HumanApprovalRequired: false,
-            HumanApprovalReason: "No vulnerability or adverse decision — drafts can be spot-checked before sending.",
-            Drafts: [memberEmail, adviserEmail, sms],
-            AdviserNote: null);
+            HumanApprovalReason: "No vulnerability, decline or partial outcome — the drafts can be spot-checked before sending.",
+            Approver: "Spot-check by Cara",
+            Drafts: [welcome, policySummary, hannah, sms],
+            PartnerNote: null,
+            AdviserNote: null,
+            Sources: [DocCorella, DocUnderwriting, DocSuperRules, DocTax, DocFsg, CaseDoc(r, "underwriting decision")]);
     }
 
-    // ── 2. Grace — reassurance to a fraud victim (verified details only) ───────
+    // ── 2. Grace — call script, reassurance letter, identity protection ───────
     private static DraftBundle Grace(CaseRecord r)
     {
         var summary = new CaseSummary(
-            SentimentLabel: "Anxious · scam victim",
+            SentimentLabel: "Shocked · scam victim overseas",
             Sentiment:
-                "Grace is shaken: \"I'm in Florence — I haven't asked anyone to move my super!\" She is independent and careful, " +
-                "so she'll want certainty that her money is safe, a calm account of what happened and simple next steps — no jargon, no blame.",
+                "Grace is in Florence and will be shocked to hear that someone pretended to be her — and claimed she has cancer. She's independent and careful, " +
+                "so she'll want certainty that her cover is safe, a calm account of what happened and simple steps to protect herself. No jargon, and nothing that " +
+                "suggests she did anything wrong.",
             WhatHappened:
-                "A request on 6 November 2026 asked to roll Grace's whole balance ($612,400) to a newly registered SMSF, " +
-                "'GW Family Superannuation Fund'. It followed a phone call on 2 November that changed her mobile and email, and online access " +
-                "set up from a new device in Sydney on 3 November — while Grace is travelling in Italy. SMSF verification failed, the licence " +
-                "image was tampered with and the payee name didn't match. Theo approved the block; the rollover was cancelled and no money left " +
-                "the account. Cara reached Grace on her pre-change verified details and she confirmed she never made the request. Her previous " +
-                "details are restored and her online access has been reset.",
+                "On Mon 2 Nov 2026 a caller pretending to be Grace passed basic checks and changed her mobile and email (\"I've lost my phone\"), and a new device " +
+                "logged in to her portal from Sydney. On Fri 6 Nov — about 93 hours later — an email from the new address made an \"urgent\" trauma claim for the full " +
+                "$200,000, to be paid into a new account in another name. Felix found the oncologist's report was fake, the licence had been tampered with and the bank " +
+                "statement was suspicious. Theo approved the block: no claim was lodged, Grace's verified contact details were restored, portal access was locked and " +
+                "Lyrebird Life's fraud team was alerted.",
             WhatsNext:
             [
-                "Send the reassurance email only to grace.williams@example.com (pre-change verified email) — after human approval.",
-                "A specialist calls Grace on 0491 570 157 at a time that suits her in Italy to set up new online access; the payment and rollover block stays until she re-verifies.",
-                "Offer IDCARE's free identity support (1800 595 160).",
-                "Internal only: the SMR decision sits with the AML/CTF compliance officer (due within 3 business days). Never mention it to Grace or anyone outside the team.",
+                "Cara calls Grace on her verified mobile 0491 570 157 — never the number or email added on 2 Nov — at 6pm Melbourne time (8am in Florence).",
+                "After the call, the reassurance letter goes to grace.williams@example.com only — once Theo approves it.",
+                "Portal access stays locked until Grace re-verifies; Amelia can help when she's home after 1 Dec.",
+                "Her $500,000 life cover and $200,000 trauma cover are unchanged; Daniel and James remain her nominated beneficiaries.",
             ]);
 
-        var memberEmail = new Draft(
-            Id: "member-reassurance",
-            Audience: "member",
-            AudienceLabel: "Member letter — reassurance",
-            Channel: "Email (pre-change verified address only)",
-            Recipient: $"{r.ClientName} <grace.williams@example.com> — never grace.w.super@mailbox.example",
-            Subject: "Your Caldova Super account is safe — what happened and what we've done",
+        var callScript = new Draft(
+            Id: "call-script",
+            Audience: "call",
+            AudienceLabel: "Call script — Cara calls Grace",
+            Channel: "Phone call — verified mobile only",
+            Recipient: "Grace Williams · 0491 570 157 (verified before 2 Nov) — never 0491 570 159",
+            Subject: "Call Grace: reassure first, then explain",
+            Body: """
+                **Before you call**
+                - Call **0491 570 157 only** — the number we've held for years. Never the number or email added on 2 November.
+                - Grace is in Florence, ten hours behind Melbourne: 6pm here is 8am there.
+                - Never ask for passwords, one-time codes or full bank details.
+
+                **1. Introduce yourself and check it's Grace**
+                "Hello, is that Grace Williams? It's Cara from Caldova Life Advice in Melbourne — I work with Amelia. Is now a good time to talk for a few minutes?"
+                Check it's her with something only she and Amelia would know — for example, the travel dates she gave Amelia at her review on 28 September. Never use anything from the claim email.
+
+                **2. Reassure her first**
+                "Before anything else — your cover is safe, and no money has been paid to anyone."
+
+                **3. Explain what happened, simply**
+                "On Monday the 2nd, someone phoned us pretending to be you and changed your mobile number and email. This morning we received a claim in your name, asking for your trauma cover to be paid into a new bank account. A number of things didn't add up, so we stopped it straight away."
+                Then ask gently: "Can I just check — you haven't asked anyone to make a claim for you?"
+                If she asks what the claim said, tell her kindly that it named a serious illness, and that the documents with it were not genuine.
+
+                **4. What we've done**
+                - Stopped the claim and the bank change — nothing was sent to Lyrebird Life and nothing was paid.
+                - Put back her own mobile and email, and removed the details that were added.
+                - Locked online access to her Caldova portal until we can set her up again.
+                - Let Lyrebird Life's fraud team know, so they're watching her policy too.
+                - Her life cover ($500,000) and trauma cover ($200,000) haven't changed, and Daniel and James are still her beneficiaries.
+
+                **5. Help her protect herself**
+                - "Someone may have some of your personal details. IDCARE is a free service that helps people in exactly this situation — I'll put their details in my letter."
+                - Suggest changing the passwords on her email and phone accounts, and letting her bank know.
+                - "We'll never ask you for a password or a code."
+
+                **6. Close**
+                - "I'll email a summary to your usual address, grace.williams@example.com, today."
+                - "When you're home after 1 December, Amelia would love to see you and set up your portal access again — or we can do it by phone sooner if you'd like."
+                - "Thank you, Grace. You haven't done anything wrong — this happens to careful people too."
+
+                **Don't**
+                - Don't use words like "suspicious claim from you", "fraud on your policy" or anything that sounds like she's under suspicion.
+                - Don't share the details of Felix's investigation, or read out the fake email address or bank account.
+                """,
+            Tone:
+                "Calm and warm. Reassurance comes first, the explanation is short and blame-free, and the steps are simple. Built for a careful person " +
+                "receiving unsettling news far from home.",
+            Compliance:
+            [
+                Pass("Verified channel only", "0491 570 157, held before the change; the new number and email are never used."),
+                Pass("Never implies Grace did anything wrong", "She's treated as the person we're protecting — no accusatory words."),
+                Pass("Identity check", "Uses a detail from her annual review, not anything the impostor could know from the claim."),
+                Pass("No codes or passwords requested", "Says so explicitly."),
+                Pass("Facts match the case", "Dates, cover amounts and actions as approved by Theo."),
+            ],
+            ApprovalRequired: true,
+            ApprovalReason: "Communication to a fraud victim — Cara reviews and approves the script before she calls.");
+
+        var letter = new Draft(
+            Id: "client-reassurance",
+            Audience: "client",
+            AudienceLabel: "Reassurance letter",
+            Channel: "Email — verified address only",
+            Recipient: $"{r.ClientName} <grace.williams@example.com> — never grace.w.claims@example.net",
+            Subject: "Your cover is safe, Grace — what happened and what we've done",
             Body: $"""
                 Dear Grace,
 
-                Thank you for speaking with us — we know this has been unsettling news to receive while you're away. The most important thing first: **your super is safe.** All **$612,400** is still in your Caldova Super account, and no money has left it.
+                Thank you for speaking with me today, and I'm sorry this news reached you while you're away. The most important thing first: **your cover is safe.** No claim was made on your Lyrebird Life policy, and no money has been paid to anyone.
 
                 **What happened**
-                On 2 November 2026 someone contacted us pretending to be you and changed the mobile number and email address on your account. On 6 November we received a request, sent from that new email address, to move your whole balance to another super fund. Our checks showed the request didn't come from you, so we stopped it before anything was processed — and you confirmed this when we spoke.
+                On Monday 2 November someone phoned us pretending to be you and changed the mobile number and email address on your file. On Friday 6 November we received an email from that new address, making a claim on your trauma cover and asking for the money to go into a new bank account. A number of things didn't add up, so we stopped it before anything was sent to Lyrebird Life. When we spoke, you confirmed you hadn't asked for any of this. None of this happened because of anything you did.
 
                 **What we've done**
-                - Stopped and cancelled the request — no money has moved.
-                - Restored your previous contact details (this email address and 0491 570 157) and removed the ones that were added.
-                - Locked online access to your account and reset your login.
-                - Added extra protection: we won't process any withdrawal or rollover until we've confirmed your identity with you directly.
+                - Stopped the claim and the bank change — nothing was lodged and nothing was paid.
+                - Put back your own mobile (0491 570 157) and this email address, and removed the details that were added.
+                - Locked online access to your Caldova client portal. We'll help you set up new access whenever you're ready.
+                - Told Lyrebird Life's fraud team, so they're watching your policy too.
+                - From now on, we'll call you on 0491 570 157 before we change any contact or bank details on your file.
+
+                **Your cover hasn't changed**
+                - Lyrebird Life policy LB-19004417
+                - Life cover: $500,000
+                - Trauma cover: $200,000
+                - Nominated beneficiaries: Daniel and James, 50% each
+
+                **Steps to protect yourself**
+                1. Contact {LifeRules.Idcare}. They can help you check whether your details are being misused elsewhere.
+                2. Change the passwords on your email and phone accounts, and turn on multi-factor (two-step) sign-in wherever you can.
+                3. Let your bank know that someone may have some of your personal details.
+                4. Watch for unexpected messages, calls or logins — even ones that seem to come from us. We will never ask for your password or a one-time code, and this email contains no links.
 
                 **What happens next**
-                - One of our specialists will call you on 0491 570 157, at a time that suits you in Italy, to set up your new online access.
-                - You don't need to do anything else with your account right now.
-
-                **Free support**
-                IDCARE, Australia's national identity and cyber support service, can help you check whether your personal information is being misused elsewhere and what to do about it. It's free: call 1800 595 160 or visit www.idcare.org.
-
-                **Keeping you safe**
-                We will never ask for your password or a one-time code by phone, email or SMS, and this email contains no links. If anyone contacts you about moving your super, please call us first.
+                There's nothing you need to do with your policy. When you're back in Melbourne after 1 December, Amelia would be glad to see you and set up your portal access again — or we can do it by phone sooner if you'd prefer.
 
                 **Questions?**
-                Call us on {CaldovaPhone} ({ServiceHours}). If you're calling from overseas, just reply to this email and we'll call you back on 0491 570 157.
+                Call me on {Phone} ({Hours}), or reply to this email and I'll call you back on 0491 570 157 at a time that suits you in Italy.
 
-                {SuperComplaints("reply to this email")}
+                {Complaints("reply to this email")}
 
-                Kind regards,
-                {Signature}
+                Warm regards,
+                {CaraSignature}
+                cc: Amelia, Senior Risk Adviser
                 """,
             Tone:
-                "Calm and reassuring. Leads with 'your super is safe', explains what happened in plain words without blame or technical detail, " +
-                "and makes the next step (a call on her verified number) feel easy. Never hints at any report to authorities.",
+                "Reassuring and calm. Leads with \"your cover is safe\", explains what happened in plain words without blame, lists what we've done, " +
+                "and gives four simple identity-protection steps.",
             Compliance:
             [
-                Pass("Verified channel only", "Sent to the pre-change verified email; the changed details are never used."),
-                Pass("No mention of SMR / investigation detail", "Avoids tipping-off: no AUSTRAC, SMR or 'suspicious matter' wording."),
-                Pass("Reassurance", "States the balance ($612,400) is intact and no money moved."),
-                Pass("IDCARE referral", "Free identity support — 1800 595 160, www.idcare.org."),
-                Pass("No links or code requests", "Reminds Grace we never ask for passwords or one-time codes."),
-                Pass("Next steps, contact & complaint rights", "Call-back on 0491 570 157; Caldova IDR (45 days) then AFCA."),
+                Pass("Verified channel only", "Sent to grace.williams@example.com; the changed details are never used."),
+                Pass("Reassurance first", "Cover safe and nothing paid, in the first paragraph."),
+                Pass("Never implies Grace did anything wrong", "\"None of this happened because of anything you did.\""),
+                Pass("Identity-protection steps", "IDCARE (free), passwords, bank, scam-safe reminders."),
+                Pass("No links or code requests", "Says so explicitly; no links in the email."),
+                Pass("Complaint rights", $"Caldova first (within {LifeRules.IdrResponse}), then AFCA."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Communication to a fraud victim — must be approved by a human before it is sent.");
+            ApprovalReason: "Communication to a fraud victim — Cara approves it before it is sent.");
 
         var sms = new Draft(
             Id: "sms",
             Audience: "sms",
             AudienceLabel: "SMS",
-            Channel: "SMS (pre-change verified mobile only)",
-            Recipient: $"{r.ClientName} · 0491 570 157 — never 0491 570 158",
+            Channel: "SMS — verified mobile only",
+            Recipient: $"{r.ClientName} · 0491 570 157 — never 0491 570 159",
             Subject: null,
-            Body: $"Caldova: Hi Grace, as discussed, your super is safe and no money has moved. Details are in your usual email. We never ask for codes or passwords. {CaldovaPhone}",
-            Tone: "Brief and reassuring; no links.",
+            Body: $"Caldova: Hi Grace, it's Cara. As we discussed, your cover is safe and nothing was paid. My letter is in your usual email. We never ask for codes. {Phone}",
+            Tone: "Brief and reassuring; sent after the call, never instead of it. No links.",
             Compliance:
             [
-                Pass("Verified channel only", "Pre-change verified mobile; never the number added on 2 November."),
-                Pass("No mention of SMR", "Says only what Grace needs to know."),
+                Pass("Verified channel only", "Her verified mobile — never the number added on 2 Nov."),
                 Pass("No links", "Scam-safe wording; points to the email."),
+                Pass("Non-sensitive", "No policy, bank or health details."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Communication to a fraud victim — must be approved by a human before it is sent.");
+            ApprovalReason: "Communication to a fraud victim — Cara approves it before it is sent.");
 
         return new DraftBundle(
-            Stage: "Rollover blocked — account secured",
+            Stage: "Claim blocked — Grace's cover secured",
             Outcome: "Blocked",
             Summary: summary,
             VulnerabilityFlags:
             [
-                "Scam / identity-takeover victim — contact only on the pre-change verified details (grace.williams@example.com, 0491 570 157).",
-                "Member is travelling overseas (Italy) — call at a time that suits her; be calm and unhurried.",
-                "Never mention any report to authorities (SMR) — tipping-off risk.",
+                "Scam and identity-takeover victim — contact only on her verified details (0491 570 157, grace.williams@example.com).",
+                "Travelling overseas (Italy until 1 Dec) — call at a time that suits her; be calm and unhurried.",
+                "Never suggest Grace did anything wrong, and don't share the details of the investigation.",
             ],
             HumanApprovalRequired: true,
-            HumanApprovalReason: "Every communication to a fraud victim is reviewed and approved by a human before it is sent.",
-            Drafts: [memberEmail, sms],
-            AdviserNote: "Grace is a direct member — no adviser on the account, so no adviser update is needed.");
+            HumanApprovalReason: "Every communication to a fraud victim is approved by a person before it is sent — Cara, for her letters (Matrix — authority, approvals and escalation).",
+            Approver: CaraApproves,
+            Drafts: [callScript, letter, sms],
+            PartnerNote: "Grace is an existing client with no referral partner on this case, so there's no partner update. Lyrebird Life's fraud team was alerted by Felix with Theo's approval — that isn't a client communication.",
+            AdviserNote: null,
+            Sources: [DocFinCrime, DocLyrebird, DocMatrix, CaseDoc(r, "client activity log"), CaseDoc(r, "travel notice")]);
     }
 
-    // ── 3. George — welcome to retirement + confirmation to Marcus ─────────────
+    // ── 3. George & Harpreet — letters and an update to Marcus ────────────────
     private static DraftBundle George(CaseRecord r)
     {
         var summary = new CaseSummary(
-            SentimentLabel: "Positive · a little anxious",
+            SentimentLabel: "Positive · practical",
             Sentiment:
-                "George is proud and practical, and a little anxious about \"running out\": \"Forty years on the tools — I just want a steady income and to stop worrying.\" " +
-                "Celebrate the milestone and give him certainty — exact dates and amounts, no jargon, no advice.",
+                "George and Harpreet are practical business owners who finally have a succession plan in place. George may feel a little flat about the loading — " +
+                "he'll want to hear that it isn't a judgement and that Northbank will review it. Both will want clear numbers and to know what's left to do.",
             WhatHappened:
-                "Marcus Tan (Bayside Financial Partners) asked on 9 November 2026 to start an account-based pension for George with $1,250,000 from his accumulation account. " +
-                "Ben confirmed the age-65 condition of release, the transfer balance cap ($850,000 of cap space left under the $2.1 million cap) and this year's pro-rated minimum ($38,870). " +
-                "Theo approved the commencement in Teams (commencements of $1,000,000 or more). Caldova Pension CP-3077881 started on 16 November 2026 with Helen as reversionary beneficiary; " +
-                "$34,600 stays in his super account. Payments of $6,500 a month start on 15 December 2026, tax-free.",
+                "Marcus Tan (Bayside Business Accountants) referred George and Harpreet on 9 Nov 2026 because Northcote Custom Joinery had no succession plan. " +
+                "After Theo's second review (total cover $2,800,000), Amelia advised buy-sell life and TPD cover of $1,200,000 each — each partner owns their own policy — " +
+                "and $400,000 of key person cover on George, owned by the company, all with Northbank Life. Harpreet was accepted at standard rates. George's medical results " +
+                "led to a 25% loading on his life and TPD cover, which Northbank will review in two years; George accepted it with Amelia on 19 Nov. All three policies " +
+                "have been in force since Fri 20 Nov 2026.",
             WhatsNext:
             [
-                "First payment of $6,500 on Tuesday 15 December 2026, then on the 15th of each month — tax-free, no PAYG withheld.",
-                "Seven payments before 30 June 2027 total $45,500 — above the $38,870 minimum for 2026-27. The minimum is recalculated every 1 July.",
-                "Transfer balance credit of $1,250,000 reported to the ATO — $850,000 of cap space remains.",
-                "Investments as instructed: two years of payments ($156,000) in cash and term deposits, the remaining $1,094,000 in the Balanced model.",
+                "Send separate letters to George and Harpreet — each sees only their own cover, and only George's letter mentions his loading.",
+                "Update Marcus with their consent: cover in place and the lawyer finalising the buy-sell agreement — no health or underwriting details.",
+                "Their lawyer drafts and finalises the buy-sell agreement — Caldova doesn't draft legal documents.",
+                "Northbank will review George's loading in two years — note it on his file.",
             ]);
 
-        var memberLetter = new Draft(
-            Id: "member-welcome-retirement",
-            Audience: "member",
-            AudienceLabel: "Member letter — welcome to retirement",
+        var georgeLetter = new Draft(
+            Id: "client-george",
+            Audience: "client",
+            AudienceLabel: "Letter to George",
             Channel: "Letter (by email)",
-            Recipient: $"{r.ClientName} <{r.ClientEmail}> · copy to Marcus Tan (Bayside Financial Partners)",
-            Subject: "Welcome to retirement, George — your Caldova Pension has started",
+            Recipient: "George Papadopoulos <george@northcotejoinery.example.com.au>",
+            Subject: "Your business protection is in place, George",
             Body: $"""
                 Dear George,
 
-                Congratulations on your retirement — after forty years on the tools, it's well earned. Your Caldova Pension started on **Monday 16 November 2026**, and we wanted to set out exactly what to expect.
+                I'm pleased to confirm that the business protection we planned for Northcote Custom Joinery is now in place with Northbank Life, from **Friday 20 November 2026**. You and Harpreet now have the cover behind your succession plan.
 
-                **Your pension at a glance**
-                - Pension account: **CP-3077881**
-                - Amount moved into your pension: $1,250,000 from your super account CS-1077881
-                - Still in your super account: $34,600
-                - Reversionary beneficiary: **Helen** — if you pass away, your pension will continue to be paid to her
+                **Your cover**
 
-                **Your payment schedule**
+                | Policy | What it's for | Cover | Owner | Premium a year |
+                |---|---|---|---|---|
+                | NB-26300418 | Buy-sell — life and TPD | $1,200,000 | You | $5,175 |
+                | NB-26300420 | Key person — life and TPD | $400,000 | Northcote Custom Joinery Pty Ltd | $1,725, paid by the company |
 
-                | Payment | Details |
-                |---|---|
-                | Regular payment | **$6,500 a month** ($78,000 a year) |
-                | First payment | **Tuesday 15 December 2026** |
-                | Then | On the 15th of each month (or the next business day) |
-                | Paid to | Your nominated account ending 2214 |
-                | Tax | None — payments are tax-free because you're over 60 |
-                | Payments before 30 June 2027 | 7 payments, $45,500 in total |
+                Premiums are stepped, so they'll usually rise each year as you get older.
 
-                **The yearly minimum**
-                The law sets a minimum amount that must be paid from your pension each financial year. Because your pension started part-way through the year, your minimum for 2026-27 is **$38,870** — your payments are comfortably above it. We'll recalculate the minimum every 1 July and let you know.
+                **About the 25% loading**
+                Northbank looked at your medical results — your cholesterol and blood pressure readings — and added a 25% loading to the premiums for your life and TPD cover. A loading isn't a judgement about you. It's simply how an insurer prices a higher risk, and it changes the price of your cover, not what it covers. Northbank will review the loading on request after two years if your results improve, and we'll help you ask for that review. Thank you for talking it through with me on 19 November.
 
-                **Your transfer balance cap**
-                There's a limit on how much can be moved into retirement pensions over your lifetime — $2.1 million in 2026-27. Your pension uses $1,250,000 of it, leaving **$850,000**. We've reported the transfer to the ATO for you.
+                **The buy-sell agreement**
+                Your cover works hand in hand with a buy-sell agreement between you and Harpreet, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Caldova doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
 
-                **Want to change something?**
-                You can change your payment amount or how often you're paid (as long as it stays above the minimum), or update your bank details, at any time. For decisions about how your pension is invested, Marcus is your first port of call.
+                **Tax**
+                As the company's accountant, Marcus has confirmed how the key person cover is treated for tax. Please speak with him about anything tax-related.
 
-                **Questions?**
-                Call us on {CaldovaPhone} ({ServiceHours}) or speak with Marcus.
+                **If you change your mind**
+                {LifeRules.CoolingOffPlain} Northbank's policy documents explain how to cancel.
 
-                {SuperComplaints("call us")}
+                **If you ever need to claim**
+                Call us first on {Phone} — Ben, our Benefit Claims Advocate, will help with every step.
 
-                Enjoy your retirement, George.
+                {Complaints("call me or reply to this email")}
 
-                Warm regards,
-                {Signature}
+                Kind regards,
+                {AmeliaSignature}
                 """,
             Tone:
-                "Warm and celebratory, then reassuringly precise: one table with every date and amount for a member who worries about running out. " +
-                "The minimum and the cap are explained in plain English; investment questions go to Marcus.",
+                "Warm and businesslike. One table for the numbers; the loading is explained kindly and plainly — what it is, why, that it isn't a judgement, " +
+                "and that it will be reviewed.",
             Compliance:
             [
-                Pass("No personal advice", "Investment and income decisions are referred to his adviser."),
-                Pass("Amounts, dates & tax treatment", "$6,500 monthly from 15 Dec 2026; tax-free (PAYG nil); minimum $38,870 for 2026-27."),
-                Pass("Rules explained plainly", "Minimum drawdown and transfer balance cap ($850,000 remaining)."),
-                Pass("Reversionary beneficiary confirmed", "Helen (spouse)."),
-                Pass("Contact & complaint rights", "Caldova IDR (45 days) then AFCA."),
-                Pass("Privacy", "Bank account masked (ending 2214)."),
+                Pass("Loading explained kindly", "Why, what it changes (price, not cover), and the review in two years."),
+                Pass("Health information", "George's own results, in his own letter only."),
+                Pass("No legal or tax advice", "Buy-sell agreement with their lawyer; tax with Marcus, their accountant."),
+                Pass("Required disclosures", $"Premiums in dollars (stepped), a cooling-off period of {LifeRules.CoolingOff} (Corporations Act s1019B), how to claim, complaint rights."),
+                Pass("Facts match the policies", "NB-26300418 and NB-26300420 from 20 Nov 2026; premiums after loading."),
             ],
             ApprovalRequired: false,
-            ApprovalReason: "Spot-check — the $1,250,000 commencement itself was approved by Theo in Teams.");
+            ApprovalReason: SpotCheck);
 
-        var adviserEmail = new Draft(
-            Id: "adviser-update",
-            Audience: "adviser",
-            AudienceLabel: "Adviser confirmation",
+        var harpreetLetter = new Draft(
+            Id: "client-harpreet",
+            Audience: "client",
+            AudienceLabel: "Letter to Harpreet",
+            Channel: "Letter (by email)",
+            Recipient: "Harpreet Kaur <harpreet@northcotejoinery.example.com.au>",
+            Subject: "Your business protection is in place, Harpreet",
+            Body: $"""
+                Dear Harpreet,
+
+                I'm pleased to confirm that your business protection cover is now in place with Northbank Life, from **Friday 20 November 2026**.
+
+                **Your cover**
+
+                | Policy | What it's for | Cover | Owner | Premium a year |
+                |---|---|---|---|---|
+                | NB-26300419 | Buy-sell — life and TPD | $1,200,000 | You | $3,100 |
+
+                Northbank accepted your cover at standard rates. Premiums are stepped, so they'll usually rise each year as you get older.
+
+                The company also now holds $400,000 of key person cover on George (policy NB-26300420), which protects the business's profit while a replacement is found and trained.
+
+                **The buy-sell agreement**
+                Your cover works hand in hand with the buy-sell agreement between you and George, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Caldova doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
+
+                **If you change your mind**
+                {LifeRules.CoolingOffPlain} Northbank's policy documents explain how to cancel.
+
+                **If you ever need to claim**
+                Call us first on {Phone} — Ben, our Benefit Claims Advocate, will help with every step.
+
+                {Complaints("call me or reply to this email")}
+
+                Kind regards,
+                {AmeliaSignature}
+                """,
+            Tone: "Clear and businesslike — Harpreet runs the numbers for the business and will appreciate a short, precise letter.",
+            Compliance:
+            [
+                Pass("Health information", "Nothing about George's medical results or loading — only Harpreet's own cover, and the company's key person policy."),
+                Pass("No legal advice", "The buy-sell agreement stays with their lawyer."),
+                Pass("Required disclosures", $"Premium in dollars (stepped), a cooling-off period of {LifeRules.CoolingOff} (Corporations Act s1019B), how to claim, complaint rights."),
+                Pass("Facts match the policy", "NB-26300419, $1,200,000, standard rates, $3,100 a year, from 20 Nov 2026."),
+            ],
+            ApprovalRequired: false,
+            ApprovalReason: SpotCheck);
+
+        var marcus = new Draft(
+            Id: "partner-update",
+            Audience: "partner",
+            AudienceLabel: "Referral partner update — with consent",
             Channel: "Email",
-            Recipient: "Marcus Tan <marcus.tan@baysidefp.example.com.au> · Bayside Financial Partners (ADV-20871)",
-            Subject: "George Papadopoulos — Caldova Pension CP-3077881 commenced 16/11/2026",
+            Recipient: "Marcus Tan <marcus.tan@baysideaccountants.example.com.au> · Bayside Business Accountants",
+            Subject: "Northcote Custom Joinery — business protection in place",
             Body: $"""
                 Hi Marcus,
 
-                Confirming George Papadopoulos's pension commencement (case {r.CaseNumber}).
+                Thank you for introducing George and Harpreet. With their consent, a short update: the business protection for Northcote Custom Joinery is in place with Northbank Life from 20 November 2026.
 
-                **Commencement**
-                - Caldova Pension **CP-3077881** commenced 16 November 2026 with $1,250,000 transferred from accumulation CS-1077881; $34,600 remains in accumulation.
-                - Approved by our Team Leader (commencements of $1,000,000 or more need approval).
-                - Reversionary beneficiary: Helen Papadopoulos (spouse) — recorded.
+                - **Buy-sell:** life and TPD cover of $1,200,000 each for George and Harpreet — 50% each of your $2,400,000 valuation at 30 June 2026 — with each partner owning the policy on their own life.
+                - **Key person:** $400,000 of life and TPD cover on George, owned by the company for a revenue purpose, in line with your estimate of the profit at risk.
+                - **Buy-sell agreement:** their lawyer is finalising it. It should reflect the sums insured and the ownership above.
 
-                **Payments**
-                - $78,000 p.a. paid monthly — $6,500 on the 15th, first payment **15 December 2026**, to the nominated joint account (ending 2214).
-                - George is over 60, so payments are tax-free (PAYG withholding nil).
-
-                **Rules check**
-                - Condition of release: age 65 — met (unrestricted non-preserved).
-                - Transfer balance cap: $2.1 million general cap (2026-27); no prior transfer balance account; the $1,250,000 credit leaves **$850,000** of cap space. Credit reported to the ATO.
-                - Minimum drawdown: 5% (age 65–74) = $62,500 p.a.; pro-rated 227/365 days for 2026-27 = **$38,870** (rounded to the nearest $10). Scheduled payments before 30 June 2027: $45,500.
-
-                **Investments**
-                Implemented per the application: two years of payments ($156,000) in cash and term deposits, with the remaining $1,094,000 in the Caldova Managed Portfolio — Balanced. Our Investment Analyst's workbook comparing three income structures is on the case for your review with George.
-
-                We've sent George a "welcome to retirement" letter with his payment schedule, this year's minimum and how to make changes, plus a short congratulatory SMS.
+                George and Harpreet have asked us to share the cover outcome only, so this note doesn't include any health or underwriting information. They're happy to talk to you directly about anything else.
 
                 Kind regards,
-                {Signature}
-                Adviser Desk: {CaldovaPhone}
+                {AmeliaSignature}
                 """,
-            Tone: "Adviser language with the full working for the file — every rule, number and date in one place.",
+            Tone: "Professional and concise — the facts an accountant needs for the succession plan, and nothing personal.",
             Compliance:
             [
-                Pass("No personal advice", "Workbook offered for the adviser's review; no recommendation to the member."),
-                Pass("Authority to share", "Marcus is the adviser of record (ADV-20871)."),
-                Pass("Rules cited", "Condition of release, transfer balance cap, minimum drawdown, reversionary nomination."),
-                Pass("Privacy", "Bank account masked."),
+                Pass("Consent scope", "George and Harpreet consented to Marcus receiving the cover outcome."),
+                Pass("No health information", "No medical results, loadings or underwriting details."),
+                Pass("No legal advice", "The agreement stays with their lawyer."),
+                Pass("Facts match the case", "$2,400,000 valuation at 30 Jun 2026; $1,200,000 each; $400,000 key person; in force 20 Nov 2026."),
             ],
             ApprovalRequired: false,
-            ApprovalReason: SpotCheckReason);
+            ApprovalReason: "Spot-check — confirm both partners' consent is on file before sending.");
 
         var sms = new Draft(
             Id: "sms",
             Audience: "sms",
             AudienceLabel: "SMS",
             Channel: "SMS",
-            Recipient: $"{r.ClientName} · {r.ClientPhone}",
+            Recipient: $"George Papadopoulos · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Congratulations on your retirement, George! Your pension has started and your first $6,500 payment arrives 15 Dec. Letter to follow. {CaldovaPhone}",
-            Tone: "Short, warm and celebratory.",
+            Body: $"Caldova: Hi George, your Northbank Life business protection started on 20 Nov. Amelia's letter with the details is in your email. Questions? {Phone}",
+            Tone: "Short and positive.",
             Compliance:
             [
-                Pass("Non-sensitive", "No bank details; amount and date only."),
-                Pass("Points to the full letter", "The letter carries the schedule and complaint rights."),
-                Pass("Contact details", CaldovaPhone),
+                Pass("Non-sensitive", "No amounts, loading or health details by SMS."),
+                Pass("Points to the full letter", "The letter carries the cover, premiums, cooling-off and complaint rights."),
             ],
             ApprovalRequired: false,
-            ApprovalReason: SpotCheckReason);
+            ApprovalReason: SpotCheck);
 
         return new DraftBundle(
-            Stage: "Pension commenced 16 Nov 2026",
+            Stage: "Cover in force from 20 Nov 2026",
             Outcome: "Completed",
             Summary: summary,
             VulnerabilityFlags: [],
             HumanApprovalRequired: false,
-            HumanApprovalReason: "Positive outcome already approved by Theo — drafts can be spot-checked before sending.",
-            Drafts: [memberLetter, adviserEmail, sms],
-            AdviserNote: null);
+            HumanApprovalReason: "Positive outcome; the loading was accepted with Amelia — the drafts can be spot-checked before sending.",
+            Approver: "Spot-check by Cara",
+            Drafts: [georgeLetter, harpreetLetter, marcus, sms],
+            PartnerNote: null,
+            AdviserNote: null,
+            Sources: [DocNorthbank, DocUnderwriting, DocAdviceRules, DocTax, CaseDoc(r, "underwriting decision")]);
     }
 
-    // ── 4. Tom — kind partial-approval letter (hardship) ──────────────────────
+    // ── 4. Tom — Amelia calls first, then a kind letter ($5,600 vs $7,000) ────
     private static DraftBundle Tom(CaseRecord r)
     {
         var summary = new CaseSummary(
-            SentimentLabel: "Distressed · vulnerable",
+            SentimentLabel: "Worried · injured and under financial strain",
             Sentiment:
-                "Tom is stressed, proud and a little embarrassed — he applied late at night: \"I never thought I'd need to touch my super — I just need to catch up on the bills.\" " +
-                "He needs kindness without judgement, a clear reason why it's $10,000 and not $15,000, and somewhere to turn for free help.",
+                "Tom is in pain after shoulder surgery, worried about the bills and frustrated that he can't work. He expected $7,000 a month, so $5,600 will be " +
+                "a disappointment. He needs to hear it from Amelia first, then a kind, clear letter with the working, the date of his first payment and the reassurance " +
+                "that Kylie can help him with anything.",
             WhatHappened:
-                "Tom applied on 11 November 2026 to release $15,000 on severe financial hardship grounds. He meets every criterion — 31 weeks of JobSeeker (26 needed), " +
-                "still receiving it, a Services Australia letter dated 9 November 2026, unable to meet reasonable living expenses, and no release in the last 12 months — " +
-                "but the law caps a hardship release at $10,000 before tax in any 12 months. After a vulnerable-member review, Theo approved a partial release of $10,000. " +
-                "Tax: $600 tax-free, $9,400 taxable, $2,068 withheld (22%), so $7,932 will be paid to him on Friday 13 November 2026.",
+                "Tom fell from a ladder on 14 Oct 2026, tore his right rotator cuff and had surgery on 21 Oct; his surgeon expects four to six months off work. He called " +
+                "on 11 Nov with Kylie as his support person. Ben checked his Harbourline Life income protection policy (HL-23051877): it pays the lesser of the $7,000 " +
+                "insured benefit and 70% of his average monthly earnings in the 12 months before the injury. His net business income for the 12 months to 30 Sep 2026 was " +
+                "$96,000 — $8,000 a month — so 70% is $5,600. Felix confirmed the BAS, profit and loss and surgeon's report. Theo approved lodgement; Ben lodged the claim " +
+                "on 12 Nov and Harbourline accepted it on 19 Nov at $5,600 a month.",
             WhatsNext:
             [
-                "$7,932 paid to Tom's account ending 5120 on Friday 13 November 2026; $2,068 sent to the ATO as tax withheld.",
-                "His balance goes from $84,300 to about $74,300 before market movements.",
-                "Another hardship release can't be paid for 12 months.",
-                "Letter needs human approval before sending (partial approval, vulnerable member); Cara offers Tom a call.",
+                "Amelia calls Tom (with Kylie, under his written authority) before anything is written — Theo's request.",
+                "The benefit accrues from 13 Nov 2026 and is paid monthly in arrears — first payment about 13 Dec 2026.",
+                "Payments are taxable income — Tom's accountant should know.",
+                "Ben stays Tom's day-to-day claims contact while he's off work.",
             ]);
 
-        var memberLetter = new Draft(
-            Id: "member-decision",
-            Audience: "member",
-            AudienceLabel: "Member letter — hardship decision",
-            Channel: "Letter (by email)",
-            Recipient: $"{r.ClientName} <{r.ClientEmail}>",
-            Subject: "Your financial hardship application — $10,000 approved",
+        var call = new Draft(
+            Id: "call-talking-points",
+            Audience: "call",
+            AudienceLabel: "Call talking points — Amelia calls Tom first",
+            Channel: "Phone call — before the letter",
+            Recipient: $"{r.ClientName} · {r.ClientPhone} (Kylie may join as his support person — written authority on file)",
+            Subject: "Tell Tom personally: claim accepted at $5,600 a month",
+            Body: $"""
+                **Purpose:** Tom hears from you, not from a letter, that Harbourline has accepted his claim — and why it's $5,600 a month.
+
+                1. **Check in first.** "How's the shoulder? How are you and Kylie going?" Let him talk.
+                2. **The good news.** "Harbourline has accepted your claim, so your payments will start soon."
+                3. **The amount, simply.** "Your policy pays up to $7,000 a month, but it's also capped at 70% of what the business earned on average in the 12 months before your accident. Your BAS and profit and loss show $96,000 for the year to 30 September — that's $8,000 a month, and 70% of that is $5,600. So Harbourline will pay $5,600 a month."
+                4. **When.** "It counts from 13 November, after your 30-day waiting period, and it's paid monthly in arrears — so the first payment should arrive around 13 December."
+                5. **Tax.** "The payments are taxable income, so let your accountant know."
+                6. **If he's disappointed.** "I know it's not what you were expecting, and I'm sorry." Don't argue the numbers. "If you think your earnings haven't been counted properly, Ben can ask Harbourline to look again — and you can make a complaint if you're still not happy."
+                7. **Support.** "If money's tight before the first payment, the National Debt Helpline on 1800 007 007 offers free, confidential financial counselling."
+                8. **Close.** "I'll send you a letter with all of this in writing. Ben looks after your claim day to day, and I'm here too."
+
+                **Not on this call:** don't discuss changing his cover — that's for his next review (see the note for Amelia).
+                """,
+            Tone: "Personal and kind. Good news first, the reason in one breath, no defensiveness.",
+            Compliance:
+            [
+                Pass("Partial outcome explained", "The 70% earnings limit with Tom's own figures."),
+                Pass("No advice on the call", "Cover changes are left for his next review with Amelia."),
+                Pass("Support person", "Kylie joins under Tom's written authority."),
+                Pass("Free help", "National Debt Helpline offered."),
+            ],
+            ApprovalRequired: true,
+            ApprovalReason: "Amelia calls Tom before anything is written — Theo's request after his vulnerable-client review.");
+
+        var letter = new Draft(
+            Id: "client-letter",
+            Audience: "client",
+            AudienceLabel: "Letter — claim accepted at $5,600 a month",
+            Channel: "Letter (by email), after Amelia's call",
+            Recipient: $"{r.ClientName} <{r.ClientEmail}> · Kylie Bradley may receive a copy under Tom's written authority",
+            Subject: "Your income protection claim — accepted at $5,600 a month",
             Body: $"""
                 Dear Tom,
 
-                Thank you for your application, and for being so open with us about what's been happening. We know it isn't easy to ask for help, and we've looked at your application carefully.
+                Thank you for talking with me today. I'm sorry you're going through this — a shoulder injury is hard on anyone who works with their hands, and harder when the bills keep coming. Here's everything we discussed, in writing.
 
-                **Our decision**
-                We've approved an early release of **$10,000** from your super on severe financial hardship grounds. You asked for $15,000, and we're sorry we can't release the full amount: the law allows a hardship release of no more than $10,000 (before tax) in any 12-month period, so $10,000 is the most we're able to pay. You met every other requirement.
+                **Harbourline has accepted your claim**
+                Harbourline Life has accepted your income protection claim (policy HL-23051877). You'll receive **$5,600 a month** for as long as your shoulder injury keeps you from working and you're under your doctor's care — your policy can pay up to age 65.
 
-                **What you'll receive**
+                **Why it's $5,600 and not $7,000**
+                Your policy pays up to $7,000 a month. It also says the monthly benefit can't be more than 70% of your average monthly earnings in the 12 months before your injury. Harbourline pays the lower of the two.
 
-                | | Amount |
+                | | |
                 |---|---|
-                | Amount released (before tax) | $10,000.00 |
-                | Tax-free part | $600.00 |
-                | Taxable part | $9,400.00 |
-                | Tax withheld (22% of the taxable part) | $2,068.00 |
-                | **Paid to you** | **$7,932.00** |
+                | Net business income, 12 months to 30 September 2026 (BAS and profit and loss) | $96,000 |
+                | Average a month | $8,000 |
+                | 70% of your average monthly earnings | **$5,600** |
+                | Your insured benefit | $7,000 |
+                | **What Harbourline pays each month** | **$5,600** |
 
-                We'll pay **$7,932** into your bank account ending 5120 on **Friday 13 November 2026**.
+                **When you'll be paid**
+                - Your benefit counts from **13 November 2026**, after your 30-day waiting period.
+                - It's paid monthly in arrears, so your first payment should arrive around **13 December 2026**, then each month after that.
+                - Harbourline may ask for updates from your surgeon while you're off work. Ben will help you with these.
 
-                **Why tax is taken out**
-                Because you're under 60, part of a super withdrawal is taxed. We send the $2,068 to the ATO on your behalf, and it will appear on your income statement for your 2026-27 tax return. The amount withheld isn't necessarily your final tax — that's worked out when you lodge your return, and the ATO or a registered tax agent can help with any questions.
+                **Tax**
+                Income protection payments are taxable income, so please let your accountant know.
 
-                **What this means for your super**
-                Your super balance will go from about $84,300 to about $74,300 (before any market movements). We mention this only so you have the full picture — the rest of your super stays invested for your retirement.
+                **If money is tight**
+                If things are tight before your first payment, {LifeRules.DebtHelpline} offers free, confidential financial counselling.
 
-                **Free, confidential help**
-                - **National Debt Helpline** — free financial counselling: **1800 007 007** (www.ndh.org.au). A counsellor can talk with your lender and energy provider about hardship arrangements.
-                - **Moneysmart** — free tools and guidance from ASIC: www.moneysmart.gov.au
+                **If you disagree with the amount**
+                If you think your earnings haven't been counted properly, tell Ben and he'll ask Harbourline to review it with any extra information you have. You can also make a complaint to Harbourline Life, which must respond in writing within {LifeRules.IdrResponse}. If you're not satisfied with the response, you can contact the Australian Financial Complaints Authority (AFCA), a free and independent service: {LifeRules.AfcaContact}. If you're unhappy with anything we've done, please tell me.
 
-                **What happens next**
-                You don't need to do anything else. Please keep in mind that a hardship release can only be paid once in any 12-month period.
+                **Your contacts**
+                Ben, our Benefit Claims Advocate, looks after your claim day to day, and I'm here too. Kylie is welcome to call us on your behalf — we have your written authority on file.
 
-                If you'd like to talk any of this through, I'm very happy to call you — just reply to this email or call us on {CaldovaPhone} ({ServiceHours}) and ask for Cara.
+                Take care of that shoulder, and please call if you need anything.
 
-                **If you're not happy with our decision**
-                You can make a complaint. Please tell us first and our Complaints team will give you a written response within 45 days. If you're still not satisfied, or we haven't responded in time, you can contact the Australian Financial Complaints Authority (AFCA), a free and independent service: {AfcaContact}.
-
-                Take care,
-                {Signature}
+                Kind regards,
+                {AmeliaSignature}
                 """,
             Tone:
-                "Kind, respectful and non-judgemental. Acknowledges how hard it is to ask, leads with what we can do, explains the $10,000 cap in one sentence, " +
-                "shows the tax in a simple table and mentions the effect on his super gently. Offers a personal call.",
+                "Kind and respectful. Leads with the good news, explains the lower amount once with Tom's own figures in a simple table, then dates, tax, " +
+                "free help and his right to disagree. Nothing defensive or legalistic.",
             Compliance:
             [
-                Pass("Partial approval explained", "The rule: $1,000–$10,000 before tax, once in any 12 months."),
-                Pass("Tax shown clearly", "$600 tax-free, $9,400 taxable, $2,068 withheld (22%), $7,932 net."),
-                Pass("Free help", "National Debt Helpline 1800 007 007 and Moneysmart."),
-                Pass("No personal financial or tax advice", "Refers tax questions to the ATO or a registered tax agent."),
-                Pass("Complaint rights", "Part of the request couldn't be met — Caldova IDR (45 days) then AFCA."),
-                Pass("Privacy", "Bank account masked (ending 5120)."),
+                Pass("Partial outcome explained", "Lesser of $7,000 and 70% of average monthly earnings in the 12 months before the injury."),
+                Pass("Matches the policy", $"Benefit basis per {DocHarbourline} and {DocClaimsRules}."),
+                Pass("Dates", "Accrues from 13 Nov 2026; paid monthly in arrears; first payment about 13 Dec 2026."),
+                Pass("Tax stated carefully", "Taxable income — refers him to his accountant."),
+                Pass("Complaint rights", $"Harbourline's IDR (within {LifeRules.IdrResponse}), then AFCA with full contact details."),
+                Pass("Support person", "Kylie, under Tom's written authority."),
+                Pass("No new advice", "Changing his cover isn't mentioned — that's Amelia's call at his next review."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Partial approval to a vulnerable member — must be approved by a human before it is sent.");
+            ApprovalReason: "Partial outcome for an injured client under financial stress — Cara approves it, and it goes only after Amelia's call.");
 
         var sms = new Draft(
             Id: "sms",
             Audience: "sms",
             AudienceLabel: "SMS",
-            Channel: "SMS",
+            Channel: "SMS — after Amelia's call",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: "Caldova: Hi Tom, we've approved $10,000 (before tax) from your super. $7,932 will reach your account on Fri 13 Nov. Details by email. Free help: 1800 007 007",
-            Tone: "Plain and kind; leads with the good news.",
+            Body: $"Caldova: Hi Tom, it's Amelia. As we discussed, Harbourline accepted your claim at $5,600 a month, first payment about 13 Dec. Details by email. {Phone}",
+            Tone: "Plain and kind; sent after the call, never instead of it.",
             Compliance:
             [
-                Pass("Non-sensitive", "No bank or TFN details."),
-                Pass("Points to the full letter", "The letter explains the cap, the tax and complaint rights."),
-                Pass("Free help", "National Debt Helpline 1800 007 007."),
+                Pass("Non-sensitive", "No health or bank details."),
+                Pass("Points to the full letter", "The letter carries the working, tax and complaint rights."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Hardship decision to a vulnerable member — human approval required.");
+            ApprovalReason: "Message to a vulnerable client — Cara approves it, after Amelia's call.");
 
         return new DraftBundle(
-            Stage: "Partially approved — $10,000 releasing Fri 13 Nov 2026",
+            Stage: "Claim accepted 19 Nov 2026 — $5,600 a month",
             Outcome: "Partially approved",
             Summary: summary,
             VulnerabilityFlags:
             [
-                "Financial hardship — vulnerable member, visible distress (late-night application).",
-                "Partial approval: $15,000 requested, $10,000 approved — decision letters need human approval and complaint rights.",
-                "Include free financial counselling: National Debt Helpline 1800 007 007 and Moneysmart.",
+                "Injury and financial stress — self-employed, with a young family; Amelia calls before anything is written.",
+                "Partial outcome: $5,600 a month against $7,000 insured — the letter explains why and includes his right to complain.",
+                "Kylie is Tom's support person under his written authority.",
             ],
             HumanApprovalRequired: true,
-            HumanApprovalReason: "Partial approvals and hardship communications are always reviewed by a human before sending.",
-            Drafts: [memberLetter, sms],
-            AdviserNote: "Tom is a direct member — no adviser on the account, so no adviser update is needed.");
+            HumanApprovalReason: "Messages to an injured client with a partial outcome are approved by a person before they're sent — Cara approves her letters, and Amelia calls first at Theo's request.",
+            Approver: CaraApproves + ", after Amelia's call",
+            Drafts: [call, letter, sms],
+            PartnerNote: "Tom is an existing client (since 2023) with no referral partner on this case, so there's no partner update.",
+            AdviserNote:
+                "Not shared with Tom: his insured benefit ($7,000 a month) is more than his recent income supports " +
+                "($5,600 a month at 70% of $8,000). At his next review Amelia may consider whether the benefit should change. The adviser decides.",
+            Sources: [DocHarbourline, DocClaimsRules, DocTax, CaseDoc(r, "earnings evidence"), CaseDoc(r, "benefit calculation")]);
     }
 
-    // ── 5. Robert & Lily — condolence letters (binding nomination) ─────────────
+    // ── 5. Robert — Amelia calls first, a gentle letter and a super checklist ─
     private static DraftBundle Robert(CaseRecord r)
     {
         var summary = new CaseSummary(
             SentimentLabel: "Grieving · bereaved family",
             Sentiment:
-                "Robert is quiet, grieving and organised for the family: \"Mum always said she'd sorted everything — I just want to do this right for her.\" " +
-                "He and Lily need gentleness, one consistent contact, clear timing and a simple explanation of the tax.",
+                "Robert lost his wife suddenly six weeks ago and is caring for Lily and Max on his own. He's organised but exhausted. He needs gentleness, " +
+                "one familiar person (Amelia), clear confirmation that the money has arrived, and a simple list for the super claim — nothing he has to chase.",
             WhatHappened:
-                "Robert told us on 13 November 2026 that his mother, Mei Chen, died on 12 October 2026. Pension payments on her Caldova Pension CP-3019042 " +
-                "(about $486,200) stopped on notification. The certified death certificate and both IDs are genuine. Mei's binding nomination (signed 18 March 2024 " +
-                "before two adult witnesses who aren't beneficiaries, valid to 18 March 2027) names Robert 50% and Lily 50%; as her children they are SIS dependants, " +
-                "so the trustee must pay as nominated. As adult non-dependants for tax, 17% is withheld from the taxable part. The portfolio was redeemed and Theo " +
-                "approved both payments: each child receives $243,100 gross, $25,622.74 withheld, $217,477.26 net.",
+                "Robert emailed Amelia on 13 Nov 2026 with a certified copy of Mei's death certificate and his ID. Theo took compassionate oversight: Amelia is the " +
+                "family's one named contact and Theo approves every message. Felix confirmed the documents. Ben confirmed Mei's Corella Life policy (CR-19033105, " +
+                "life cover $1,000,000) was in force with premiums paid, no exclusions and a valid nomination of Robert (100%), so the benefit is paid directly to " +
+                "him, not through Mei's estate. Ben lodged the claim on 16 Nov after Theo's approval; Corella accepted it on 20 Nov and paid $1,000,000 to Robert on " +
+                "23 Nov 2026. Ben also found $180,000 of default death cover in Mei's Riverbend Super account — a separate claim with the fund's trustee.",
             WhatsNext:
             [
-                "Cara calls Robert first, then sends separate condolence letters to Robert and Lily — after human approval.",
-                "Update Marcus Tan only with the family's consent.",
-                "Close Mei's pension account and send a final statement; each beneficiary receives a statement of the payment and tax withheld for their 2026-27 tax return.",
-                "Complaint clock: up to 90 days for a death benefit complaint if one is made — none open.",
+                "Amelia calls Robert first; the letter follows — Theo approves every message to the family.",
+                "Riverbend Super claim ($180,000): Ben helps Robert with the fund's claim form and documents; the trustee pays it under the fund's rules.",
+                "Nothing more is needed on the Corella claim — it's complete.",
             ]);
 
-        Draft CondolenceLetter(string id, string first, string recipient, string accountEnding, string sibling) => new(
-            Id: id,
-            Audience: "member",
-            AudienceLabel: $"Condolence letter — {first}",
-            Channel: "Letter (by email)",
-            Recipient: recipient,
-            Subject: "Your mother's Caldova Pension — with our sympathy",
+        var call = new Draft(
+            Id: "call-talking-points",
+            Audience: "call",
+            AudienceLabel: "Call talking points — Amelia calls Robert first",
+            Channel: "Phone call — before the letter",
+            Recipient: $"{r.ClientName} · {r.ClientPhone}",
+            Subject: "Let Robert know, gently, that Mei's cover has been paid",
             Body: $"""
-                Dear {first},
+                **Purpose:** Robert hears from you, gently, that Mei's life cover has been paid — and that the super claim is in hand.
 
-                I'm so sorry for the loss of your mother, Mei. Thank you for letting us know, and for gathering what we needed at such a hard time. We've done our best to keep this as simple as we can.
+                - **Open gently.** "Hi Robert, it's Amelia. Is now an OK time? There's no rush at all."
+                - **The payment.** "I wanted you to hear it from me: Corella has paid Mei's life cover — $1,000,000 — into your account today."
+                - **Why it came to you directly.** "Because Mei nominated you, it's paid to you directly. It doesn't have to wait for her estate."
+                - **Tax.** "It isn't taxable."
+                - **The super claim.** "Mei also had $180,000 of cover with Riverbend Super. That's a separate claim with the fund. Ben will help you with it, one step at a time — I'll send a short checklist so you don't have to remember anything from this call."
+                - **Ask, don't assume.** "Is there anything you need from us right now?"
+                - **Close.** "I'm your contact for anything at all. Call me any time on {Phone}."
 
-                **Your mother's wishes**
-                Your mother made a binding death benefit nomination on 18 March 2024, asking for her pension to be shared equally between you and {sibling}. We've confirmed the nomination is valid, so we've paid it exactly as she asked — half to you and half to {sibling}.
+                **Don't:** no jargon, no other products or reviews, and don't rush him. If he'd rather talk another day, offer to call back.
+                """,
+            Tone: "Gentle and unhurried. Short sentences; silence is fine.",
+            Compliance:
+            [
+                Pass("One named contact", "Amelia."),
+                Pass("Facts match the case", "$1,000,000 paid to Robert on 23 Nov 2026; Riverbend Super $180,000."),
+                Pass("No sales or advice", "Nothing about other cover or products."),
+            ],
+            ApprovalRequired: true,
+            ApprovalReason: "Communication to a bereaved family — Theo approves every message; Amelia makes the call.");
 
-                **Your payment**
-                We've paid your share into your nominated account ending {accountEnding}. It should appear within one to two business days.
+        var letter = new Draft(
+            Id: "client-letter",
+            Audience: "client",
+            AudienceLabel: "Letter — Mei's life cover paid",
+            Channel: "Letter (by email), after Amelia's call",
+            Recipient: $"{r.ClientName} <{r.ClientEmail}>",
+            Subject: "Mei's life cover — paid to you on 23 November",
+            Body: $"""
+                Dear Robert,
 
-                | | Your share |
-                |---|---|
-                | Your 50% share (before tax) | $243,100.00 |
-                | Tax-free part (38%) | $92,378.00 |
-                | Taxable part (62%) | $150,722.00 |
-                | Tax withheld (17% of the taxable part) | $25,622.74 |
-                | **Paid to you** | **$217,477.26** |
+                I'm so sorry for the loss of Mei. Thank you for letting us know, and for sending what we needed at such a hard time. I wanted to confirm in writing what we talked about today.
 
-                **Why some tax was taken out**
-                Part of your mother's pension is tax-free and part is taxable. For tax purposes, adult children who weren't financially dependent on their parent are treated as non-dependants, so the law requires us to withhold 17% (15% plus the 2% Medicare levy) from the taxable part. Nothing is taken from the tax-free part. We'll send you a statement of the payment and the tax withheld for your 2026-27 tax return — the ATO or a registered tax agent can help with any questions about it.
+                **Mei's life cover has been paid**
+                Corella Life has paid Mei's life cover of **$1,000,000** into your account, on **Monday 23 November 2026**.
+                - Because Mei nominated you as her beneficiary, it's paid to you directly — it doesn't go through her estate.
+                - It isn't taxable.
+                - There's nothing more you need to do for this claim.
 
-                **What happens next**
-                There's nothing more you need to do. We'll close your mother's pension account and send you a final statement in the coming weeks.
+                **Mei's super — a separate claim**
+                Mei also had **$180,000** of death cover through her Riverbend Super account. This is a separate claim with Riverbend Super's trustee, who will pay it under the fund's rules. Because you were Mei's husband, a super death benefit paid to you as a lump sum is tax-free. Ben, from our Claims team, will help you with each step — there's no rush, and he'll do as much of the chasing as he can.
+
+                Here's a short checklist. Riverbend Super will confirm exactly what it needs, and Ben will help you complete the form:
+                - [ ] Riverbend Super's death benefit claim form — Ben will send it to you, with as much filled in as he can
+                - [ ] A certified copy of Mei's death certificate — you already have this
+                - [ ] Your certified ID — you already have this
+                - [ ] Evidence of your relationship to Mei, such as your marriage certificate, if the fund asks for it
+                - [ ] A bank account in your own name for the payment
 
                 **Who to contact**
-                I'll be your contact for anything you need. Please call me on {CaldovaPhone} ({ServiceHours}) and ask for Cara, or simply reply to this email.
+                I'm your contact for anything at all — please call me on {Phone} or reply to this email. Ben will look after the Riverbend Super claim with you.
 
-                {DeathBenefitComplaints("your mother's account")}
+                **If anything isn't right**
+                If you're ever unhappy with how we've helped, please tell me and I'll put it right. We'll respond in writing within {LifeRules.IdrResponse}, and if you're still not satisfied you can contact the Australian Financial Complaints Authority (AFCA), a free and independent service: {LifeRules.AfcaContact}.
 
-                With our deepest sympathy,
-                {Signature}
+                With deepest sympathy,
+                {AmeliaSignature}
                 """,
             Tone:
-                "Gentle and unhurried: condolences first, the mother's wishes in her own terms, one table for the money, one short paragraph on the tax, " +
-                "one name and one number to call. No process jargon.",
+                "Gentle and unhurried: condolences first, the payment confirmed in three short lines, then a simple checklist so nothing has to be remembered. " +
+                "One name and one number. No process jargon.",
             Compliance:
             [
                 Pass("Condolences first", "Opens with sympathy before any detail."),
-                Pass("Paid as nominated", "Binding nomination — no trustee discretion; 50/50 as Mei asked."),
-                Pass("Tax explained plainly", "38% tax-free / 62% taxable; 17% withheld from the taxable part; $217,477.26 net."),
-                Pass("One named contact", $"Cara on {CaldovaPhone}."),
-                Pass("Complaint rights", "Caldova IDR (up to 90 days for death benefit complaints) then AFCA."),
-                Pass("Privacy", $"Bank account masked (ending {accountEnding}); each beneficiary sees only their own payment."),
+                Pass("Facts match the case", "$1,000,000 paid 23 Nov 2026 to Robert as nominated beneficiary — not through the estate."),
+                Pass("Tax stated carefully", $"Life cover paid outside super isn't taxable; a super lump sum to a spouse is tax-free (ITAA 1997 s302-60) — per {DocTax}."),
+                Pass("Super claim explained", "Separate claim with Riverbend Super's trustee, under the fund's rules; checklist caveated."),
+                Pass("One named contact", $"Amelia on {Phone}."),
+                Pass("Complaint rights", "Given gently, at the end."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Communication to a bereaved family — every word is reviewed by a human before it is sent.");
-
-        var robertLetter = CondolenceLetter(
-            "member-condolence-robert", "Robert",
-            $"{r.ClientName} <{r.ClientEmail}> — the family's contact", "9012", "Lily");
-        var lilyLetter = CondolenceLetter(
-            "member-condolence-lily", "Lily",
-            "Lily Chen <lily.chen@example.com>", "4477", "Robert");
-
-        var adviserEmail = new Draft(
-            Id: "adviser-update",
-            Audience: "adviser",
-            AudienceLabel: "Adviser update (with the family's consent)",
-            Channel: "Email",
-            Recipient: "Marcus Tan <marcus.tan@baysidefp.example.com.au> · Bayside Financial Partners (ADV-20871)",
-            Subject: "The late Mei Chen (CP-3019042) — death benefit paid to Robert and Lily Chen",
-            Body: $"""
-                Hi Marcus,
-
-                With the Chen family's consent, an update on your late client Mei Chen's Caldova Pension **CP-3019042** (case {r.CaseNumber}). Thank you for pointing Robert to us.
-
-                - Notification received 13 November 2026 (date of death 12 October 2026); pension payments stopped on notification.
-                - Certified death certificate and both beneficiaries' identification verified.
-                - Binding death benefit nomination dated 18 March 2024 confirmed valid (two adult witnesses not named in it; lapsing, in force to 18 March 2027): Robert Chen 50%, Lily Chen 50%. Both are SIS dependants (children), so the trustee paid as nominated — no discretion.
-                - Tax: adult children who weren't financially dependent are non-dependants for tax — the taxable component (taxed element) was withheld at 17%. Components: 38% tax-free / 62% taxable.
-                - Portfolio redeemed to cash; payments approved by our Team Leader (every death benefit needs approval) and paid as lump sums.
-                - Each beneficiary: gross $243,100.00 → tax-free $92,378.00, taxable $150,722.00, withheld $25,622.74, **net $217,477.26**.
-
-                We've written to Robert and Lily separately. If either of them asks you about the tax, we're happy to share their payment statements with their permission.
-
-                Kind regards,
-                {Signature}
-                """,
-            Tone: "Respectful and factual — adviser language, with no more personal detail than Marcus needs.",
-            Compliance:
-            [
-                Pass("Family consent", "Send only once Robert confirms the family is happy for Marcus to be updated."),
-                Pass("No personal advice", "Facts of the payment only."),
-                Pass("Rules cited", "Binding nomination (SIS reg 6.17A), SIS vs tax dependants, 17% withholding."),
-                Pass("Privacy", "No bank details or beneficiaries' contact details."),
-            ],
-            ApprovalRequired: true,
-            ApprovalReason: "Concerns a bereaved family and needs their consent — human approval required.");
+            ApprovalReason: "Communication to a bereaved family — Theo approves every word before it is sent.");
 
         var sms = new Draft(
             Id: "sms",
             Audience: "sms",
             AudienceLabel: "SMS",
-            Channel: "SMS",
+            Channel: "SMS — after Amelia's call",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Robert, we're so sorry for your loss. Your mother's pension has been paid as she wished; details are in your email. Call Cara on {CaldovaPhone} anytime.",
-            Tone: "Gentle; sent after Cara's call, never instead of it.",
+            Body: $"Caldova: Robert, it's Amelia. As we discussed, Mei's life cover has been paid into your account. My letter is in your email. Call me anytime on {Phone}",
+            Tone: "Gentle; sent after the call, never instead of it.",
             Compliance:
             [
                 Pass("Non-sensitive", "No amounts or bank details by SMS."),
-                Pass("Points to the full letter", "The letter carries the payment, tax and complaint rights."),
-                Pass("One named contact", $"Cara on {CaldovaPhone}."),
+                Pass("One named contact", "Amelia."),
             ],
             ApprovalRequired: true,
-            ApprovalReason: "Communication to a bereaved family — human approval required.");
+            ApprovalReason: "Communication to a bereaved family — Theo approves it.");
 
         return new DraftBundle(
-            Stage: "Death benefit paid — 50/50 as nominated",
+            Stage: "Claim paid 23 Nov 2026 — super claim under way",
             Outcome: "Completed",
             Summary: summary,
             VulnerabilityFlags:
             [
-                "Bereavement — the family is grieving; condolences first and no process jargon.",
-                "Two beneficiaries — write to Robert and Lily separately; Robert is the family's contact.",
-                "Adviser update to Marcus Tan only with the family's consent.",
+                "Bereavement — Mei died suddenly on 12 Oct 2026; Robert is caring for Lily (12) and Max (9).",
+                "One named contact (Amelia); Theo approves every message to the family.",
+                "Keep it simple: the super claim checklist means Robert has nothing to remember or chase.",
             ],
             HumanApprovalRequired: true,
-            HumanApprovalReason: "Every communication to a bereaved family is reviewed and approved by a human before it is sent.",
-            Drafts: [robertLetter, lilyLetter, adviserEmail, sms],
-            AdviserNote: null);
+            HumanApprovalReason: "Every communication to a bereaved family is approved by Theo before it is sent (Matrix — authority, approvals and escalation).",
+            Approver: TheoApproves,
+            Drafts: [call, letter, sms],
+            PartnerNote: "Robert and Mei are existing clients (since 2019) with no referral partner on this case, so there's no partner update.",
+            AdviserNote:
+                "Corella must suggest independent financial advice for an accepted lump sum of $25,000 or more " +
+                "(Life Code cl 5.61). No review or product conversation now — when Robert is ready, Amelia may offer to look at his own cover " +
+                "and the family's needs. The adviser decides when, and whether.",
+            Sources: [DocCorella, DocClaimsRules, DocTax, DocSuperRules, CaseDoc(r, "policy schedule and nomination"), CaseDoc(r, "super fund cover note")]);
     }
 
-    // ── Request received — cases opened live by the Onboarding demo ──────────
-    // (The seeded scenario cases above are shown at the stage where Cara
-    // writes the outcome; a freshly opened case gets a type-aware
-    // acknowledgement instead.)
+    // ── Request received — cases opened live with the Onboarding Agent ────────
     private static DraftBundle Generic(CaseRecord r)
     {
         var first = FirstName(r.ClientName);
         var type = string.IsNullOrWhiteSpace(r.RequestType) ? "request" : r.RequestType;
-        var typeLower = type.ToLowerInvariant().Replace("smsf", "SMSF").Replace("death benefit claim", "death benefit request");
         var kind = KindOf(type);
-        var hasAdviser = HasAdviser(r);
-        var adviserFirst = FirstName(r.AdviserName);
-        var nextTeam = NextTeam(type);
+        var hasPartner = HasReferralPartner(r);
+        var isClaim = kind is "death" or "claim" or "claim-bank";
 
         var flags = new List<string>();
-        if (kind == "hardship")
-            flags.Add("Financial hardship — vulnerable member; kind tone, human review and free financial counselling (National Debt Helpline 1800 007 007, Moneysmart).");
         if (kind == "death")
-            flags.Add("Bereavement — condolences first; one named contact; human-approved letters only.");
-        if (kind == "rollover")
-            flags.Add("Rollover out — write only to the verified contact details on file, invite the member to call if they didn't make the request, and never discuss any suspicion with the requester.");
+            flags.Add("Bereavement — condolences first; one named contact (Amelia); every message approved by Theo.");
+        if (kind is "claim" or "claim-bank")
+            flags.Add("Illness or injury — plain English and kindness; check for financial stress; messages approved by a person.");
+        if (kind == "claim-bank")
+            flags.Add("Bank-detail change with a claim — write only to the contact details verified before any recent change, and never confirm the new bank details.");
         if (string.Equals(r.Priority, "Urgent", StringComparison.OrdinalIgnoreCase))
             flags.Add($"Urgent case — {r.PriorityReason}");
 
-        var approvalRequired = flags.Count > 0;
+        var approvalRequired = isClaim || flags.Count > 0;
 
         var opener = kind switch
         {
-            "death" => $"Dear {first},\n\nWe're so sorry for your loss. Thank you for letting us know — we'll take care of this with you, one step at a time.",
-            "hardship" => $"Dear {first},\n\nThank you for your application. We know it isn't easy to ask for help, and we'll look at it carefully and as quickly as we can.",
-            "rollover" => $"Dear {first},\n\nWe've received a request to roll over your super out of Caldova. Before any money moves to another fund — especially a self-managed super fund — we verify the request with the ATO and with you.",
-            "pension" => $"Hi {first},\n\nThanks for your pension application — it's a big milestone, and we'll make sure it's set up properly.",
-            "account" => $"Hi {first},\n\nThanks for choosing Caldova — your application is with us and we're setting things up.",
-            _ => $"Hi {first},\n\nThanks for your request — it's with us and we're on it."
+            "death" => $"Dear {first},\n\nI'm so sorry for your loss. Thank you for letting us know — we'll take care of this with you, one step at a time.",
+            "claim" or "claim-bank" => $"Dear {first},\n\nI'm sorry you're going through this. Thank you for letting us know — we'll help you with your claim so you can focus on your health.",
+            "business" => $"Dear {first},\n\nThank you for getting in touch about protecting your business. We're glad to help.",
+            "advice" => $"Dear {first},\n\nThank you for getting in touch about protecting your family. We're glad to help.",
+            _ => $"Dear {first},\n\nThank you for your request — it's with us and we're on it."
         };
 
         string[] steps = kind switch
         {
             "death" =>
             [
-                "We'll check the documents we have — a certified death certificate and identification for each person receiving a benefit — and let you know straight away if we need anything else.",
-                "We'll confirm any death benefit nomination and who can receive the benefit under super law and the trust deed.",
-                "We'll explain the amounts and any tax in plain English before anything is paid.",
+                "We'll check the documents we have — a certified death certificate and identification — and let you know straight away if we need anything else.",
+                "We'll check the policy, who it's paid to, and whether there's other cover, such as cover inside super.",
+                "We'll explain what happens next in plain English before anything is lodged — and I'll be your one contact the whole way through.",
             ],
-            "hardship" =>
+            "claim" or "claim-bank" =>
             [
-                "Our Benefits & Eligibility team will check your application against the severe financial hardship rules — including 26 weeks in a row of Centrelink income support, and a limit of $1,000 to $10,000 (before tax) once in any 12 months.",
-                "If we need anything else, we'll ask you once, clearly.",
-                "We'll write to you with the decision, the amount and any tax, in plain English.",
+                "Ben, our Benefit Claims Advocate, will check your policy — the definition, any waiting period and what the insurer needs from you.",
+                "If we need anything else, such as a report from your doctor or proof of earnings, we'll ask you once, clearly.",
+                "We'll only lodge your claim with the insurer once a member of our team has approved it, and we'll keep you updated at every step.",
             ],
-            "rollover" =>
+            "business" =>
             [
-                "We'll verify the request, including checking the receiving fund's details with the ATO's SMSF verification service where an SMSF is involved.",
-                "We may call you on the number we already hold to confirm it's really you.",
-                "Once the request is verified and we have everything we need, rollovers are completed within 3 business days.",
+                "We'll start with a conversation about your business — its value, who owns it and who it depends on.",
+                "We'll work out how much cover is needed and compare the insurers on our approved product list.",
+                "Amelia, our Senior Risk Adviser, will give you her advice in a Statement of Advice, and nothing happens until you're comfortable.",
             ],
-            "pension" =>
+            "advice" =>
             [
-                "Our Benefits & Eligibility team will confirm your condition of release, your transfer balance cap and this year's minimum payment.",
-                "Once everything checks out — and any approval is in place — we'll start your pension and confirm your payment schedule in writing.",
-                hasAdviser ? $"We'll keep {r.AdviserName} updated at each step." : "If anything is missing, we'll ask you once, clearly.",
-            ],
-            "account" =>
-            [
-                "We'll confirm your member number and our fund details to give your employer.",
-                hasAdviser
-                    ? $"If anything is missing from your application, we'll let you and {r.AdviserName} know straight away."
-                    : "If anything is missing from your application, we'll let you know straight away.",
-                "If you've asked us to bring super across from other funds, we'll request it for you — and we'll check first whether you'd lose any insurance cover.",
+                "We'll start with a fact find — your income, debts, family and any cover you already have, including cover inside super.",
+                "We'll work out how much cover your family needs and compare the insurers on our approved product list.",
+                "Amelia, our Senior Risk Adviser, will give you her advice in a Statement of Advice, and nothing happens until you're comfortable.",
             ],
             _ =>
             [
-                $"Our {nextTeam} team will review your request against your product's rules and the law.",
-                "If we need anything else, we'll ask you once, clearly, and explain why.",
-                "We'll let you know the outcome and what it means for you, in plain English.",
+                "We'll review your request and let you know if we need anything else.",
+                "If we need anything, we'll ask once, clearly, and explain why.",
+                "We'll let you know the outcome in plain English.",
             ]
         };
         var stepsText = string.Join("\n", steps.Select((s, i) => $"{i + 1}. {s}"));
 
         var extra = kind switch
         {
-            "hardship" =>
-                "\n\n**Free, confidential help**\n" +
-                "- National Debt Helpline — free financial counselling: 1800 007 007 (www.ndh.org.au)\n" +
-                "- Moneysmart — free tools and guidance from ASIC: www.moneysmart.gov.au",
-            "rollover" =>
+            "claim-bank" =>
                 "\n\n**Didn't make this request?**\n" +
-                $"Call us straight away on {CaldovaPhone}. We will never ask for your password or a one-time code by phone, email or SMS.",
+                $"Please call us straight away on {Phone}. We'll never ask for a password or a one-time code, and we only pay benefits to the policy owner's verified account.",
+            "advice" or "business" =>
+                "\n\n**How we're paid**\n" +
+                "Our Financial Services Guide explains our services and how we're paid, including any commission from insurers — we'll always show it to you in dollars before you decide.",
             _ => string.Empty
         };
 
@@ -866,38 +1057,39 @@ internal static class ClientCommunicationsDrafter
             SentimentLabel: kind switch
             {
                 "death" => "Grieving",
-                "hardship" => "Possibly distressed",
-                "rollover" => "Unknown — verify first",
-                "pension" or "account" => "Positive",
+                "claim" or "claim-bank" => "Worried · unwell or injured",
+                "business" or "advice" => "Positive · getting organised",
                 _ => "Neutral"
             },
             Sentiment: kind switch
             {
                 "death" => "A bereaved family member — be gentle, keep it simple and give one contact.",
-                "hardship" => "A member under financial pressure — be kind, clear and practical, and point to free help.",
-                "rollover" => "We can't yet be sure the member made this request — write only to verified details and keep it factual and protective.",
-                "pension" => "A member reaching a milestone — warm, and clear about what happens next.",
-                "account" => "A new member — welcoming, practical and quick to read.",
+                "claim" => "A client dealing with illness or injury — be kind and practical, and make the claim feel manageable.",
+                "claim-bank" => "We can't yet be sure the policy owner made this request — write only to verified details and keep it factual and protective.",
+                "business" => "Business owners planning ahead — practical, clear about the process and how we're paid.",
+                "advice" => "A family planning ahead — warm, and clear about what happens next.",
                 _ => "First contact on this request — keep it clear and set expectations."
             },
-            WhatHappened: $"{r.ClientName}'s {typeLower} ({r.CaseNumber}) was received on {r.ReceivedDate} and opened by Olivia. {r.RequestSummary}",
+            WhatHappened: $"{r.ClientName}'s request ({type}, {r.CaseNumber}) was received on {PracticeDates.Display(r.ReceivedDate)} and opened by Olivia. {r.RequestSummary}",
             WhatsNext:
             [
-                $"{nextTeam} reviews the request against the PDS, trust deed and super law.",
+                isClaim
+                    ? "Ben checks the policy and evidence; Felix checks the documents (and any bank change) before anything is lodged."
+                    : "Olivia completes the fact find and in-good-order checklist; Penny starts the needs analysis.",
                 $"Cara acknowledges the request today by {(string.IsNullOrWhiteSpace(r.PreferredContact) ? "email" : r.PreferredContact)}" +
-                    (hasAdviser ? $" and updates {r.AdviserName}." : "."),
+                    (hasPartner && !isClaim ? $", and updates {r.ReferredBy} with the client's consent." : "."),
                 "If anything is missing, we ask once — clearly and with a reason.",
             ]);
 
         var drafts = new List<Draft>
         {
             new(
-                Id: "member-acknowledgement",
-                Audience: "member",
-                AudienceLabel: "Member email — request received",
+                Id: "client-acknowledgement",
+                Audience: "client",
+                AudienceLabel: "Acknowledgement — request received",
                 Channel: "Email",
-                Recipient: kind == "rollover"
-                    ? $"{r.ClientName} <{r.ClientEmail}> — verified details on file"
+                Recipient: kind == "claim-bank"
+                    ? $"{r.ClientName} <{r.ClientEmail}> — verified details on file only"
                     : $"{r.ClientName} <{r.ClientEmail}>",
                 Subject: $"We've received your request — {r.CaseNumber}",
                 Body: $"""
@@ -906,181 +1098,156 @@ internal static class ClientCommunicationsDrafter
                     **Your request**
                     - Reference: {r.CaseNumber}
                     - Type: {type}
-                    - Account: {r.MemberNumber}
+                    - Client number: {r.ClientNumber}
 
                     **What happens next**
                     {stepsText}{extra}
 
                     **Questions?**
-                    Reply to this email or call us on {CaldovaPhone} ({ServiceHours}).
+                    Reply to this email or call us on {Phone} ({Hours}).
 
-                    {(kind == "death" ? DeathBenefitComplaints("your loved one's account") : SuperComplaints("reply to this email"))}
+                    {Complaints("reply to this email")}
 
                     Kind regards,
-                    {Signature}
+                    {(kind == "death" ? AmeliaSignature : CaraSignature)}
                     """,
                 Tone: kind switch
                 {
                     "death" => "Gentle and simple, with condolences first and one named contact.",
-                    "hardship" => "Kind and practical; no judgement; free help up front.",
-                    "rollover" => "Calm, factual and protective — no detail the requester could misuse.",
+                    "claim" => "Kind and practical; makes the claim feel manageable.",
+                    "claim-bank" => "Calm, factual and protective — nothing the requester could misuse.",
                     _ => "Clear and friendly; sets expectations."
                 },
                 Compliance: GenericCompliance(kind),
                 ApprovalRequired: approvalRequired,
                 ApprovalReason: approvalRequired
-                    ? "Sensitive case — a human reviews the message before it is sent."
-                    : SpotCheckReason),
+                    ? "Sensitive case — a person reviews the message before it is sent."
+                    : SpotCheck),
         };
 
-        if (hasAdviser)
+        if (hasPartner && !isClaim)
         {
+            var partnerFirst = FirstName(r.ReferredBy);
             drafts.Add(new Draft(
-                Id: "adviser-update",
-                Audience: "adviser",
-                AudienceLabel: "Adviser update",
+                Id: "partner-update",
+                Audience: "partner",
+                AudienceLabel: "Referral partner update — with consent",
                 Channel: "Email",
-                Recipient: $"{r.AdviserName}{(string.IsNullOrWhiteSpace(r.AdviserPractice) ? string.Empty : " · " + r.AdviserPractice)}",
-                Subject: $"{r.ClientName} — {type} received ({r.CaseNumber})",
+                Recipient: r.ReferredBy,
+                Subject: $"Thank you for referring {r.ClientName}",
                 Body: $"""
-                    Hi {adviserFirst},
+                    Hi {partnerFirst},
 
-                    We've received {r.ClientName}'s {typeLower} (case {r.CaseNumber}, received {r.ReceivedDate}).
+                    Thank you for referring {r.ClientName} to Caldova Life Advice. With {FirstName(r.ClientName)}'s consent, I'm letting you know we've received the referral, and I'll be in touch with {FirstName(r.ClientName)} shortly.
 
-                    - Summary: {r.RequestSummary}
-                    - Amount: {r.Amount}
-                    - Next: with our {nextTeam} team for review.
-
-                    We'll come back to you straight away if anything is missing, and confirm the outcome to you and your client.
+                    We'll only share what {FirstName(r.ClientName)} is happy for us to share — never health information.
 
                     Kind regards,
-                    {Signature}
-                    Adviser Desk: {CaldovaPhone}
+                    {AmeliaSignature}
                     """,
-                Tone: kind == "death"
-                    ? "Respectful and brief — adviser language, shared only with the family's consent."
-                    : "Concise adviser language.",
+                Tone: "Brief and appreciative.",
                 Compliance:
                 [
-                    Pass("No personal advice", "Status only."),
-                    kind == "death"
-                        ? Pass("Family consent", "Send only once the family confirms they're happy for the adviser to be updated.")
-                        : Pass("Authority to share", "Adviser of record on the account."),
-                    Pass("Next steps", "Who has the case and when the adviser will hear back."),
+                    Pass("Consent scope", "Receipt of the referral only."),
+                    Pass("No health information", "Nothing about the client's circumstances or health."),
                 ],
-                ApprovalRequired: kind == "death",
-                ApprovalReason: kind == "death"
-                    ? "Concerns a bereaved family and needs their consent — human approval required."
-                    : SpotCheckReason));
+                ApprovalRequired: false,
+                ApprovalReason: "Spot-check — confirm the client's consent is on file before sending."));
         }
 
         var smsBody = kind switch
         {
-            "death" => $"Caldova: {first}, we're so sorry for your loss. We've received your message ({r.CaseNumber}) and emailed you what happens next. {CaldovaPhone}",
-            "rollover" => $"Caldova: We've received a request to roll over your super ({r.CaseNumber}). If this wasn't you, call us now on {CaldovaPhone}.",
-            _ => $"Caldova: Hi {first}, we've received your request ({r.CaseNumber}) and we're on it. Details are in your email. Questions? {CaldovaPhone}"
+            "death" => $"Caldova: {first}, we're so sorry for your loss. We've received your message ({r.CaseNumber}) and emailed you what happens next. {Phone}",
+            "claim-bank" => $"Caldova: We've received a claim request on your policy ({r.CaseNumber}). If this wasn't you, call us now on {Phone}.",
+            _ => $"Caldova: Hi {first}, we've received your request ({r.CaseNumber}). Details are in your email. Questions? {Phone}"
         };
 
         drafts.Add(new Draft(
             Id: "sms",
             Audience: "sms",
             AudienceLabel: "SMS",
-            Channel: "SMS",
+            Channel: kind == "claim-bank" ? "SMS — verified mobile only" : "SMS",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
             Body: smsBody,
-            Tone: kind == "rollover" ? "Short and protective — invites a call if the member didn't make the request." : "Short acknowledgement.",
+            Tone: kind == "claim-bank" ? "Short and protective — invites a call if the client didn't make the request." : "Short acknowledgement.",
             Compliance:
             [
-                Pass("Non-sensitive", "Reference number only."),
+                Pass("Non-sensitive", "Reference number only — no health or bank details."),
                 Pass("Points to the full message", "The email carries next steps and complaint rights."),
             ],
             ApprovalRequired: approvalRequired,
-            ApprovalReason: approvalRequired ? "Sensitive case — human review before sending." : SpotCheckReason));
+            ApprovalReason: approvalRequired ? "Sensitive case — a person reviews it before sending." : SpotCheck));
+
+        var sources = isClaim
+            ? new List<string> { DocClaimsRules, DocInGoodOrder, DocMatrix }
+            : new List<string> { DocFsg, DocAdviceRules, DocInGoodOrder };
+        if (kind == "claim-bank") sources.Add(DocFinCrime);
 
         return new DraftBundle(
-            Stage: $"Request received — with {nextTeam}",
+            Stage: "Request received — with " + (isClaim ? "Claims" : "Onboarding & Requests"),
             Outcome: "In progress",
             Summary: summary,
             VulnerabilityFlags: flags,
             HumanApprovalRequired: approvalRequired,
             HumanApprovalReason: approvalRequired
-                ? "Sensitive case — these drafts must be reviewed by a human before anything is sent."
-                : "Routine acknowledgement — drafts can be spot-checked before sending.",
+                ? "Sensitive case — these drafts are reviewed by a person before anything is sent."
+                : "Routine acknowledgement — the drafts can be spot-checked before sending.",
+            Approver: !approvalRequired ? "Spot-check by Cara" : kind == "death" ? TheoApproves : CaraApproves,
             Drafts: drafts,
-            AdviserNote: hasAdviser ? null : "No adviser on this account — no adviser update is needed.");
+            PartnerNote: hasPartner
+                ? (isClaim ? "Claims are never shared with a referral partner without the client's specific consent — no partner update." : null)
+                : "No referral partner on this case, so there's no partner update.",
+            AdviserNote: null,
+            Sources: sources);
     }
 
     private static IReadOnlyList<ComplianceCheck> GenericCompliance(string kind)
     {
         var checks = new List<ComplianceCheck>
         {
-            Pass("No personal advice", "Explains the process only."),
+            Pass("No personal advice", "Explains the process only — Amelia gives the advice."),
             Pass("Next steps", "What happens next, in order."),
-            kind == "rollover"
-                ? Pass("Timeframes", "States the 3-business-day rollover standard once the request is verified.")
-                : Warn("Timeframes", "No firm date yet — confirm once the assessment is complete."),
-            Pass("Contact details", CaldovaPhone),
-            Pass("Complaint rights", kind == "death"
-                ? "Caldova IDR (up to 90 days for death benefits) then AFCA."
-                : "Caldova IDR (45 days) then AFCA."),
+            Warn("Timeframes", "No firm dates yet — confirm once the case is assessed."),
+            Pass("Contact details", Phone),
+            Pass("Complaint rights", $"Caldova first (within {LifeRules.IdrResponse}), then AFCA."),
         };
-        if (kind == "hardship")
-            checks.Add(Pass("Free help", "National Debt Helpline 1800 007 007 and Moneysmart."));
-        if (kind == "rollover")
-            checks.Add(Pass("Verified channel only", "Sent to the details on file; invites the member to call if they didn't make the request."));
+        if (kind is "advice" or "business")
+            checks.Add(Pass("How we're paid", "Points to the FSG; commission shown in dollars before the client decides."));
+        if (kind == "claim-bank")
+            checks.Add(Pass("Verified channel only", "Sent to the details on file; invites a call if the client didn't make the request."));
         return checks;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// True for the five seeded scenario cases (<c>REQ-yyyyMMdd-OPSnnn</c>),
-    /// which are shown at the point Cara writes the outcome. Cases opened
-    /// live with the Onboarding Agent are freshly received.
-    /// </summary>
-    internal static bool IsScenarioCase(CaseRecord r) =>
-        CaseStore.IsScenarioCaseNumber(r.CaseNumber);
-
-    private static string SuperComplaints(string howToTellUs) =>
+    private static string Complaints(string howToTellUs) =>
         "**If you're unhappy**\n" +
-        $"Please tell us first — {howToTellUs} and our Complaints team will look into it and give you a written response within 45 days. " +
+        $"Please tell us first — {howToTellUs} — and we'll do our best to put it right. We'll respond in writing within {LifeRules.IdrResponse}. " +
         "If you're not satisfied with our response, or we haven't responded in time, you can contact the Australian Financial Complaints Authority (AFCA), " +
-        $"a free and independent service: {AfcaContact}.";
+        $"a free and independent service: {LifeRules.AfcaContact}.";
 
-    private static string DeathBenefitComplaints(string whoseAccount) =>
-        "**If you're unhappy**\n" +
-        $"If you're unhappy with anything about how we've handled {whoseAccount}, please tell us first and we'll do our best to put it right. " +
-        "We'll respond in writing within the time that applies — up to 90 days for a complaint about how a death benefit is paid. " +
-        $"If you're still not satisfied, you can contact the Australian Financial Complaints Authority (AFCA), a free and independent service: {AfcaContact}.";
+    private static string CaseDoc(CaseRecord r, string document) => $"Case {r.CaseNumber} — {document}";
 
     private static ComplianceCheck Pass(string label, string note) => new(label, "pass", note);
     private static ComplianceCheck Warn(string label, string note) => new(label, "warn", note);
 
-    internal static bool HasAdviser(CaseRecord r) =>
-        !string.IsNullOrWhiteSpace(r.AdviserName) &&
-        !r.AdviserName.TrimStart().StartsWith("None", StringComparison.OrdinalIgnoreCase);
+    /// <summary>True when a referral partner (not "Existing client") sent the case.</summary>
+    internal static bool HasReferralPartner(CaseRecord r) =>
+        !string.IsNullOrWhiteSpace(r.ReferredBy) &&
+        !r.ReferredBy.TrimStart().StartsWith("Existing", StringComparison.OrdinalIgnoreCase) &&
+        !r.ReferredBy.TrimStart().StartsWith("None", StringComparison.OrdinalIgnoreCase);
 
     private static string KindOf(string requestType)
     {
         var t = (requestType ?? string.Empty).ToLowerInvariant();
         if (t.Contains("death")) return "death";
-        if (t.Contains("hardship")) return "hardship";
-        if (t.Contains("smsf") || t.Contains("rollover")) return "rollover";
-        if (t.Contains("pension")) return "pension";
-        if (t.Contains("account")) return "account";
+        if (t.Contains("claim") && t.Contains("bank")) return "claim-bank";
+        if (t.Contains("claim")) return "claim";
+        if (t.Contains("business")) return "business";
+        if (t.Contains("advice") || t.Contains("protection") || t.Contains("cover")) return "advice";
         return "general";
     }
-
-    private static string NextTeam(string requestType) => KindOf(requestType) switch
-    {
-        "death" => "Benefits & Eligibility",
-        "hardship" => "Benefits & Eligibility",
-        "pension" => "Benefits & Eligibility",
-        "rollover" => "Transfers & Rollovers",
-        "account" => "Onboarding & Requests",
-        _ => "Client Operations"
-    };
 
     internal static string FirstName(string? fullName)
     {

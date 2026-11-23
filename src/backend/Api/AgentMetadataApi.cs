@@ -1,7 +1,7 @@
-using CaldovaSuper.Agents;
-using CaldovaSuper.App.Services;
+using CaldovaLife.Agents;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 /// <summary>
 /// Lightweight read-only endpoint that powers the "Agent Prompt &amp; Tools"
@@ -23,14 +23,13 @@ public static class AgentMetadataApi
         string[] DefaultTools,
         string[] McpTools);
 
-    // Shared base tools every Caldova agent gets. Surfaced both in the
-    // static "demo" view (defaultTools) and the runtime view
-    // (configuredTools) when the corresponding Foundry connection ids
-    // are present in configuration.
+    // Shared base tools every Caldova agent gets. Surfaced both in the static
+    // view (defaultTools) and the runtime view (configuredTools) when the
+    // corresponding Foundry connection ids are present in configuration.
     private const string SearchToolDescription =
-        "Azure AI Search — Caldova wealth knowledge base (PDS, trust deed, super rules, member case files)";
+        "Azure AI Search — Caldova life knowledge base (life_knowledge: insurer PDS extracts, Caldova's FSG, APL and guides, advice, underwriting, claims, tax and commission rules, client case files)";
     private const string BingToolDescription =
-        "Bing Grounding — open-web grounding for current public context (e.g. ATO rates)";
+        "Bing Grounding — open-web grounding for current public context (never client details)";
 
     private static readonly string[] DefaultTools =
     [
@@ -38,59 +37,61 @@ public static class AgentMetadataApi
         BingToolDescription
     ];
 
-    // Per-role MCP tool surfaces. Each entry is the human-readable label
-    // shown in the "Tools available" list in the Agent Prompt & Tools tab.
-    // These mirror the [McpServerTool] methods in src/backend/Mcp/*.cs and
-    // are appended to the runtime configuredTools list whenever
-    // APP_MCP_URL is set.
-    private static readonly string[] InvestmentsMcpTools =
+    // Per-role MCP tool surfaces served by this app at /mcp (server label
+    // caldova-ops-mcp). Each entry is the label shown in the "Tools
+    // available" list. They mirror the [McpServerTool] methods in
+    // src/backend/Mcp/*.cs and are appended to the runtime configuredTools
+    // list whenever APP_MCP_URL is set.
+    private static readonly string[] ResearchMcpTools =
     [
-        "MCP · analyzeFactSheet — fetch and parse a Caldova Managed Portfolio fact sheet (fees, allocation, returns)",
-        "MCP · compareModels — markdown comparison table + Mermaid chart of annual cost in dollars + observations",
-        "MCP · generateClientWorkbook — write the case .xlsx workbook (summary + comparison + recommendations) and return its download URL"
+        "MCP · research_analysePolicyDocument — read an APL insurer's product sheet or PDS extract (definitions, features, exclusions)",
+        "MCP · research_compareInsurers — compare the APL insurers for the client's cover: stepped vs level premiums, definitions and features",
+        "MCP · research_generateComparisonWorkbook — write the Excel comparison workbook with a premium chart and return its download link"
     ];
 
-    private static readonly string[] TransfersMcpTools =
+    private static readonly string[] UnderwritingMcpTools =
     [
-        "MCP · lookupFunds — Caldova directory of external super funds and counterparties (USI, SuperStream contact, turnaround)",
-        "MCP · verifySmsf — SMSF verification check before any rollover out (registered SMSF, member linked, bank details and ESA match)",
-        "MCP · generateTransferRequestPdf — generate the Caldova transfer / rollover request PDF and return the download URL"
+        "MCP · underwriting_lookupInsurer — APL insurer directory: contacts, service levels and underwriting thresholds",
+        "MCP · underwriting_checkRequirements — medical and financial evidence the insurer needs for the client's age and sums insured",
+        "MCP · underwriting_generateApplicationSummaryPdf — generate the application and disclosure summary PDF and return its download link"
     ];
 
-    private static readonly string[] PaymentsMcpTools =
+    private static readonly string[] ClaimsMcpTools =
     [
-        "MCP · payments_validatePayee — confirm the payee name and bank details match the member or beneficiary",
-        "MCP · payments_checkCaseApproval — confirm the eligibility decision and approved amount on the case",
-        "MCP · payments_calculateBenefit — tax-free / taxable components, PAYG withholding and net payment",
-        "MCP · payments_checkAuthorityLimit — flag payments that need Team Leader approval",
-        "MCP · payments_requestApproval — raise an approval and post an Adaptive Card to Microsoft Teams (uses teams_sendApprovalCard)",
-        "MCP · payments_getApprovalStatus — poll the approval state",
-        "MCP · payments_releasePayment — release the payment (gated, requires prior approval)",
-        "MCP · teams_sendApprovalCard — deliver the Caldova payment-approval Adaptive Card to the approver in Microsoft Teams"
+        "MCP · claims_validateClaimant — confirm the claimant is the policy owner or nominated beneficiary, and their payment details",
+        "MCP · claims_checkPolicy — policy in force, definition, waiting period, exclusions and the evidence needed",
+        "MCP · claims_calculateBenefit — expected benefit with the working shown",
+        "MCP · claims_checkApprovalRules — which human approvals the claim needs before lodgement",
+        "MCP · claims_requestApproval — raise the approval and post the Adaptive Card to Microsoft Teams (uses teams_sendApprovalCard)",
+        "MCP · claims_getApprovalStatus — poll the approval state",
+        "MCP · claims_lodgeClaim — lodge the claim with the insurer (refuses unless a person has approved)",
+        "MCP · teams_sendApprovalCard — deliver the claim-lodgement approval card to the approver in Microsoft Teams"
     ];
 
     private static readonly string[] NoMcpTools = Array.Empty<string>();
 
+    // Keyed by the agent page route id (/agents/{id}); the voice agent has
+    // its own key for Cara's Voice chat tab.
     private static readonly Dictionary<string, RoleMetadata> _catalog = new(StringComparer.OrdinalIgnoreCase)
     {
         ["onboarding"] = new(
             "onboarding", "Olivia", "Onboarding & Requests Officer", "Onboarding & Requests",
             "onboarding-agent", OnboardingAgent.Instructions, DefaultTools, NoMcpTools),
-        ["benefits-eligibility"] = new(
-            "benefits-eligibility", "Ben", "Benefits & Eligibility Assessor", "Benefits & Eligibility",
-            "benefits-eligibility-agent", BenefitsEligibilityAgent.Instructions, DefaultTools, NoMcpTools),
-        ["investment-analyst"] = new(
-            "investment-analyst", "Ivy", "Investment Analyst", "Investment Solutions",
-            "investment-analyst-agent", InvestmentAnalystAgent.Instructions, DefaultTools.Concat(InvestmentsMcpTools).ToArray(), InvestmentsMcpTools),
+        ["paraplanning"] = new(
+            "paraplanning", "Penny", "Paraplanner", "Paraplanning",
+            "paraplanning-agent", ParaplanningAgent.Instructions, DefaultTools, NoMcpTools),
+        ["insurance-research"] = new(
+            "insurance-research", "Ivy", "Insurance Research Analyst", "Insurance Research",
+            "insurance-research-agent", InsuranceResearchAgent.Instructions, DefaultTools.Concat(ResearchMcpTools).ToArray(), ResearchMcpTools),
         ["financial-crime"] = new(
             "financial-crime", "Felix", "Financial Crime Investigator", "Financial Crime",
             "financial-crime-agent", FinancialCrimeAgent.Instructions, DefaultTools, NoMcpTools),
-        ["transfers-rollovers"] = new(
-            "transfers-rollovers", "Rory", "Transfers & Rollovers Coordinator", "Transfers & Rollovers",
-            "transfers-rollovers-agent", TransfersRolloversAgent.Instructions, DefaultTools.Concat(TransfersMcpTools).ToArray(), TransfersMcpTools),
-        ["payments"] = new(
-            "payments", "Penny", "Payments Officer", "Payments",
-            "payments-agent", PaymentsAgent.Instructions, DefaultTools.Concat(PaymentsMcpTools).ToArray(), PaymentsMcpTools),
+        ["underwriting"] = new(
+            "underwriting", "Uma", "Underwriting Coordinator", "Underwriting & New Business",
+            "underwriting-agent", UnderwritingAgent.Instructions, DefaultTools.Concat(UnderwritingMcpTools).ToArray(), UnderwritingMcpTools),
+        ["claims"] = new(
+            "claims", "Ben", "Benefit Claims Advocate", "Claims",
+            "claims-agent", ClaimsAgent.Instructions, DefaultTools.Concat(ClaimsMcpTools).ToArray(), ClaimsMcpTools),
         ["client-communications"] = new(
             "client-communications", "Cara", "Client Communications Specialist", "Client Communications",
             "client-communications-agent", ClientCommunicationsAgent.Instructions, DefaultTools, NoMcpTools),
@@ -98,7 +99,7 @@ public static class AgentMetadataApi
             "client-communications-voice", "Cara", "Client Communications Specialist (Voice)", "Client Communications",
             "client-communications-voice-agent", ClientCommunicationsVoiceAgent.Instructions, DefaultTools, NoMcpTools),
         ["team-leader"] = new(
-            "team-leader", "Theo", "Client Operations Team Leader", "Team Leader Office",
+            "team-leader", "Theo", "Practice Team Leader", "Team Leader Office",
             "team-leader-agent", TeamLeaderAgent.Instructions, DefaultTools, NoMcpTools),
     };
 

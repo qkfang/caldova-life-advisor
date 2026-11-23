@@ -1,11 +1,11 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using CaldovaSuper.Agents;
+using CaldovaLife.Agents;
 
-namespace CaldovaSuper.App.Api;
+namespace CaldovaLife.App.Api;
 
 /// <summary>
-/// Server-Sent Events helper used by every agent "Try It Out" /process endpoint
+/// Server-Sent Events helper used by every agent "Try it out" /process endpoint
 /// to stream the live Foundry agent response to the browser.
 ///
 /// Each /process endpoint accepts a streaming request when the client sends
@@ -17,7 +17,7 @@ namespace CaldovaSuper.App.Api;
 ///
 /// When Foundry is not configured we still respond with SSE so the browser
 /// keeps a uniform code path: zero deltas, then a <c>done</c> event with the
-/// deterministic-fallback envelope so the page still flows end-to-end.
+/// offline (deterministic) envelope so the page still flows end to end.
 /// </summary>
 internal static class AgentSseStreaming
 {
@@ -45,11 +45,12 @@ internal static class AgentSseStreaming
     /// <summary>
     /// Stream the agent's reply over SSE, then emit a final <c>done</c> event
     /// carrying <paramref name="buildEnvelope"/>'s projection of the agent
-    /// trace into the page-specific envelope shape (fields, NIGO checklist,
-    /// eligibility checklist, payment calculation, transfer plan, etc).
+    /// trace into the page-specific envelope shape (Client Case fields,
+    /// in-good-order checklist, needs analysis, insurer comparison,
+    /// underwriting requirements, claim calculation, etc).
     ///
-    /// Pass <paramref name="agent"/> as <c>null</c> to send only the
-    /// deterministic-fallback envelope (zero deltas, single <c>done</c> event).
+    /// Pass <paramref name="agent"/> as <c>null</c> to send only the offline
+    /// (deterministic) envelope (zero deltas, single <c>done</c> event).
     /// This keeps the SSE branch usable when Foundry is not configured.
     /// </summary>
     public static async Task StreamAsync(
@@ -96,7 +97,7 @@ internal static class AgentSseStreaming
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "{AgentLabel} streaming invocation failed; falling back to deterministic demo data", agentLabel);
+                logger.LogWarning(ex, "{AgentLabel} streaming invocation failed; using the offline result", agentLabel);
                 agentError = ex.Message;
                 await WriteEventAsync(response, "error", new { message = ex.Message }, ct);
             }
@@ -109,7 +110,7 @@ internal static class AgentSseStreaming
     /// <summary>
     /// Same as <see cref="StreamAsync"/> but resumes a previous Foundry agent
     /// conversation by chaining off <paramref name="previousResponseId"/> via
-    /// <see cref="CaldovaSuper.Agents.BaseAgent.ChatStreamingTraceAsync"/>. Used by
+    /// <see cref="CaldovaLife.Agents.BaseAgent.ChatStreamingTraceAsync"/>. Used by
     /// the "Chat with the agent" follow-up panels on each agent page.
     /// </summary>
     public static async Task StreamChatAsync(

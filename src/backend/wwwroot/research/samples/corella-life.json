@@ -1,0 +1,546 @@
+{
+  "documentType": "Insurer product sheet",
+  "insurer": "Corella Life",
+  "shortName": "Corella",
+  "code": "CR",
+  "policyPrefix": "CR-",
+  "productName": "Corella Protection Plan and Corella Super Plan",
+  "superPlan": "Corella Super Plan — life and any-occupation TPD held inside super, linked to cover outside super",
+  "pdsTitle": "Corella Life — Protection PDS extract",
+  "asAt": "2026-07-01",
+  "aplListing": "Personal and business protection",
+  "fictionNote": "Summary of the Corella Life — Protection PDS extract (PDS dated 1 July 2026) for Caldova's research. Read the PDS extract before relying on any wording.",
+  "summary": "Super-linking: life cover and any-occupation TPD inside the Corella Super Plan, with an own-occupation TPD extension, trauma cover and income protection outside super and linked to it. Income protection exclusions can be reviewed after two symptom-free years. Key person and buy-sell cover are also offered.",
+  "strengths": [
+    "Super-linking: the own-occupation TPD extension outside super is linked to any-occupation TPD inside super — it suits people whose work is physical or specialised, such as physiotherapists",
+    "Premiums for the cover inside super come out of the Corella Super Plan account, which can be funded by a rollover from another fund",
+    "Income protection exclusions (for example back and spine conditions) can be reviewed after two symptom-free years",
+    "A dedicated case manager for every death and terminal illness claim"
+  ],
+  "watchPoints": [
+    "The own-occupation extension can't be bought on its own — it must be linked to any-occupation TPD inside super",
+    "The exclusion review applies to income protection exclusions; the PDS extract doesn't offer a review of loadings",
+    "The PDS extract doesn't set out fast-track financial underwriting for business cover"
+  ],
+  "premiumStyles": {
+    "stepped": "Stepped premiums rise with age.",
+    "level": "Level premiums start higher and rise more slowly.",
+    "indexation": "Sums insured increase each year in line with CPI unless the policy owner declines the increase."
+  },
+  "coverTypes": [
+    {
+      "cover": "Life cover (with terminal illness benefit)",
+      "key": "life",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "Inside super through the Corella Super Plan, or outside super."
+    },
+    {
+      "cover": "TPD — any occupation",
+      "key": "tpd-any",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "The TPD cover held inside super."
+    },
+    {
+      "cover": "TPD — own-occupation extension (super-linked)",
+      "key": "tpd-own",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Outside super, linked to any-occupation TPD inside super; can't be bought on its own."
+    },
+    {
+      "cover": "Trauma cover",
+      "key": "trauma",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Listed conditions such as cancer, heart attack or stroke; mental health conditions aren't covered."
+    },
+    {
+      "cover": "Income protection",
+      "key": "ip",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65."
+    },
+    {
+      "cover": "Business protection — key person and buy-sell",
+      "key": "business",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Key person and buy-sell cover for businesses."
+    }
+  ],
+  "definitions": [
+    {
+      "key": "terminal-illness",
+      "title": "Terminal illness benefit",
+      "cover": "Life cover",
+      "wording": "The sum insured is paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.",
+      "plainEnglish": "If two doctors (one a specialist) say death is likely within 24 months, the life cover is paid early."
+    },
+    {
+      "key": "tpd-any-occupation",
+      "title": "TPD — any occupation",
+      "cover": "TPD",
+      "wording": "Because of illness or injury, the life insured is unlikely ever to work again in any occupation suited to their education, training or experience. Available inside or outside super.",
+      "plainEnglish": "Pays only if you can never work again in any job that suits your education, training or experience."
+    },
+    {
+      "key": "tpd-own-occupation",
+      "title": "Own-occupation TPD extension (super-linked)",
+      "cover": "TPD",
+      "wording": "Pays if the life insured is unlikely ever to work again in their own occupation, even if they could do other work. A TPD claim is assessed against the any-occupation cover inside super first; if that definition isn't met but the own-occupation definition is, the extension pays. The two parts are priced and linked together, the extension never pays more than the linked TPD sum insured, and benefits from the extension are paid to the policy owner personally. Suits people whose work is physical or specialised, such as physiotherapists.",
+      "plainEnglish": "Pays if you can never go back to your own job — even if you could do some other work."
+    },
+    {
+      "key": "tpd-super-linking",
+      "title": "Super-linking and cover inside super",
+      "cover": "TPD",
+      "wording": "The Corella Super Plan's trustee owns the cover inside super. Premiums are deducted from the person's Corella Super Plan account, which can be funded by a rollover from another super fund. Super cover can only pay on events that match a condition of release, so own-occupation TPD and trauma are held outside super. Benefits from cover inside super are paid by the trustee under the plan's rules and any valid nomination.",
+      "plainEnglish": "Life and any-occupation TPD premiums come out of super; the own-occupation extension, trauma and income protection sit outside super, linked to it."
+    },
+    {
+      "key": "trauma-cancer",
+      "title": "Trauma cover",
+      "cover": "Trauma cover",
+      "wording": "A lump sum on diagnosis of a listed condition, such as cancer, heart attack or stroke, confirmed by a specialist medical practitioner. Mental health conditions are not covered.",
+      "plainEnglish": "A lump sum when a specialist confirms a listed condition such as cancer."
+    },
+    {
+      "key": "ip-benefit-basis",
+      "title": "Income protection — monthly benefit",
+      "cover": "Income protection",
+      "wording": "Insured monthly benefit at application up to 70% of annual pre-tax earnings, divided by 12. Corella pays the lesser of the insured monthly benefit and 70% of the life insured's average monthly earnings in the 12 months before the disability.",
+      "plainEnglish": "Pays up to 70% of what you earned in the 12 months before you became unable to work, capped at the insured amount."
+    },
+    {
+      "key": "ip-periods",
+      "title": "Income protection — waiting and benefit periods",
+      "cover": "Income protection",
+      "wording": "Waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65. Benefits are paid monthly in arrears from the end of the waiting period.",
+      "plainEnglish": "Payments start after the waiting period you choose and can last until age 65."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Exclusion review",
+      "cover": "Income protection",
+      "wording": "Where Corella has excluded a pre-existing condition from income protection (for example back and spine conditions), the policy owner can ask Corella to review the exclusion after two symptom-free years. If Corella removes it, cover for that condition applies from the review date.",
+      "plainEnglish": "An income protection exclusion can be reviewed after two symptom-free years."
+    },
+    {
+      "key": "nominated-beneficiaries",
+      "title": "Who is paid (outside super)",
+      "cover": "Life cover",
+      "wording": "Benefits are paid to the policy owner. If the policy owner is the life insured and has nominated beneficiaries, life cover is paid directly to the nominated beneficiaries in the shares nominated, not through the estate; without a nomination it is paid to the estate. The policy owner can change nominations in writing at any time.",
+      "plainEnglish": "Life cover goes straight to the people named on the policy, not through the estate."
+    },
+    {
+      "key": "benefit-payment",
+      "title": "How benefits are paid",
+      "cover": "All covers",
+      "wording": "Benefits are paid only into an account in the payee's own name.",
+      "plainEnglish": "The money only goes into the recipient's own bank account."
+    },
+    {
+      "key": "death-claim-evidence",
+      "title": "Death claims — what Corella needs",
+      "cover": "Life cover",
+      "wording": "Claim form and certified ID of the claimant; a certified copy of the death certificate and the policy number; the beneficiary nomination on Corella's records (outside super) or the trustee's nomination records (inside super); and a bank account in the payee's own name.",
+      "plainEnglish": "A claim form, ID, the death certificate, the nomination on file and the payee's bank details."
+    },
+    {
+      "key": "claims-support",
+      "title": "Claims support",
+      "cover": "Life cover",
+      "wording": "A dedicated case manager for every death and terminal illness claim. Corella subscribes to the Life Insurance Code of Practice.",
+      "plainEnglish": "One named case manager looks after the family's claim."
+    },
+    {
+      "key": "earlier-policies",
+      "title": "Earlier policies",
+      "cover": "Life cover",
+      "wording": "The life cover, terminal illness and beneficiary nomination terms described here are the same as in Corella's 2019 PDS.",
+      "plainEnglish": "Policies issued under the 2019 PDS have the same life cover and nomination terms."
+    },
+    {
+      "key": "business-buy-sell",
+      "title": "Buy-sell cover",
+      "cover": "Business protection",
+      "wording": "Corella offers buy-sell cover for business owners. The PDS extract doesn't set out the ownership options.",
+      "plainEnglish": "Buy-sell cover is available."
+    },
+    {
+      "key": "business-key-person",
+      "title": "Key person cover",
+      "cover": "Business protection",
+      "wording": "Corella offers key person cover for businesses.",
+      "plainEnglish": "Key person cover is available."
+    },
+    {
+      "key": "tpd-business-cover",
+      "title": "TPD definition for business cover",
+      "cover": "Business protection",
+      "wording": "TPD held outside super is any occupation. Own-occupation TPD is only available as an extension linked to any-occupation TPD inside super, and can't be bought on its own.",
+      "plainEnglish": "Business cover outside super uses the any-occupation TPD definition."
+    },
+    {
+      "key": "financial-underwriting",
+      "title": "Financial underwriting",
+      "cover": "Business protection",
+      "wording": "The PDS extract doesn't set out fast-track financial underwriting for business cover. Corella's medical evidence depends on age and sum insured (see 'Directory — insurers on the approved product list').",
+      "plainEnglish": "No fast-track financial underwriting is set out."
+    }
+  ],
+  "features": [
+    {
+      "key": "super-linking",
+      "title": "Super-linking",
+      "detail": "Life and any-occupation TPD inside the Corella Super Plan, own-occupation extension, trauma and income protection outside super."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Exclusion review",
+      "detail": "Income protection exclusions reviewed after two symptom-free years."
+    },
+    {
+      "key": "underwriting",
+      "title": "Underwriting",
+      "detail": "Tele-interview for every application; standard rates, a loading, an exclusion or a decline."
+    },
+    {
+      "key": "claims-support",
+      "title": "Claims support",
+      "detail": "A dedicated case manager for every death and terminal illness claim."
+    },
+    {
+      "key": "cooling-off",
+      "title": "Cooling-off",
+      "detail": "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made."
+    },
+    {
+      "key": "genetic",
+      "title": "No genetic test results",
+      "detail": "The insurer won't ask for or use genetic test results."
+    },
+    {
+      "key": "remuneration",
+      "title": "Adviser remuneration",
+      "detail": "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent."
+    }
+  ],
+  "exclusions": [
+    {
+      "cover": "Trauma cover",
+      "detail": "Mental health conditions are not covered."
+    },
+    {
+      "cover": "Inside super",
+      "detail": "Own-occupation TPD and trauma cover can't be held inside super."
+    },
+    {
+      "cover": "TPD",
+      "detail": "The own-occupation extension can't be bought on its own and never pays twice for the same disability."
+    },
+    {
+      "cover": "Income protection",
+      "detail": "Not offered on an agreed-value basis."
+    },
+    {
+      "cover": "All covers",
+      "detail": "Exclusions shown on the policy schedule apply until Corella removes them."
+    }
+  ],
+  "quotes": [
+    {
+      "scenario": "family-protection",
+      "caseNumber": "REQ-20261103-LIF001",
+      "quoteReference": "CR-Q-261104-0192",
+      "quotedOn": "2026-11-04",
+      "livesInsured": "Priya Natarajan, 34, female, non-smoker, physiotherapist",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 3180,
+      "insideSuperYear1": 858,
+      "outsideSuperYear1": 2322,
+      "structure": "Life and any-occupation TPD inside the Corella Super Plan (premiums funded by a rollover from Riverbend Super); own-occupation TPD extension (super-linked), trauma and income protection outside super.",
+      "covers": [
+        {
+          "cover": "Life cover (with terminal illness)",
+          "sumInsured": "$750,000",
+          "ownership": "Inside super",
+          "year1Premium": 468,
+          "levelYear1Premium": 598
+        },
+        {
+          "cover": "TPD — any occupation",
+          "sumInsured": "$600,000",
+          "ownership": "Inside super",
+          "year1Premium": 390,
+          "levelYear1Premium": 499
+        },
+        {
+          "cover": "TPD — own-occupation extension (super-linked)",
+          "sumInsured": "$600,000",
+          "ownership": "Outside super",
+          "year1Premium": 222,
+          "levelYear1Premium": 284
+        },
+        {
+          "cover": "Trauma cover",
+          "sumInsured": "$150,000",
+          "ownership": "Outside super",
+          "year1Premium": 640,
+          "levelYear1Premium": 818
+        },
+        {
+          "cover": "Income protection",
+          "sumInsured": "$6,125 a month · 90-day waiting period · to age 65",
+          "ownership": "Outside super",
+          "year1Premium": 1460,
+          "levelYear1Premium": 1851
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 4050,
+        "insideSuperYear1": 1097,
+        "outsideSuperYear1": 2953,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "tpd-own-occupation",
+          "result": "meets",
+          "note": "Own-occupation TPD extension outside super, linked to any-occupation TPD inside super — the PDS says it suits physical or specialised work such as physiotherapy."
+        },
+        {
+          "key": "ip-benefit-basis",
+          "result": "meets",
+          "note": "Lesser of the insured $6,125 a month and 70% of average monthly earnings in the 12 months before the disability."
+        },
+        {
+          "key": "ip-periods",
+          "result": "meets",
+          "note": "90-day waiting period and benefit period to age 65; paid monthly in arrears from the end of the waiting period."
+        },
+        {
+          "key": "tpd-super-linking",
+          "result": "meets",
+          "note": "Life and any-occupation TPD inside the Corella Super Plan, linked to the extension outside — $858 of year-1 premiums come from super, not cash flow."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "meets",
+          "note": "Income protection exclusions (for example back and spine conditions) reviewed after two symptom-free years."
+        },
+        {
+          "key": "ip-long-claims",
+          "result": "meets",
+          "note": "The PDS extract sets out no change of definition during the benefit period."
+        },
+        {
+          "key": "trauma-cancer",
+          "result": "meets",
+          "note": "Listed conditions such as cancer, heart attack or stroke, confirmed by a specialist medical practitioner."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Corella's actual future premiums can change.",
+        "agesLabel": "Priya's age",
+        "years": [
+          {
+            "year": 1,
+            "ages": "34",
+            "stepped": 3180,
+            "level": 4050
+          },
+          {
+            "year": 2,
+            "ages": "35",
+            "stepped": 3364,
+            "level": 4091
+          },
+          {
+            "year": 3,
+            "ages": "36",
+            "stepped": 3566,
+            "level": 4132
+          },
+          {
+            "year": 4,
+            "ages": "37",
+            "stepped": 3787,
+            "level": 4173
+          },
+          {
+            "year": 5,
+            "ages": "38",
+            "stepped": 4029,
+            "level": 4215
+          },
+          {
+            "year": 6,
+            "ages": "39",
+            "stepped": 4295,
+            "level": 4257
+          },
+          {
+            "year": 7,
+            "ages": "40",
+            "stepped": 4587,
+            "level": 4300
+          },
+          {
+            "year": 8,
+            "ages": "41",
+            "stepped": 4908,
+            "level": 4343
+          },
+          {
+            "year": 9,
+            "ages": "42",
+            "stepped": 5261,
+            "level": 4386
+          },
+          {
+            "year": 10,
+            "ages": "43",
+            "stepped": 5650,
+            "level": 4430
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "business-protection",
+      "caseNumber": "REQ-20261109-LIF003",
+      "quoteReference": "CR-Q-261110-0417",
+      "quotedOn": "2026-11-10",
+      "livesInsured": "George Papadopoulos, 52, male, non-smoker, master joiner; Harpreet Kaur, 47, female, non-smoker, operations and finance director",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 9180,
+      "structure": "Buy-sell life and TPD owned by each owner on their own life; key person life and TPD owned by Northcote Custom Joinery Pty Ltd for a revenue purpose. All outside super.",
+      "covers": [
+        {
+          "cover": "Buy-sell — life and TPD on George (owned by George)",
+          "sumInsured": "$1,200,000",
+          "ownership": "George",
+          "year1Premium": 4410,
+          "levelYear1Premium": 6840
+        },
+        {
+          "cover": "Key person — life and TPD on George (revenue purpose)",
+          "sumInsured": "$400,000",
+          "ownership": "Northcote Custom Joinery Pty Ltd",
+          "year1Premium": 1470,
+          "levelYear1Premium": 2280
+        },
+        {
+          "cover": "Buy-sell — life and TPD on Harpreet (owned by Harpreet)",
+          "sumInsured": "$1,200,000",
+          "ownership": "Harpreet",
+          "year1Premium": 3300,
+          "levelYear1Premium": 4940
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 14060,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "business-buy-sell",
+          "result": "meets",
+          "note": "Buy-sell cover offered; the PDS extract doesn't set out the ownership options."
+        },
+        {
+          "key": "business-key-person",
+          "result": "meets",
+          "note": "Key person cover offered."
+        },
+        {
+          "key": "financial-underwriting",
+          "result": "partly",
+          "note": "No fast-track financial underwriting in the PDS extract."
+        },
+        {
+          "key": "tpd-business-cover",
+          "result": "partly",
+          "note": "Any occupation for cover held outside super — the own-occupation extension only links to TPD inside super, so it doesn't fit business cover."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "partly",
+          "note": "Reviews income protection exclusions only — not loadings on life or TPD."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Corella's actual future premiums can change.",
+        "agesLabel": "George / Harpreet",
+        "years": [
+          {
+            "year": 1,
+            "ages": "52 / 47",
+            "stepped": 9180,
+            "level": 14060
+          },
+          {
+            "year": 2,
+            "ages": "53 / 48",
+            "stepped": 9878,
+            "level": 14201
+          },
+          {
+            "year": 3,
+            "ages": "54 / 49",
+            "stepped": 10658,
+            "level": 14343
+          },
+          {
+            "year": 4,
+            "ages": "55 / 50",
+            "stepped": 11532,
+            "level": 14486
+          },
+          {
+            "year": 5,
+            "ages": "56 / 51",
+            "stepped": 12512,
+            "level": 14631
+          },
+          {
+            "year": 6,
+            "ages": "57 / 52",
+            "stepped": 13613,
+            "level": 14777
+          },
+          {
+            "year": 7,
+            "ages": "58 / 53",
+            "stepped": 14852,
+            "level": 14925
+          },
+          {
+            "year": 8,
+            "ages": "59 / 54",
+            "stepped": 16248,
+            "level": 15074
+          },
+          {
+            "year": 9,
+            "ages": "60 / 55",
+            "stepped": 17824,
+            "level": 15225
+          },
+          {
+            "year": 10,
+            "ages": "61 / 56",
+            "stepped": 19606,
+            "level": 15377
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-@description('Base resource name abbreviation for the Caldova Wealth demo (Wealth Team in a Day)')
+@description('Base resource name abbreviation for Caldova Life Advice (Advice Team in a Day)')
 param baseName string = 'zc'
 
 @description('Azure region for all resources')
@@ -11,8 +11,8 @@ param appServiceLocation string = location
 param principals array = []
 
 var commonTags = {
-  workload: 'caldova-super-agent'
-  demo: 'wealth-operations-office'
+  workload: 'caldova-life-advisor'
+  demo: 'life-advice-practice'
 }
 
 // Short, deterministic suffix for globally-unique resource names (storage, key vault).
@@ -67,7 +67,8 @@ module keyVault 'keyvault.bicep' = {
 }
 
 // ---------------------------------------------------------------------------
-// Azure AI Search (wealth knowledge index: rules + member case files)
+// Azure AI Search (life_knowledge index: insurer PDS extracts, rules, guides
+// and client case files)
 // ---------------------------------------------------------------------------
 module aiSearch 'aisearch.bicep' = {
   name: 'aiSearchDeployment'
@@ -109,7 +110,7 @@ module appService 'appservice.bicep' = {
     modelDeploymentName: foundry.outputs.deploymentName
     bingConnectionId: foundry.outputs.bingProjectConnectionId
     searchConnectionId: foundry.outputs.aiSearchProjectConnectionId
-    searchIndexName: 'wealth_knowledge'
+    searchIndexName: 'life_knowledge'
   }
 }
 
@@ -199,7 +200,7 @@ resource backendAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04
 //   can read/write documents directly when needed)
 // Foundry account & project managed identities → Search Index Data Reader +
 //   Search Service Contributor (so the AzureAISearchTool wired into each
-//   CaldovaAgent can issue queries against the wealth_knowledge index using
+//   CaldovaAgent can issue queries against the life_knowledge index using
 //   the Foundry-side managed identity)
 // User principals → Search Index Data Contributor + Search Service Contributor
 //   (operators running the ai-search/setup-index.ps1 / ingest-documents.ps1
@@ -284,7 +285,7 @@ resource principalSearchIndexDataContributor 'Microsoft.Authorization/roleAssign
   }
 }]
 
-// ai-search/setup-index.ps1 creates the wealth_knowledge / wealth_rules
+// ai-search/setup-index.ps1 creates the life_knowledge / life_rules
 // indexes, which needs Search Service Contributor (index management) on top
 // of the data-plane role above.
 resource principalSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for principal in principals: {
@@ -323,5 +324,5 @@ output logAnalyticsName string = monitoring.outputs.logAnalyticsName
 
 output aiSearchName string = aiSearch.outputs.name
 output aiSearchEndpoint string = aiSearch.outputs.endpoint
-output aiSearchIndexName string = 'wealth_knowledge'
+output aiSearchIndexName string = 'life_knowledge'
 output aiSearchProjectConnectionId string = foundry.outputs.aiSearchProjectConnectionId

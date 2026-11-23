@@ -62,7 +62,7 @@ export class LevelStack {
 
   /**
    * How far an anchor's level is lifted out of the way right now: 0 while the level is in view,
-   * or when the anchor doesn't move with a level (the dock). Beams use it to keep an end where
+   * or when the anchor doesn't move with a level (the front desk). Beams use it to keep an end where
    * its level would be while that level is lifted away.
    */
   liftOf(a: Anchor): number {

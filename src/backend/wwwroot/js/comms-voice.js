@@ -38,8 +38,14 @@
             const SAMPLE_RATE = 24000;
             const FRAME_MS = 50;
             const FRAME_SAMPLES = (SAMPLE_RATE * FRAME_MS) / 1000;
-            // Azure neural voice used for Cara on Voice Live calls.
-            const VOICE_LIVE_VOICE = 'en-US-Ava:DragonHDLatestNeural';
+            // Defaults for Cara's Voice Live session; the server's
+            // /communications/voice-live/session endpoint supplies the
+            // current voice, greeting prompt and the verified caller's case
+            // context when a call starts.
+            const DEFAULT_VOICE = 'en-US-Ava:DragonHDLatestNeural';
+            const DEFAULT_GREETING = 'Please greet me as Cara from Caldova Life Advice and ask how you can help today. Keep it to one or two short, warm sentences.';
+            let voiceName = DEFAULT_VOICE;
+            let greetingText = DEFAULT_GREETING;
 
             const waveBars = Array.from(wave.querySelectorAll('span'));
 
@@ -141,6 +147,8 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const cfg = await res.json();
                     voiceEnabled = !!cfg.enabled;
+                    if (cfg.voice) voiceName = cfg.voice;
+                    if (cfg.greeting) greetingText = cfg.greeting;
                 } catch (_) {
                     voiceEnabled = false;
                 }
@@ -171,10 +179,11 @@
                 caseSelect.disabled = false;
             }
 
-            async function loadCaseDetail(caseNumber) {
-                if (!caseNumber) return null;
+            async function loadSession(caseNumber) {
                 try {
-                    const res = await fetch('/communications/cases/' + encodeURIComponent(caseNumber));
+                    const url = '/communications/voice-live/session' +
+                        (caseNumber ? '?caseNumber=' + encodeURIComponent(caseNumber) : '');
+                    const res = await fetch(url);
                     if (!res.ok) return null;
                     return await res.json();
                 } catch (_) { return null; }
@@ -384,7 +393,7 @@
                                     item: {
                                         type: 'message',
                                         role: 'user',
-                                        content: [{ type: 'input_text', text: 'Please greet me as Cara from the Caldova Wealth client communications team and ask how you can help today. Keep it short and warm.' }]
+                                        content: [{ type: 'input_text', text: greetingText }]
                                     }
                                 }));
                                 ws.send(JSON.stringify({ type: 'response.create' }));
@@ -441,30 +450,19 @@
                 }
             }
 
-            function caseContextText(c) {
-                const adviser = (!c.adviserName || /^\s*none/i.test(c.adviserName))
-                    ? 'None (direct member)'
-                    : c.adviserName + (c.adviserPractice ? ' (' + c.adviserPractice + ')' : '');
-                return 'Context for this call (do not read this aloud unless asked). The caller has already been verified.\n' +
-                    'Case number: ' + (c.caseNumber || '') + '\n' +
-                    'Caller: ' + (c.clientName || '') + '\n' +
-                    'Member number: ' + (c.memberNumber || '') + '\n' +
-                    'Product: ' + (c.product || '') + '\n' +
-                    'Request type: ' + (c.requestType || '') + '\n' +
-                    'Received: ' + (c.receivedDate || '') + '\n' +
-                    'Adviser: ' + adviser + '\n' +
-                    'Request: ' + (c.requestSummary || '') + '\n' +
-                    'Amount: ' + (c.amount || '') + '\n' +
-                    'Priority: ' + (c.priority || '') + (c.priorityReason ? ' — ' + c.priorityReason : '');
-            }
-
             async function connect() {
                 if (connected || connecting) return;
                 connecting = true;
                 stopSpeaking();
                 setStatus('Connecting to Voice Live…');
 
-                const memberCase = await loadCaseDetail(caseSelect.value);
+                // Cara's voice, greeting and — when a caller is picked — the
+                // verified caller's case context, built server-side from the
+                // same facts as her written drafts.
+                const session = await loadSession(caseSelect.value);
+                if (session && session.voice) voiceName = session.voice;
+                if (session && session.greeting) greetingText = session.greeting;
+                const caseContext = session && session.caseContext ? session.caseContext : null;
 
                 const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const url = proto + '//' + location.host + '/communications/voice-live';
@@ -506,21 +504,21 @@
                                 silence_duration_ms: 500
                             },
                             voice: {
-                                name: VOICE_LIVE_VOICE,
+                                name: voiceName,
                                 type: 'azure-standard'
                             }
                         }
                     };
                     try { ws.send(JSON.stringify(sessionUpdate)); } catch (_) {}
 
-                    if (memberCase) {
+                    if (caseContext) {
                         try {
                             ws.send(JSON.stringify({
                                 type: 'conversation.item.create',
                                 item: {
                                     type: 'message',
                                     role: 'user',
-                                    content: [{ type: 'input_text', text: caseContextText(memberCase) }]
+                                    content: [{ type: 'input_text', text: caseContext }]
                                 }
                             }));
                         } catch (_) {}
@@ -662,8 +660,8 @@
                     setStatus(data.agentUsed
                         ? 'Cara (live Foundry voice agent) replied. Keep chatting, or start a live call with the mic.'
                         : voiceEnabled
-                            ? 'Cara replied (scripted reply). Press the mic for a live Voice Live call.'
-                            : 'Cara replied (scripted reply — Foundry not configured). Keep chatting.');
+                            ? 'Cara replied (offline reply). Press the mic for a live Voice Live call.'
+                            : 'Cara replied offline (Foundry not configured). Keep chatting.');
                 } catch (err) {
                     setStatus('Could not reach Cara: ' + (err.message || err), true);
                 } finally {

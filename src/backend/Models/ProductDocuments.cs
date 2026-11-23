@@ -1,58 +1,99 @@
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Services;
 
-namespace CaldovaSuper.App.Models;
+namespace CaldovaLife.App.Models;
 
 /// <summary>
-/// One clause in a Caldova rule document — the unit the Benefits &amp;
-/// Eligibility Agent cites in its eligibility checklist.
+/// Verified rules and Caldova practice settings shared by the Paraplanning
+/// and Underwriting flows. Regulatory figures come from the FY2026-27 fact
+/// sheet (Corporations Act, Insurance Contracts Act, SIS, ITAA 1997 and the
+/// ASIC life insurance commissions instrument); practice settings (the
+/// adviser, the second-review threshold, Caldova's commission option) are
+/// Caldova's own fictional policy.
+/// </summary>
+public static class LifeAdviceFacts
+{
+    /// <summary>Caldova's adviser — gives the advice and signs every SoA.</summary>
+    public const string Adviser = "Amelia, Senior Risk Adviser";
+
+    /// <summary>Caldova practice rule: total cover on one case at or above this gets a second review.</summary>
+    public const decimal SecondReviewThreshold = 2_000_000m;
+
+    /// <summary>LIF cap — upfront commission as a share of the first-year policy cost (ASIC Instrument 2017/510 s5(2)).</summary>
+    public const decimal LifUpfrontCap = 0.60m;
+
+    /// <summary>LIF cap — ongoing commission as a share of each later year's policy cost (s5(3)).</summary>
+    public const decimal LifOngoingCap = 0.20m;
+
+    /// <summary>Cooling-off period for a new risk insurance policy (Corporations Act s1019B).</summary>
+    public const int CoolingOffDays = 14;
+
+    /// <summary>Protecting Your Super — months of inactivity after which cover stops unless the account holder elects to keep it (SIS Act s68AAA).</summary>
+    public const int ProtectingYourSuperMonths = 16;
+
+    public const string CoolingOffSummary =
+        "Cooling-off: the client has 14 days to cancel a new policy and get their premiums back, counted from when they receive confirmation " +
+        "of the policy or the end of the 5th business day after it's issued, whichever is earlier. The right ends once a claim is made " +
+        "(Corporations Act s1019B).";
+
+    public const string DutyOfCareScript =
+        "Before you answer the insurer's health and lifestyle questions: the law asks you to take reasonable care not to make a " +
+        "misrepresentation. Answer every question honestly and fully, and ask if a question isn't clear. If an answer isn't right, " +
+        "the insurer may be able to reduce the cover or change its terms — or, if it wouldn't have offered cover at all, cancel it " +
+        "within three years. A fraudulent answer lets the insurer cancel the policy. You don't need to tell the insurer about any " +
+        "genetic test results, and we will never ask for them.";
+}
+
+/// <summary>
+/// One clause in a rule or product document — the unit the Paraplanning
+/// Agent cites in its advice checklist.
 /// </summary>
 /// <param name="ClauseId">
-/// Clause id cited by checklist items. Prefixes: <c>PDS-</c> (Caldova Super
-/// &amp; Pension PDS), <c>HS-</c> (PDS financial-hardship rules), <c>TD-</c>
-/// (trust deed), <c>SIS-</c> (super law — SIS Act / Regulations),
-/// <c>TAX-</c> (tax law and PAYG withholding) and <c>AUTH-</c> (Caldova
-/// Client Operations authority matrix).
+/// Clause id cited by checklist items. Prefixes: <c>HLP-</c>, <c>CRP-</c>,
+/// <c>LBP-</c>, <c>NBP-</c> (insurer PDS extracts), <c>FSG-</c> (Caldova's
+/// FSG), <c>APL-</c> (approved product list), <c>ADV-</c> (advice rules),
+/// <c>SUP-</c> (insurance inside super), <c>UW-</c> (underwriting),
+/// <c>CLM-</c> (claims rules), <c>TAX-</c> (tax), <c>COM-</c> (commission)
+/// and <c>MAT-</c> (authority matrix).
 /// </param>
 /// <param name="Title">Short clause heading.</param>
 /// <param name="Text">Plain-English rule text.</param>
-/// <param name="LegalReference">Underlying law or source (e.g. "SIS Regs reg 6.17A").</param>
+/// <param name="LegalReference">Underlying law or source (e.g. "Corporations Act s947D").</param>
 public record RuleSection(string ClauseId, string Title, string Text, string LegalReference);
 
 /// <summary>
-/// A demo-grade extract of a Caldova product or rule document — PDS
-/// extracts, trust-deed rules, super-law rule summaries and the operations
-/// authority matrix. Shown on the Benefits &amp; Eligibility "Try it out" tab
-/// so the user can see exactly which rules the agent applies, and included
-/// in the agent prompt so the agent's checklist cites the same clause ids.
+/// An extract of one document in the <c>life_knowledge</c> index — an
+/// insurer's PDS extract, a Caldova guide or a rule summary — titled exactly
+/// as the knowledge base titles it, so the agent's citations and the page's
+/// reference panel match.
 /// </summary>
-/// <param name="Id">Stable document id (e.g. <c>pds-hardship</c>).</param>
-/// <param name="Title">Document title as shown to the user.</param>
-/// <param name="DocumentType">"PDS extract", "Trust deed extract", "Rule summary" or "Operations guide".</param>
-/// <param name="Issuer">Who issues the document (trustee, operations).</param>
-/// <param name="Product">Product(s) the rules apply to.</param>
-/// <param name="EffectiveDate">Date the extract is effective from.</param>
-/// <param name="KnowledgeBaseTitle">Title of the matching rule document in the <c>wealth_knowledge</c> index.</param>
-/// <param name="Summary">One-line description of what the document covers.</param>
+/// <param name="Id">Stable document id (e.g. <c>advice-rules</c>).</param>
+/// <param name="Number">Position in the rules-and-products list (1–12); 13 for the authority matrix.</param>
+/// <param name="Title">Exact knowledge-base title.</param>
+/// <param name="DocumentType">"PDS extract", "Caldova guide", "Rule summary" or "Practice matrix".</param>
+/// <param name="Issuer">Who issues the document.</param>
+/// <param name="AppliesTo">What the rules apply to.</param>
+/// <param name="EffectiveDate">Date the extract is current at.</param>
+/// <param name="Summary">One-line description.</param>
 /// <param name="Sections">The clauses, each with a citable clause id.</param>
 /// <param name="Requirements">What must be on file before the rules can be applied.</param>
 /// <param name="Restrictions">Limits and things that can't be done under these rules.</param>
 public record ProductRuleDocument(
     string Id,
+    int Number,
     string Title,
     string DocumentType,
     string Issuer,
-    string Product,
+    string AppliesTo,
     string EffectiveDate,
-    string KnowledgeBaseTitle,
     string Summary,
     IReadOnlyList<RuleSection> Sections,
     IReadOnlyList<string> Requirements,
     IReadOnlyList<string> Restrictions);
 
 /// <summary>
-/// Status of one line of the eligibility checklist. The UI shows
-/// <c>Pass</c> as a green tick, <c>Fail</c> as a red cross and <c>Info</c>
-/// as an amber note (a caution, a tax note or a human-approval step).
+/// Status of one line of the advice checklist. The UI shows <c>Pass</c> as a
+/// green tick, <c>Fail</c> as a red cross and <c>Info</c> as an amber note (an
+/// action, a caution or a human-approval step).
 /// </summary>
 public enum ChecklistStatus
 {
@@ -62,78 +103,128 @@ public enum ChecklistStatus
 }
 
 /// <summary>
-/// One rule check the Benefits &amp; Eligibility Agent works through for a
-/// Member Case, citing the clause it relies on (e.g. "Amount within
-/// $1,000–$10,000" → <c>HS-4</c>).
+/// One strategy, ownership or rule check the Paraplanning Agent works
+/// through for a Client Case, citing the clause it relies on.
 /// </summary>
-public record EligibilityChecklistItem(
+public record AdviceChecklistItem(
     string Id,
+    string Category,
     string Label,
     ChecklistStatus Status,
     string Finding,
     string ClauseRef);
 
-/// <summary>Overall eligibility recommendation for a Member Case.</summary>
-public enum EligibilityRecommendation
+/// <summary>Where the draft advice is up to.</summary>
+public enum AdviceStatus
 {
-    Approve,
-    PartialApprove,
-    Decline,
-    NeedMoreInfo
+    ReadyForAdviser,
+    NeedMoreInfo,
+    NotApplicable
 }
 
+/// <summary>One line of a needs calculation. <c>Kind</c> is "add", "less", "total", "note" or "result".</summary>
+public record NeedsLine(string Label, string Amount, string Kind);
+
+/// <summary>One needs calculation, with the working shown line by line.</summary>
+public record NeedsCalculation(
+    string Id,
+    string Title,
+    string LifeInsured,
+    IReadOnlyList<NeedsLine> Lines,
+    string Recommended,
+    string Basis);
+
+/// <summary>One section of the draft Statement of Advice outline.</summary>
+public record SoaSection(string Id, string Title, IReadOnlyList<string> Points);
+
+/// <summary>One premium line in the draft SoA.</summary>
+public record PremiumLine(
+    string LifeInsured,
+    string Cover,
+    string SumInsured,
+    string Structure,
+    string Premium,
+    string PaidBy);
+
+/// <summary>The commission disclosure in dollars, with the consent and clawback terms.</summary>
+public record CommissionDisclosure(
+    string Insurer,
+    string PremiumBasis,
+    string Upfront,
+    string Ongoing,
+    string Basis,
+    string Consent,
+    string Gst,
+    string Clawback);
+
+/// <summary>The adviser sign-off box — the draft isn't advice until the adviser signs.</summary>
+public record AdviserSignOff(
+    string Heading,
+    string Adviser,
+    string Status,
+    string Statement,
+    IReadOnlyList<string> History,
+    IReadOnlyList<string> Approvals);
+
 /// <summary>
-/// Deterministic eligibility report for one Member Case: the
-/// recommendation, the per-rule checklist with clause references, the rule
-/// documents applied, and the supporting working used for the offline demo
-/// narrative. Mirrors the trailing JSON block the
-/// <see cref="CaldovaSuper.Agents.BenefitsEligibilityAgent"/> emits.
+/// Deterministic paraplanning report for one Client Case: the needs
+/// analysis with the working, the strategy / ownership / rules checklist
+/// with clause references, the draft SoA outline, premiums and commission in
+/// dollars, and the adviser sign-off. Mirrors the trailing JSON block the
+/// <see cref="CaldovaLife.Agents.ParaplanningAgent"/> emits for the
+/// checklist; claim cases carry a polite pointer to the Claims Agent instead.
 /// </summary>
-public record EligibilityReport(
+public record AdviceReport(
     string CaseNumber,
-    string SampleId,
-    EligibilityRecommendation Recommendation,
-    string RecommendationLabel,
-    string RecommendationReason,
-    string OutcomeSummary,
-    IReadOnlyList<EligibilityChecklistItem> Items,
+    string ScenarioKey,
+    bool Applicable,
+    string? NotApplicableNote,
+    IReadOnlyList<AgentPointer> Redirects,
+    AdviceStatus Status,
+    string StatusLabel,
+    string StatusReason,
+    string Summary,
+    IReadOnlyList<NeedsCalculation> Needs,
+    string NeedsTotal,
+    IReadOnlyList<AdviceChecklistItem> Items,
+    IReadOnlyList<SoaSection> SoaOutline,
+    IReadOnlyList<PremiumLine> Premiums,
+    string PremiumNote,
+    CommissionDisclosure? Commission,
+    AdviserSignOff SignOff,
     IReadOnlyList<string> RuleDocumentIds,
-    IReadOnlyList<string> Calculations,
     IReadOnlyList<string> MissingInformation,
     string PlainEnglishExplanation,
     string HumanApproval);
 
 /// <summary>
-/// Static catalogue of the Caldova rule documents (PDS extracts, trust-deed
-/// rules, super-law and tax rule summaries, authority matrix) and the
-/// per-case eligibility reports for the five canonical scenarios, keyed by
-/// <see cref="CaseRecord.SampleId"/> so they stay stable for seeded cases and
-/// for cases minted live by the Onboarding demo.
-///
-/// Outcomes are intentionally varied:
-/// - Priya (<c>onboarding-priya</c>) — Approve: open the account; nomination
-///   not binding until re-signed; Southern Cross rollover held.
-/// - Grace (<c>rollover-grace</c>) — Decline: SMSF verification fails; refer
-///   to Financial Crime.
-/// - George (<c>pension-george</c>) — Approve: commence the pension.
-/// - Tom (<c>hardship-tom</c>) — Partially approve: $10,000 gross.
-/// - Robert (<c>death-benefit-robert</c>) — Approve: pay as nominated.
+/// Static catalogue of the <c>life_knowledge</c> rule and product documents
+/// (titles exactly as indexed) and the per-case paraplanning reports for the
+/// five scenarios:
+/// - Priya (<c>REQ-20261103-LIF001</c>) — family protection; draft SoA ready
+///   for Amelia; Kestrel cover kept under Protecting Your Super.
+/// - George (<c>REQ-20261109-LIF003</c>) — buy-sell and key person; draft SoA
+///   ready once Theo's second review ($2.8m) is done.
+/// - Grace, Tom and Robert — claim cases, pointed to the Claims Agent.
 /// </summary>
 public static class ProductDocumentCatalog
 {
-    private const string DocAccountOpening = "pds-account-opening";
-    private const string DocFeeConsent = "fee-consent-rules";
-    private const string DocNominations = "td-death-benefits";
-    private const string DocConditionsOfRelease = "conditions-of-release";
-    private const string DocPensionStandards = "pension-standards";
-    private const string DocTax = "tax-benefits";
-    private const string DocRollovers = "rollovers-smsf";
-    private const string DocProtectingAccount = "pds-protecting-account";
-    private const string DocHardship = "pds-hardship";
-    private const string DocAuthority = "authority-matrix";
+    private const string DocHarbourline = "pds-harbourline";
+    private const string DocCorella = "pds-corella";
+    private const string DocLyrebird = "pds-lyrebird";
+    private const string DocNorthbank = "pds-northbank";
+    private const string DocFsg = "caldova-fsg";
+    private const string DocApl = "caldova-apl";
+    private const string DocAdvice = "advice-rules";
+    private const string DocSuper = "insurance-in-super";
+    private const string DocUnderwriting = "underwriting-duty";
+    private const string DocClaims = "claims-rules";
+    private const string DocTax = "tax-life-insurance";
+    private const string DocCommission = "commission-rules";
+    private const string DocMatrix = "authority-matrix";
 
-    private const string Trustee = "Caldova Superannuation Services Pty Ltd (trustee, RSE licensee)";
-    private const string Fund = "Caldova Superannuation Master Fund (USI CDV0101AU)";
+    private const string RulesAsAt = "As at 23 Nov 2026 (FY2026-27)";
+    private const string Compliance = "Caldova Life Advice — compliance summary of the law";
 
     public static IReadOnlyList<ProductRuleDocument> All { get; } = BuildDocuments();
 
@@ -153,865 +244,1258 @@ public static class ProductDocumentCatalog
     }
 
     /// <summary>The rule documents applied to the case behind <paramref name="report"/>, in display order.</summary>
-    public static IReadOnlyList<ProductRuleDocument> DocumentsFor(EligibilityReport report) =>
+    public static IReadOnlyList<ProductRuleDocument> DocumentsFor(AdviceReport report) =>
         report.RuleDocumentIds
             .Select(FindById)
             .Where(d => d is not null)
             .Select(d => d!)
             .ToList();
 
-    /// <summary>Default badge text for a recommendation.</summary>
-    public static string DefaultLabel(EligibilityRecommendation recommendation) => recommendation switch
+    /// <summary>Exact knowledge-base title of an APL insurer's PDS extract, or null.</summary>
+    public static string? PdsTitleFor(string insurerName) =>
+        All.FirstOrDefault(d => d.DocumentType == "PDS extract"
+                                && d.Title.StartsWith(insurerName, StringComparison.OrdinalIgnoreCase))?.Title;
+
+    /// <summary>Default badge text for a status.</summary>
+    public static string DefaultLabel(AdviceStatus status) => status switch
     {
-        EligibilityRecommendation.Approve => "Approve",
-        EligibilityRecommendation.PartialApprove => "Partially approve",
-        EligibilityRecommendation.Decline => "Decline",
-        _ => "Need more info",
+        AdviceStatus.ReadyForAdviser => "Draft SoA ready for Amelia",
+        AdviceStatus.NotApplicable => "Not a paraplanning case",
+        _ => "Need more information",
     };
 
     /// <summary>
-    /// Returns the eligibility report for <paramref name="c"/>, keyed off its
-    /// <see cref="CaseRecord.SampleId"/>. Falls back to a generic "need more
-    /// info" report (with rule documents chosen by request type) for any case
-    /// that isn't one of the five worked scenarios — including a scenario
-    /// case whose request type was changed on the Onboarding form.
+    /// The paraplanning report for <paramref name="c"/>: the worked scenarios
+    /// for Priya and George, a polite pointer to Claims for the claim cases,
+    /// and a "need more information" report for any other advice request.
     /// </summary>
-    public static EligibilityReport BuildReport(CaseRecord c)
+    public static AdviceReport BuildReport(CaseRecord c) => InsurerProductCatalog.ScenarioKey(c) switch
     {
-        var sample = RequestSampleCatalog.FindById(c.SampleId ?? string.Empty);
-        if (sample is null || !string.Equals(sample.RequestType, c.RequestType, StringComparison.OrdinalIgnoreCase))
-            return GenericReport(c);
+        "priya" => PriyaReport(c),
+        "george" => GeorgeReport(c),
+        "grace" => ClaimReport(c, "grace"),
+        "tom" => ClaimReport(c, "tom"),
+        "robert" => ClaimReport(c, "robert"),
+        _ => InsurerProductCatalog.IsAdviceRequest(c) ? GenericReport(c) : ClaimReport(c, "claim"),
+    };
 
-        return sample.Id switch
-        {
-            "onboarding-priya" => PriyaReport(c),
-            "rollover-grace" => GraceReport(c),
-            "pension-george" => GeorgeReport(c),
-            "hardship-tom" => TomReport(c),
-            "death-benefit-robert" => RobertReport(c),
-            _ => GenericReport(c),
-        };
-    }
+    private static AdviceChecklistItem Item(string id, string category, string label, ChecklistStatus status, string finding, string clauseRef) =>
+        new(id, category, label, status, finding, clauseRef);
 
-    private static EligibilityChecklistItem Item(string id, string label, ChecklistStatus status, string finding, string clauseRef) =>
-        new(id, label, status, finding, clauseRef);
+    private static RuleSection S(string id, string title, string text, string reference) => new(id, title, text, reference);
 
-    // ── Rule documents ─────────────────────────────────────────────────────
+    // ── Rule and product documents ─────────────────────────────────────────
 
     private static IReadOnlyList<ProductRuleDocument> BuildDocuments() => new[]
     {
         new ProductRuleDocument(
-            Id: DocAccountOpening,
-            Title: "Caldova Super & Pension PDS — Opening an account & consolidating (extract)",
+            Id: DocHarbourline,
+            Number: 1,
+            Title: "Harbourline Life — Protection PDS extract",
             DocumentType: "PDS extract",
-            Issuer: Trustee,
-            Product: "Caldova Super (Essential, Select, Private) — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Caldova Super & Pension PDS extract",
-            Summary:
-                "What we need before we open a Caldova Super account, how investment choices and " +
-                "adviser fees work, and what happens to insurance cover in funds you roll over.",
+            Issuer: "Harbourline Life Limited (fictional insurer on Caldova's APL)",
+            AppliesTo: "Harbourline Protection Plan (policy numbers HL-…)",
+            EffectiveDate: "PDS extract — PDS dated 1 July 2026",
+            Summary: "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals, and key person and buy-sell cover for businesses. No super-linking.",
             Sections: new[]
             {
-                new RuleSection("PDS-1", "Verifying your identity",
-                    "Before we open your account we verify your identity — electronically (for example a " +
-                    "driver licence checked through the Document Verification Service, DVS) by us or your " +
-                    "adviser, or with certified copies. We also screen new members against politically " +
-                    "exposed person (PEP) and sanctions lists.",
-                    "AML/CTF Act 2006 — identity verification (KYC)"),
-                new RuleSection("PDS-2", "Your tax file number (TFN)",
-                    "Please give us your TFN. You don't have to, but without it we can't accept personal " +
-                    "contributions, extra tax applies to employer contributions and it is harder to find " +
-                    "your other super. We never show your full TFN on letters or statements.",
-                    "SIS Act Part 25A"),
-                new RuleSection("PDS-3", "Choosing your investments",
-                    "Every tier is available direct or through an adviser. Essential offers a simple menu " +
-                    "(Caldova Managed Portfolios and cash); Select offers the full menu, including term deposits " +
-                    "and managed funds; Private adds direct ASX and international shares and private markets. " +
-                    "We check your choice is on your tier's menu, that you're within the target market " +
-                    "determination (TMD) for the product, and — if you're advised — that it is consistent with " +
-                    "the risk profile in your Statement of Advice. At least 1% of your account is kept in the " +
-                    "Caldova Cash Account for fees and payments.",
-                    "Corporations Act Pt 7.8A (design & distribution obligations)"),
-                new RuleSection("PDS-4", "Advice fees paid from your account",
-                    "We only deduct a fee for personal advice you have received, and only with your written " +
-                    "consent. The consent must state the amount, the services and the period it covers (no " +
-                    "more than 12 months for an ongoing fee arrangement), and you can withdraw it at any time.",
-                    "SIS Act s99FA"),
-                new RuleSection("PDS-5", "Bringing your other super across",
-                    "When you roll over your whole balance from another fund, that fund closes your account and " +
-                    "any insurance cover it holds (for example death and TPD cover) usually ends. Before we " +
-                    "request a rollover from a fund where you hold cover, you must confirm — on the application " +
-                    "or in writing through your adviser — that you understand the cover will end, or that " +
-                    "replacement cover is in place. Rollovers from funds without cover proceed straight away.",
-                    "Caldova consolidation procedure"),
+                S("HLP-1", "Life cover",
+                    "Pays the sum insured on death. Terminal illness benefit: the sum insured is paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.",
+                    "Harbourline PDS, rule 1"),
+                S("HLP-2", "TPD cover",
+                    "Any occupation: because of illness or injury, the life insured has been off work for 3 consecutive months and is unlikely ever to work again in any occupation suited to their education, training or experience. Own occupation (outside super only): unlikely ever to work again in their own occupation. When TPD is packaged with life cover, a TPD payment reduces the life cover by the same amount.",
+                    "Harbourline PDS, rule 2"),
+                S("HLP-3", "Trauma cover",
+                    "A lump sum when the life insured is diagnosed with a listed condition, such as cancer, heart attack or stroke, or suffers a listed serious injury, confirmed by a specialist medical practitioner. Mental health conditions aren't covered.",
+                    "Harbourline PDS, rule 3"),
+                S("HLP-4", "Income protection",
+                    "A monthly benefit while the life insured is totally disabled after the waiting period (30, 60 or 90 days), for a benefit period of 2 years, 5 years or to age 65; insured benefit at application up to 70% of annual pre-tax earnings, divided by 12. For policies issued from 1 Oct 2021, Harbourline pays the lesser of the insured monthly benefit and 70% of average monthly earnings in the 12 months before the disability — for a self-employed person, the net income the business generates from their personal exertion, shown in BAS, profit and loss statements or tax returns. Benefits accrue from the end of the waiting period, are paid monthly in arrears and increase each year with CPI. Example: insured $7,000 a month; average earnings $8,000 a month; 70% × $8,000 = $5,600 a month payable.",
+                    "Harbourline PDS, rule 4; within APRA's IDII limits"),
+                S("HLP-5", "Business protection",
+                    "Key person cover (life and TPD on a key person, owned by the business) and buy-sell cover (life and TPD on each business owner).",
+                    "Harbourline PDS, rule 5"),
+                S("HLP-6", "Premiums",
+                    "Stepped (rise with age) or level (start higher and rise more slowly). Sums insured increase each year with CPI unless the policy owner declines the increase.",
+                    "Harbourline PDS, rule 6"),
+                S("HLP-7", "Applying",
+                    "The policy owner and life insured must take reasonable care not to make a misrepresentation. Harbourline won't ask for or use genetic test results.",
+                    "Harbourline PDS, rule 7"),
+                S("HLP-8", "Cooling-off",
+                    "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it's issued; not available once a claim has been made.",
+                    "Harbourline PDS, rule 8"),
+                S("HLP-9", "Who is paid",
+                    "Benefits are paid to the policy owner. Life cover is paid to the nominated beneficiaries if the policy owner has nominated them, otherwise to the policy owner's estate. Payments go only into an account in the payee's own name.",
+                    "Harbourline PDS, rule 9"),
+                S("HLP-10", "Claims",
+                    "A named claims consultant within 2 business days of a claim. Harbourline subscribes to the Life Insurance Code of Practice.",
+                    "Harbourline PDS, rule 10"),
+                S("HLP-11", "Adviser remuneration",
+                    "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent. The SoA shows the amounts in dollars.",
+                    "Harbourline PDS, rule 11"),
             },
             Requirements: new[]
             {
-                "Application signed and dated by the member.",
-                "Identity verified (DVS or certified copies) and PEP / sanctions screening clear.",
-                "TFN supplied.",
-                "Investment selection on the tier's menu and, for advised members, consistent with the Statement of Advice.",
-                "Written adviser fee consent if advice fees will be deducted from the account.",
-                "Signed insurance-loss acknowledgement for each fund being rolled over that holds cover.",
+                "Claim form signed by the policy owner (or a representative with written authority) and certified ID of the claimant.",
+                "Income protection: treating doctor's or surgeon's report and earnings evidence for the 12 months before the disability (BAS, profit and loss statement, tax returns or payslips).",
+                "Trauma: specialist's report confirming the diagnosis against the policy definition.",
+                "Bank account in the payee's own name.",
             },
             Restrictions: new[]
             {
-                "Investments must be on the tier's menu — for example, term deposits need Select or Private.",
-                "A minimum of 1% of the account is held in the Caldova Cash Account.",
-                "A rollover from a fund that holds insurance cover is held until the acknowledgement is received.",
-                "Caldova does not give personal financial advice — that is the adviser's role.",
+                "Own-occupation TPD can't be held inside super, and Harbourline doesn't offer super-linking.",
+                "Trauma cover doesn't cover mental health conditions and isn't available inside super.",
+                "Income protection isn't agreed value — the benefit can be less than the insured monthly benefit when earnings have fallen.",
+                "Benefits are never paid to a third party or into an account in another name.",
             }),
 
         new ProductRuleDocument(
-            Id: DocFeeConsent,
-            Title: "Adviser fee consent (s99FA) & ongoing fee arrangements — rule summary",
+            Id: DocCorella,
+            Number: 2,
+            Title: "Corella Life — Protection PDS extract",
+            DocumentType: "PDS extract",
+            Issuer: "Corella Life Limited (fictional insurer on Caldova's APL)",
+            AppliesTo: "Corella Protection Plan and Corella Super Plan (policy numbers CR-…)",
+            EffectiveDate: "PDS extract — PDS dated 1 July 2026",
+            Summary: "Super-linking — life and any-occupation TPD inside Corella's super plan, with an own-occupation TPD extension, trauma and income protection outside super — plus exclusion reviews, nominated beneficiaries and key person and buy-sell cover.",
+            Sections: new[]
+            {
+                S("CRP-1", "Life cover",
+                    "Pays the sum insured on death. Terminal illness benefit: paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.",
+                    "Corella PDS, rule 1"),
+                S("CRP-2", "TPD cover, any occupation",
+                    "Inside or outside super: because of illness or injury, the life insured is unlikely ever to work again in any occupation suited to their education, training or experience.",
+                    "Corella PDS, rule 2"),
+                S("CRP-3", "Own-occupation TPD extension (outside super, super-linked)",
+                    "Pays if the life insured is unlikely ever to work again in their own occupation, even if they could do other work. A TPD claim is assessed against the any-occupation cover inside super first; if that definition isn't met but the own-occupation definition is, the extension pays. The two parts are priced and linked together, the extension never pays more than the linked TPD sum insured, and its benefits are paid to the policy owner personally. Suits people whose work is physical or specialised, such as physiotherapists.",
+                    "Corella PDS, rule 3"),
+                S("CRP-4", "Cover inside super",
+                    "The Corella Super Plan's trustee owns the cover. Premiums are deducted from the person's Corella Super Plan account, which can be funded by a rollover from another super fund. Super cover can only pay on events that match a condition of release, so own-occupation TPD and trauma are held outside super. Benefits from cover inside super are paid by the trustee under the plan's rules and any valid nomination.",
+                    "Corella PDS, rule 4"),
+                S("CRP-5", "Trauma cover (outside super)",
+                    "A lump sum on diagnosis of a listed condition, such as cancer, heart attack or stroke, confirmed by a specialist medical practitioner. Mental health conditions aren't covered.",
+                    "Corella PDS, rule 5"),
+                S("CRP-6", "Income protection (outside super)",
+                    "Waiting periods of 30, 60 or 90 days; benefit periods of 2 years, 5 years or to age 65; insured monthly benefit at application up to 70% of annual pre-tax earnings, divided by 12. Corella pays the lesser of the insured monthly benefit and 70% of average monthly earnings in the 12 months before the disability, monthly in arrears from the end of the waiting period.",
+                    "Corella PDS, rule 6"),
+                S("CRP-7", "Exclusion review",
+                    "Where Corella has excluded a pre-existing condition from income protection (for example back and spine conditions), the policy owner can ask Corella to review the exclusion after two symptom-free years. If Corella removes it, cover for that condition applies from the review date.",
+                    "Corella PDS, rule 7"),
+                S("CRP-8", "Premiums",
+                    "Stepped (rise with age) or level (start higher and rise more slowly). Sums insured increase each year with CPI unless the policy owner declines.",
+                    "Corella PDS, rule 8"),
+                S("CRP-9", "Underwriting",
+                    "A tele-interview for every application. Corella may accept cover at standard rates, with a loading or an exclusion, or decline. The policy owner and life insured must take reasonable care not to make a misrepresentation; Corella won't ask for or use genetic test results.",
+                    "Corella PDS, rule 9"),
+                S("CRP-10", "Who is paid (outside super)",
+                    "Benefits are paid to the policy owner. If the policy owner is the life insured and has nominated beneficiaries, life cover is paid directly to them in the shares nominated, not through the estate; without a nomination it's paid to the estate. Nominations can be changed in writing at any time.",
+                    "Corella PDS, rule 10"),
+                S("CRP-11", "Cooling-off",
+                    "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it's issued; not available once a claim has been made.",
+                    "Corella PDS, rule 11"),
+                S("CRP-12", "Claims",
+                    "A dedicated case manager for every death and terminal illness claim. Corella subscribes to the Life Insurance Code of Practice.",
+                    "Corella PDS, rule 12"),
+                S("CRP-13", "Adviser remuneration",
+                    "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent. The SoA shows the amounts in dollars.",
+                    "Corella PDS, rule 13"),
+                S("CRP-14", "Earlier policies",
+                    "The life cover, terminal illness and beneficiary nomination terms are the same as in Corella's 2019 PDS.",
+                    "Corella PDS, rule 14"),
+            },
+            Requirements: new[]
+            {
+                "Claim form and certified ID of the claimant.",
+                "Death: certified copy of the death certificate, the policy number and the beneficiary nomination on Corella's records (or the trustee's records, inside super).",
+                "Income protection: treating doctor's report and earnings evidence for the 12 months before the disability.",
+                "Exclusion review: medical evidence of two symptom-free years.",
+                "Bank account in the payee's own name.",
+            },
+            Restrictions: new[]
+            {
+                "Own-occupation TPD and trauma can't be held inside super.",
+                "The own-occupation extension can't be bought on its own — it's linked to any-occupation TPD inside super, and never pays twice for the same disability.",
+                "Income protection isn't offered on an agreed-value basis.",
+                "Exclusions on the policy schedule apply until Corella removes them.",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocLyrebird,
+            Number: 3,
+            Title: "Lyrebird Life — Protection PDS extract",
+            DocumentType: "PDS extract",
+            Issuer: "Lyrebird Life Limited (fictional insurer on Caldova's APL)",
+            AppliesTo: "Lyrebird Life Protection (policy numbers LB-…)",
+            EffectiveDate: "PDS extract — PDS dated 1 July 2026",
+            Summary: "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals and families — no business protection or super-linking — with Lyrebird's cancer definition and its controls on changes of details and payments.",
+            Sections: new[]
+            {
+                S("LBP-1", "Life cover",
+                    "Pays the sum insured on death, with a terminal illness benefit paid early if two medical practitioners, one a specialist in the condition, certify the life insured is likely to die within 24 months. Life cover is paid directly to the nominated beneficiaries, not through the estate.",
+                    "Lyrebird PDS, rule 1"),
+                S("LBP-2", "TPD cover",
+                    "Any occupation (inside or outside super) or own occupation (outside super only).",
+                    "Lyrebird PDS, rule 2"),
+                S("LBP-3", "Trauma cover — cancer",
+                    "A lump sum on diagnosis of a listed condition, such as cancer, heart attack, stroke or major head injury; mental health conditions aren't covered. Cancer means a malignant tumour, shown by the uncontrolled growth and spread of malignant cells and the invasion of tissue, confirmed by a specialist and supported by histopathology. A GP's letter or imaging alone isn't enough.",
+                    "Lyrebird PDS, rule 3"),
+                S("LBP-4", "Income protection",
+                    "Waiting periods of 30, 60 or 90 days; benefit periods of 2 years, 5 years or to age 65. Lyrebird pays the lesser of the insured monthly benefit and 70% of average monthly earnings in the 12 months before the disability.",
+                    "Lyrebird PDS, rule 4"),
+                S("LBP-5", "Who is paid",
+                    "Trauma, TPD and income protection benefits are paid to the policy owner, only into an account in the policy owner's name (or the nominated beneficiary's, for life cover) — never to third parties or company accounts unless the company owns the policy.",
+                    "Lyrebird PDS, rule 5"),
+                S("LBP-6", "Changes of contact or bank details",
+                    "Each change is confirmed with a code sent to the mobile or email held before the change, or with a signed request and certified ID. If bank details changed in the 30 days before a benefit payment, Lyrebird calls the policy owner on the verified number before paying.",
+                    "Lyrebird PDS, rule 6"),
+                S("LBP-7", "Claims Integrity",
+                    "Lyrebird's Claims Integrity team investigates suspected fraud and identity takeover. Advisers can alert the team about a policy.",
+                    "Lyrebird PDS, rule 7"),
+                S("LBP-8", "Premiums",
+                    "Stepped (rise with age) or level (start higher and rise more slowly).",
+                    "Lyrebird PDS, rule 8"),
+                S("LBP-9", "Applying",
+                    "The policy owner and life insured must take reasonable care not to make a misrepresentation. Lyrebird won't ask for or use genetic test results.",
+                    "Lyrebird PDS, rule 9"),
+                S("LBP-10", "Cooling-off",
+                    "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it's issued; not available once a claim has been made.",
+                    "Lyrebird PDS, rule 10"),
+                S("LBP-11", "Claims",
+                    "Lyrebird subscribes to the Life Insurance Code of Practice.",
+                    "Lyrebird PDS, rule 11"),
+                S("LBP-12", "Adviser remuneration",
+                    "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent.",
+                    "Lyrebird PDS, rule 12"),
+                S("LBP-13", "Earlier policies",
+                    "The cancer definition, beneficiary nominations and payment rules are the same as in Lyrebird's 2019 PDS.",
+                    "Lyrebird PDS, rule 13"),
+            },
+            Requirements: new[]
+            {
+                "Claim form signed by the policy owner and certified ID of the policy owner.",
+                "Trauma (cancer): specialist's report confirming the diagnosis, and the histopathology report.",
+                "Any change of contact or bank details confirmed through the verified mobile or email held before the change.",
+                "Bank account in the policy owner's own name (or the nominated beneficiary's, for life cover).",
+            },
+            Restrictions: new[]
+            {
+                "No business protection and no super-linking.",
+                "A cancer claim can't be assessed without a specialist's diagnosis supported by histopathology.",
+                "Benefits are never paid to a third party or into an account in another name.",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocNorthbank,
+            Number: 4,
+            Title: "Northbank Life — Business Protection PDS extract",
+            DocumentType: "PDS extract",
+            Issuer: "Northbank Life Limited (fictional insurer on Caldova's APL)",
+            AppliesTo: "Northbank Business Protection — buy-sell and key person cover (policy numbers NB-…)",
+            EffectiveDate: "PDS extract — PDS dated 1 July 2026",
+            Summary: "Buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting.",
+            Sections: new[]
+            {
+                S("NBP-1", "Buy-sell cover",
+                    "Life and TPD cover (trauma optional) on each business owner, sized to that owner's share of the business value, so the remaining owners can buy the share and the departing owner or their family receives its value. Self-ownership: each owner owns the policy on their own life and the benefit is paid to them, their nominated beneficiaries or their estate, with the buy-sell agreement setting out how the share is transferred; or cross-ownership. Northbank requires a buy-sell agreement prepared by the owners' lawyer, and doesn't draft or review it. TPD on buy-sell and key person cover is assessed on an own-occupation basis: the life insured is unlikely ever to work in their own occupation again because of illness or injury. The buy-sell agreement's TPD trigger should use the same definition.",
+                    "Northbank PDS, rule 1"),
+                S("NBP-2", "Key person cover",
+                    "Life and TPD cover (trauma optional) on a person whose death or disability would cost the business money. The business owns the policy and receives the benefit. The purpose is recorded at application: revenue (to replace lost profit while a replacement is found and trained) or capital (for example to repay business debt). The sum insured is supported by the accountant's estimate of the loss.",
+                    "Northbank PDS, rule 2"),
+                S("NBP-3", "Financial underwriting",
+                    "Northbank accepts the business valuation and the last two years' financial statements prepared by the business's accountant as financial evidence, and usually decides within 5 business days.",
+                    "Northbank PDS, rule 3"),
+                S("NBP-4", "Medical underwriting",
+                    "For total life or TPD cover on one life: a tele-interview for every application; a blood profile from age 46 above $1,000,000; a blood profile and medical examination from age 51 above $1,500,000.",
+                    "Northbank PDS, rule 4"),
+                S("NBP-5", "Underwriting outcomes",
+                    "Standard rates, a loading (a percentage added to the premium, for example +25%), an exclusion, or a decline. Northbank reviews a loading or exclusion on request after two years if the life insured's health results improve.",
+                    "Northbank PDS, rule 5"),
+                S("NBP-6", "Premiums",
+                    "Stepped (rise with age) or level (start higher and rise more slowly). The business pays key person premiums; under self-ownership each owner pays the premiums for their own buy-sell policy.",
+                    "Northbank PDS, rule 6"),
+                S("NBP-7", "Applying",
+                    "The policy owner and life insured must take reasonable care not to make a misrepresentation. Northbank won't ask for or use genetic test results.",
+                    "Northbank PDS, rule 7"),
+                S("NBP-8", "Cooling-off",
+                    "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it's issued; not available once a claim has been made.",
+                    "Northbank PDS, rule 8"),
+                S("NBP-9", "Tax",
+                    "The tax treatment of premiums and benefits depends on who owns the policy and why it was taken out. Northbank recommends that the business confirm it with its accountant.",
+                    "Northbank PDS, rule 9"),
+                S("NBP-10", "Claims",
+                    "Northbank subscribes to the Life Insurance Code of Practice.",
+                    "Northbank PDS, rule 10"),
+                S("NBP-11", "Adviser remuneration",
+                    "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent.",
+                    "Northbank PDS, rule 11"),
+            },
+            Requirements: new[]
+            {
+                "Company extract showing the owners and their shareholdings.",
+                "Business valuation from the accountant and the last two years' financial statements.",
+                "Accountant's estimate of the loss (key person cover).",
+                "Blood profile and medical examination where the thresholds apply.",
+                "Buy-sell agreement prepared by the owners' lawyer.",
+            },
+            Restrictions: new[]
+            {
+                "Buy-sell sums insured can't exceed the owner's share of the business value supported by the financial evidence; key person sums insured can't exceed the loss estimated by the accountant.",
+                "Northbank doesn't draft buy-sell agreements or give tax or legal advice.",
+                "Business protection isn't available inside super.",
+                "Benefits are paid only into an account in the policy owner's name (the business, for key person cover).",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocFsg,
+            Number: 5,
+            Title: "Caldova Life Advice — Financial Services Guide and remuneration",
+            DocumentType: "Caldova guide",
+            Issuer: "Caldova Life Advice Pty Ltd (fictional advice practice)",
+            AppliesTo: "Every Caldova client",
+            EffectiveDate: "FSG v2026.1 — dated 1 July 2026",
+            Summary: "Who Caldova is, the services it provides, the documents clients receive, how Caldova and its people are paid, its associations, privacy and how to complain.",
+            Sections: new[]
+            {
+                S("FSG-1", "Who we are",
+                    "Caldova Life Advice Pty Ltd, Caldova House, Melbourne: a life insurance advice practice licensed for personal advice on, and dealing in, life risk insurance products. Caldova acts for its clients, not for the insurers.",
+                    "Caldova FSG, item 1"),
+                S("FSG-2", "Our adviser",
+                    "Amelia, Senior Risk Adviser, gives all of Caldova's personal advice and signs every Statement of Advice. She meets the education standard, completes at least 40 hours of continuing professional development each year, follows the Financial Planners and Advisers Code of Ethics 2019 and is on ASIC's Financial Advisers Register.",
+                    "Caldova FSG, item 2"),
+                S("FSG-3", "What we do",
+                    "Personal advice on life cover (with a terminal illness benefit), TPD, trauma, income protection and business protection (key person and buy-sell cover), including whether cover is held inside or outside super; applying for cover and supporting clients through underwriting; supporting clients and families through claims; annual reviews. No advice on investments, super investment options, tax or legal matters.",
+                    "Caldova FSG, item 3"),
+                S("FSG-4", "Documents you receive",
+                    "This FSG (or the FSG information on our website); a Statement of Advice for personal advice, showing our remuneration, including commission, in dollars; a Record of Advice for further advice when your circumstances haven't changed significantly; and each insurer's PDS.",
+                    "Caldova FSG, item 4"),
+                S("FSG-5", "How Caldova is paid",
+                    "No advice fee for protection-only advice. The insurer pays Caldova commission within the Life Insurance Framework caps: up to 60% of the first year's policy cost (premiums and fees, excluding GST) and up to 20% of the policy cost in each later year. Example: on a first-year premium of $3,180, up to $1,908 upfront and up to $636 a year ongoing.",
+                    "Caldova FSG, item 5"),
+                S("FSG-6", "Your consent to commission",
+                    "Caldova only receives commission with your informed consent. Before you consent we tell you the insurer, the rate as a percentage of the policy cost, how often and for how long it's paid (including renewals), the services we provide (annual reviews and claims support), that the law requires your consent and that it can't be withdrawn. You consent in writing (or we keep a written record of verbal consent) and get a copy.",
+                    "Caldova FSG, item 6"),
+                S("FSG-7", "Clawback",
+                    "If a policy is cancelled in its first year, the insurer recovers 100% of the upfront commission from Caldova; in its second year, 60%.",
+                    "Caldova FSG, item 7"),
+                S("FSG-8", "How our people are paid",
+                    "Amelia and the team are paid salaries. Caldova doesn't pay or receive referral fees: referral partners such as Hannah Lewis (Yarra Home Loans) and Marcus Tan (Bayside Business Accountants) aren't paid for referrals.",
+                    "Caldova FSG, item 8"),
+                S("FSG-9", "Not independent",
+                    "Because Caldova receives commission from insurers, we don't call ourselves independent, impartial or unbiased.",
+                    "Caldova FSG, item 9"),
+                S("FSG-10", "Associations",
+                    "No insurer owns Caldova or has a financial interest in it. Caldova recommends cover from the insurers on its APL: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life.",
+                    "Caldova FSG, item 10"),
+                S("FSG-11", "Privacy",
+                    "Health information is sensitive: collected with consent, used only for your advice, application or claim, and shared only with the people who need it, such as the insurer. Referral partners are told only what you agree to, never your health details.",
+                    "Caldova FSG, item 11"),
+                S("FSG-12", "Complaints",
+                    "Tell us first; we give a final written response within 30 calendar days. If you're not satisfied, you can take your complaint to the Australian Financial Complaints Authority (AFCA), a free, independent scheme.",
+                    "Caldova FSG, item 12"),
+                S("FSG-13", "Records",
+                    "Records of your advice, including the best-interests steps, are kept for 7 years, and records of your commission consent for at least 5 years.",
+                    "Caldova FSG, item 13"),
+            },
+            Requirements: new[]
+            {
+                "Date the FSG was given (or the client was pointed to the FSG information on Caldova's website).",
+                "Signed privacy and health-information consent.",
+                "Written commission consent (or a written record of verbal consent), with a copy given to the client.",
+            },
+            Restrictions: new[]
+            {
+                "No ongoing fee arrangements — there's no advice fee for protection-only advice.",
+                "No advice on investments, super investment options, tax or legal matters; no buy-sell agreements drafted.",
+                "AI agents support the team but never give advice; only Amelia does.",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocApl,
+            Number: 6,
+            Title: "Caldova Life Advice — Approved product list and research method",
+            DocumentType: "Caldova guide",
+            Issuer: "Caldova Life Advice Pty Ltd (fictional advice practice)",
+            AppliesTo: "Every product recommendation",
+            EffectiveDate: "APL 2026-27 — reviewed 1 July 2026",
+            Summary: "The insurers and products Amelia can recommend, and the method Insurance Research uses to research and compare them for every Statement of Advice.",
+            Sections: new[]
+            {
+                S("APL-1", "APL insurers for 2026-27",
+                    "Harbourline Life (HL-): life, TPD (own occupation outside super only), trauma and income protection; key person and buy-sell; no super-linking. Corella Life (CR-): super-linking (life and any-occupation TPD inside super, own-occupation extension, trauma and income protection outside); key person and buy-sell. Lyrebird Life (LB-): life, TPD, trauma and income protection for individuals and families; no business protection. Northbank Life (NB-): buy-sell and key person cover with fast financial underwriting — always researched for business protection.",
+                    "Caldova APL 2026-27"),
+                S("APL-2", "How insurers get on the APL",
+                    "Insurance Research and Theo review the APL every year against definitions, features and exclusions; premiums over time, stepped and level; underwriting service; claims philosophy and claims data, including APRA's claims statistics; Life Code subscription; and each product's target market determination.",
+                    "Caldova APL 2026-27"),
+                S("APL-3", "Research for each SoA",
+                    "The reasonable investigation of products in the best interests duty: start from the needs analysis and the client's circumstances; compare the definitions that matter for this client; compare features and exclusions; compare premiums in dollars, year 1 and stepped against level over time; shortlist with reasons and a comparison workbook. Cheapest isn't best if the definition won't pay. Amelia decides what to recommend and records why in the SoA.",
+                    "Caldova APL 2026-27; Corporations Act s961B(2)(e)"),
+                S("APL-4", "Target market determinations",
+                    "Insurers make a TMD for each product. Giving personal advice and arranging a product to implement it are excluded conduct, so the best interests duty governs Amelia's recommendation; Ivy still notes when a client sits outside a product's target market.",
+                    "Corporations Act s994A, s994B, s994E(3)"),
+                S("APL-5", "Off-APL products",
+                    "If no APL product suits a client, Amelia can research a product off the APL with Theo's approval, or tell the client that Caldova can't help with that need.",
+                    "Caldova APL 2026-27"),
+            },
+            Requirements: new[]
+            {
+                "Needs analysis, product comparison and premium workbook on the file.",
+                "Reasons for the shortlisted product; Theo's approval for any product off the APL.",
+            },
+            Restrictions: new[]
+            {
+                "The APL doesn't limit the best interests duty.",
+                "Agents compare and shortlist; they never recommend a product to the client.",
+                "Premiums are indicative, at standard rates, until the insurer has underwritten the application.",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocAdvice,
+            Number: 7,
+            Title: "Advice rules — best interests duty, SoA and replacement advice",
             DocumentType: "Rule summary",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Adviser fee consent (s99FA) & ongoing fee arrangements",
-            Summary: "When the trustee may pay a financial adviser's fee from a member's super account.",
+            Issuer: Compliance,
+            AppliesTo: "Personal advice to retail clients on life risk insurance",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
+            Summary: "The best interests duty and related obligations, what an SoA must contain and when, Records of Advice, replacement advice, hawking, design and distribution, and Caldova practice.",
             Sections: new[]
             {
-                new RuleSection("SIS-1", "Paying advice fees from super",
-                    "The trustee may only deduct a fee for financial product advice from a member's account " +
-                    "if the advice is personal advice to that member, the member has given a written request " +
-                    "or consent, and the trustee holds it. Caldova accepts a consent signed and dated by the " +
-                    "member that states the adviser, the fee amount, the services and the period it applies to, and " +
-                    "says the consent can be withdrawn at any time. The best-interests duty and the sole " +
-                    "purpose test still apply.",
-                    "SIS Act s99FA"),
-                new RuleSection("SIS-2", "Ongoing fee arrangements — annual renewal",
-                    "Ongoing fee consent lasts no more than 12 months. It must be renewed in writing each year: " +
-                    "the renewal window opens 60 days before and closes 150 days after the reference day. If it " +
-                    "isn't renewed, the arrangement ends and Caldova stops deducting the fee.",
-                    "Corporations Act Pt 7.7A Div 3"),
+                S("ADV-1", "Best interests duty and the safe harbour",
+                    "The adviser must act in the client's best interests. Safe harbour: (a) identify the client's objectives, financial situation and needs disclosed through their instructions; (b) identify the subject matter of the advice and the relevant circumstances; (c) make reasonable inquiries where information is incomplete or inaccurate; (d) assess whether the adviser has the expertise, and decline if not; (e) if recommending a product, reasonably investigate the products and assess them; (f) base all judgements on the client's relevant circumstances; (g) take any other step reasonably regarded as in the client's best interests. Scaled advice is allowed.",
+                    "Corporations Act s961B"),
+                S("ADV-2", "Related obligations",
+                    "Give advice only if it's reasonable to conclude it's appropriate for the client; warn the client if the advice is based on incomplete or inaccurate information; give the client's interests priority when there's a conflict. Contraventions can attract civil penalties.",
+                    "Corporations Act s961G, s961H, s961J, s961K, s961Q"),
+                S("ADV-3", "Statement of Advice",
+                    "Personal advice needs an SoA; the small-investment exemption doesn't apply to life risk advice. Give it when the advice is given, or as soon as practicable afterwards and before any further connected service — in time-critical cases within 5 business days, or before the cooling-off period starts.",
+                    "Corporations Act s946A, s946AA(1)(b)(iii), s946C"),
+                S("ADV-4", "SoA content",
+                    "The advice and its basis; the adviser's name and contact details; remuneration, including commission, stated in dollars; other interests and associations; any warning — with the detail the client would reasonably require, presented clearly, concisely and effectively. An SoA can't be combined with an FSG or a PDS.",
+                    "Corporations Act s947B, s947C, s947E"),
+                S("ADV-5", "Replacement advice",
+                    "When the advice is to replace one product with another (for example cancel existing cover and take out new cover), the SoA must also set out the charges on disposing of the old product and acquiring the new one, any benefits lost (temporarily or otherwise) and any other significant consequences — or say there will or may be such charges, losses or consequences if they aren't known.",
+                    "Corporations Act s947D"),
+                S("ADV-6", "Record of Advice",
+                    "For further advice when the client's relevant circumstances and the basis of the advice aren't significantly different, an RoA can be used instead of an SoA. It sets out the advice (or brief particulars and their basis) plus any s947D items, is kept for 7 years, and the client can ask for a copy.",
+                    "Corporations Regs reg 7.7.10AE, reg 7.7.09; ASIC INFO 266; s942B(8)"),
+                S("ADV-7", "Records",
+                    "Keep records of the best-interests steps, the advice and why it's appropriate, and the actions taken to prioritise the client's interests, for 7 years.",
+                    "Corporations Act s912G; ASIC Instrument 2024/508"),
+                S("ADV-8", "Commission",
+                    "Shown in dollars in the SoA, with the client's informed consent before it can be received.",
+                    "Corporations Act s947B, s963BB"),
+                S("ADV-9", "Hawking",
+                    "Offering a product during unsolicited real-time contact is prohibited, but offers made in the course of personal advice by someone bound by the best interests duty are an exception, and contacting an existing client about a product they already hold isn't hawking. Caldova contacts a referred client only after the referral partner has passed on the client's consent.",
+                    "Corporations Act s992A; ASIC RG 38"),
+                S("ADV-10", "Design and distribution",
+                    "Giving personal advice and arranging a product to implement it are excluded conduct; insurers still make a target market determination for each product.",
+                    "Corporations Act s994A, s994B, s994E(3)"),
+                S("ADV-11", "Caldova practice",
+                    "Amelia signs every SoA and RoA. Existing cover is never cancelled until the new cover is in force, and replacing or cancelling cover is always the client's decision with Amelia. Advice with total cover of $2,000,000 or more on one case gets Theo's second review.",
+                    "Caldova practice; Matrix — authority, approvals and escalation"),
+                S("ADV-12", "Proposed changes — not law",
+                    "The government's announced 'tranche 2' measures (a proposed client advice record, a new class of adviser and removing only the broadest safe-harbour step) aren't law at 23 Nov 2026. The current SoA, RoA and s961B rules apply.",
+                    "Treasury announcements, 2025-26 (proposed)"),
             },
             Requirements: new[]
             {
-                "Signed and dated written consent held by the trustee.",
-                "Fee amount, services and term stated on the consent.",
-                "Adviser authorised on the member's account.",
+                "Fact find: objectives, financial situation, needs and relevant circumstances.",
+                "Needs analysis with the working shown, and the research comparison of products.",
+                "Existing cover details, and the s947D disclosures for any replacement.",
+                "Commission in dollars and the client's informed consent; SoA signed by Amelia and the client's Authority to Proceed.",
             },
             Restrictions: new[]
             {
-                "No fee deduction without written consent — verbal consent is not accepted.",
-                "Fees for general advice, or for advice to someone other than the member, can't be deducted.",
-                "Deductions stop if an ongoing fee arrangement isn't renewed.",
+                "AI agents never give personal advice, never sign or send an SoA, and never tell a client to replace or cancel cover.",
+                "An RoA can't be used when the client's circumstances or the basis of the advice have changed significantly.",
+                "Proposed tranche 2 changes must not be presented as law.",
             }),
 
         new ProductRuleDocument(
-            Id: DocNominations,
-            Title: "Caldova Superannuation Master Fund Trust Deed — Death benefits & nominations (extract)",
-            DocumentType: "Trust deed extract",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026 (deed as amended)",
-            KnowledgeBaseTitle: "Trust-deed rules on death benefits & nominations",
-            Summary:
-                "How members nominate who receives their super when they die, and how the trustee pays death benefits.",
-            Sections: new[]
-            {
-                new RuleSection("TD-1", "Making a binding nomination",
-                    "A binding death benefit nomination must be in writing, signed and dated by the member in " +
-                    "the presence of two witnesses who are each at least 18 and are not named as beneficiaries. " +
-                    "Both witnesses sign a declaration that the member signed in their presence.",
-                    "SIS Regs reg 6.17A"),
-                new RuleSection("TD-2", "Nominations lapse after three years",
-                    "A binding nomination stays in force for three years from the date it was signed (or last " +
-                    "confirmed) and then lapses unless the member renews it. Caldova does not offer non-lapsing nominations.",
-                    "SIS Regs reg 6.17A"),
-                new RuleSection("TD-3", "Who you can nominate",
-                    "You can nominate your legal personal representative (your estate) and/or SIS dependants: " +
-                    "your spouse (including a de facto partner), your children of any age, or anyone in an " +
-                    "interdependency relationship with you. The shares must add up to 100%.",
-                    "SIS Act s10(1)"),
-                new RuleSection("TD-4", "Effect of a valid binding nomination",
-                    "If a binding nomination is valid and in force when the member dies, the trustee must pay " +
-                    "the death benefit to the nominated people in the nominated shares. The trustee has no discretion.",
-                    "SIS Act s59(1A)"),
-                new RuleSection("TD-5", "Nominations that are not binding",
-                    "If a nomination doesn't meet clause TD-1, or has lapsed, the trustee treats it as a " +
-                    "non-binding guide to the member's wishes and decides how to pay the benefit among the " +
-                    "member's dependants and legal personal representative.",
-                    "Caldova trust deed"),
-                new RuleSection("TD-6", "Pensions on death",
-                    "When we're told a pension member has died, pension payments stop. If a reversionary " +
-                    "beneficiary was nominated, the pension continues to them; otherwise the balance is paid " +
-                    "as a death benefit under these rules.",
-                    "SIS Regs reg 6.21"),
-            },
-            Requirements: new[]
-            {
-                "Certified copy of the death certificate.",
-                "Certified identification for each beneficiary.",
-                "Death benefit claim form signed by each beneficiary.",
-                "A bank account in each beneficiary's own name.",
-            },
-            Restrictions: new[]
-            {
-                "A binding nomination can only name the legal personal representative or SIS dependants.",
-                "A nomination more than three years old has lapsed and is treated as non-binding.",
-                "Every death benefit needs Team Leader approval before payment (AUTH-3).",
-            }),
-
-        new ProductRuleDocument(
-            Id: DocConditionsOfRelease,
-            Title: "Conditions of release & preservation — rule summary",
+            Id: DocSuper,
+            Number: 8,
+            Title: "Insurance inside super — permitted cover, Protecting Your Super and opt-in rules",
             DocumentType: "Rule summary",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Conditions of release & preservation",
-            Summary: "When preserved super can be paid out as a lump sum or used to start a pension.",
+            Issuer: Compliance,
+            AppliesTo: "Cover held through a super fund",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
+            Summary: "Which cover can be held inside super, when cover on an inactive account stops, the opt-in rules, how super-linking works and the tax points that follow.",
             Sections: new[]
             {
-                new RuleSection("SIS-3", "Preservation",
-                    "Super is preserved — it can't be paid out — until the member meets a condition of release. " +
-                    "Preservation age is 60 for anyone born after 30 June 1964. Once a condition of release with " +
-                    "no cashing restriction is met (for example retirement after preservation age, or reaching " +
-                    "65), the benefits become unrestricted non-preserved.",
-                    "SIS Regs reg 6.01(2)"),
-                new RuleSection("SIS-4", "Reaching age 65",
-                    "From age 65 all of a member's super is unrestricted non-preserved and can be paid as a lump " +
-                    "sum or used to start a pension, whether or not they have retired. No retirement declaration is needed.",
-                    "SIS Regs Sch 1"),
-                new RuleSection("SIS-5", "Severe financial hardship",
-                    "A member who has received eligible Commonwealth income support continuously for 26 weeks, " +
-                    "is still receiving it and can't meet reasonable and immediate family living expenses can " +
-                    "apply to their fund for one lump sum of $1,000 to $10,000 (gross) in any 12-month period. " +
-                    "Release on compassionate grounds is a separate condition approved by the ATO.",
-                    "SIS Regs reg 6.01(5); Sch 1"),
+                S("SUP-1", "Permitted cover",
+                    "A super trustee may only provide insured benefits for events that match a condition of release: death, terminal medical condition, permanent incapacity and temporary incapacity. So new own-occupation TPD and trauma cover can't be held inside super; existing benefits for people who joined their fund before 1 Jul 2014 are preserved.",
+                    "SIS Regs reg 4.07D"),
+                S("SUP-2", "Terminal medical condition",
+                    "Two registered medical practitioners, at least one a specialist in the relevant area, certify that the illness is likely to result in death within 24 months of the certification.",
+                    "SIS Regs reg 6.01A"),
+                S("SUP-3", "TPD inside super is any occupation",
+                    "Two legally qualified medical practitioners certify that the person is unlikely ever to be gainfully employed in a capacity for which they're reasonably qualified because of education, experience or training.",
+                    "ITAA 1997 s995-1"),
+                S("SUP-4", "Protecting Your Super",
+                    "A trustee must not provide insurance on a choice or MySuper product that has been inactive — no amount received — for 16 continuous months, unless the person has told the fund in writing that they want to keep the cover. The election carries over to a successor fund that gives equivalent rights. Example: Priya Natarajan's Kestrel Retail Super account has received nothing since 30 Jul 2025, so its $50,000 death cover stops on 30 Nov 2026 unless she elects to keep it.",
+                    "SIS Act s68AAA (from 1 Jul 2019)"),
+                S("SUP-5", "Opt-in rules",
+                    "Insurance needs the person to opt in if they're under 25 and new to the fund, or if their account balance is under $6,000. People who already had cover usually keep it if their balance later falls below $6,000.",
+                    "From 1 Apr 2020"),
+                S("SUP-6", "Default cover",
+                    "Default life and TPD cover in super usually starts from age 25; TPD cover in super usually ends at 65 and life cover at 70.",
+                    "Moneysmart"),
+                S("SUP-7", "Super-linking",
+                    "One arrangement split between a policy owned by the super trustee and a policy owned personally: life and any-occupation TPD sit in the fund, and own-occupation TPD and trauma are held personally. The two are priced and linked together, claims are assessed against the any-occupation super cover first, and benefits from the personally owned part are paid to the individual.",
+                    "Industry practice"),
+                S("SUP-8", "Paying premiums from super",
+                    "Premiums come out of the super account rather than the household budget, and the account can be topped up by contributions or a rollover from another fund. Premiums paid through super aren't personally tax-deductible.",
+                    "ATO — income protection insurance"),
+                S("SUP-9", "Who receives a super death benefit",
+                    "The trustee pays it under the fund's rules and any valid nomination.",
+                    "SIS Act"),
+                S("SUP-10", "Tax on benefits from super",
+                    "A death benefit lump sum to a death-benefits dependant (a spouse or former spouse, a child under 18, a person in an interdependency relationship, or another dependant) is tax-free; for a non-dependant the taxable component is taxed at up to 15% (taxed element) or 30% (untaxed element) plus the 2% Medicare levy. TPD lump sums are tax-free from age 60; below preservation age (60 for people born from 1 Jul 1964) the taxable component is taxed at up to 20% plus the Medicare levy.",
+                    "ITAA 1997 s302-60, s302-195, s302-145, s301-10, s301-35"),
+                S("SUP-11", "Commission",
+                    "Commission on group super cover and default cover in super is conflicted remuneration, so Caldova never receives commission on default cover.",
+                    "Corporations Act s963B(2)"),
             },
             Requirements: new[]
             {
-                "Evidence of the condition of release — date of birth, retirement declaration, Services Australia letter or death certificate.",
+                "Latest super statements showing the cover, the balance and the date of the last amount received.",
+                "Written election to keep cover on an inactive account (Protecting Your Super).",
             },
             Restrictions: new[]
             {
-                "Preserved benefits can't be paid before a condition of release is met.",
-                "Hardship releases are capped at $10,000 gross, once in any 12-month period.",
-                "Illegal early access schemes — such as promoters urging a rollover to an SMSF to get money out — are refused and referred to Financial Crime.",
+                "No new own-occupation TPD or trauma cover inside super.",
+                "Cover on an account that has received nothing for 16 continuous months stops unless the person has elected in writing to keep it.",
+                "AI agents never tell a client to cancel or keep super cover — that's the client's decision with Amelia.",
             }),
 
         new ProductRuleDocument(
-            Id: DocPensionStandards,
-            Title: "Pension standards — minimum drawdown, transfer balance cap & reversionary (rule summary)",
+            Id: DocUnderwriting,
+            Number: 9,
+            Title: "Underwriting and the duty to take reasonable care",
             DocumentType: "Rule summary",
-            Issuer: Trustee,
-            Product: "Caldova Pension (account-based pension) — " + Fund,
-            EffectiveDate: "1 July 2026 (FY2026-27)",
-            KnowledgeBaseTitle: "Pension standards (min drawdown table, TBC, reversionary)",
-            Summary: "The rules every Caldova Pension must meet when it starts and in every year after.",
+            Issuer: Compliance,
+            AppliesTo: "Every application for life risk cover",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
+            Summary: "What a client must do when applying, how an insurer can respond to a misrepresentation, the genetic information protection from 8 Oct 2026, cooling-off, and how Caldova handles underwriting outcomes.",
             Sections: new[]
             {
-                new RuleSection("TAX-1", "Transfer balance cap",
-                    "The general transfer balance cap is $2.1 million for 2026-27 (it was $2.0 million in " +
-                    "2025-26). Starting a pension creates a credit in the member's transfer balance account equal " +
-                    "to the amount used. Total credits can't go above the member's cap — any amount above it " +
-                    "stays in accumulation.",
-                    "ITAA 1997 Div 294"),
-                new RuleSection("SIS-6", "Minimum annual payment",
-                    "At least the minimum must be paid each financial year — a percentage of the account balance " +
-                    "by age: under 65 4%; 65–74 5%; 75–79 6%; 80–84 7%; 85–89 9%; 90–94 11%; 95 and over 14%.",
-                    "SIS Regs Sch 7"),
-                new RuleSection("SIS-7", "The first year",
-                    "In the year a pension starts, the minimum is pro-rated by the days from the start date to " +
-                    "30 June (counting the start date) and rounded to the nearest $10. A pension that starts on " +
-                    "or after 1 June has no minimum that year.",
-                    "SIS Regs Sch 7"),
-                new RuleSection("SIS-8", "Reversionary beneficiary",
-                    "A member may nominate a reversionary beneficiary when the pension starts. The beneficiary " +
-                    "must be a dependant who can receive a pension — for example a spouse. If the member dies, " +
-                    "the pension continues to them.",
-                    "SIS Regs reg 6.21; Caldova Pension terms"),
-                new RuleSection("TAX-2", "Reporting to the ATO",
-                    "Caldova reports each new pension to the ATO through transfer balance account reporting " +
-                    "(TBAR), so the credit is recorded against the member's cap.",
-                    "ATO transfer balance account reporting"),
+                S("UW-1", "Duty to take reasonable care",
+                    "Before a consumer insurance contract is entered into, the insured must take reasonable care not to make a misrepresentation. Whether reasonable care was taken depends on the circumstances: the type of contract and its target market, the insurer's material, how clear and specific its questions were, whether an agent acted for the insured, and whether it's a new contract. Not answering, or an obviously incomplete or irrelevant answer, isn't by itself a misrepresentation; a fraudulent misrepresentation is always a breach. Cover owned by a business, such as key person cover, may not be a consumer contract — the insurer's application explains the duty that applies.",
+                    "Insurance Contracts Act s20A, s20B (from 5 Oct 2021)"),
+                S("UW-2", "Genetic information",
+                    "From 8 Oct 2026, not disclosing protected genetic information isn't a misrepresentation for life insurance, and insurers can't ask for or use it in underwriting. Caldova's agents never ask for, record or use genetic test results, and tell clients they don't need to disclose them.",
+                    "Insurance Contracts Act s20B(5A), s33H"),
+                S("UW-3", "What a life insurer can do after a misrepresentation",
+                    "No remedy if the insurer would have entered into the contract anyway. Fraud: the insurer may avoid the contract. Not fraudulent, and the insurer wouldn't have offered cover on any terms: it may avoid the contract, but only within 3 years. Otherwise it may reduce the sum insured to S × P ÷ Q — for death cover only within 3 years — or, for cover such as income protection, TPD or trauma, vary the terms. Variations take effect from the start of the contract.",
+                    "Insurance Contracts Act s29"),
+                S("UW-4", "Underwriting outcomes",
+                    "Standard rates; a loading (a percentage added to the premium); an exclusion (a condition that isn't covered); or a decline. Accepting a loading, an exclusion or a decline is always the client's decision, made with Amelia. Insurers set their evidence requirements by age and sum insured — see 'Directory — insurers on the approved product list'.",
+                    "Caldova practice"),
+                S("UW-5", "Cooling-off",
+                    "14 days, starting from the earlier of when the client receives confirmation of the policy and the end of the fifth business day after it's issued. Not available once a claim has been made. The client can give notice in any way the insurer permits.",
+                    "Corporations Act s1019B; reg 7.9.64A"),
+                S("UW-6", "Caldova practice",
+                    "Uma's agent explains the duty before the first health question; the client answers every question themselves, carefully and completely; existing cover isn't cancelled until the new cover is in force; health information is shared only with the insurer and the people who need it.",
+                    "Caldova practice"),
             },
             Requirements: new[]
             {
-                "Condition of release met.",
-                "Declaration of any existing retirement-phase income streams.",
-                "Payment amount and frequency at or above the minimum.",
-                "Reversionary nomination (optional) with the beneficiary's details.",
+                "Application answered by the client after the duty to take reasonable care was explained; tele-interview record.",
+                "Medical and financial evidence the insurer requires for the age and sum insured.",
+                "Client's signed acceptance of any loading or exclusion.",
             },
             Restrictions: new[]
             {
-                "Pension credits can't exceed the transfer balance cap.",
-                "If the minimum isn't paid in a year, the pension loses its tax-free earnings status for that year.",
-                "Commencements of $1,000,000 or more need Team Leader approval (AUTH-2).",
+                "AI agents never answer health questions for a client, never suggest what to leave out, never ask for genetic test results, and never accept a loading, an exclusion or a decline on a client's behalf.",
+                "The 3-year limit in s29(3) doesn't apply to fraud.",
+            }),
+
+        new ProductRuleDocument(
+            Id: DocClaims,
+            Number: 10,
+            Title: "Claims rules — Life Insurance Code of Practice and income protection benefits",
+            DocumentType: "Rule summary",
+            Issuer: Compliance,
+            AppliesTo: "Claims on life risk policies",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026 (Life Code effective 1 Mar 2025)",
+            Summary: "The Life Code standards for claims, how income protection benefits are worked out under APRA's measures, and how Caldova supports a claim.",
+            Sections: new[]
+            {
+                S("CLM-1", "The Life Code",
+                    "Issued by the Council of Australian Life Insurers; the current edition took effect on 1 Mar 2025. It covers life cover with terminal illness, TPD, trauma and income protection from life insurers, and doesn't bind advisers unless they adopt it. A review's proposals aren't in force.",
+                    "Life Insurance Code of Practice cl 1.4, 1.7, 1.10"),
+                S("CLM-2", "Claim decisions",
+                    "Income-related claims: decide within 2 months of the Claim Received Date, or the end of the waiting period if later. Lump-sum claims (death, terminal illness, trauma, TPD): within 6 months. A written decision within 15 business days of receiving all the information.",
+                    "Life Code cl 5.48–5.50"),
+                S("CLM-3", "Keeping the claimant informed",
+                    "Explain the Code, cover and process within 10 business days of a claim; updates at least every 20 business days; reply to information requests within 10 business days; pay income protection by the due date or within 5 business days of all information; suggest independent financial advice for accepted non-income claims of $25,000 or more, unless paid to a super trustee.",
+                    "Life Code cl 5.5–5.7, 5.61, 5.63"),
+                S("CLM-4", "Vulnerability",
+                    "Insurers respond to vulnerability, including financial distress; recognise a support person in all reasonable ways; offer hardship options; and respond to requests for urgent access to benefits within 5 business days of the evidence.",
+                    "Life Code cl 6.1, 6.13, 6.18, 6.25–6.27"),
+                S("CLM-5", "Complaints",
+                    "Final written response within 30 calendar days; a complaint about claim handling is a standard complaint.",
+                    "Life Code cl 7.13; ASIC RG 271"),
+                S("CLM-6", "APRA's income protection measures",
+                    "No new agreed-value income protection from 31 Mar 2020; from 1 Oct 2021 benefits are based on income at the time of the claim, and all benefits combined can't exceed 90% of earnings for the first 6 months of a claim and 70% after that. The 5-year contract-term measure was suspended; there's no prescribed switch from own to any occupation.",
+                    "APRA IDII measures (letter of 30 Sep 2020)"),
+                S("CLM-7", "Worked example",
+                    "Insured monthly benefit $7,000; average earnings in the 12 months before the disability $8,000 a month; the lesser of the insured benefit and 70% of earnings = $5,600 a month. The benefit is taxable income.",
+                    "Life Code; APRA IDII measures"),
+                S("CLM-8", "How Caldova supports a claim",
+                    "Ben's agent checks the policy and evidence, builds the claim pack and calculates the expected benefit; Theo approves lodging every claim; Ben lodges and tracks the insurer; Cara keeps the client or family informed; vulnerable clients have one named contact.",
+                    "Caldova practice"),
+            },
+            Requirements: new[]
+            {
+                "Claim form, certified ID, policy schedule and medical evidence that meets the definition.",
+            },
+            Restrictions: new[]
+            {
+                "The insurer decides every claim; agents never lodge a claim without human approval.",
             }),
 
         new ProductRuleDocument(
             Id: DocTax,
-            Title: "Tax on super benefits & PAYG withholding — rule summary",
+            Number: 11,
+            Title: "Tax on life insurance — premiums and benefits",
             DocumentType: "Rule summary",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026 (FY2026-27)",
-            KnowledgeBaseTitle: "Tax on super benefits & PAYG withholding",
-            Summary: "How much tax Caldova withholds from lump sums, pension payments and death benefits.",
+            Issuer: Compliance,
+            AppliesTo: "Premiums and benefits, outside and inside super",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
+            Summary: "The general tax treatment of life insurance premiums and benefits for individuals and businesses — general information only; Caldova doesn't give tax advice.",
             Sections: new[]
             {
-                new RuleSection("TAX-3", "Tax-free and taxable components",
-                    "Every payment is split into a tax-free and a taxable component in the same proportions as " +
-                    "the member's account (the proportioning rule). Only the taxable component can be taxed.",
-                    "ITAA 1997 s307-125"),
-                new RuleSection("TAX-4", "Lump sums under age 60",
-                    "For a member under 60, Caldova withholds 22% (20% plus the 2% Medicare levy) from the " +
-                    "taxable component (taxed element) of a lump sum, or the member's marginal rate if lower. " +
-                    "The tax-free component is paid in full.",
-                    "Schedule 12 PAYG withholding tax table"),
-                new RuleSection("TAX-5", "Age 60 and over",
-                    "Lump sums and pension payments from a taxed source to a member aged 60 or over are " +
-                    "tax-free, and earnings on retirement-phase pension assets aren't taxed.",
-                    "ITAA 1997 Div 301"),
-                new RuleSection("TAX-6", "Death benefits — who is a dependant for tax",
-                    "For tax, a death benefits dependant is a spouse or former spouse, a child under 18, a person " +
-                    "financially dependent on the deceased, or someone in an interdependency relationship. Adult " +
-                    "children who weren't financially dependent are not tax dependants — even though they are SIS dependants.",
-                    "ITAA 1997 s302-195"),
-                new RuleSection("TAX-7", "Death benefits paid to non-dependants",
-                    "Lump sums paid to a non-dependant (for tax) have 17% (15% plus the 2% Medicare levy) " +
-                    "withheld from the taxable component (taxed element) and 32% from any untaxed element. The " +
-                    "tax-free component is paid in full. Death benefits to non-dependants must be paid as lump " +
-                    "sums — they can't be rolled over or paid as a pension.",
-                    "ITAA 1997 Div 302; Schedule 12 tax table"),
+                S("TAX-1", "Income protection outside super",
+                    "Premiums are deductible where the cover protects salary and wages; benefits that replace salary or income are assessable, whether paid regularly or as a lump sum. Combined policies are apportioned. Premiums paid through super aren't personally deductible. Self-employed people confirm the treatment with their accountant.",
+                    "ATO — income protection insurance"),
+                S("TAX-2", "Life, TPD and trauma outside super",
+                    "Premiums for life, trauma or critical care cover aren't deductible for individuals, and the proceeds are generally not taxable: the CGT exemptions are s118-300 for life policies (for example the original owner) and s118-37(1)(a)(ii) for compensation for an illness or injury to you or a relative. A terminal illness benefit is treated as a payment under a life policy.",
+                    "ITAA 1997 s118-300, s118-37; TD 2007/4"),
+                S("TAX-3", "Key person cover",
+                    "Under the ATO's long-standing ruling IT 155, term cover for a revenue purpose (replacing lost revenue or profit) generally has deductible premiums and assessable proceeds; cover for a capital purpose has neither. Whether IT 155 still reflects the ATO's current view hasn't been confirmed, so Caldova always relies on the business's accountant.",
+                    "IT 155; Carapark Holdings (1966)"),
+                S("TAX-4", "Buy-sell cover",
+                    "Premiums for cover that funds the buy-out of an owner are capital and not deductible. Where each owner insures their own life, the ATO has treated the death proceeds as capital and not assessable. The CGT exemption depends on who owns the policy, so the ownership structure matters, and transferring a policy for consideration can lose the exemption.",
+                    "IT 155 para 9(b); ATO ID 2003/1189; ITAA 1997 s118-300"),
+                S("TAX-5", "Benefits from super",
+                    "A death benefit lump sum to a death-benefits dependant is tax-free; for a non-dependant the taxable component is taxed at up to 15% or 30% plus the 2% Medicare levy. TPD lump sums from super are tax-free from age 60.",
+                    "ITAA 1997 s302-60, s302-195, s302-145, s301-10"),
             },
             Requirements: new[]
             {
-                "TFN and date of birth for the member or beneficiary.",
-                "Tax-free / taxable component split for the member's account.",
-                "Tax-dependant status of each death benefit beneficiary.",
+                "Policy ownership and who pays the premiums; the purpose of business cover, confirmed by the accountant.",
             },
             Restrictions: new[]
             {
-                "Without a TFN, tax is withheld at the top marginal rate plus Medicare levy.",
-                "Withholding is paid to the ATO; final tax is worked out in the recipient's tax return.",
+                "Agents state the general rules, never a client's personal tax position.",
+                "IT 155's currency is unconfirmed — key person treatment is always confirmed by the accountant.",
             }),
 
         new ProductRuleDocument(
-            Id: DocRollovers,
-            Title: "SuperStream rollovers, insurance-loss warnings & SMSF verification — rule summary",
+            Id: DocCommission,
+            Number: 12,
+            Title: "Commission rules — LIF caps, clawback and consent",
             DocumentType: "Rule summary",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "SuperStream rollovers, insurance-loss warnings & SMSF verification",
-            Summary: "What must be checked before money is rolled out of Caldova — especially to a self-managed super fund.",
+            Issuer: Compliance,
+            AppliesTo: "Commission on life risk insurance (not group or default super cover)",
+            EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
+            Summary: "How life risk commission is capped and clawed back under the Life Insurance Framework, the informed-consent rule from 9 Jul 2025, and how Caldova shows commission in dollars.",
             Sections: new[]
             {
-                new RuleSection("SIS-9", "Verify the SMSF before any rollover",
-                    "Before rolling over to a self-managed super fund (SMSF), the trustee must use the ATO SMSF " +
-                    "verification service (SVS) to confirm the ABN belongs to a registered SMSF and to check its " +
-                    "compliance status.",
-                    "SIS Regs reg 6.33E"),
-                new RuleSection("SIS-10", "Member must be linked to the SMSF",
-                    "The SVS must confirm the member's TFN is linked to that SMSF as a member, the TFN isn't " +
-                    "flagged as compromised, and no date of death is recorded.",
-                    "SIS Regs reg 6.33E"),
-                new RuleSection("SIS-11", "Bank account and ESA must match",
-                    "The SMSF's bank account (BSB, account number and account name) and electronic service " +
-                    "address (ESA) on the request must match the details the ATO holds for the fund. Money is " +
-                    "only paid to the SMSF's own verified account.",
-                    "SIS Regs reg 6.33E"),
-                new RuleSection("SIS-12", "Rollover timeframe",
-                    "A rollover must be completed within 3 business days of receiving all the information " +
-                    "needed to process it. The clock doesn't start while information is missing or a " +
-                    "verification has failed.",
-                    "SIS Regs reg 6.34A"),
+                S("COM-1", "When commission is allowed",
+                    "Commission on life risk insurance isn't conflicted remuneration if the benefit ratio is the same every year (level) or it meets the benefit-ratio and clawback requirements — and either way the client's informed consent is required. Commission on group super policies and default cover in super is still conflicted remuneration.",
+                    "Corporations Act s963B, s963BB"),
+                S("COM-2", "Benefit ratio",
+                    "The commission divided by the policy cost; the policy cost is the premiums plus fees and instalment fees.",
+                    "Corporations Act s963B(3A)–(3B)"),
+                S("COM-3", "Caps",
+                    "Upfront: up to 60% of the policy cost in the first year for products issued from 1 Jan 2020. Ongoing: up to 20% of the policy cost in each later year. Client-initiated increases: up to 60% of the annualised increase, then 20%; CPI increases attract only the 20%.",
+                    "ASIC Corporations (Life Insurance Commissions) Instrument 2017/510"),
+                S("COM-4", "Level commission",
+                    "There's no numeric cap; the condition is an identical benefit ratio every year. Never quote a level commission cap.",
+                    "Corporations Act s963B(1)(b)"),
+                S("COM-5", "Clawback",
+                    "Cancelled, not continued or reduced in year 1: 100% of the first-year commission (pro-rated for reductions); in year 2: 60%; after 24 months: nothing. No clawback on death.",
+                    "ASIC Instrument 2017/510 s6"),
+                S("COM-6", "Worked examples",
+                    "A $1,000 first-year premium allows up to $600 upfront; cancelled in year 2, 60% × $600 = $360 is clawed back.",
+                    "ASIC Instrument 2017/510"),
+                S("COM-7", "GST",
+                    "The caps are tested on the commission excluding GST; where a commission includes GST, the GST isn't a benefit for conflicted-remuneration purposes.",
+                    "ASIC RG 246"),
+                S("COM-8", "Informed consent",
+                    "For insurance issued or sold on or after 9 Jul 2025: before the client consents, disclose the insurer, the commission rate as a percentage of the policy cost, how often and for how long it's paid (including renewals), the services, that the law requires consent and that consent is irrevocable. Consent in writing (or a written record of verbal consent), a copy to the client, records kept at least 5 years. Consent covers disclosed renewals; there's no annual re-consent for life risk.",
+                    "Corporations Act s963BB, s1101C(3); ASIC INFO 292"),
+                S("COM-9", "Dates often misreported",
+                    "The caps have applied since 1 Jan 2018 (60% from 1 Jan 2020) and consent since 9 Jul 2025. The instrument is due to sunset on 1 Oct 2027 unless it's remade.",
+                    "Federal Register of Legislation"),
+                S("COM-10", "Caldova practice",
+                    "No advice fee for protection-only advice; commission in dollars in the SoA; written consent with the SoA. Example: Corella Life, first-year policy cost $3,180 — upfront 60% = $1,908; ongoing 20% = $636 a year from year 2, changing as the premium changes; amounts exclude GST.",
+                    "Caldova practice; Corporations Act s947B"),
             },
             Requirements: new[]
             {
-                "A passing SVS result — registered SMSF, member linked, bank details and ESA matched.",
-                "Rollover request signed by the member, matching the specimen signature on file.",
-                "Insurance-loss warning acknowledged where cover will end.",
+                "Commission disclosure in the SoA: insurer, rate, frequency and period, services, consent required and irrevocable.",
+                "The client's written consent (or a written record of verbal consent) and a copy given to the client.",
             },
             Restrictions: new[]
             {
-                "No rollover to an SMSF until the SVS checks pass.",
-                "Never pay to an account that isn't in the SMSF's name.",
-                "A failed check means the request isn't complete — the 3-business-day clock hasn't started.",
+                "No commission on group super cover or default cover in super.",
+                "Never quote a level commission cap; never let commission influence a comparison; never ask a client to pay a clawback.",
             }),
 
         new ProductRuleDocument(
-            Id: DocProtectingAccount,
-            Title: "Caldova Super & Pension PDS — Rollovers out & protecting your account (extract)",
-            DocumentType: "PDS extract",
-            Issuer: Trustee,
-            Product: "Caldova Super & Pension — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Caldova Super & Pension PDS extract",
-            Summary: "The checks Caldova makes before money leaves your account, to protect you from fraud and scams.",
+            Id: DocMatrix,
+            Number: 13,
+            Title: "Matrix — authority, approvals and escalation",
+            DocumentType: "Practice matrix",
+            Issuer: "Caldova Life Advice — Practice Team Leader",
+            AppliesTo: "Every Client Case",
+            EffectiveDate: "Current at 23 Nov 2026",
+            Summary: "What the team can action and what always needs a human decision — agents gather facts, draft, check, calculate, compare and recommend; people approve.",
             Sections: new[]
             {
-                new RuleSection("PDS-6", "Recent changes to your contact or bank details",
-                    "If your contact or bank details changed recently, we may hold a withdrawal or rollover " +
-                    "request and confirm it with you using the contact details we held before the change. We " +
-                    "never confirm a request using contact details supplied in the request itself.",
-                    "Caldova member-protection controls (APRA authentication expectations)"),
-                new RuleSection("PDS-7", "Signatures and identity",
-                    "Withdrawal and rollover requests must be signed by you, and the signature must match our " +
-                    "records. We may ask for certified identification and check documents for alteration before we act.",
-                    "AML/CTF Act 2006 — ongoing due diligence"),
-                new RuleSection("PDS-8", "Paying to the right account",
-                    "We only pay withdrawals to an account in your own name, and rollovers to the receiving " +
-                    "fund's verified account.",
-                    "Caldova payment controls"),
+                S("MAT-1", "Every SoA and RoA",
+                    "Amelia signs every Statement of Advice and Record of Advice.",
+                    "Caldova matrix, item 1"),
+                S("MAT-2", "Replacing or cancelling existing cover",
+                    "The client decides with Amelia; the SoA sets out the replacement disclosures.",
+                    "Caldova matrix, item 2"),
+                S("MAT-3", "Underwriting terms",
+                    "Accepting a loading, an exclusion or a decline at underwriting — the client decides with Amelia.",
+                    "Caldova matrix, item 3"),
+                S("MAT-4", "Claims",
+                    "Lodging any claim, and every death or terminal illness claim — Theo approves through the Teams approval card before Ben lodges.",
+                    "Caldova matrix, item 4"),
+                S("MAT-5", "Financial crime",
+                    "Blocking a request on financial-crime grounds, and referring suspected fraud to an insurer — Theo.",
+                    "Caldova matrix, item 5"),
+                S("MAT-6", "Ownership, beneficiaries and bank details",
+                    "Any change — Theo, after Financial Crime has confirmed the request on the client's verified contact details.",
+                    "Caldova matrix, item 6"),
+                S("MAT-7", "Second review — $2,000,000 or more",
+                    "Advice with total cover of $2,000,000 or more on one case gets Theo's second review.",
+                    "Caldova matrix, item 7"),
+                S("MAT-8", "Complaint responses",
+                    "Theo approves every complaint response.",
+                    "Caldova matrix, item 8"),
+                S("MAT-9", "Sensitive communications",
+                    "Any communication to a fraud victim, a seriously ill client or a bereaved family is approved by a person before it goes: Cara for her letters, and Theo for every message to a bereaved family.",
+                    "Caldova matrix, item 9"),
+                S("MAT-10", "Caldova service standards",
+                    "Requests acknowledged within 1 business day; applications lodged within 2 business days of the Authority to Proceed; approved claims lodged the same or next business day; clients updated at least every 10 business days while anything is open; vulnerable clients have one named contact.",
+                    "Caldova matrix — service standards"),
             },
-            Requirements: new[]
-            {
-                "Request signed by the member and matching the specimen signature.",
-                "Contact details unchanged — or the request confirmed with the member on the pre-change details.",
-                "Payee account in the member's name, or the receiving fund's verified account.",
-            },
+            Requirements: Array.Empty<string>(),
             Restrictions: new[]
             {
-                "Requests that fail these checks are held and referred to Financial Crime.",
-                "Holding a request to protect a member isn't a finding against them — it's how we keep savings safe.",
-            }),
-
-        new ProductRuleDocument(
-            Id: DocHardship,
-            Title: "Caldova Super & Pension PDS — Withdrawals & hardship (extract)",
-            DocumentType: "PDS extract",
-            Issuer: Trustee,
-            Product: "Caldova Super (accumulation) — " + Fund,
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Financial hardship",
-            Summary:
-                "How members under preservation age can apply for an early release of super on severe financial hardship grounds.",
-            Sections: new[]
-            {
-                new RuleSection("HS-1", "Income support for 26 weeks",
-                    "You must have received an eligible Commonwealth income support payment (such as JobSeeker) " +
-                    "continuously for at least 26 weeks, and still be receiving it on the date you apply.",
-                    "SIS Regs reg 6.01(5)(a)"),
-                new RuleSection("HS-2", "Confirmation from Services Australia",
-                    "Include a Services Australia letter confirming your income support. Caldova needs the " +
-                    "letter to be dated no more than 21 days before we receive your application.",
-                    "Caldova hardship procedure"),
-                new RuleSection("HS-3", "Unable to meet living expenses",
-                    "You must be unable to meet reasonable and immediate family living expenses — such as " +
-                    "mortgage or rent, utilities, food or car costs. We ask for a statutory declaration and " +
-                    "evidence such as overdue notices.",
-                    "SIS Regs reg 6.01(5)(a)"),
-                new RuleSection("HS-4", "How much can be released",
-                    "We can release a single lump sum of at least $1,000 and no more than $10,000 (gross, " +
-                    "before tax). If you ask for more than $10,000, we can only release $10,000.",
-                    "SIS Regs Sch 1"),
-                new RuleSection("HS-5", "Once in any 12 months",
-                    "Only one hardship payment can be made in any 12-month period. We check your account " +
-                    "history before we approve a release.",
-                    "SIS Regs Sch 1"),
-            },
-            Requirements: new[]
-            {
-                "Signed hardship application.",
-                "Services Australia confirmation letter dated within 21 days of the application.",
-                "Statutory declaration and evidence of the expenses.",
-                "Bank account in the member's own name.",
-            },
-            Restrictions: new[]
-            {
-                "Minimum $1,000 and maximum $10,000 gross per release.",
-                "One release in any 12-month period.",
-                "Tax is withheld from the taxable component (TAX-4).",
-                "An early release reduces retirement savings. Free help: National Debt Helpline 1800 007 007 and Moneysmart.",
-            }),
-
-        new ProductRuleDocument(
-            Id: DocAuthority,
-            Title: "Caldova Client Operations — Authority & escalation matrix (extract)",
-            DocumentType: "Operations guide",
-            Issuer: "Caldova Client Operations",
-            Product: "All Caldova products",
-            EffectiveDate: "1 July 2026",
-            KnowledgeBaseTitle: "Authority & escalation matrix",
-            Summary: "Which decisions agents may recommend, and which always need a human approver.",
-            Sections: new[]
-            {
-                new RuleSection("AUTH-1", "Declines, partial approvals and hardship releases",
-                    "Any decline or partial approval, and every financial-hardship release, needs Team Leader " +
-                    "approval. Hardship cases are handled as vulnerable-member cases.",
-                    "Caldova authority matrix"),
-                new RuleSection("AUTH-2", "Large pension commencements",
-                    "Starting a pension of $1,000,000 or more needs Team Leader approval before the pension commences.",
-                    "Caldova authority matrix"),
-                new RuleSection("AUTH-3", "Death benefits and large payments",
-                    "Every death benefit, and any single payment of $250,000 or more, needs Team Leader approval " +
-                    "through a Microsoft Teams approval card before Payments releases it.",
-                    "Caldova authority matrix"),
-                new RuleSection("AUTH-4", "Financial-crime holds",
-                    "Blocking a request on financial-crime grounds needs Team Leader approval. Whether to lodge " +
-                    "a suspicious matter report (SMR) with AUSTRAC is a human decision, due within 3 business days.",
-                    "Caldova authority matrix; AML/CTF Act 2006"),
-            },
-            Requirements: new[]
-            {
-                "Agent recommendation with every rule cited.",
-                "Human approver recorded on the Member Case.",
-            },
-            Restrictions: new[]
-            {
-                "Agents never approve, decline or release money on their own.",
-                "Complaints follow IDR timeframes: 30 days (45 for super trustee complaints, 90 for death benefit distribution complaints).",
+                "Agents gather facts, draft, check, calculate, compare and recommend — people approve. Only Amelia gives advice.",
             }),
     };
 
-    // ── Per-case eligibility reports ───────────────────────────────────────
+    // ── Scenario 1 — Priya: family protection ──────────────────────────────
 
-    private static EligibilityReport PriyaReport(CaseRecord c) => new(
+    private static AdviceReport PriyaReport(CaseRecord c) => new(
         CaseNumber: c.CaseNumber,
-        SampleId: c.SampleId,
-        Recommendation: EligibilityRecommendation.Approve,
-        RecommendationLabel: "Approve — open the account",
-        RecommendationReason:
-            "Every account-opening requirement is met: identity verified, TFN supplied, a valid s99FA adviser fee " +
-            "consent and a Growth selection that matches the Statement of Advice and the Select target market. " +
-            "Two items need follow-up but don't stop the account opening.",
-        OutcomeSummary:
-            "Open the account (member CS-2049817). The Harbourline rollover (~$41,800) can proceed now; hold the " +
-            "Southern Cross rollover (~$96,400) until the insurance-loss acknowledgement is received; Priya re-signs " +
-            "the nomination in front of two adult witnesses who aren't beneficiaries.",
+        ScenarioKey: "priya",
+        Applicable: true,
+        NotApplicableNote: null,
+        Redirects: Array.Empty<AgentPointer>(),
+        Status: AdviceStatus.ReadyForAdviser,
+        StatusLabel: "Draft SoA ready for Amelia",
+        StatusReason:
+            "The needs analysis, strategy, ownership, research, premiums and commission are complete and every rule check passes or is noted. " +
+            "One action is time-critical: Priya's Kestrel cover stops on 30 Nov 2026 unless she tells the fund in writing to keep it.",
+        Summary:
+            "For Amelia's review: life $750,000, TPD $600,000, trauma $150,000 and income protection of $6,125 a month with Corella Life — life and " +
+            "any-occupation TPD inside super, the own-occupation TPD extension, trauma and income protection outside super. Year-1 premiums $3,180 " +
+            "(stepped), $2,322 of it outside super ($193.50 a month). Keep Riverbend's cover, and keep Kestrel's until the new cover is in force.",
+        Needs: new[]
+        {
+            new NeedsCalculation("life", "Life cover", "Priya Natarajan", new[]
+            {
+                new NeedsLine("Joint mortgage", "$680,000", "add"),
+                new NeedsLine("Children's education (2 × $50,000)", "$100,000", "add"),
+                new NeedsLine("Family income support ($40,000 × 5 years)", "$200,000", "add"),
+                new NeedsLine("Final expenses and emergency fund", "$30,000", "add"),
+                new NeedsLine("Total need", "$1,010,000", "total"),
+                new NeedsLine("Less savings", "−$45,000", "less"),
+                new NeedsLine("Less existing super death cover (Riverbend Super)", "−$210,000", "less"),
+                new NeedsLine("Shortfall", "$755,000", "result"),
+                new NeedsLine("Kestrel Retail Super's $50,000 isn't counted — it stops on 30 Nov 2026 unless Priya elects to keep it, and it's only kept until the new cover starts.", "", "note"),
+            }, "$750,000", "Shortfall of $755,000, rounded to the nearest $50,000."),
+            new NeedsCalculation("tpd", "TPD cover", "Priya Natarajan", new[]
+            {
+                new NeedsLine("Joint mortgage", "$680,000", "add"),
+                new NeedsLine("Rehabilitation and home modifications", "$100,000", "add"),
+                new NeedsLine("Emergency fund", "$30,000", "add"),
+                new NeedsLine("Total need", "$810,000", "total"),
+                new NeedsLine("Less existing super TPD cover (Riverbend Super)", "−$210,000", "less"),
+                new NeedsLine("Shortfall", "$600,000", "result"),
+            }, "$600,000", "Any-occupation TPD inside super, with an own-occupation extension outside super."),
+            new NeedsCalculation("trauma", "Trauma cover", "Priya Natarajan", new[]
+            {
+                new NeedsLine("Six months' income (50% × $105,000)", "$52,500", "add"),
+                new NeedsLine("Medical costs and Arjun's time off work", "$50,000", "add"),
+                new NeedsLine("Debt reduction", "$50,000", "add"),
+                new NeedsLine("Total need", "$152,500", "result"),
+            }, "$150,000", "Total need of $152,500, rounded to the nearest $50,000."),
+            new NeedsCalculation("ip", "Income protection", "Priya Natarajan", new[]
+            {
+                new NeedsLine("Salary", "$105,000 a year", "add"),
+                new NeedsLine("Insurable share (Corella insures up to 70%)", "× 70%", "note"),
+                new NeedsLine("Annual benefit", "$73,500 a year", "total"),
+                new NeedsLine("Monthly benefit ($73,500 ÷ 12)", "$6,125 a month", "result"),
+            }, "$6,125 a month", "70% of salary, divided by 12; 90-day waiting period; benefit period to age 65."),
+        },
+        NeedsTotal: "Recommended: life $750,000 · TPD $600,000 · trauma $150,000 · income protection $6,125 a month (90-day waiting period, benefit period to age 65).",
         Items: new[]
         {
-            Item("identity", "Identity verified (KYC)", ChecklistStatus.Pass,
-                "Victorian driver licence verified electronically (DVS) by the adviser on 28/10/2026. PEP and sanctions screening: no match.",
-                "PDS-1"),
-            Item("tfn", "TFN supplied", ChecklistStatus.Pass,
-                "TFN supplied and held securely (*** *** 418).",
-                "PDS-2"),
-            Item("fee-consent", "Adviser fee consent (s99FA)", ChecklistStatus.Pass,
-                "Personal advice; written consent signed and dated by Priya on 30/10/2026 — $3,300 p.a. incl. GST, " +
-                "services described, 12-month term, can be withdrawn at any time.",
-                "SIS-1"),
-            Item("bdbn-witnesses", "Binding nomination — two witnesses", ChecklistStatus.Fail,
-                "Signed by Priya on 30/10/2026 but only ONE witness signed; two adult witnesses who aren't " +
-                "beneficiaries are required. Not valid as binding — treat as non-binding until re-signed.",
-                "TD-1"),
-            Item("bdbn-beneficiary", "Nominated beneficiary is a SIS dependant", ChecklistStatus.Pass,
-                "Arjun Mehta is Priya's de facto partner — a spouse for SIS purposes — so he can be nominated for " +
-                "100% once the nomination is re-signed.",
-                "TD-3"),
-            Item("insurance-loss", "Insurance-loss acknowledgement — Southern Cross", ChecklistStatus.Info,
-                "Southern Cross Industry Super holds $520,000 of Death & TPD cover that ends on rollover, and the " +
-                "acknowledgement isn't ticked. Hold that rollover until Hannah and Priya confirm in writing (or " +
-                "replacement cover is in place). Harbourline holds no insurance and can proceed.",
-                "PDS-5"),
-            Item("investment-fit", "Investment selection vs SoA & TMD", ChecklistStatus.Pass,
-                "Caldova Managed Portfolio — Growth (80/20) is on the Select menu, matches the SoA dated 28/10/2026 " +
-                "(risk profile: Growth), and Priya is within the Caldova Super target market.",
-                "PDS-3"),
+            Item("scope", "Scope and facts", "Scope of advice agreed", ChecklistStatus.Pass,
+                "Personal and family protection after the home purchase: life, TPD, trauma and income protection for Priya. Arjun's cover isn't part of this advice — he has default cover in his own super.",
+                "ADV-1"),
+            Item("fact-find", "Scope and facts", "Fact find complete and identity verified", ChecklistStatus.Pass,
+                "Salary $105,000 + super, joint mortgage $680,000, savings $45,000, Asha (2) and a baby due March 2027, existing cover and health basics on file. Financial Crime: driver licence and payslip legitimate, KYC complete, no PEP or sanctions match.",
+                "ADV-1"),
+            Item("needs", "Needs", "Needs analysis shown step by step", ChecklistStatus.Pass,
+                "Life $750,000, TPD $600,000, trauma $150,000 and income protection $6,125 a month — the working is in the needs analysis.",
+                "ADV-1, ADV-2"),
+            Item("budget", "Needs", "Premiums fit the budget", ChecklistStatus.Pass,
+                "Outside super: $2,322 a year = $193.50 a month, within Priya's $300 a month budget. Inside super: $858 a year, paid from super.",
+                "ADV-2"),
+            Item("super-life-tpd", "Strategy and ownership", "Life and any-occupation TPD inside super", ChecklistStatus.Pass,
+                "Death and permanent incapacity are permitted insured events in super, so life cover and any-occupation TPD can sit in Corella's super plan.",
+                "SUP-1, CRP-4"),
+            Item("own-occ", "Strategy and ownership", "Own-occupation TPD outside super, super-linked", ChecklistStatus.Pass,
+                "Own-occupation TPD can't be new cover inside super, so Corella's own-occupation extension sits outside super, linked to the any-occupation TPD inside — important for a physiotherapist.",
+                "SUP-1, SUP-7, CRP-3"),
+            Item("outside-super", "Strategy and ownership", "Trauma and income protection outside super", ChecklistStatus.Pass,
+                "Trauma can't be held in super. Income protection outside super keeps the premiums tax-deductible for Priya.",
+                "SUP-1, TAX-1"),
+            Item("premium-funding", "Strategy and ownership", "Inside-super premiums funded without losing cover", ChecklistStatus.Pass,
+                "A partial rollover from Riverbend Super pays the $858 inside-super premium. The Riverbend account stays open, so its $210,000 death and TPD cover continues. Paying premiums from super reduces Priya's retirement savings — the SoA says so.",
+                "CRP-4, SUP-8"),
+            Item("pys-kestrel", "Existing cover", "Kestrel Retail Super cover — Protecting Your Super", ChecklistStatus.Info,
+                "No contributions since 30 Jul 2025, so the $50,000 death cover stops after 16 months of inactivity — on 30 Nov 2026 — unless Priya elects in writing to keep it. Recommend she elects to keep it until the new Corella cover is in force. The opt-in rules don't apply (she's 34 and the balance is $8,200).",
+                "SUP-4, SUP-5"),
+            Item("replacement", "Existing cover", "Replacement analysis — nothing cancelled now", ChecklistStatus.Pass,
+                "No cover is replaced or cancelled: Riverbend's $210,000 stays, and Kestrel's $50,000 stays until the new cover starts. If Priya later cancels the Kestrel cover, the SoA sets out what she'd lose and any charges — her decision with Amelia.",
+                "ADV-5, MAT-2"),
+            Item("research", "Research and premiums", "On the APL, with the research compared", ChecklistStatus.Pass,
+                "Year-1 stepped premiums for the full package: Corella Life $3,180 (recommended — lowest cost and own-occupation TPD for physiotherapists), Harbourline Life $3,412, Lyrebird Life $3,690.",
+                "APL-1, APL-3, ADV-1"),
+            Item("stepped-level", "Research and premiums", "Stepped and level premiums explained", ChecklistStatus.Info,
+                "Stepped premiums ($3,180 in year 1) rise with age; level premiums ($4,050 in year 1) start higher and rise more slowly. The draft recommends stepped to fit the budget now and shows the level option for comparison.",
+                "CRP-8"),
+            Item("commission", "Commission", "Commission in dollars, within the caps, with consent", ChecklistStatus.Pass,
+                "No advice fee. Corella pays commission within the caps: upfront 60% × $3,180 = $1,908; ongoing 20% = $636 a year from year 2. Priya gives written informed consent first. The caps are tested on the commission excluding GST.",
+                "COM-3, COM-7, COM-8, FSG-5"),
+            Item("ip-tax", "Commission", "Income protection premiums deductible", ChecklistStatus.Info,
+                "The $1,460 income protection premium, held outside super, is generally tax-deductible for Priya; the life, TPD and trauma premiums aren't. Benefits paid would be assessable income.",
+                "TAX-1, TAX-2"),
+            Item("duty-cooling", "Underwriting", "Duty to take reasonable care and cooling-off", ChecklistStatus.Info,
+                "The SoA explains that Priya must take reasonable care answering Corella's questions (she has mild asthma and a 2023 back strain to disclose), and that she has a 14-day cooling-off period once the policy is issued.",
+                "UW-1, UW-5"),
+            Item("sign-off", "Approvals", "Adviser review and sign-off", ChecklistStatus.Info,
+                "Amelia reviews and signs the SoA before anything is implemented. Lump-sum cover totals $1,500,000 — under $2,000,000 — so no second review is needed.",
+                "MAT-1, MAT-7"),
         },
-        RuleDocumentIds: new[] { DocAccountOpening, DocFeeConsent, DocNominations },
-        Calculations: new[]
+        SoaOutline: new[]
         {
-            "Rollovers in: Southern Cross ~$96,400 + Harbourline ~$41,800 = ~$138,200.",
-            "Adviser fee: $3,300 p.a. incl. GST = $275 a month, under the s99FA consent (12-month term).",
-            "Cash minimum: 1% of the balance stays in the Caldova Cash Account (~$1,382 on $138,200).",
+            new SoaSection("scope", "1. Scope of advice", new[]
+            {
+                "Personal and family protection for Priya Natarajan after buying the family home: life, TPD, trauma and income protection.",
+                "Not included: Arjun's cover (he has default cover in his own super), investment or super advice.",
+                "Protection-only advice — no advice fee.",
+            }),
+            new SoaSection("situation", "2. Your situation and goals", new[]
+            {
+                "Priya, 34, physiotherapist, salary $105,000 + super; partner Arjun; daughter Asha (2); second baby due March 2027.",
+                "Joint mortgage $680,000 on the Coburg home bought in October 2026; savings $45,000; premium budget up to $300 a month.",
+                "Goal: if something happens to Priya, the family keeps the home and the children's future is looked after.",
+            }),
+            new SoaSection("recommendations", "3. Recommendations", new[]
+            {
+                "Life cover $750,000 (with terminal illness benefit) and any-occupation TPD $600,000 inside super, through the Corella Life super plan.",
+                "Own-occupation TPD extension $600,000 outside super, linked to the TPD inside super.",
+                "Trauma cover $150,000 and income protection $6,125 a month (90-day waiting period, benefit period to age 65) outside super.",
+            }),
+            new SoaSection("best-interests", "4. Why this is in your best interests", new[]
+            {
+                "Cover is based on the needs analysis, net of savings and existing cover (working attached).",
+                "Own-occupation TPD protects Priya if she can't work as a physiotherapist, not just in any job.",
+                "Putting life and any-occupation TPD inside super keeps the cash-flow cost within budget.",
+            }),
+            new SoaSection("research", "5. Insurer and research", new[]
+            {
+                "Corella Life recommended: $3,180 in year 1 (stepped) — lowest cost, and own-occupation TPD for physiotherapists.",
+                "Compared: Harbourline Life $3,412 and Lyrebird Life $3,690 for the same cover.",
+            }),
+            new SoaSection("premiums", "6. Premiums", new[]
+            {
+                "Inside super: life $468 + TPD $390 = $858 a year, paid by a partial rollover from Riverbend Super.",
+                "Outside super: own-occupation TPD extension $222 + trauma $640 + income protection $1,460 = $2,322 a year ($193.50 a month).",
+                "Stepped premiums rise with age; the level option is $4,050 in year 1.",
+            }),
+            new SoaSection("commission", "7. Fees and commission", new[]
+            {
+                "No advice fee.",
+                "Corella pays Caldova commission: $1,908 upfront (60% of the first-year premium) and $636 a year from year 2 (20%).",
+                "Priya's written informed consent is needed before Caldova receives it; the consent can't be revoked.",
+                "If the policy is cancelled in year 1, Corella claws back 100% of the upfront commission, or 60% in year 2 — Caldova doesn't pass this on.",
+            }),
+            new SoaSection("replacement", "8. Your existing cover (replacement analysis)", new[]
+            {
+                "Riverbend Super death and TPD $210,000 — keep it; it's counted in the needs analysis.",
+                "Kestrel Retail Super death cover $50,000 — elect in writing to keep it before 30 Nov 2026, so it doesn't stop under Protecting Your Super, and keep it until the new Corella cover is in force.",
+                "Nothing is cancelled now. Any later cancellation is Priya's decision with Amelia, with the cover and features she'd lose set out first.",
+            }),
+            new SoaSection("underwriting", "9. Applying, underwriting and cooling-off", new[]
+            {
+                "Answer Corella's questions with reasonable care — including the asthma and the 2023 back strain.",
+                "Corella may offer standard terms, a loading or an exclusion; accepting any change is Priya's decision with Amelia.",
+                "14-day cooling-off once the policy is issued.",
+            }),
+            new SoaSection("next-steps", "10. Next steps", new[]
+            {
+                "Amelia reviews and signs this SoA.",
+                "Priya signs the Authority to Proceed and the commission consent.",
+                "Uma's team lodges the application with Corella Life.",
+            }),
         },
+        Premiums: new[]
+        {
+            new PremiumLine("Priya Natarajan", "Life cover (with terminal illness benefit)", "$750,000", "Inside super", "$468", "Super plan (partial rollover from Riverbend Super)"),
+            new PremiumLine("Priya Natarajan", "TPD — any occupation", "$600,000", "Inside super", "$390", "Super plan (partial rollover from Riverbend Super)"),
+            new PremiumLine("Priya Natarajan", "TPD — own-occupation extension", "$600,000", "Outside super (super-linked)", "$222", "Priya"),
+            new PremiumLine("Priya Natarajan", "Trauma cover", "$150,000", "Outside super", "$640", "Priya"),
+            new PremiumLine("Priya Natarajan", "Income protection (90 days, to age 65)", "$6,125 a month", "Outside super", "$1,460", "Priya"),
+        },
+        PremiumNote: "Year-1 stepped premiums: $3,180 in total — $858 inside super and $2,322 outside super ($193.50 a month). Level option: $4,050 in year 1.",
+        Commission: new CommissionDisclosure(
+            Insurer: "Corella Life",
+            PremiumBasis: "$3,180 first-year premium (stepped)",
+            Upfront: "$1,908 — 60% of the first-year premium",
+            Ongoing: "$636 a year from year 2 — 20% of each later year's premium, so it moves with the premium",
+            Basis: "Within the LIF caps: upfront up to 60% of the first-year policy cost, ongoing up to 20%. No advice fee for protection-only advice.",
+            Consent: "Priya's written informed consent before Caldova receives commission: the insurer, the rates as a percentage of the policy cost, how often and how long they're paid (including renewals), the services (annual reviews and claims support), that the law requires consent and that it can't be revoked.",
+            Gst: "The caps are tested on the commission excluding GST.",
+            Clawback: "Cancelled in year 1: 100% of the upfront commission ($1,908) is clawed back; in year 2: 60% ($1,144.80) — pro-rated if the cover is reduced instead; nothing after 24 months. Caldova doesn't pass clawbacks on to Priya."),
+        SignOff: new AdviserSignOff(
+            Heading: "Adviser sign-off required: Amelia",
+            Adviser: LifeAdviceFacts.Adviser,
+            Status: "Signed by Amelia on Fri 6 Nov 2026",
+            Statement: "Drafted by the Paraplanning Agent for Penny and Amelia. It isn't advice until Amelia has reviewed it, made any changes she wants and signed the Statement of Advice.",
+            History: new[]
+            {
+                "Thu 5 Nov 2026 — draft SoA prepared by the Paraplanning Agent; Penny checks the working.",
+                "Fri 6 Nov 2026 — Amelia reviews and signs the SoA.",
+                "Sat 7 Nov 2026 — Priya signs the Authority to Proceed; she gave her written commission consent with the SoA and has a copy.",
+            },
+            Approvals: new[]
+            {
+                "Amelia signs the SoA — every SoA (MAT-1).",
+                "Keeping or cancelling the Kestrel cover is Priya's decision with Amelia (MAT-2).",
+                "No second review — lump-sum cover totals $1,500,000, under $2,000,000 (MAT-7).",
+            }),
+        RuleDocumentIds: new[] { DocAdvice, DocSuper, DocCorella, DocCommission, DocFsg, DocTax, DocApl, DocUnderwriting, DocMatrix },
         MissingInformation: new[]
         {
-            "Binding nomination re-signed in front of two adult witnesses who aren't beneficiaries, with witness declarations (TD-1).",
-            "Written insurance-loss acknowledgement for Southern Cross Industry Super, or confirmation that replacement cover is in place (PDS-5).",
+            "Priya's written election to keep her Kestrel Retail Super cover before 30 Nov 2026 (SUP-4) — recommended in the SoA; Priya has since told Kestrel to keep it.",
         },
         PlainEnglishExplanation:
-            "Priya's new Caldova Super account can open now, invested in the Growth portfolio her adviser " +
-            "recommended. Her Harbourline super can come across straight away. Before we move her Southern Cross " +
-            "super, she needs to confirm she understands her $520,000 of death and TPD cover there will end. Her " +
-            "nomination for Arjun needs a second witness before it can be binding — until then it's a guide to her wishes.",
+            "If Priya died, her family would need about $1,010,000 — mostly the mortgage, the children's education and income for the family. Her " +
+            "savings and existing super cover already meet $255,000 of that, so the draft suggests $750,000 of life cover. It also covers her if she " +
+            "can never work as a physio again ($600,000), has a serious illness ($150,000) or is off work for a while ($6,125 a month). The premiums " +
+            "outside super are $193.50 a month, within her $300 budget. Amelia reviews this draft and gives the advice.",
         HumanApproval:
-            "No Team Leader approval is needed to open the account. Ben confirms the findings; the Southern Cross " +
-            "rollover waits for written confirmation from Hannah Lewis and Priya.");
+            "Yes — Amelia must review and sign the Statement of Advice before anything is implemented, and any decision to keep, replace or cancel " +
+            "existing cover is Priya's, with Amelia (MAT-1, MAT-2).");
 
-    private static EligibilityReport GraceReport(CaseRecord c) => new(
+    // ── Scenario 3 — George and Harpreet: business protection ──────────────
+
+    private static AdviceReport GeorgeReport(CaseRecord c) => new(
         CaseNumber: c.CaseNumber,
-        SampleId: c.SampleId,
-        Recommendation: EligibilityRecommendation.Decline,
-        RecommendationLabel: "Decline — do not process",
-        RecommendationReason:
-            "The rollover fails SMSF verification: Grace's TFN isn't linked to the GW Family Superannuation Fund, " +
-            "and the bank details and ESA don't match the ATO's records. With a recent change of contact details " +
-            "and a signature that doesn't match our records, the request can't proceed and is referred to Financial Crime.",
-        OutcomeSummary:
-            "Do not process the $612,400 rollover. Refer to Financial Crime today, keep the balance where it is, and " +
-            "only contact Grace on the details held before 2 Nov 2026 (mobile 0491 570 157). The 3-business-day " +
-            "rollover clock hasn't started.",
+        ScenarioKey: "george",
+        Applicable: true,
+        NotApplicableNote: null,
+        Redirects: Array.Empty<AgentPointer>(),
+        Status: AdviceStatus.ReadyForAdviser,
+        StatusLabel: "Draft SoA ready — second review first",
+        StatusReason:
+            "The buy-sell and key person needs, ownership, tax notes, research, premiums and commission are complete. Total cover on the case is " +
+            "$2,800,000, so Theo's second review comes before Amelia signs.",
+        Summary:
+            "For Amelia's review, after Theo's second review: buy-sell life and TPD cover of $1,200,000 on each owner, self-owned and backed by a " +
+            "buy-sell agreement their lawyer drafts, and $400,000 key person life and TPD cover on George owned by the company — all with Northbank " +
+            "Life at $8,620 a year (year 1, standard rates).",
+        Needs: new[]
+        {
+            new NeedsCalculation("buy-sell-george", "Buy-sell — George's share", "George Papadopoulos", new[]
+            {
+                new NeedsLine("Business valuation (Marcus Tan, 30 Jun 2026)", "$2,400,000", "add"),
+                new NeedsLine("George's share", "× 50%", "note"),
+                new NeedsLine("Buy-sell sum insured", "$1,200,000", "result"),
+            }, "$1,200,000 life and TPD on George — owned by George", "50% × $2,400,000. Self-ownership: George owns the policy on his own life."),
+            new NeedsCalculation("buy-sell-harpreet", "Buy-sell — Harpreet's share", "Harpreet Kaur", new[]
+            {
+                new NeedsLine("Business valuation (Marcus Tan, 30 Jun 2026)", "$2,400,000", "add"),
+                new NeedsLine("Harpreet's share", "× 50%", "note"),
+                new NeedsLine("Buy-sell sum insured", "$1,200,000", "result"),
+            }, "$1,200,000 life and TPD on Harpreet — owned by Harpreet", "50% × $2,400,000. Self-ownership: Harpreet owns the policy on her own life."),
+            new NeedsCalculation("key-person", "Key person — George", "George Papadopoulos", new[]
+            {
+                new NeedsLine("Company net profit (context)", "$520,000 a year", "note"),
+                new NeedsLine("Profit lost over 18 months while a replacement is found and trained (Marcus Tan's estimate)", "$400,000", "add"),
+                new NeedsLine("Key person sum insured", "$400,000", "result"),
+            }, "$400,000 life and TPD on George — owned by Northcote Custom Joinery Pty Ltd", "Revenue purpose: replaces lost profit while George's skills are replaced."),
+            new NeedsCalculation("total", "Total cover on the case", "George and Harpreet", new[]
+            {
+                new NeedsLine("Buy-sell — George", "$1,200,000", "add"),
+                new NeedsLine("Buy-sell — Harpreet", "$1,200,000", "add"),
+                new NeedsLine("Key person — George", "$400,000", "add"),
+                new NeedsLine("Total cover", "$2,800,000", "result"),
+            }, "Second review required", "$2,800,000 is $2,000,000 or more, so Theo reviews the advice before Amelia signs."),
+        },
+        NeedsTotal: "Total cover on the case: $2,800,000 — Theo's second review before Amelia signs.",
         Items: new[]
         {
-            Item("svs-registered", "SVS — ABN is a registered SMSF", ChecklistStatus.Info,
-                "ABN 98 765 432 109 is a registered SMSF — but only since 28/10/2026, nine days before the request.",
-                "SIS-9"),
-            Item("svs-member-linked", "SVS — member's TFN linked to the SMSF", ChecklistStatus.Fail,
-                "Grace's TFN is not linked to GW Family Superannuation Fund as a member, so a rollover to this fund can't be made.",
-                "SIS-10"),
-            Item("svs-bank-esa", "SVS — bank details & ESA match", ChecklistStatus.Fail,
-                "The bank account (name 'G Williams Holdings Pty Ltd') and the ESA on the request don't match the " +
-                "details the ATO holds for the fund — and the account isn't in the SMSF's name.",
-                "SIS-11"),
-            Item("change-of-details", "Recent change of details before a full-balance rollover", ChecklistStatus.Fail,
-                "Mobile and email were changed by phone on 02/11/2026 at 10:42 — about 93 hours (under 96) before " +
-                "this full-balance request, which came from the new email at 07:52 on 06/11/2026. A travel notice " +
-                "(Italy, from 18/10/2026) is on file. Confirm only on the pre-change verified number.",
-                "PDS-6"),
-            Item("signature", "Signature vs specimen", ChecklistStatus.Fail,
-                "Signed 'G. Williams' on 05/11/2026 — it doesn't match the specimen signature on file. The attached " +
-                "licence image also needs an authenticity check by Financial Crime.",
-                "PDS-7"),
-            Item("rollover-clock", "3-business-day rollover timeframe", ChecklistStatus.Info,
-                "The request isn't complete while SMSF verification fails, so the SuperStream clock hasn't started — " +
-                "holding it doesn't breach the timeframe.",
-                "SIS-12"),
-            Item("approval", "Human approval — financial-crime hold", ChecklistStatus.Info,
-                "Blocking the request needs Team Leader approval; whether to lodge an SMR with AUSTRAC is a human decision.",
-                "AUTH-4"),
+            Item("scope", "Scope and facts", "Scope of advice: business protection", ChecklistStatus.Pass,
+                "Buy-sell and key person cover for the two 50% owners of Northcote Custom Joinery Pty Ltd (founded 2011, 14 staff, revenue $3.1m, net profit $520,000). Personal and family cover is outside this advice.",
+                "ADV-1"),
+            Item("kyc", "Scope and facts", "KYC on the company and both owners", ChecklistStatus.Pass,
+                "Financial Crime: company extract and both IDs legitimate; no PEP or sanctions match for the company or its beneficial owners.",
+                "ADV-1"),
+            Item("valuation", "Needs", "Business valuation basis", ChecklistStatus.Pass,
+                "Marcus Tan's valuation of $2,400,000 at 30 Jun 2026; each owner holds 50%.",
+                "NBP-1, NBP-3"),
+            Item("buy-sell", "Strategy and ownership", "Buy-sell: $1,200,000 life and TPD on each owner, self-owned", ChecklistStatus.Pass,
+                "50% of $2,400,000 each. Self-ownership: each partner owns the policy on their own life, so the proceeds go to the owner whose share is being bought out.",
+                "NBP-1, TAX-4"),
+            Item("agreement", "Strategy and ownership", "Buy-sell agreement drafted by their lawyer", ChecklistStatus.Info,
+                "Caldova doesn't draft legal documents. Their lawyer drafts the buy-sell agreement setting out how the shares change hands on death or TPD; the policies fund it.",
+                "NBP-1"),
+            Item("key-person", "Strategy and ownership", "Key person: $400,000 life and TPD on George, company-owned", ChecklistStatus.Pass,
+                "Marcus estimates losing George would cost about $400,000 of profit over 18 months while a replacement is found and trained — a revenue purpose. Northcote Custom Joinery Pty Ltd owns the policy and pays the premium.",
+                "NBP-2"),
+            Item("tax", "Strategy and ownership", "Tax treatment — confirmed by the accountant", ChecklistStatus.Info,
+                "Key person cover for a revenue purpose: premiums generally deductible and proceeds assessable (IT 155). Self-owned buy-sell: premiums not deductible; death proceeds capital and not assessable. Marcus Tan confirmed the treatment as their accountant — Caldova doesn't give tax advice.",
+                "TAX-3, TAX-4, NBP-9"),
+            Item("research", "Research and premiums", "On the APL, with the research compared", ChecklistStatus.Pass,
+                "Year-1 stepped premiums at standard rates for all three covers: Northbank Life $8,620 (recommended — business-protection features and fast financial underwriting), Corella Life $9,180, Harbourline Life $9,410.",
+                "APL-1, APL-3, ADV-1"),
+            Item("premiums", "Research and premiums", "Premiums and who pays", ChecklistStatus.Pass,
+                "George's buy-sell $4,140 (paid by George), key person $1,380 (paid by the company), Harpreet's buy-sell $3,100 (paid by Harpreet) = $8,620 a year.",
+                "NBP-6"),
+            Item("underwriting", "Underwriting", "Underwriting expectations set", ChecklistStatus.Info,
+                "For their ages and sums insured: George (52) — blood profile, medical examination and financial evidence; Harpreet (47) — blood profile and financial evidence. Results could mean a loading or an exclusion — accepting it is the clients' decision with Amelia.",
+                "NBP-4, NBP-5, UW-4"),
+            Item("replacement", "Existing cover", "Replacement advice", ChecklistStatus.Pass,
+                "No existing buy-sell or key person cover is being replaced, so the replacement disclosures don't apply.",
+                "ADV-5"),
+            Item("commission", "Commission", "Commission in dollars, within the caps, with consent", ChecklistStatus.Pass,
+                "No advice fee. Northbank pays commission within the caps: upfront 60% × $8,620 = $5,172; ongoing 20% = $1,724 a year from year 2 (on the quoted premium — recalculated if underwriting changes it). George, Harpreet and the company give written informed consent first.",
+                "COM-3, COM-8, FSG-5"),
+            Item("second-review", "Approvals", "Second review — total cover $2,800,000", ChecklistStatus.Info,
+                "Advice with total cover of $2,000,000 or more on one case gets Theo's second review before Amelia signs.",
+                "MAT-7"),
+            Item("sign-off", "Approvals", "Adviser review and sign-off", ChecklistStatus.Info,
+                "Amelia reviews and signs the SoA after Theo's second review; nothing is implemented until the clients sign the Authority to Proceed.",
+                "MAT-1"),
         },
-        RuleDocumentIds: new[] { DocRollovers, DocProtectingAccount, DocAuthority },
-        Calculations: new[]
+        SoaOutline: new[]
         {
-            "Amount requested: whole balance ≈ $612,400.",
-            "Change of details (02/11/2026 10:42) to rollover request email (06/11/2026 07:52): ~93 hours — under 96 hours.",
-            "SMSF ABN registered (28/10/2026) to rollover request (06/11/2026): 9 days.",
+            new SoaSection("scope", "1. Scope of advice", new[]
+            {
+                "Business protection for George Papadopoulos and Harpreet Kaur, 50% owners of Northcote Custom Joinery Pty Ltd: buy-sell and key person cover.",
+                "Not included: personal and family cover, legal documents (their lawyer drafts the buy-sell agreement) and tax advice (Marcus Tan, their accountant).",
+                "Protection-only advice — no advice fee.",
+            }),
+            new SoaSection("situation", "2. Your business and goals", new[]
+            {
+                "Founded 2011; 14 staff; revenue $3.1m; net profit $520,000; valued at $2,400,000 (30 Jun 2026).",
+                "Referred by Marcus Tan, Bayside Business Accountants, because there's no succession plan.",
+                "Goal: if either owner dies or can never work again, the other can buy their share at a fair price and the business keeps going.",
+            }),
+            new SoaSection("recommendations", "3. Recommendations", new[]
+            {
+                "Buy-sell life and TPD cover of $1,200,000 on George and $1,200,000 on Harpreet, each owning the policy on their own life.",
+                "Key person life and TPD cover of $400,000 on George, owned by the company for a revenue purpose.",
+                "A buy-sell agreement drafted by their lawyer, funded by the buy-sell policies.",
+            }),
+            new SoaSection("ownership", "4. Ownership and tax", new[]
+            {
+                "Self-ownership keeps the buy-sell proceeds with the owner whose share is bought; the agreement sets out the share transfer.",
+                "Key person (revenue purpose): premiums generally deductible to the company and proceeds assessable; buy-sell premiums aren't deductible — Marcus Tan confirmed the treatment as their accountant.",
+            }),
+            new SoaSection("research", "5. Insurer and research", new[]
+            {
+                "Northbank Life recommended: $8,620 a year at standard rates — business-protection features and fast financial underwriting.",
+                "Compared: Corella Life $9,180 and Harbourline Life $9,410.",
+            }),
+            new SoaSection("premiums", "6. Premiums and who pays", new[]
+            {
+                "George's buy-sell $4,140 (George), key person $1,380 (the company), Harpreet's buy-sell $3,100 (Harpreet) = $8,620 a year, stepped.",
+                "Underwriting may change the premiums — any changed terms are the clients' decision with Amelia.",
+            }),
+            new SoaSection("commission", "7. Fees and commission", new[]
+            {
+                "No advice fee.",
+                "Northbank pays Caldova commission: $5,172 upfront (60% of the quoted first-year premium) and $1,724 a year from year 2 (20%), recalculated on the final premium.",
+                "Written informed consent from George, Harpreet and the company before Caldova receives it.",
+            }),
+            new SoaSection("underwriting", "8. Applying and underwriting", new[]
+            {
+                "George (52): blood profile, medical examination and financial evidence. Harpreet (47): blood profile and financial evidence.",
+                "Financial evidence: two years' company financials and the valuation, from Marcus Tan with consent.",
+                "Answer the health questions with reasonable care; 14-day cooling-off once the policies are issued.",
+            }),
+            new SoaSection("second-review", "9. Second review", new[]
+            {
+                "Total cover on the case is $2,800,000 — $2,000,000 or more — so Theo, the Practice Team Leader, reviews the advice before Amelia signs.",
+            }),
+            new SoaSection("next-steps", "10. Next steps", new[]
+            {
+                "Theo's second review, then Amelia reviews and signs this SoA.",
+                "George, Harpreet and the company sign the Authority to Proceed and the commission consent.",
+                "Their lawyer drafts the buy-sell agreement; Uma's team lodges the applications with Northbank Life.",
+            }),
         },
+        Premiums: new[]
+        {
+            new PremiumLine("George Papadopoulos", "Buy-sell — life and TPD", "$1,200,000", "Self-owned (George)", "$4,140", "George"),
+            new PremiumLine("Harpreet Kaur", "Buy-sell — life and TPD", "$1,200,000", "Self-owned (Harpreet)", "$3,100", "Harpreet"),
+            new PremiumLine("George Papadopoulos", "Key person — life and TPD", "$400,000", "Company-owned", "$1,380", "Northcote Custom Joinery Pty Ltd"),
+        },
+        PremiumNote: "Northbank Life, year-1 stepped premiums at standard rates: $8,620 a year in total.",
+        Commission: new CommissionDisclosure(
+            Insurer: "Northbank Life",
+            PremiumBasis: "$8,620 first-year premium at standard rates (quoted)",
+            Upfront: "$5,172 — 60% of the first-year premium",
+            Ongoing: "$1,724 a year from year 2 — 20% of each later year's premium",
+            Basis: "Within the LIF caps. The dollar amounts are recalculated on the final premium if underwriting changes it; the rates don't change.",
+            Consent: "Written informed consent from George, Harpreet and the company (as owner of the key person policy) before Caldova receives commission.",
+            Gst: "The caps are tested on the commission excluding GST.",
+            Clawback: "100% of the upfront commission is clawed back if a policy is cancelled in year 1, 60% in year 2, nothing after 24 months — not passed on to the clients."),
+        SignOff: new AdviserSignOff(
+            Heading: "Adviser sign-off required: Amelia",
+            Adviser: LifeAdviceFacts.Adviser,
+            Status: "Signed by Amelia on Wed 11 Nov 2026, after Theo's second review",
+            Statement: "Drafted by the Paraplanning Agent for Penny and Amelia. It isn't advice until Theo has completed the second review and Amelia has reviewed and signed the Statement of Advice.",
+            History: new[]
+            {
+                "Tue 10 Nov 2026 — draft SoA prepared by the Paraplanning Agent; Penny checks the working.",
+                "Wed 11 Nov 2026 — Theo's second review (total cover $2,800,000); Amelia reviews and signs the SoA.",
+                "Thu 12 Nov 2026 — George and Harpreet sign the Authority to Proceed; their written commission consent was given with the SoA.",
+            },
+            Approvals: new[]
+            {
+                "Theo's second review — total cover of $2,000,000 or more (MAT-7).",
+                "Amelia signs the SoA (MAT-1).",
+                "Their lawyer drafts the buy-sell agreement; Marcus Tan confirmed the tax treatment.",
+            }),
+        RuleDocumentIds: new[] { DocAdvice, DocNorthbank, DocTax, DocCommission, DocFsg, DocApl, DocUnderwriting, DocMatrix },
         MissingInformation: new[]
         {
-            "A passing SVS result (member linked, bank details and ESA matched) — not possible on the current details (SIS-10, SIS-11).",
-            "Confirmation from Grace, using the contact details held before 02/11/2026, that she made this request (PDS-6).",
-            "Financial Crime's authenticity check of the licence image (PDS-7).",
+            "The buy-sell agreement — drafted and finalised by their lawyer; the policies fund it, and Caldova doesn't draft it (NBP-1).",
         },
         PlainEnglishExplanation:
-            "We can't roll Grace's super over to this SMSF. The ATO's checks show she isn't a member of that fund and " +
-            "its bank details don't match, so the law doesn't allow the transfer. Her $612,400 stays safely with " +
-            "Caldova while our Financial Crime team confirms the request with her on the details we held before they " +
-            "were changed. This isn't a judgement about Grace — these checks exist to protect members' savings.",
+            "If George or Harpreet died or could never work again, the other would need $1.2 million to buy their half of the business at Marcus's " +
+            "$2.4 million valuation — so each owns a $1.2 million policy on their own life, and their lawyer's buy-sell agreement says how the shares " +
+            "change hands. The company also needs $400,000 to cover lost profit while it replaces George's skills. Because the total is $2.8 million, " +
+            "Theo reviews the advice before Amelia signs it.",
         HumanApproval:
-            "Yes — blocking a request on financial-crime grounds needs Team Leader approval, and any suspicious matter " +
-            "report to AUSTRAC is a human decision, due within 3 business days (AUTH-4).");
+            "Yes — Theo's second review (total cover of $2,800,000 is $2,000,000 or more) and Amelia's signature on the SoA come before anything is " +
+            "implemented (MAT-1, MAT-7).");
 
-    private static EligibilityReport GeorgeReport(CaseRecord c) => new(
-        CaseNumber: c.CaseNumber,
-        SampleId: c.SampleId,
-        Recommendation: EligibilityRecommendation.Approve,
-        RecommendationLabel: "Approve — commence the pension",
-        RecommendationReason:
-            "George is 66, so all his super is unrestricted non-preserved. The $1,250,000 commencement is within his " +
-            "$2.1 million transfer balance cap, the $78,000 a year he asked for is above the minimum, and Helen can be " +
-            "his reversionary beneficiary.",
-        OutcomeSummary:
-            "Commence Caldova Pension CP-3077881 with $1,250,000 on 16/11/2026, paying $6,500 a month ($78,000 p.a.) — " +
-            "above the pro-rated FY2026-27 minimum of $38,870. Report the $1,250,000 transfer balance credit to the ATO " +
-            "($850,000 cap space remains). Team Leader approval is needed before commencement.",
-        Items: new[]
-        {
-            Item("release-age", "Condition of release — age 65", ChecklistStatus.Pass,
-                "George was born on 03/04/1960 and is 66. Reaching 65 is a condition of release; no retirement declaration is needed.",
-                "SIS-4"),
-            Item("unrestricted", "Benefits unrestricted non-preserved", ChecklistStatus.Pass,
-                "With the condition of release met, all of George's $1,284,600 is unrestricted non-preserved: " +
-                "$1,250,000 starts the pension and $34,600 stays in accumulation.",
-                "SIS-3"),
-            Item("tbc", "Transfer balance cap", ChecklistStatus.Pass,
-                "General cap $2.1 million (2026-27). No prior transfer balance account, so the $1,250,000 credit " +
-                "leaves $850,000 of cap space. The credit is reported to the ATO.",
-                "TAX-1"),
-            Item("min-drawdown", "Minimum annual payment", ChecklistStatus.Pass,
-                "Age 65–74: 5% × $1,250,000 = $62,500 p.a. The $78,000 p.a. requested is above the minimum.",
-                "SIS-6"),
-            Item("first-year", "First-year minimum (pro-rated)", ChecklistStatus.Pass,
-                "Starting 16/11/2026 leaves 227 of 365 days in FY2026-27: $62,500 × 227 ÷ 365 = $38,870 (rounded to " +
-                "the nearest $10). Seven monthly payments of $6,500 before 30 June total $45,500.",
-                "SIS-7"),
-            Item("reversionary", "Reversionary beneficiary", ChecklistStatus.Pass,
-                "Helen Papadopoulos (spouse, DOB 21/09/1963) can be nominated — the pension continues to her if George dies first.",
-                "SIS-8"),
-            Item("tax", "Tax on pension payments", ChecklistStatus.Info,
-                "George is over 60: pension payments are tax-free (no PAYG withheld) and earnings on the pension's assets aren't taxed.",
-                "TAX-5"),
-            Item("approval", "Team Leader approval (≥ $1,000,000)", ChecklistStatus.Info,
-                "A $1,250,000 commencement is above the $1,000,000 authority limit — Team Leader approval is needed before the pension starts.",
-                "AUTH-2"),
-        },
-        RuleDocumentIds: new[] { DocConditionsOfRelease, DocPensionStandards, DocTax, DocAuthority },
-        Calculations: new[]
-        {
-            "Transfer balance cap: $2,100,000 − $1,250,000 = $850,000 cap space remaining.",
-            "Minimum annual payment (age 65–74): 5% × $1,250,000 = $62,500.",
-            "First-year minimum: $62,500 × 227 ÷ 365 = $38,869.86 → $38,870 (nearest $10).",
-            "Requested: $78,000 p.a. = $6,500 a month; 7 payments (15 Dec 2026 – 15 Jun 2027) = $45,500 ≥ $38,870.",
-            "Left in accumulation: $1,284,600 − $1,250,000 = $34,600.",
-        },
-        MissingInformation: Array.Empty<string>(),
-        PlainEnglishExplanation:
-            "George can start his Caldova Pension. At 66 he can access all of his super, the $1.25 million he's moving " +
-            "is well within the $2.1 million cap, and the $6,500 a month he asked for is above the legal minimum. Helen " +
-            "will keep receiving the pension if anything happens to George. Because the amount is over $1 million, a " +
-            "Team Leader signs it off before it starts on 16 November.",
-        HumanApproval:
-            "Yes — pension commencements of $1,000,000 or more need Team Leader approval (AUTH-2).");
+    // ── Claim cases — nothing for Paraplanning to draft ────────────────────
 
-    private static EligibilityReport TomReport(CaseRecord c) => new(
-        CaseNumber: c.CaseNumber,
-        SampleId: c.SampleId,
-        Recommendation: EligibilityRecommendation.PartialApprove,
-        RecommendationLabel: "Partially approve — $10,000 gross",
-        RecommendationReason:
-            "Tom meets every severe-financial-hardship criterion, but $15,000 is more than the $10,000 maximum that " +
-            "can be released in any 12-month period.",
-        OutcomeSummary:
-            "Release $10,000 gross — the legal maximum: tax-free $600, taxable $9,400, PAYG withheld $2,068, net " +
-            "$7,932. The remaining $5,000 can't be released on hardship grounds. Team Leader approval is needed " +
-            "(partial approval, vulnerable member).",
-        Items: new[]
-        {
-            Item("income-support", "Income support for 26 continuous weeks", ChecklistStatus.Pass,
-                "JobSeeker continuously since 06/04/2026 — 31 weeks at 09/11/2026.",
-                "HS-1"),
-            Item("still-receiving", "Still receiving income support", ChecklistStatus.Pass,
-                "The Services Australia letter dated 09/11/2026 confirms Tom is still receiving JobSeeker.",
-                "HS-1"),
-            Item("letter-current", "Services Australia letter within 21 days", ChecklistStatus.Pass,
-                "Letter dated 09/11/2026; application received 11/11/2026 — 2 days.",
-                "HS-2"),
-            Item("living-expenses", "Unable to meet reasonable & immediate family living expenses", ChecklistStatus.Pass,
-                "Statutory declaration plus overdue notices: mortgage arrears $6,840, electricity $1,120 overdue, car registration due.",
-                "HS-3"),
-            Item("previous-release", "No hardship release in the last 12 months", ChecklistStatus.Pass,
-                "Account history shows no hardship release in the last 12 months.",
-                "HS-5"),
-            Item("amount-limit", "Amount within $1,000–$10,000", ChecklistStatus.Fail,
-                "$15,000 requested is above the $10,000 gross maximum — only $10,000 can be released.",
-                "HS-4"),
-            Item("tax", "Tax on the payment", ChecklistStatus.Info,
-                "Tom is 47 (under 60): 22% (20% + 2% Medicare levy) is withheld from the taxable component. On " +
-                "$10,000: tax-free $600, taxable $9,400, PAYG $2,068, net $7,932.",
-                "TAX-4"),
-            Item("approval", "Team Leader approval — partial release, vulnerable member", ChecklistStatus.Info,
-                "Partial approvals and hardship releases always need Team Leader approval; Tom is flagged as a vulnerable member.",
-                "AUTH-1"),
-        },
-        RuleDocumentIds: new[] { DocHardship, DocConditionsOfRelease, DocTax, DocAuthority },
-        Calculations: new[]
-        {
-            "Payment limit: $15,000 requested → capped at $10,000 gross (HS-4).",
-            "Components (6% tax-free): tax-free $600; taxable $9,400.",
-            "PAYG withholding: 22% × $9,400 = $2,068.",
-            "Net payment: $10,000 − $2,068 = $7,932.",
-            "Balance after release: $84,300 − $10,000 ≈ $74,300 (before market movements).",
-        },
-        MissingInformation: Array.Empty<string>(),
-        PlainEnglishExplanation:
-            "Tom qualifies for an early release on financial hardship grounds, but the law caps it at $10,000 before " +
-            "tax in any 12 months, so we can't release the full $15,000. After $2,068 tax he'll receive $7,932. Free, " +
-            "confidential help is available from the National Debt Helpline on 1800 007 007 and on Moneysmart.",
-        HumanApproval:
-            "Yes — partial approvals and hardship releases need Team Leader approval, and Tom is a vulnerable member " +
-            "who should get a human touch (AUTH-1).");
-
-    private static EligibilityReport RobertReport(CaseRecord c) => new(
-        CaseNumber: c.CaseNumber,
-        SampleId: c.SampleId,
-        Recommendation: EligibilityRecommendation.Approve,
-        RecommendationLabel: "Approve — pay as nominated",
-        RecommendationReason:
-            "Mei Chen's binding nomination is valid and in force, and both nominated beneficiaries — her children " +
-            "Robert and Lily — are SIS dependants. The trustee must pay as nominated: 50% each.",
-        OutcomeSummary:
-            "Pay Mei Chen's death benefit (≈ $486,200) as nominated — 50% to Robert and 50% to Lily, as lump sums. " +
-            "Each share ≈ $243,100: tax-free $92,378, taxable $150,722, 17% withheld $25,622.74, net ≈ $217,477.26 " +
-            "(final amounts depend on sale proceeds). Team Leader approval is needed (death benefit).",
-        Items: new[]
-        {
-            Item("bdbn-formalities", "Binding nomination signed & witnessed", ChecklistStatus.Pass,
-                "Signed and dated by Mei on 18/03/2024 in front of two adult witnesses who aren't beneficiaries, with witness declarations.",
-                "TD-1"),
-            Item("bdbn-in-force", "Nomination in force (not lapsed)", ChecklistStatus.Pass,
-                "Lapsing three-year nomination valid to 18/03/2027; Mei died on 12/10/2026, so it was in force.",
-                "TD-2"),
-            Item("sis-dependants", "Beneficiaries are SIS dependants", ChecklistStatus.Pass,
-                "Robert and Lily are Mei's children — a child of any age is a SIS dependant. Shares 50% + 50% = 100%.",
-                "TD-3"),
-            Item("binding-effect", "Binding — trustee must follow", ChecklistStatus.Info,
-                "The nomination is valid and binding, so the trustee must pay as nominated, with no discretion. There's " +
-                "no reversionary beneficiary (Mei's husband died before her).",
-                "TD-4"),
-            Item("tax-status", "Tax — beneficiaries are non-dependants", ChecklistStatus.Info,
-                "Adult children who weren't financially dependent aren't death benefit dependants for tax: 17% " +
-                "(15% + 2% Medicare levy) is withheld from the taxable component, and the benefit is paid as lump " +
-                "sums (it can't be rolled over).",
-                "TAX-7"),
-            Item("approval", "Team Leader approval — death benefit", ChecklistStatus.Info,
-                "Every death benefit needs Team Leader approval through a Teams approval card before Payments releases it.",
-                "AUTH-3"),
-        },
-        RuleDocumentIds: new[] { DocNominations, DocTax, DocAuthority },
-        Calculations: new[]
-        {
-            "Balance ≈ $486,200 → 50% each ≈ $243,100 gross.",
-            "Components (38% tax-free / 62% taxable): tax-free $92,378; taxable $150,722 per share.",
-            "Withholding: 17% × $150,722 = $25,622.74 per share.",
-            "Net per share: $243,100 − $25,622.74 = $217,477.26.",
-            "Final amounts depend on sale proceeds when the pension's portfolio is redeemed.",
-        },
-        MissingInformation: Array.Empty<string>(),
-        PlainEnglishExplanation:
-            "Mei's nomination was made correctly and was still current, so Caldova must pay her super exactly as she " +
-            "asked — half to Robert and half to Lily. Because adult children aren't dependants for tax purposes, some " +
-            "tax is withheld from the taxable part of each payment. The final amounts depend on what the investments " +
-            "sell for, and a Team Leader signs off before anything is paid.",
-        HumanApproval:
-            "Yes — every death benefit needs Team Leader approval (AUTH-3), and every message to the family is " +
-            "handled with care by a person.");
-
-    private static EligibilityReport GenericReport(CaseRecord c)
+    private static AdviceReport ClaimReport(CaseRecord c, string key)
     {
-        var requestType = c.RequestType ?? string.Empty;
-        var (docs, ruleClause, evidenceClause) = requestType switch
+        var claims = new AgentPointer("Open the case in Claims", $"/agents/claims?case={Uri.EscapeDataString(c.CaseNumber)}");
+        var (note, redirects) = key switch
         {
-            RequestTypes.NewAccount => (new[] { DocAccountOpening, DocFeeConsent, DocNominations, DocAuthority }, "PDS-3", "PDS-1"),
-            RequestTypes.RolloverOutSmsf => (new[] { DocRollovers, DocProtectingAccount, DocAuthority }, "SIS-9", "PDS-7"),
-            RequestTypes.PensionCommencement => (new[] { DocConditionsOfRelease, DocPensionStandards, DocTax, DocAuthority }, "SIS-3", "SIS-6"),
-            RequestTypes.FinancialHardship => (new[] { DocHardship, DocConditionsOfRelease, DocTax, DocAuthority }, "HS-1", "HS-2"),
-            RequestTypes.DeathBenefit => (new[] { DocNominations, DocTax, DocAuthority }, "TD-1", "TD-3"),
-            _ => (new[] { DocAccountOpening, DocConditionsOfRelease, DocAuthority }, "SIS-3", "PDS-1"),
+            "grace" => (
+                "Grace Williams's case is a claim request on her existing Lyrebird Life policy, not a request for new advice — so there's nothing for Paraplanning to draft. Ben's Claims Agent and Felix's Financial Crime Agent are handling it.",
+                new[] { claims, new AgentPointer("Open the case in Financial Crime", $"/agents/financial-crime?case={Uri.EscapeDataString(c.CaseNumber)}") }),
+            "tom" => (
+                "Tom Bradley's case is an income protection claim, not a request for new advice — Ben's Claims Agent is supporting Tom and Kylie. A note for Amelia (not advice): Tom's insured $7,000 a month is more than his recent earnings support, so at his next review she may consider whether the benefit should change. That's her decision.",
+                new[] { claims }),
+            "robert" => (
+                "Robert Chen's case is a death claim on Mei Chen's Corella Life policy — there's nothing for Paraplanning to draft. Ben's Claims Agent is supporting Robert, with Theo overseeing every message to the family.",
+                new[] { claims }),
+            _ => (
+                $"This is a \"{c.RequestType}\" request, not a request for new advice — the Claims Agent looks after claims on existing policies.",
+                new[] { claims }),
         };
-        var typeLabel = string.IsNullOrWhiteSpace(requestType) ? "this request" : $"a '{requestType}' request";
 
-        return new EligibilityReport(
+        return new AdviceReport(
             CaseNumber: c.CaseNumber,
-            SampleId: c.SampleId,
-            Recommendation: EligibilityRecommendation.NeedMoreInfo,
-            RecommendationLabel: DefaultLabel(EligibilityRecommendation.NeedMoreInfo),
-            RecommendationReason:
-                $"Case {c.CaseNumber} is {typeLabel} without a worked rule check on file, so the member's records and " +
-                "supporting documents are needed before the rules can be applied.",
-            OutcomeSummary:
-                "No decision yet — gather the missing information below, then run the eligibility check again.",
-            Items: new[]
-            {
-                Item("rule-identified", "Applicable rule identified", ChecklistStatus.Info,
-                    $"Confirm which PDS, trust-deed and super-law rules apply to {typeLabel} and the evidence each needs.",
-                    ruleClause),
-                Item("evidence", "Supporting evidence on file", ChecklistStatus.Info,
-                    "Check the documents on the case against the NIGO checklist from Onboarding before assessing.",
-                    evidenceClause),
-                Item("approval", "Human review", ChecklistStatus.Info,
-                    "Any decline or partial approval that follows needs Team Leader approval.",
-                    "AUTH-1"),
-            },
-            RuleDocumentIds: docs,
-            Calculations: Array.Empty<string>(),
-            MissingInformation: new[]
-            {
-                "Member record and identity confirmation for the member number on the case.",
-                "The supporting documents for the condition of release or product rule being relied on.",
-            },
-            PlainEnglishExplanation:
-                $"We've received {typeLabel} for {c.ClientName} and need a few more details before we can confirm " +
-                "eligibility. We'll let the member (and their adviser, if they have one) know exactly what's needed.",
-            HumanApproval: "Not yet — no recommendation has been made. Any decline or partial approval will need Team Leader approval.");
+            ScenarioKey: key,
+            Applicable: false,
+            NotApplicableNote: note,
+            Redirects: redirects,
+            Status: AdviceStatus.NotApplicable,
+            StatusLabel: DefaultLabel(AdviceStatus.NotApplicable),
+            StatusReason: note,
+            Summary: note,
+            Needs: Array.Empty<NeedsCalculation>(),
+            NeedsTotal: string.Empty,
+            Items: Array.Empty<AdviceChecklistItem>(),
+            SoaOutline: Array.Empty<SoaSection>(),
+            Premiums: Array.Empty<PremiumLine>(),
+            PremiumNote: string.Empty,
+            Commission: null,
+            SignOff: new AdviserSignOff("No Statement of Advice on this case", LifeAdviceFacts.Adviser, "Not applicable",
+                "There's no new advice to draft or sign on a claim case.", Array.Empty<string>(), Array.Empty<string>()),
+            RuleDocumentIds: Array.Empty<string>(),
+            MissingInformation: Array.Empty<string>(),
+            PlainEnglishExplanation: note,
+            HumanApproval: "No — there's no Statement of Advice on this case.");
     }
+
+    // ── Any other advice request — the fact find comes first ───────────────
+
+    private static AdviceReport GenericReport(CaseRecord c) => new(
+        CaseNumber: c.CaseNumber,
+        ScenarioKey: "generic",
+        Applicable: true,
+        NotApplicableNote: null,
+        Redirects: new[] { new AgentPointer("Back to Onboarding", "/agents/onboarding") },
+        Status: AdviceStatus.NeedMoreInfo,
+        StatusLabel: DefaultLabel(AdviceStatus.NeedMoreInfo),
+        StatusReason: "The fact find doesn't yet hold everything the needs analysis needs — debts, dependants, income, savings and existing cover.",
+        Summary: "Complete the fact find, then the Paraplanning Agent works out the cover needed and drafts the SoA for Amelia.",
+        Needs: Array.Empty<NeedsCalculation>(),
+        NeedsTotal: "Needs analysis waiting for the completed fact find.",
+        Items: new[]
+        {
+            Item("fact-find", "Scope and facts", "Fact find complete", ChecklistStatus.Fail,
+                $"The request ({c.RequestType}) doesn't yet include debts, dependants, income, savings and existing cover.",
+                "ADV-1"),
+            Item("identity", "Scope and facts", "Identity verified", ChecklistStatus.Info,
+                "Financial Crime verifies identity for every new client before advice is implemented.",
+                "ADV-1"),
+            Item("existing-cover", "Existing cover", "Existing cover listed", ChecklistStatus.Info,
+                "List every policy and super fund cover; nothing is cancelled until new cover is in force.",
+                "ADV-5, UW-6"),
+            Item("sign-off", "Approvals", "Adviser review and sign-off", ChecklistStatus.Info,
+                "Amelia signs every SoA; advice with total cover of $2,000,000 or more gets a second review first.",
+                "MAT-1, MAT-7"),
+        },
+        SoaOutline: Array.Empty<SoaSection>(),
+        Premiums: Array.Empty<PremiumLine>(),
+        PremiumNote: string.Empty,
+        Commission: null,
+        SignOff: new AdviserSignOff("Adviser sign-off required: Amelia", LifeAdviceFacts.Adviser, "Not drafted yet",
+            "The SoA is drafted once the fact find is complete; it isn't advice until Amelia signs it.", Array.Empty<string>(),
+            new[] { "Amelia signs the SoA (MAT-1)." }),
+        RuleDocumentIds: new[] { DocAdvice, DocSuper, DocCommission, DocMatrix },
+        MissingInformation: new[]
+        {
+            "Debts, dependants, income and savings (ADV-1).",
+            "Existing cover, inside and outside super (ADV-5).",
+            "Health basics and occupation for underwriting (UW-1).",
+        },
+        PlainEnglishExplanation: "We need a few more details before we can work out how much cover would help — Olivia's team will be in touch.",
+        HumanApproval: "Yes — Amelia signs every SoA (MAT-1).");
 }

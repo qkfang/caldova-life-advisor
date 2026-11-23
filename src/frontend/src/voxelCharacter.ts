@@ -23,14 +23,14 @@ export interface CharacterPickMetadata {
 /**
  * A blocky humanoid built from boxes — head, torso, two arms, two legs —
  * with optional details (hair styles, glasses, beard, dress, etc.) so that
- * each persona reads as a distinct individual in the lakehouse.
+ * each persona reads as a distinct individual in Caldova House.
  *
  * Exposes `setWalking()` to drive a tiny limb-swing animation and `root`
  * so callers can move the character around the scene.
  */
 export class VoxelCharacter {
   public readonly root: TransformNode;
-  /** Stable id stamped on the click hitbox (matches StaffPersona/Customer id). */
+  /** Stable id stamped on the click hitbox (matches StaffPersona/ClientPersona id). */
   public readonly id: string;
   private readonly leftArm: Mesh;
   private readonly rightArm: Mesh;

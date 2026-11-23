@@ -1,5 +1,5 @@
-/* Header navigation — Caldova Wealth. White bar, serif wordmark, underline
-   active state and mega-menu dropdowns, as on Australian super fund sites.
+/* Header navigation — Caldova Life Advice. White bar, serif wordmark with the
+   teal shield mark, underline active state and mega-menu dropdowns.
    NavLink renders its own <a>, so those anchors are reached with ::deep. */
 
 .header-inner {
@@ -50,7 +50,7 @@
     font-weight: 700;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--cw-gold-ink);
+    color: var(--cw-teal-ink);
 }
 
 /* ── Primary navigation ───────────────────────────────────────────────── */

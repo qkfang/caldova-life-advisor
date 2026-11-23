@@ -1,0 +1,27 @@
+{
+  "id": "business",
+  "scenarioNumber": 3,
+  "caseId": "REQ-20261109-LIF003",
+  "clientId": "business",
+  "amount": 2800000,
+  "outcomeAmount": 2800000,
+  "outcome": "approved",
+  "beats": [
+    {"at": "client", "action": "lodge-at-front-desk", "narration": "On Mon 9 Nov 2026, Marcus Tan of Bayside Business Accountants refers George Papadopoulos and Harpreet Kaur: Northcote Custom Joinery Pty Ltd, owned 50/50, valued at $2,400,000, and no succession plan."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent extracts the referral: two 50% owners, 14 staff, revenue of $3.1m and net profit of $520,000. It runs the in-good-order checklist for both partners."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261109-LIF003 for George (CL-104611) and Harpreet (CL-104612)."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix's agent runs KYC on the company and both owners: the company extract and both IDs are legit, with no PEP or sanctions match."},
+    {"at": "Paraplanner", "action": "paraplanning-needs", "narration": "Penny's agent works out the needs: buy-sell life and TPD cover of $1,200,000 each (half of $2.4m), each partner owning the policy on their own life, and $400,000 of key person cover on George, owned by the company. Their lawyer drafts the buy-sell agreement, and Marcus confirms the tax treatment."},
+    {"at": "Insurance Research Analyst", "action": "research-compare", "narration": "Ivy's agent compares year-1 stepped premiums at standard rates: Northbank Life $8,620, Corella Life $9,180, Harbourline Life $9,410. Northbank has the business-protection features and fast financial underwriting."},
+    {"at": "Practice Team Leader", "action": "team-leader-review", "narration": "The case totals $2,800,000 of cover, so Theo gives it a second review (every case of $2,000,000 or more gets one) before Amelia signs the Statement of Advice."},
+    {"at": "Underwriting Coordinator", "action": "underwriting", "narration": "Uma's agent tracks the requirements: bloods, a medical and two years' financials for George; bloods and financials for Harpreet. George's cholesterol of 7.2 mmol/L and blood pressure of 150/95 bring a 25% loading on his life and TPD cover; Harpreet is standard. George accepts with Amelia on 19 Nov, and the premiums come to $10,000 a year."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara's agent writes to George and Harpreet, and tells Marcus, with their consent, that the cover is in place and their lawyer will finalise the buy-sell agreement."}
+  ],
+  "result": {
+    "status": "completed",
+    "headline": "Business protected from 20 Nov 2026",
+    "figure": "$2,800,000 cover",
+    "icon": "✅",
+    "summary": "Outcome: COMPLETED — buy-sell cover of $1.2 million each and $400,000 key person cover in force from 20 Nov 2026 (policies NB-26300418, NB-26300419 and NB-26300420), with a 25% loading on George's cover."
+  }
+}

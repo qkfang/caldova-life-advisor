@@ -1,20 +1,23 @@
 /**
- * Lower level · The Engine Room — Microsoft IQ and the Azure services under
- * the waterline, behind a glass wall onto the lake.
+ * B · The Engine Room — Microsoft IQ and the Azure services, in the old bank
+ * vault under Caldova House.
  *
- * Microsoft Foundry sits in the middle as a glowing core that runs every
- * agent. Behind it, on a raised deck, is Microsoft IQ, the context layer
- * every agent shares: Work IQ, Fabric IQ, Foundry IQ and Web IQ. Around
- * them are the Azure services: along the glass, the tools and channels that
+ * The vault keeps its 1889 bones: bluestone walls lined with brass
+ * safe-deposit boxes, and a huge round vault door standing open by the
+ * laneway wall. Microsoft Foundry sits in the middle as a glowing core that
+ * runs every agent. Behind it, on a raised deck, is Microsoft IQ, the context
+ * layer every agent shares: Work IQ, Fabric IQ, Foundry IQ and Web IQ. Around
+ * them are the Azure services: along the front, the tools and channels that
  * particular agents call (Content Understanding, Voice Live, Teams approvals
- * and MCP tools), and behind, the platform (Entra ID, the network, Key
- * Vault, Storage, App Service and Application Insights). Floor traces carry
- * pulses of data to and from the core.
+ * and MCP tools), and behind, the platform (Entra ID, the network, Key Vault,
+ * Storage, App Service and Application Insights). Floor traces carry pulses
+ * of data to and from the core.
  */
 import { Color3, Mesh, MeshBuilder, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
+import { heritageMats } from "../heritage";
+import { INFRA, TIERS, infraInfo, levelInfo, type InfraId } from "../houseData";
 import { Batch, Kit, rng } from "../kit";
-import { INFRA, TIERS, infraInfo, levelInfo, type InfraId } from "../lakehouseData";
-import { FLOOR_Y, SLABS, WALLS } from "../layout";
+import { FLOOR_Y, HOUSE, INSIDE, STOREY } from "../layout";
 import { buildShell } from "../shell";
 import type { Anchor, Highlights, LevelBuild } from "../types";
 
@@ -46,7 +49,7 @@ const PLACES: Record<InfraId, Place> = {
   fabriciq: { x: -4.4, z: 5.2, w: 3.2, d: 3.0, h: 3.6, tx: -4.4, tz: 3.7, deck: true },
   foundryiq: { x: 4.4, z: 5.4, w: 4.4, d: 1.6, h: 3.9, tx: 4.4, tz: 4.6, deck: true },
   webiq: { x: 9.3, z: 5.2, w: 2.4, d: 2.4, h: 5.2, tx: 9.3, tz: 4.0, deck: true },
-  // Along the glass: the services particular agents call.
+  // Along the front: the services particular agents call.
   content: { x: -14.2, z: -8.0, w: 5.2, d: 1.6, h: 2.9, tx: -14.2, tz: -7.2 },
   voice: { x: -6.4, z: -8.8, w: 2.6, d: 1.6, h: 2.8, tx: -6.4, tz: -8.0 },
   teams: { x: 6.4, z: -8.4, w: 3.0, d: 1.6, h: 2.8, tx: 6.4, tz: -7.6 },
@@ -152,27 +155,113 @@ export function buildEngineLevel(kit: Kit): LevelBuild {
   floorMat.diffuseTexture = circuit;
   floorMat.emissiveColor = new Color3(0.55, 0.55, 0.65);
   floorMat.specularColor = Color3.Black();
-  const height = -0.2 - y;
+  const height = STOREY.engine;
+  const hm = heritageMats(kit);
   const { tag } = buildShell(kit, {
     root,
     level: info,
     floorY: y,
-    slab: SLABS.engine,
-    walls: WALLS.engine,
+    storey: "basement",
     floor: floorMat,
-    back: kit.mat("#ffffff", { texture: "concrete" }),
-    open: ["front"],
-    height,
-    tagAt: [-25.8, y + 2.8, -16.5],
+    // Out past the laneway's cut, so the vault's walls never cover it.
+    tagAt: [HOUSE.x0 - 6.4, y + 2.8, HOUSE.z0 - 3.6],
   });
 
-  // The frameless glass wall onto the lake: kept faint and matte so the room stays crisp.
-  const concrete = kit.mat("#ffffff", { texture: "concrete" });
   const steel = kit.mat("#2b3240", { specular: 0.25 });
-  const fz = (SLABS.engine.z0 + WALLS.engine.z0) / 2 - 0.2;
-  kit.block(root, 0, y, fz, 40.8, 0.4, 0.4, concrete);
-  kit.block(root, 0, y + 0.4, fz, 40, 4.6, 0.12, kit.mat("#9fe3ff", { alpha: 0.1, specular: 0.15 }));
-  kit.block(root, 0, y + 5.0, fz, 40.8, height - 5.0, 0.4, concrete);
+
+  /* ---------------- The vault: safe-deposit boxes and the round door ---------------- */
+  // Brass safe-deposit boxes line the back wall and the laneway wall, behind the machines.
+  const panel = (name: string, w: number, h: number): Mesh => {
+    const tex = kit.canvas(`v2_depositBoxes_${name}`, 256, 256, (ctx, cw, ch) => {
+      ctx.fillStyle = "#3b2f1c";
+      ctx.fillRect(0, 0, cw, ch);
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 4; col++) {
+          const x = col * 64 + 3;
+          const yy = row * 32 + 3;
+          ctx.fillStyle = (row * 5 + col * 3) % 4 === 0 ? "#b48a45" : "#a37b3b";
+          ctx.fillRect(x, yy, 58, 26);
+          ctx.fillStyle = "#5c4521";
+          ctx.fillRect(x + 25, yy + 9, 8, 8);
+          ctx.fillStyle = "rgba(255,240,200,0.35)";
+          ctx.fillRect(x, yy, 58, 2);
+        }
+      }
+    });
+    tex.wrapU = Texture.WRAP_ADDRESSMODE;
+    tex.wrapV = Texture.WRAP_ADDRESSMODE;
+    tex.uScale = w / 4;
+    tex.vScale = h / 2.4;
+    const mat = kit.screen(tex);
+    mat.disableLighting = false;
+    mat.emissiveColor = new Color3(0.3, 0.28, 0.24);
+    const p = MeshBuilder.CreatePlane(`v2_boxes_${name}`, { width: w, height: h }, scene);
+    p.material = mat;
+    p.isPickable = false;
+    p.parent = root;
+    return p;
+  };
+  {
+    const x0 = -16.8;
+    const backW = INSIDE.x1 - x0;
+    const ph = height - 0.8;
+    const p = panel("back", backW, ph);
+    p.position.set((INSIDE.x1 + x0) / 2, y + ph / 2 + 0.3, INSIDE.z1 - 0.04);
+    const lw = 8.6;
+    const pl = panel("left", lw, ph);
+    pl.position.set(INSIDE.x0 + 0.04, y + ph / 2 + 0.3, -0.2);
+    pl.rotation.y = -Math.PI / 2;
+  }
+  // The round vault door, standing open by the laneway wall behind its doorway (behind it from the
+  // usual view, so it never covers the level tag).
+  {
+    const dz = -8.2;
+    const frame = kit.mat("#6b7280", { specular: 0.5 });
+    const ring = MeshBuilder.CreateTorus("v2_vaultFrame", { diameter: 4.9, thickness: 0.45, tessellation: 40 }, scene);
+    ring.rotation.z = Math.PI / 2;
+    ring.position.set(INSIDE.x0 + 0.1, y + 2.75, dz);
+    kit.finish(ring, root, frame);
+    const hole = kit.cyl(root, INSIDE.x0 + 0.03, y + 2.75 - 0.03, dz, 4.5, 0.06, kit.mat("#06080d"), { tess: 32 });
+    hole.rotation.z = Math.PI / 2;
+    hole.position.y = y + 2.75;
+    const door = new TransformNode("v2_vaultDoor", scene);
+    door.parent = root;
+    door.position.set(INSIDE.x0 + 1.9, y + 2.75, dz + 3.3);
+    door.rotation.y = -0.69;
+    const body = kit.cyl(door, 0, -0.45, 0, 4.6, 0.9, kit.mat("#9aa3b2", { specular: 0.6 }), { tess: 36 });
+    body.rotation.x = Math.PI / 2;
+    body.position.set(0, 0, 0);
+    const face = kit.cyl(door, 0, -0.06, 0, 3.6, 0.12, kit.mat("#b8c0cc", { specular: 0.7 }), { tess: 36 });
+    face.rotation.x = Math.PI / 2;
+    face.position.set(0, 0, -0.5);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const bolt = kit.cyl(door, 0, 0, 0, 0.32, 0.7, steel, { tess: 10 });
+      bolt.rotation.z = a - Math.PI / 2;
+      bolt.position.set(Math.cos(a) * 2.45, Math.sin(a) * 2.45, 0);
+    }
+    const hub = kit.cyl(door, 0, 0, 0, 0.7, 0.3, kit.mat("#c9a14a", { specular: 0.6 }), { tess: 16 });
+    hub.rotation.x = Math.PI / 2;
+    hub.position.set(0, 0, -0.62);
+    for (let i = 0; i < 3; i++) {
+      const spoke = kit.block(door, 0, -0.07, -0.7, 2.2, 0.14, 0.12, kit.mat("#c9a14a", { specular: 0.6 }));
+      spoke.rotation.z = (i * Math.PI) / 3;
+      spoke.position.set(0, 0, -0.7);
+    }
+    // The hinge, on the doorway's back edge.
+    kit.block(root, INSIDE.x0 + 0.6, y + 0.4, dz + 2.45, 0.9, 4.7, 0.7, kit.mat("#4b5563", { specular: 0.4 }));
+    const plaque = kit.label(root, {
+      lines: [
+        { text: "THE VAULT · 1889", size: 44, weight: 800, color: "#7a5a12", serif: true },
+        { text: "now the engine room", size: 28, weight: 600, color: "#5b6476" },
+      ],
+      width: 2.6,
+      px: 480,
+      bg: "rgba(255,251,242,0.97)",
+    });
+    plaque.rotation.y = -Math.PI / 2;
+    plaque.position.set(INSIDE.x0 + 0.08, y + 5.6, dz);
+  }
 
   const darkSteel = kit.mat("#1e2433", { specular: 0.3 });
   const rack = kit.mat("#1b2030", { specular: 0.2 });
@@ -243,7 +332,7 @@ export function buildEngineLevel(kit: Kit): LevelBuild {
     bar: "top",
   });
   azureSign.rotation.y = -Math.PI / 2;
-  azureSign.position.set(WALLS.engine.x0 + 0.32, y + 3.0, -3.6);
+  azureSign.position.set(INSIDE.x0 + 0.06, y + 3.2, 1.4);
 
   /* ---------------- Component nodes, labels, rings and hitboxes ---------------- */
   const nodes = new Map<InfraId, TransformNode>();
@@ -502,29 +591,38 @@ export function buildEngineLevel(kit: Kit): LevelBuild {
     });
   }
 
-  /* ---------------- Key Vault: the vault door ---------------- */
+  /* ---------------- Key Vault: a cabinet of safe-deposit boxes, one open with its key ---------------- */
   {
     const p = at("vault");
     const node = nodes.get("vault")!;
     kit.block(root, p.x, y, p.z + 0.2, 3.6, 3.6, 0.6, darkSteel);
-    const door = kit.cyl(root, p.x, y + 1.8 - 0.2, p.z - 0.2, 3.0, 0.4, kit.mat("#8a94a6", { specular: 0.6 }), { tess: 28 });
-    door.rotation.x = Math.PI / 2;
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      kit.block(root, p.x + Math.cos(a) * 1.25, y + 1.8 + Math.sin(a) * 1.25 - 0.1, p.z - 0.44, 0.2, 0.2, 0.1, steel);
+    const brass = kit.mat("#b48a45", { specular: 0.5 });
+    const brassDark = kit.mat("#7c5f2c");
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 4; col++) {
+        if (row === 2 && col === 2) continue;
+        const bx = p.x - 1.29 + col * 0.86;
+        const by = y + 0.3 + row * 0.62;
+        kit.block(root, bx, by, p.z - 0.13, 0.78, 0.54, 0.1, brass);
+        kit.block(root, bx, by + 0.2, p.z - 0.19, 0.12, 0.12, 0.04, brassDark);
+      }
     }
-    const wheel = new TransformNode("v2_vaultWheel", scene);
-    wheel.parent = node;
-    wheel.position.set(0, 1.8, -0.5);
-    const wheelMat = kit.mat("#cbd5e1", { specular: 0.6 });
-    const rim = MeshBuilder.CreateTorus("v2_wheelRim", { diameter: 1.3, thickness: 0.12, tessellation: 24 }, scene);
-    rim.rotation.x = Math.PI / 2;
-    kit.finish(rim, wheel, wheelMat, true);
-    for (let i = 0; i < 3; i++) {
-      kit.block(wheel, 0, -0.06, 0, 1.3, 0.12, 0.1, wheelMat, { dynamic: true }).rotation.z = (i * Math.PI) / 3;
-    }
+    // The open box, glowing, with the key floating out of it.
+    kit.block(root, p.x - 1.29 + 2 * 0.86, y + 0.3 + 2 * 0.62, p.z - 0.05, 0.78, 0.54, 0.06, kit.mat("#94a3b8", { unlit: true }));
+    kit.block(root, p.x - 1.29 + 2 * 0.86 - 0.45, y + 0.3 + 2 * 0.62, p.z - 0.55, 0.08, 0.54, 0.7, brass);
+    const key = new TransformNode("v2_vaultKey", scene);
+    key.parent = node;
+    key.position.set(0.43, 2.0, -0.8);
+    const keyMat = kit.mat("#e2e8f0", { emissive: 0.6 });
+    const bow = MeshBuilder.CreateTorus("v2_vaultKeyBow", { diameter: 0.46, thickness: 0.1, tessellation: 18 }, scene);
+    bow.rotation.x = Math.PI / 2;
+    bow.position.x = -0.32;
+    kit.finish(bow, key, keyMat, true);
+    kit.block(key, 0.16, -0.05, 0, 0.62, 0.1, 0.1, keyMat, { dynamic: true });
+    kit.block(key, 0.38, -0.2, 0, 0.08, 0.16, 0.1, keyMat, { dynamic: true });
     spinners.push((t) => {
-      wheel.rotation.z = Math.sin(t * 0.5) * 0.8;
+      key.rotation.y = Math.sin(t * 0.9) * 0.6;
+      key.position.y = 2.0 + Math.sin(t * 1.6) * 0.1;
     });
   }
 
@@ -617,8 +715,8 @@ export function buildEngineLevel(kit: Kit): LevelBuild {
     kit.block(root, p.x, y + 0.4, p.z, 4.4, 3.0, 0.12, kit.mat("#334155"));
     kit.block(root, p.x - 2.0, y, p.z, 0.16, 0.5, 0.5, darkSteel);
     kit.block(root, p.x + 2.0, y, p.z, 0.16, 0.5, 0.5, darkSteel);
-    // One column per tool family: Investments, Transfers, Payments, Teams.
-    const toolColors = ["#f59e0b", "#10b981", "#a855f7", "#818cf8"];
+    // One column per tool family: Insurance Research, Underwriting, Claims, Teams.
+    const toolColors = ["#f59e0b", "#10b981", "#6366f1", "#818cf8"];
     for (let i = 0; i < 4; i++) {
       for (let row = 0; row < 2; row++) {
         const tx = p.x - 1.55 + i * 1.03;
@@ -641,10 +739,10 @@ export function buildEngineLevel(kit: Kit): LevelBuild {
       ctx.fillRect(0, 0, w, 54);
       ctx.fillStyle = "#ffffff";
       ctx.font = '700 26px "Segoe UI", sans-serif';
-      ctx.fillText("Payment approval", 20, 36);
+      ctx.fillText("Claim approval", 20, 36);
       ctx.fillStyle = "#1e1b4b";
       ctx.font = '600 22px "Segoe UI", sans-serif';
-      ctx.fillText("Approval needed before release", 20, 98);
+      ctx.fillText("A person approves before lodging", 20, 98);
       ctx.fillStyle = "#16a34a";
       ctx.fillRect(20, 160, 170, 64);
       ctx.fillStyle = "#e5e7eb";

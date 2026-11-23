@@ -1,29 +1,26 @@
 {
   "id": "bereavement",
   "scenarioNumber": 5,
-  "caseId": "REQ-20261113-OPS005",
-  "customerId": "bereavement",
-  "amount": 486200,
-  "paidAmount": 486200,
+  "caseId": "REQ-20261113-LIF005",
+  "clientId": "bereavement",
+  "amount": 1000000,
+  "outcomeAmount": 1000000,
   "outcome": "approved",
   "beats": [
-    {"at": "customer", "action": "lodge-at-reception", "narration": "The death notification lands in the Onboarding inbox with a certified death certificate and IDs for Robert and his sister Lily."},
-    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent gently extracts the notification — Mei's pension CP-3019042 ($486,200), the death certificate and both children's IDs — and stops the pension payments."},
-    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261113-OPS005 and asks Theo to own it personally."},
-    {"at": "Client Operations Team Leader", "action": "team-leader-review", "narration": "Theo takes ownership of the case for compassionate oversight — every message to the family is reviewed by a person."},
-    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix checks the death certificate and both beneficiaries' IDs for authenticity — all genuine ✓."},
-    {"at": "Benefits & Eligibility Assessor", "action": "benefits-pickup", "narration": "Ben reviews Mei's binding death benefit nomination against SIS reg 6.17A and the trust deed."},
-    {"at": "Benefits & Eligibility Assessor", "action": "benefits-process", "narration": "Ben: BDBN signed 18 Mar 2024 before two adult non-beneficiary witnesses ✓, valid until 18 Mar 2027 ✓, Robert 50% and Lily 50% — both SIS dependants ✓. It is binding: the trustee must pay as nominated."},
-    {"at": "Investment Analyst", "action": "investment-review", "narration": "Ivy redeems Mei's pension portfolio to cash and notes that the final amounts depend on market movements until the units are sold."},
-    {"at": "Benefits & Eligibility Assessor", "action": "benefits-handoff", "narration": "Ben hands the case to Payments with the 50/50 beneficiary split."},
-    {"at": "Payments Officer", "action": "payment", "narration": "Penny calculates each payment: gross $243,100 — tax-free $92,378, taxable $150,722, 17% withheld ($25,622.74) — and pays $217,477.26 to each child once Theo approves the Microsoft Teams card (every death benefit needs Team Leader approval)."},
-    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara sends Robert and Lily gentle condolence letters explaining the tax, the timeline and their complaint rights (IDR, then AFCA)."}
+    {"at": "client", "action": "lodge-at-front-desk", "narration": "On Fri 13 Nov 2026, Robert Chen emails Amelia: his wife Mei died suddenly of a brain aneurysm on 12 Oct, aged 42. He attaches a certified copy of the death certificate and his ID."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-pickup", "narration": "Olivia's agent gently extracts the notification: Mei's Corella Life policy CR-19033105, with $1,000,000 of life cover and Robert as her nominated beneficiary."},
+    {"at": "Onboarding & Requests Officer", "action": "onboarding-route", "narration": "Olivia opens case REQ-20261113-LIF005, sets the priority to High and flags a bereaved family for human handling."},
+    {"at": "Practice Team Leader", "action": "team-leader-review", "narration": "Theo takes compassionate oversight: one named contact for the family, Amelia, and every message to Robert approved by a person."},
+    {"at": "Financial Crime Investigator", "action": "fincrime-review", "narration": "Felix's agent checks the death certificate and Robert's ID: both legit."},
+    {"at": "Benefit Claims Advocate", "action": "claims-assess", "narration": "Ben's agent confirms the policy was in force with premiums paid, no exclusions apply and the nomination is valid, so the benefit is paid straight to Robert, not through Mei's estate. It also finds Mei's $180,000 of default death cover in Riverbend Super, a separate claim with the fund's trustee."},
+    {"at": "Benefit Claims Advocate", "action": "claims-lodge", "narration": "After the Teams approval, Ben's agent lodges the claim with Corella Life on 16 Nov. Corella accepts it on 20 Nov and pays $1,000,000 to Robert on 23 Nov."},
+    {"at": "Client Communications Specialist", "action": "comms-notify", "narration": "Cara's agent drafts gentle letters for Robert, with a simple checklist for the super claim, and a person approves every one."}
   ],
   "result": {
     "status": "completed",
-    "headline": "Benefit paid — Mum's wishes followed",
-    "figure": "$486,200",
+    "headline": "$1,000,000 paid to Robert",
+    "figure": "$1,000,000",
     "icon": "✅",
-    "summary": "Outcome: COMPLETED — $486,200 paid 50/50 to Robert and Lily under Mei's binding nomination ($217,477.26 net each)"
+    "summary": "Outcome: COMPLETED — $1,000,000 paid to Robert on 23 Nov 2026, with Mei's $180,000 super claim under way."
   }
 }

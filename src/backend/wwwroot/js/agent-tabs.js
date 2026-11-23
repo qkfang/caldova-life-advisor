@@ -1,4 +1,4 @@
-// Drives the tab strip on agent pages with more than one demo view
+// Drives the tab strip on agent pages with more than one view
 // (Client Communications: Try it out / Voice chat; Team Leader: Try it out / Group Chat).
 // Uses event delegation on document so it survives Blazor enhancedload swaps.
 (function () {

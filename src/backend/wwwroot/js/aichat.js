@@ -1,4 +1,5 @@
-// Document-query chatbot ("Ask AI") used on the Account page.
+// "Ask AI" assistant used on the Account page (/account) — general information
+// about Caldova Life Advice and life insurance advice, never personal advice.
 // Talks to /api/chat/ask and renders matching reference cards on the right.
 // Ported from forex-trading-agent/src/research-analytics/Pages/Account/Index.cshtml.
 // Self-guarded: no-ops if the panel markup is not present on the page.
@@ -106,8 +107,8 @@
             messagesEl.innerHTML =
                 '<div class="aichat-welcome">' +
                 '<i class="fa-solid fa-brain fa-2x mb-2"></i>' +
-                '<p class="mb-1 fw-semibold">Caldova Wealth AI Assistant</p>' +
-                '<p class="small text-muted">Ask about your account, a request in progress, or how super rules work.</p>' +
+                '<p class="mb-1 fw-semibold">Caldova Life Advice AI Assistant</p>' +
+                '<p class="small text-muted">Ask about your cover, a claim in progress, or how life insurance advice works. General information only — Amelia, our adviser, gives personal advice.</p>' +
                 '</div>';
             refsEl.innerHTML = '<div class="text-muted small text-center mt-4">References will appear here after your first query.</div>';
             refsCount.textContent = '0';

@@ -1,0 +1,32 @@
+{
+  "id": "guide-financial-crime-red-flags-and-controls",
+  "title": "Guide — financial crime red flags and controls for life insurance",
+  "category": "Practice Guide",
+  "requestType": "All",
+  "caseNumber": "",
+  "clientNumber": "",
+  "content": "Guide used by Financial Crime, Onboarding & Requests, Claims and Client Communications, and their agents, to recognise and respond to fraud, scams, identity takeover and money-laundering risk in life insurance advice and claims. A red flag is a reason to verify, never an accusation. The client is often the victim.\n\nRed flags:\n1 Identity takeover — contact details (mobile, email, address) changed by phone or online, then within days a claim, a payment request or a bank-detail change; a 'lost phone' story; codes sent only to the new number; portal logins from a new device or an unfamiliar location, or activity that doesn't fit a travel notice on file.\n2 Fake or altered documents — pasted letterheads; edited dates; mismatched fonts; provider numbers in the wrong format; reports from practices that can't be verified; medical reports without the evidence the policy definition needs (such as histopathology for cancer); edited ID photos.\n3 Payment redirection — a new bank account, especially one opened in the last few days; an account name that doesn't match the policy owner or beneficiary; company or third-party accounts.\n4 Pressure — 'urgent' requests for the full sum insured; insistence on using only new contact details; reluctance to take a call-back.\n5 Unusual timing or changes — a claim soon after cover starts or increases; changes to ownership or beneficiaries shortly before a claim; a new 'representative' who controls all contact.\n6 Elder or family financial abuse — someone pushing an older or unwell client to claim, change beneficiaries or redirect payments.\n7 Business protection — ownership or values that don't match the company extract or the accountant's records; beneficial owners who can't be identified.\n8 Screening — a PEP or sanctions match.\n\nControls (Caldova standard):\n• Every new client: identity verification and KYC, with PEP and sanctions screening; for a company, the company extract and every beneficial owner.\n• Contact-detail changes: confirm with a code to, or a call-back on, the verified mobile or email held before the change. Basic checks alone (name, date of birth and address) are not enough, because those details are easy to find.\n• A claim, payment or bank-detail change within 30 days of a change to contact or bank details: hold it and call the client back on the verified number held before the change — never a number supplied in the request.\n• Payments only to an account in the name of the policy owner or the nominated beneficiary. Bank-detail changes need human approval.\n• After a suspected takeover: restore the verified contact details, lock portal access and reset it — each approved by the Practice Team Leader.\n• Never contact the requester on the new details. Blocking a request and alerting an insurer's fraud team are human decisions made by the Practice Team Leader.\n• Help the client protect their identity: change email and portal passwords, turn on multi-factor authentication, watch for unexpected messages or logins, and contact their bank if bank details may have been exposed.\n• Share documents and health information only with the people who need them.\n\nRisk rating (explainable, every flag listed with the reason):\n• Low — no red flags, or one that is explained.\n• Medium — one unexplained red flag, such as a recent contact change before a claim or a document that needs a closer look.\n• High — two or more unexplained red flags, or any document that isn't genuine, or a payment to an account in another name together with any other flag. High-risk requests are held and escalated to the Practice Team Leader at once.\n\nAML/CTF (status at 23 Nov 2026): the core changes in the Anti-Money Laundering and Counter-Terrorism Financing Amendment Act 2024 started on 31 Mar 2026, and the new 'tranche 2' sectors (lawyers, accountants, real estate, dealers in precious metals and stones, and trust and company service providers) have had to comply since 1 Jul 2026. Financial advisers aren't a tranche-2 sector. An AFS licensee is a reporting entity only when it arranges for a person to receive a designated service (table 1, item 54); it must then enrol, assess its money-laundering and terrorism-financing risk, keep policies for initial customer due diligence, report suspicious matters and keep records. Under the AML/CTF Act a 'life policy' excludes policies with no prescribed minimum surrender value, and policies with regular premiums of up to $1,500 a year or a single premium of up to $3,000 (s5). Caldova's compliance adviser decides whether a service is a designated service; Caldova applies the KYC and fraud controls above to every client either way.\n\nExample: case REQ-20261106-LIF002 (Grace Williams) — a contact change on basic checks, a Sydney login during a travel notice, an urgent claim for the full trauma benefit about 93 hours later, a new account in a company name, a fake oncologist's report and an edited licence. Risk HIGH; blocked with Theo's approval; $200,000 protected.",
+  "severity": "high",
+  "department": "Financial Crime",
+  "tags": [
+    "financial-crime",
+    "fraud",
+    "red-flags",
+    "identity-takeover",
+    "fake-documents",
+    "payment-redirection",
+    "bank-detail-change",
+    "call-back",
+    "verified-contact-details",
+    "kyc",
+    "pep-sanctions",
+    "elder-abuse",
+    "risk-rating",
+    "aml-ctf",
+    "tranche-2",
+    "item-54",
+    "block-approval",
+    "insurer-fraud-team"
+  ],
+  "lastUpdated": "2026-11-01T00:00:00Z"
+}

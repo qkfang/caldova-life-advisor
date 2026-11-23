@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261111-lif004-claim-notification",
+  "title": "Case REQ-20261111-LIF004 — claim notification",
+  "category": "Case File",
+  "requestType": "Income protection claim",
+  "caseNumber": "REQ-20261111-LIF004",
+  "clientNumber": "CL-102265",
+  "content": "Claim notification taken by phone and captured by the Onboarding Agent for Olivia (Onboarding & Requests) on Wed 11 Nov 2026. Case REQ-20261111-LIF004 · request type Income protection claim · adviser Amelia, Senior Risk Adviser · existing client.\n\nClient: Tom Bradley, 41 (DOB 03/03/1985), self-employed electrician (sole trader, Bradley Electrical), Frankston VIC. Wife Kylie (39, part-time bookkeeper); two children (8 and 5). Client since 2023; client number CL-102265; 0491 570 110; tom.bradley@example.com.\n\nSupport person: Kylie joined the call as Tom's support person, with Tom's written authority.\n\nPolicy: Harbourline Life income protection HL-23051877 (outside super) — insured monthly benefit $7,000, 30-day waiting period, benefit period to age 65 (see 'Case REQ-20261111-LIF004 — policy schedule').\n\nWhat happened: on Wed 14 Oct 2026 Tom fell from a ladder on a job and tore the rotator cuff in his right shoulder. He had surgery on 21 Oct 2026, and his surgeon expects him to be off work for four to six months.\n\nPriority: High — Tom is self-employed and can't work, so the family has lost its main income. Vulnerability: financial stress, flagged for human handling.\n\nIn-good-order checklist:\n✅ policy found and in force\n✅ written authority for Kylie as support person\n⚠️ claim form to be completed and signed\n⚠️ surgeon's report\n⚠️ earnings evidence for the 12 months before the injury: BAS and profit and loss statement\n⚠️ bank account in Tom's own name for the benefit\n\nRouting: Claims (policy and evidence check, claim pack and benefit calculation) → Financial Crime (document checks) → Team Leader Office (vulnerable-client review and approval to lodge) → Claims (lodgement) → Client Communications.",
+  "severity": "high",
+  "department": "Onboarding & Requests",
+  "tags": [
+    "tom-bradley",
+    "REQ-20261111-LIF004",
+    "CL-102265",
+    "HL-23051877",
+    "harbourline-life",
+    "income-protection-claim",
+    "claim-notification",
+    "support-person",
+    "kylie-bradley",
+    "rotator-cuff",
+    "ladder-fall",
+    "self-employed",
+    "sole-trader",
+    "financial-stress",
+    "vulnerable-client"
+  ],
+  "lastUpdated": "2026-11-11T01:30:00Z"
+}

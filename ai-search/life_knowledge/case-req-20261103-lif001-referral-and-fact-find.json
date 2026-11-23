@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261103-lif001-referral-and-fact-find",
+  "title": "Case REQ-20261103-LIF001 — referral and fact find",
+  "category": "Case File",
+  "requestType": "New protection advice",
+  "caseNumber": "REQ-20261103-LIF001",
+  "clientNumber": "CL-104582",
+  "content": "Referral and fact find for Priya Natarajan, captured by the Onboarding Agent for Olivia (Onboarding & Requests) on Tue 3 Nov 2026. Case REQ-20261103-LIF001 · request type New protection advice · adviser Amelia, Senior Risk Adviser · referred by Hannah Lewis, Yarra Home Loans.\n\nReferral: Hannah Lewis, mortgage broker, Yarra Home Loans (hannah.lewis@yarrahomeloans.example.com.au), referred Priya on 3 Nov 2026 with Priya's consent. Priya and her partner bought their home in Coburg in October 2026 with a joint mortgage of $680,000, and the only cover Priya holds is the default cover in her super.\n\nClient: Priya Natarajan, 34 (DOB 14/02/1992), client number CL-104582. Physiotherapist at a private clinic in Brunswick; salary $105,000 a year plus super. Non-smoker. Lives in Coburg VIC with her partner Arjun Mehta (36, software engineer) and their daughter Asha (2); their second baby is due in March 2027. Contact: priya.natarajan@example.com, 0491 570 156. Arjun has default cover in his own super and is not part of this case.\n\nGoals: if Priya dies, becomes totally and permanently disabled, has a serious illness or can't work because of illness or injury, the mortgage can be paid off and the family can keep its home and lifestyle; premiums must stay affordable.\n\nFinances: joint mortgage $680,000; savings $45,000; budget for premiums from cash flow up to $300 a month.\n\nExisting cover:\n• Riverbend Super (industry fund), balance $96,400 — default death and TPD cover of $210,000. Keep it.\n• Kestrel Retail Super (an old account), balance $8,200 — default death cover of $50,000. No contributions since 30 Jul 2025. ⚠️ Caught issue: under Protecting Your Super this cover will stop after 16 months of inactivity, on 30 Nov 2026, unless Priya tells the fund she wants to keep it. Flagged to Paraplanning as time-critical. Keeping, replacing or cancelling cover is a human decision.\n\nHealth (sensitive — shared only with Paraplanning and Underwriting & New Business): mild asthma, well controlled with a preventer inhaler; lower back strain in 2023 (six weeks of physiotherapy, full recovery).\n\nIn-good-order checklist:\n✅ Financial Services Guide given\n✅ privacy and health-information consent signed\n✅ identity: driver licence and payslip sent to Financial Crime for KYC\n✅ authority to obtain existing cover details from Riverbend Super and Kestrel Retail Super\n✅ fact find complete: goals, dependants, debts, income, occupation, health and existing cover\n✅ sharing consent: Hannah may be told the outcome only (cover in place), with no health details\n⚠️ commission to be shown in dollars in the Statement of Advice, with Priya's written consent (no advice fee for protection-only advice)\n⚠️ Kestrel Retail Super cover stops on 30 Nov 2026 unless Priya elects to keep it\n\nPriority: High — the Kestrel Retail Super cover stops on 30 Nov 2026 unless Priya acts, and she has a new $680,000 mortgage to protect.\n\nRouting: Financial Crime (KYC for a new client) → Paraplanning (needs analysis) → Insurance Research → Paraplanning (Statement of Advice for Amelia to review and sign) → Underwriting & New Business → Client Communications.",
+  "severity": "medium",
+  "department": "Onboarding & Requests",
+  "tags": [
+    "priya-natarajan",
+    "REQ-20261103-LIF001",
+    "CL-104582",
+    "new-protection-advice",
+    "referral",
+    "hannah-lewis",
+    "yarra-home-loans",
+    "fact-find",
+    "in-good-order-checklist",
+    "mortgage-680000",
+    "riverbend-super",
+    "kestrel-retail-super",
+    "protecting-your-super",
+    "16-months-inactivity",
+    "health-disclosure"
+  ],
+  "lastUpdated": "2026-11-03T03:00:00Z"
+}

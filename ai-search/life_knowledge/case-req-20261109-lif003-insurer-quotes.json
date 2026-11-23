@@ -1,0 +1,29 @@
+{
+  "id": "case-req-20261109-lif003-insurer-quotes",
+  "title": "Case REQ-20261109-LIF003 — insurer quotes",
+  "category": "Case File",
+  "requestType": "Business protection advice",
+  "caseNumber": "REQ-20261109-LIF003",
+  "clientNumber": "CL-104611",
+  "content": "Insurer comparison prepared by the Insurance Research Agent for Ivy (Insurance Research), case REQ-20261109-LIF003.\n\nCover quoted: buy-sell life and TPD of $1,200,000 on George Papadopoulos (52) and $1,200,000 on Harpreet Kaur (47), each owned by the life insured; key person life and TPD of $400,000 on George, owned by Northcote Custom Joinery Pty Ltd. Lyrebird Life doesn't offer business protection, so it wasn't quoted.\n\nYear-1 stepped premiums at standard rates for all three covers:\n• Northbank Life — $8,620 — recommended for Amelia's consideration: buy-sell and key person options designed for business owners, and fast financial underwriting\n• Corella Life — $9,180\n• Harbourline Life — $9,410\n\nNorthbank Life split (year 1, standard rates):\n• George, buy-sell life and TPD $1,200,000 — $4,140\n• George, key person life and TPD $400,000 — $1,380 (paid by the company)\n• Harpreet, buy-sell life and TPD $1,200,000 — $3,100\nTotal: $8,620.\n\nSecond review: total cover on the case is $2,800,000, so Theo, the Practice Team Leader, reviewed the advice before the applications went to underwriting (a human approval).\n\nFinal premiums depend on underwriting — see 'Case REQ-20261109-LIF003 — underwriting decision'. Ivy's agent compares; Amelia decides what to recommend.",
+  "severity": "low",
+  "department": "Insurance Research",
+  "tags": [
+    "george-papadopoulos",
+    "harpreet-kaur",
+    "REQ-20261109-LIF003",
+    "CL-104611",
+    "insurer-quotes",
+    "business-protection",
+    "northbank-life",
+    "corella-life",
+    "harbourline-life",
+    "8620",
+    "9180",
+    "9410",
+    "stepped-premium",
+    "second-review",
+    "total-cover-2800000"
+  ],
+  "lastUpdated": "2026-11-11T05:00:00Z"
+}

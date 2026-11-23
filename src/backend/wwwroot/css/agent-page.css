@@ -1,5 +1,6 @@
-/* Shared styles for the per-agent pages under /agents/{id}.
-   Each agent page is a hand-written static .razor file that uses these classes. */
+/* Shared styles for the Caldova Life Advice agent pages under /agents/{id}
+   and the scenario pages under /scenarios/{id}. Each agent page is a
+   hand-written static .razor file that uses these classes. */
 
 /* ----- Markdown-rendered agent output ----------------------------------- */
 /* Applied to elements whose innerHTML is set via window.zcRenderMarkdown(). */
@@ -134,7 +135,7 @@
     height: 1em;
     margin-left: 2px;
     vertical-align: text-bottom;
-    background: rgba(110, 193, 255, 0.85);
+    background: rgba(20, 184, 166, 0.85);
     animation: zc-stream-caret 1s steps(2, end) infinite;
 }
 @keyframes zc-stream-caret {
@@ -157,9 +158,9 @@
     text-decoration: none;
 }
 
-/* Agent and scenario page hero — a light banner like a fund site's page
-   header: soft blue-to-ivory wash, navy type, the department accent as a
-   top rule and gentle glow, and gold hairline rings. */
+/* Agent and scenario page hero — a light banner: soft teal-to-ivory wash,
+   navy type, the department accent as a top rule and gentle glow, and gold
+   hairline rings (the copper dome of Caldova House). */
 .agent-header {
     position: relative;
     isolation: isolate;
@@ -171,7 +172,7 @@
     border: 1px solid var(--cw-line);
     background:
         radial-gradient(ellipse 45% 95% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 66%),
-        linear-gradient(135deg, #eaf1fb 0%, #f4f7fc 55%, #fbf8f1 100%);
+        linear-gradient(135deg, #e9f5f3 0%, #f3f7f8 55%, #fbf8f1 100%);
     box-shadow: var(--cw-shadow-sm);
 }
 .agent-header::before {
@@ -188,8 +189,8 @@
     right: -170px; bottom: -300px;
     width: 460px; height: 460px;
     border-radius: 50%;
-    border: 1px solid rgba(201, 162, 74, 0.42);
-    outline: 1px solid rgba(201, 162, 74, 0.22);
+    border: 1px solid rgba(201, 161, 74, 0.42);
+    outline: 1px solid rgba(201, 161, 74, 0.22);
     outline-offset: 56px;
     pointer-events: none;
 }
@@ -261,7 +262,7 @@
 }
 .panel > p { color: var(--cw-text); line-height: 1.65; }
 .panel .muted { color: var(--cw-muted); font-size: 0.92rem; }
-/* Demo panels open straight into step 1 — no gap above it. */
+/* Try it out panels open straight into step 1 — no gap above it. */
 .panel > [data-step="1"] { margin-top: 0; }
 .panel ul { margin: 0; padding-left: 1.15rem; color: var(--cw-text); }
 .panel ul li { margin-bottom: 0.35rem; line-height: 1.55; }
@@ -272,14 +273,14 @@
 .approval {
     color: var(--cw-text);
     background: var(--cw-primary-soft);
-    border: 1px solid #cddcf5;
+    border: 1px solid #bfe3dd;
     border-left: 4px solid var(--cw-primary);
     border-radius: 10px;
     padding: 0.75rem 1rem;
     font-size: 0.94rem;
 }
 
-/* "Scenario" — scripted member-case journey with one step per AI agent. */
+/* "Scenario" — the Client Case journey, one step per AI agent. */
 .scenario-steps {
     list-style: none;
     counter-reset: scenario-step;
@@ -396,7 +397,7 @@
 }
 .other-agent-icon { font-size: 1rem; }
 
-/* Tabs (Client Communications and Team Leader pages, which have two demo views). */
+/* Tabs (Client Communications and Team Leader pages, which have two views). */
 .agent-tabs {
     display: flex;
     gap: 0.5rem;
@@ -429,10 +430,10 @@
 .agent-tab-panel.standalone { display: block; }
 
 /* ── Engage Agent panel sub-tabs ──────────────────────────────────────
-   Used inside the "Try It Out" panel on every agent page to flip
-   between the live demo, the agent's system prompt + tools, the
-   exact input that was sent, and the raw output (with function
-   calls). Driven by wwwroot/js/engage-tabs.js. */
+   Used inside the "Try it out" panel on every agent page to flip
+   between the streamed narrative, the cited references, the agent's
+   system prompt + tools, the exact input that was sent, and the raw
+   output (with function calls). Driven by wwwroot/js/engage-tabs.js. */
 .engage-tabs-scope {
     margin-top: 0.9rem;
     padding-top: 0.6rem;
@@ -664,3 +665,60 @@
     font-size: 0.78rem;
 }
 .json-viewer .jv-controls button:hover { background: rgba(16, 38, 72, 0.042); color: #0b1f3a; }
+
+/* Lifecycle and side tags under an agent page title, e.g. "Discover · Verify"
+   and "Shared by both sides". Side colours: teal Protection Advice, gold
+   Claims & Care, lilac shared. */
+.agent-header-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+.agent-header-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--cw-ink);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--accent, var(--cw-teal)) 45%, var(--cw-line));
+}
+.agent-header-tag.side-protection {
+    background: color-mix(in srgb, var(--cw-teal) 14%, #fff);
+    border-color: color-mix(in srgb, var(--cw-teal) 50%, transparent);
+}
+.agent-header-tag.side-claims {
+    background: color-mix(in srgb, var(--cw-gold) 16%, #fff);
+    border-color: color-mix(in srgb, var(--cw-gold) 55%, transparent);
+}
+.agent-header-tag.side-shared {
+    background: color-mix(in srgb, var(--cw-lilac) 16%, #fff);
+    border-color: color-mix(in srgb, var(--cw-lilac) 55%, transparent);
+}
+
+/* Lifecycle stage tags on scenario steps (Discover → Verify → Advise →
+   Implement → Confirm, plus Oversight for the Team Leader Office). */
+.stage-tag {
+    display: inline-block;
+    margin-left: 0.45rem;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    font-family: var(--cw-font-sans);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--cw-ink);
+    background: var(--cw-surface-2);
+    border: 1px solid var(--cw-line);
+}
+.stage-discover  { background: #e0f2fe; border-color: #bae0f7; }
+.stage-verify    { background: #fde8e8; border-color: #f6c9c9; }
+.stage-advise    { background: #e6f6f3; border-color: #b7e3db; }
+.stage-implement { background: #fbf1dc; border-color: #ecd6a6; }
+.stage-confirm   { background: #fce7f3; border-color: #f5c4df; }
+.stage-oversight { background: #eceffd; border-color: #ccd3fa; }

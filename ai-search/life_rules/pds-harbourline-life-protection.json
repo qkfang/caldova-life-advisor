@@ -1,0 +1,42 @@
+{
+  "id": "pds-harbourline-life-protection",
+  "title": "Harbourline Life — Protection PDS extract",
+  "product": "Harbourline Protection Plan",
+  "version": "PDS extract — PDS dated 1 July 2026",
+  "summary": "Extract of the Product Disclosure Statement for the Harbourline Protection Plan, issued by Harbourline Life Limited. The plan offers life cover with a terminal illness benefit, TPD cover, trauma cover and income protection for individuals, and key person and buy-sell cover for businesses. Cover is held outside super; life and any-occupation TPD cover can also be held through a super fund. Harbourline doesn't offer super-linking, so own-occupation TPD is available only on a policy held outside super. Insurance Research uses this extract to compare definitions, features and exclusions; Claims uses it for the income protection benefit basis. General information only — it doesn't take account of anyone's objectives, financial situation or needs.",
+  "rules": "1 Life cover — pays the sum insured on death. Terminal illness benefit: the sum insured is paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.\n2 TPD cover — any occupation: because of illness or injury, the life insured has been off work for 3 consecutive months and is unlikely ever to work again in any occupation suited to their education, training or experience. Own occupation (outside super only): unlikely ever to work again in their own occupation. When TPD is packaged with life cover, a TPD payment reduces the life cover by the same amount.\n3 Trauma cover — pays a lump sum when the life insured is diagnosed with a listed condition, such as cancer, heart attack or stroke, or suffers a listed serious injury. Diagnoses must be confirmed by a specialist medical practitioner. Mental health conditions are not covered.\n4 Income protection — pays a monthly benefit while the life insured is totally disabled after the waiting period. Waiting periods: 30, 60 or 90 days. Benefit periods: 2 years, 5 years or to age 65. Insured monthly benefit at application: up to 70% of annual pre-tax earnings, divided by 12.\nBenefit basis for policies issued from 1 Oct 2021: Harbourline pays the lesser of (a) the insured monthly benefit and (b) 70% of the life insured's average monthly earnings in the 12 months before the disability. For a self-employed person, earnings are the net income the business generates from their personal exertion, after business expenses, shown in BAS, profit and loss statements or tax returns. This basis keeps benefits within APRA's limit for individual disability income insurance (no more than 90% of earnings for the first 6 months of a claim and 70% after that).\nTotal disability: because of illness or injury, the life insured can't do at least one income-producing duty of their occupation, isn't working, and is under the regular care of a medical practitioner. For benefit periods longer than 2 years, Harbourline assesses claims that last beyond 2 years against any occupation suited to the life insured's education, training or experience, and gives 3 months' notice before the definition changes.\nBenefits accrue from the end of the waiting period and are paid monthly in arrears. Claim payments increase each year in line with CPI.\nExample: insured benefit $7,000 a month (set from $120,000 a year at application); average earnings in the 12 months before the disability $8,000 a month; 70% × $8,000 = $5,600; benefit payable $5,600 a month.\n5 Business protection — key person cover (life and TPD on a key person, owned by the business) and buy-sell cover (life and TPD on each business owner).\n6 Premiums — stepped (rise with age) or level (start higher and rise more slowly). Sums insured increase each year in line with CPI unless the policy owner declines the increase.\n7 Applying — the policy owner and life insured must take reasonable care not to make a misrepresentation. Harbourline won't ask for or use genetic test results.\n8 Cooling-off — 14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made.\n9 Who is paid — benefits are paid to the policy owner. Life cover is paid to the nominated beneficiaries if the policy owner has nominated them, otherwise to the policy owner's estate. Payments are made only into an account in the payee's own name.\n10 Claims — a named claims consultant within 2 business days of a claim. Harbourline subscribes to the Life Insurance Code of Practice (see 'Claims rules — Life Insurance Code of Practice and income protection benefits').\n11 Adviser remuneration — Harbourline may pay the adviser commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent. The Statement of Advice shows the amounts in dollars.",
+  "limits": "Own-occupation TPD can't be held inside super, and Harbourline doesn't offer super-linking. Trauma cover doesn't cover mental health conditions and isn't available inside super. Income protection isn't offered on an agreed-value basis: benefits are always based on earnings before the disability, so the benefit can be less than the insured monthly benefit when earnings have fallen. Exclusions shown on the policy schedule apply. Benefits are never paid to a third party or into an account in another name. Harbourline doesn't give personal advice.",
+  "evidenceRequired": [
+    "Claim form signed by the policy owner (or a representative with written authority)",
+    "Certified ID of the claimant",
+    "Income protection: treating doctor's or surgeon's report and earnings evidence for the 12 months before the disability (BAS, profit and loss statement, tax returns or payslips)",
+    "Trauma: specialist's report confirming the diagnosis against the policy definition",
+    "Death: certified copy of the death certificate and the nominated beneficiary's or executor's certified ID",
+    "Bank account in the payee's own name"
+  ],
+  "sources": [],
+  "owner": "Insurance Research",
+  "tags": [
+    "pds",
+    "harbourline-life",
+    "HL-",
+    "life-cover",
+    "terminal-illness",
+    "tpd",
+    "own-occupation",
+    "any-occupation",
+    "trauma",
+    "income-protection",
+    "benefit-basis",
+    "70-percent",
+    "12-months-before-disability",
+    "self-employed-earnings",
+    "waiting-period",
+    "benefit-period",
+    "key-person",
+    "buy-sell",
+    "no-super-linking",
+    "cooling-off"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "case-req-20261113-lif005-super-fund-cover-note",
+  "title": "Case REQ-20261113-LIF005 — super fund cover note",
+  "category": "Case Evidence",
+  "requestType": "Death claim",
+  "caseNumber": "REQ-20261113-LIF005",
+  "clientNumber": "CL-101935",
+  "content": "Super fund cover note for Mei Chen (CL-101934), case REQ-20261113-LIF005, prepared by the Claims Agent for Ben (Claims) while checking Mei's records for other cover.\n\nFund: Riverbend Super (industry fund). Mei's account held default death cover of $180,000.\n\nHow this claim works: it is separate from the Corella Life claim. Robert claims with Riverbend Super's trustee, not with Corella Life. The trustee pays Mei's super death benefit, including the $180,000 of insurance, under the fund's rules — here, to Robert as her spouse. Death benefits paid to a spouse are tax-free: a lump sum paid to a death-benefits dependant, which includes a spouse, is not taxed (Income Tax Assessment Act 1997 s302-60 and s302-195; see 'Tax on life insurance — premiums and benefits').\n\nChecklist for Robert (sent with Cara's gentle letter, approved by Theo):\n• Riverbend Super's death benefit claim form\n• the certified copy of Mei's death certificate\n• Robert's certified ID\n• evidence of the relationship, if the fund asks for it\n• a bank account in Robert's own name\nBen helps Robert complete the form, and Amelia stays his one named contact.\n\nStatus at 23 Nov 2026: claim under way with Riverbend Super's trustee.",
+  "severity": "high",
+  "department": "Claims",
+  "tags": [
+    "robert-chen",
+    "mei-chen",
+    "REQ-20261113-LIF005",
+    "CL-101935",
+    "CL-101934",
+    "riverbend-super",
+    "default-death-cover",
+    "180000",
+    "super-death-benefit",
+    "trustee",
+    "spouse",
+    "claim-checklist"
+  ],
+  "lastUpdated": "2026-11-23T00:00:00Z"
+}

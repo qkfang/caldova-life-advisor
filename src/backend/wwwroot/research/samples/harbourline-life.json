@@ -1,0 +1,530 @@
+{
+  "documentType": "Insurer product sheet",
+  "insurer": "Harbourline Life",
+  "shortName": "Harbourline",
+  "code": "HL",
+  "policyPrefix": "HL-",
+  "productName": "Harbourline Protection Plan",
+  "superPlan": "Life and any-occupation TPD can also be held through a super fund — no super-linking",
+  "pdsTitle": "Harbourline Life — Protection PDS extract",
+  "asAt": "2026-07-01",
+  "aplListing": "Personal and business protection",
+  "fictionNote": "Summary of the Harbourline Life — Protection PDS extract (PDS dated 1 July 2026) for Caldova's research. Read the PDS extract before relying on any wording.",
+  "summary": "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals, plus key person and buy-sell cover. Cover is held outside super; life and any-occupation TPD can also be held through a super fund. No super-linking, so own-occupation TPD is only on a policy outside super. A clear income protection benefit basis for policies issued from 1 Oct 2021.",
+  "strengths": [
+    "A clear income protection benefit basis, with a worked example, for policies issued from 1 Oct 2021",
+    "Own-occupation TPD on a policy held outside super",
+    "A named claims consultant within 2 business days of a claim; income protection claim payments increase each year with CPI",
+    "Key person and buy-sell cover for businesses"
+  ],
+  "watchPoints": [
+    "No super-linking — own-occupation TPD is a separate policy outside super, paid entirely from cash flow",
+    "Income protection claims lasting more than 2 years are assessed against any occupation (with 3 months' notice)",
+    "The PDS extract offers no review of exclusions — exclusions on the policy schedule apply"
+  ],
+  "premiumStyles": {
+    "stepped": "Stepped premiums rise with age.",
+    "level": "Level premiums start higher and rise more slowly.",
+    "indexation": "Sums insured increase each year in line with CPI unless the policy owner declines the increase."
+  },
+  "coverTypes": [
+    {
+      "cover": "Life cover (with terminal illness benefit)",
+      "key": "life",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "Outside super, or through a super fund."
+    },
+    {
+      "cover": "TPD — any occupation",
+      "key": "tpd-any",
+      "insideSuper": true,
+      "outsideSuper": true,
+      "notes": "Outside super, or through a super fund."
+    },
+    {
+      "cover": "TPD — own occupation",
+      "key": "tpd-own",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Outside super only; no super-linking."
+    },
+    {
+      "cover": "Trauma cover",
+      "key": "trauma",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Listed conditions and serious injuries; mental health conditions aren't covered."
+    },
+    {
+      "cover": "Income protection",
+      "key": "ip",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Waiting periods 30, 60 or 90 days; benefit periods 2 years, 5 years or to age 65."
+    },
+    {
+      "cover": "Business protection — key person and buy-sell",
+      "key": "business",
+      "insideSuper": false,
+      "outsideSuper": true,
+      "notes": "Key person cover owned by the business; buy-sell cover on each business owner."
+    }
+  ],
+  "definitions": [
+    {
+      "key": "terminal-illness",
+      "title": "Terminal illness benefit",
+      "cover": "Life cover",
+      "wording": "The sum insured is paid early if two medical practitioners, one of them a specialist in the condition, certify that the life insured is likely to die within 24 months.",
+      "plainEnglish": "If two doctors (one a specialist) say death is likely within 24 months, the life cover is paid early."
+    },
+    {
+      "key": "tpd-any-occupation",
+      "title": "TPD — any occupation",
+      "cover": "TPD",
+      "wording": "Because of illness or injury, the life insured has been off work for 3 consecutive months and is unlikely ever to work again in any occupation suited to their education, training or experience. When TPD is packaged with life cover, a TPD payment reduces the life cover by the same amount.",
+      "plainEnglish": "Pays only if you can never work again in any job that suits your education, training or experience."
+    },
+    {
+      "key": "tpd-own-occupation",
+      "title": "TPD — own occupation",
+      "cover": "TPD",
+      "wording": "Outside super only: the life insured is unlikely ever to work again in their own occupation.",
+      "plainEnglish": "Pays if you can never go back to your own job — on a policy held outside super."
+    },
+    {
+      "key": "tpd-super-linking",
+      "title": "Super-linking",
+      "cover": "TPD",
+      "wording": "Harbourline doesn't offer super-linking, so own-occupation TPD is available only on a policy held outside super.",
+      "plainEnglish": "No linking — own-occupation TPD is a separate policy paid entirely from your own money."
+    },
+    {
+      "key": "trauma-cancer",
+      "title": "Trauma cover",
+      "cover": "Trauma cover",
+      "wording": "Pays a lump sum when the life insured is diagnosed with a listed condition, such as cancer, heart attack or stroke, or suffers a listed serious injury. Diagnoses must be confirmed by a specialist medical practitioner. Mental health conditions are not covered.",
+      "plainEnglish": "A lump sum when a specialist confirms a listed condition or serious injury."
+    },
+    {
+      "key": "ip-benefit-basis",
+      "title": "Income protection — benefit basis",
+      "cover": "Income protection",
+      "wording": "For policies issued from 1 Oct 2021, Harbourline pays the lesser of (a) the insured monthly benefit and (b) 70% of the life insured's average monthly earnings in the 12 months before the disability. For a self-employed person, earnings are the net income the business generates from their personal exertion, after business expenses, shown in BAS, profit and loss statements or tax returns. This basis keeps benefits within APRA's limit for individual disability income insurance (no more than 90% of earnings for the first 6 months of a claim and 70% after that). Example: insured benefit $7,000 a month; average earnings in the 12 months before the disability $8,000 a month; 70% × $8,000 = $5,600 a month payable.",
+      "plainEnglish": "Pays the lower of the insured amount and 70% of what you earned in the 12 months before you became unable to work."
+    },
+    {
+      "key": "ip-total-disability",
+      "title": "Income protection — total disability",
+      "cover": "Income protection",
+      "wording": "Because of illness or injury, the life insured can't do at least one income-producing duty of their occupation, isn't working, and is under the regular care of a medical practitioner.",
+      "plainEnglish": "You can't do an income-producing part of your job, you aren't working, and a doctor is treating you."
+    },
+    {
+      "key": "ip-periods",
+      "title": "Income protection — waiting and benefit periods",
+      "cover": "Income protection",
+      "wording": "Waiting periods: 30, 60 or 90 days. Benefit periods: 2 years, 5 years or to age 65. Insured monthly benefit at application: up to 70% of annual pre-tax earnings, divided by 12. Benefits accrue from the end of the waiting period and are paid monthly in arrears. Claim payments increase each year in line with CPI.",
+      "plainEnglish": "Payments build up from the end of the waiting period and are paid monthly, one month in arrears."
+    },
+    {
+      "key": "ip-long-claims",
+      "title": "Income protection — claims longer than 2 years",
+      "cover": "Income protection",
+      "wording": "For benefit periods longer than 2 years, Harbourline assesses claims that last beyond 2 years against any occupation suited to the life insured's education, training or experience, and gives 3 months' notice before the definition changes.",
+      "plainEnglish": "After 2 years on claim, the test becomes whether you could do any suitable job."
+    },
+    {
+      "key": "ip-claim-evidence",
+      "title": "Income protection claims — what Harbourline needs",
+      "cover": "Income protection",
+      "wording": "Claim form signed by the policy owner (or a representative with written authority); certified ID of the claimant; the treating doctor's or surgeon's report and earnings evidence for the 12 months before the disability (BAS, profit and loss statement, tax returns or payslips); and a bank account in the payee's own name.",
+      "plainEnglish": "A signed claim form, ID, the doctor's or surgeon's report and proof of earnings for the last 12 months."
+    },
+    {
+      "key": "exclusion-review",
+      "title": "Exclusions",
+      "cover": "All covers",
+      "wording": "Exclusions shown on the policy schedule apply. The PDS extract doesn't offer a review of exclusions or loadings.",
+      "plainEnglish": "There's no set way to have an exclusion reviewed."
+    },
+    {
+      "key": "nominated-beneficiaries",
+      "title": "Who is paid",
+      "cover": "Life cover",
+      "wording": "Benefits are paid to the policy owner. Life cover is paid to the nominated beneficiaries if the policy owner has nominated them, otherwise to the policy owner's estate.",
+      "plainEnglish": "Life cover goes to the people named on the policy, otherwise to the estate."
+    },
+    {
+      "key": "benefit-payment",
+      "title": "How benefits are paid",
+      "cover": "All covers",
+      "wording": "Benefits are paid to the policy owner, only into an account in the payee's own name — never to a third party or into an account in another name.",
+      "plainEnglish": "The money only goes into the policy owner's own bank account."
+    },
+    {
+      "key": "business-buy-sell",
+      "title": "Buy-sell cover",
+      "cover": "Business protection",
+      "wording": "Buy-sell cover: life and TPD on each business owner.",
+      "plainEnglish": "Each owner is insured so the remaining owner can buy their share."
+    },
+    {
+      "key": "business-key-person",
+      "title": "Key person cover",
+      "cover": "Business protection",
+      "wording": "Key person cover: life and TPD on a key person, owned by the business.",
+      "plainEnglish": "The business insures a key person and receives the benefit."
+    },
+    {
+      "key": "tpd-business-cover",
+      "title": "TPD definition for business cover",
+      "cover": "Business protection",
+      "wording": "Any occupation, or own occupation on a policy held outside super.",
+      "plainEnglish": "Own-occupation TPD is available on business cover held outside super."
+    },
+    {
+      "key": "financial-underwriting",
+      "title": "Financial underwriting",
+      "cover": "Business protection",
+      "wording": "The PDS extract doesn't set out fast-track financial underwriting for business cover. Harbourline's evidence requirements depend on age and sum insured (see 'Directory — insurers on the approved product list').",
+      "plainEnglish": "No fast-track financial underwriting is set out."
+    }
+  ],
+  "features": [
+    {
+      "key": "ip-basis",
+      "title": "Income protection benefit basis",
+      "detail": "Lesser of the insured benefit and 70% of average monthly earnings in the 12 months before the disability."
+    },
+    {
+      "key": "ip-cpi",
+      "title": "Claim payments indexed",
+      "detail": "Income protection claim payments increase each year in line with CPI."
+    },
+    {
+      "key": "claims-consultant",
+      "title": "Named claims consultant",
+      "detail": "Within 2 business days of a claim."
+    },
+    {
+      "key": "cooling-off",
+      "title": "Cooling-off",
+      "detail": "14 days from the earlier of receiving confirmation of the policy and the end of the fifth business day after it is issued; not available once a claim has been made."
+    },
+    {
+      "key": "genetic",
+      "title": "No genetic test results",
+      "detail": "The insurer won't ask for or use genetic test results."
+    },
+    {
+      "key": "remuneration",
+      "title": "Adviser remuneration",
+      "detail": "Commission of up to 60% of the first year's premium and up to 20% of later premiums (excluding GST), only with the client's informed consent."
+    }
+  ],
+  "exclusions": [
+    {
+      "cover": "TPD",
+      "detail": "Own-occupation TPD can't be held inside super, and there's no super-linking."
+    },
+    {
+      "cover": "Trauma cover",
+      "detail": "Mental health conditions aren't covered; trauma isn't available inside super."
+    },
+    {
+      "cover": "Income protection",
+      "detail": "Not offered on an agreed-value basis: the benefit can be less than the insured monthly benefit when earnings have fallen."
+    },
+    {
+      "cover": "All covers",
+      "detail": "Exclusions shown on the policy schedule apply."
+    }
+  ],
+  "quotes": [
+    {
+      "scenario": "family-protection",
+      "caseNumber": "REQ-20261103-LIF001",
+      "quoteReference": "HL-Q-261104-3381",
+      "quotedOn": "2026-11-04",
+      "livesInsured": "Priya Natarajan, 34, female, non-smoker, physiotherapist",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 3412,
+      "insideSuperYear1": 485,
+      "outsideSuperYear1": 2927,
+      "structure": "Life cover held through a super fund; own-occupation TPD as a stand-alone policy outside super (no super-linking), trauma and income protection outside super.",
+      "covers": [
+        {
+          "cover": "Life cover (with terminal illness)",
+          "sumInsured": "$750,000",
+          "ownership": "Inside super",
+          "year1Premium": 485,
+          "levelYear1Premium": 625
+        },
+        {
+          "cover": "TPD — own occupation (stand-alone)",
+          "sumInsured": "$600,000",
+          "ownership": "Outside super",
+          "year1Premium": 642,
+          "levelYear1Premium": 832
+        },
+        {
+          "cover": "Trauma cover",
+          "sumInsured": "$150,000",
+          "ownership": "Outside super",
+          "year1Premium": 668,
+          "levelYear1Premium": 866
+        },
+        {
+          "cover": "Income protection",
+          "sumInsured": "$6,125 a month · 90-day waiting period · to age 65",
+          "ownership": "Outside super",
+          "year1Premium": 1617,
+          "levelYear1Premium": 2097
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 4420,
+        "insideSuperYear1": 625,
+        "outsideSuperYear1": 3795,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "tpd-own-occupation",
+          "result": "meets",
+          "note": "Own-occupation TPD on a policy held outside super only."
+        },
+        {
+          "key": "ip-benefit-basis",
+          "result": "meets",
+          "note": "Lesser of the insured $6,125 a month and 70% of average monthly earnings in the 12 months before the disability."
+        },
+        {
+          "key": "ip-periods",
+          "result": "meets",
+          "note": "90-day waiting period and benefit period to age 65; claim payments increase with CPI."
+        },
+        {
+          "key": "tpd-super-linking",
+          "result": "gap",
+          "note": "No super-linking — the own-occupation TPD is a separate policy outside super, so its whole premium comes from cash flow."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "gap",
+          "note": "No exclusion review in the PDS extract — exclusions on the policy schedule apply."
+        },
+        {
+          "key": "ip-long-claims",
+          "result": "partly",
+          "note": "Claims lasting more than 2 years are assessed against any occupation suited to her education, training or experience (with 3 months' notice)."
+        },
+        {
+          "key": "trauma-cancer",
+          "result": "meets",
+          "note": "Listed conditions and serious injuries, confirmed by a specialist medical practitioner."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Harbourline's actual future premiums can change.",
+        "agesLabel": "Priya's age",
+        "years": [
+          {
+            "year": 1,
+            "ages": "34",
+            "stepped": 3412,
+            "level": 4420
+          },
+          {
+            "year": 2,
+            "ages": "35",
+            "stepped": 3610,
+            "level": 4464
+          },
+          {
+            "year": 3,
+            "ages": "36",
+            "stepped": 3827,
+            "level": 4509
+          },
+          {
+            "year": 4,
+            "ages": "37",
+            "stepped": 4064,
+            "level": 4554
+          },
+          {
+            "year": 5,
+            "ages": "38",
+            "stepped": 4324,
+            "level": 4600
+          },
+          {
+            "year": 6,
+            "ages": "39",
+            "stepped": 4609,
+            "level": 4646
+          },
+          {
+            "year": 7,
+            "ages": "40",
+            "stepped": 4922,
+            "level": 4692
+          },
+          {
+            "year": 8,
+            "ages": "41",
+            "stepped": 5267,
+            "level": 4739
+          },
+          {
+            "year": 9,
+            "ages": "42",
+            "stepped": 5646,
+            "level": 4786
+          },
+          {
+            "year": 10,
+            "ages": "43",
+            "stepped": 6064,
+            "level": 4834
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "business-protection",
+      "caseNumber": "REQ-20261109-LIF003",
+      "quoteReference": "HL-Q-261110-3529",
+      "quotedOn": "2026-11-10",
+      "livesInsured": "George Papadopoulos, 52, male, non-smoker, master joiner; Harpreet Kaur, 47, female, non-smoker, operations and finance director",
+      "rateBasis": "Standard rates before underwriting",
+      "premiumStyle": "Stepped",
+      "year1Premium": 9410,
+      "structure": "Buy-sell life and TPD owned by each owner on their own life; key person life and TPD owned by Northcote Custom Joinery Pty Ltd for a revenue purpose. All outside super.",
+      "covers": [
+        {
+          "cover": "Buy-sell — life and TPD on George (owned by George)",
+          "sumInsured": "$1,200,000",
+          "ownership": "George",
+          "year1Premium": 4530,
+          "levelYear1Premium": 7050
+        },
+        {
+          "cover": "Key person — life and TPD on George (revenue purpose)",
+          "sumInsured": "$400,000",
+          "ownership": "Northcote Custom Joinery Pty Ltd",
+          "year1Premium": 1510,
+          "levelYear1Premium": 2350
+        },
+        {
+          "cover": "Buy-sell — life and TPD on Harpreet (owned by Harpreet)",
+          "sumInsured": "$1,200,000",
+          "ownership": "Harpreet",
+          "year1Premium": 3370,
+          "levelYear1Premium": 5120
+        }
+      ],
+      "levelOption": {
+        "year1Premium": 14520,
+        "note": "Level premiums start higher and rise more slowly."
+      },
+      "termsQuoted": [
+        {
+          "key": "business-buy-sell",
+          "result": "meets",
+          "note": "Buy-sell cover: life and TPD on each business owner."
+        },
+        {
+          "key": "business-key-person",
+          "result": "meets",
+          "note": "Key person cover: life and TPD owned by the business."
+        },
+        {
+          "key": "financial-underwriting",
+          "result": "partly",
+          "note": "No fast-track financial underwriting in the PDS extract."
+        },
+        {
+          "key": "tpd-business-cover",
+          "result": "meets",
+          "note": "Any occupation, or own occupation on a policy held outside super."
+        },
+        {
+          "key": "exclusion-review",
+          "result": "gap",
+          "note": "No loading or exclusion review in the PDS extract."
+        }
+      ],
+      "projection": {
+        "label": "Illustrative only — not a quote for future years. Assumes the same cover every year with no CPI increases; stepped premiums rise with age and level premiums start higher and rise more slowly (1% a year here). Harbourline's actual future premiums can change.",
+        "agesLabel": "George / Harpreet",
+        "years": [
+          {
+            "year": 1,
+            "ages": "52 / 47",
+            "stepped": 9410,
+            "level": 14520
+          },
+          {
+            "year": 2,
+            "ages": "53 / 48",
+            "stepped": 10125,
+            "level": 14665
+          },
+          {
+            "year": 3,
+            "ages": "54 / 49",
+            "stepped": 10925,
+            "level": 14812
+          },
+          {
+            "year": 4,
+            "ages": "55 / 50",
+            "stepped": 11821,
+            "level": 14960
+          },
+          {
+            "year": 5,
+            "ages": "56 / 51",
+            "stepped": 12826,
+            "level": 15110
+          },
+          {
+            "year": 6,
+            "ages": "57 / 52",
+            "stepped": 13955,
+            "level": 15261
+          },
+          {
+            "year": 7,
+            "ages": "58 / 53",
+            "stepped": 15225,
+            "level": 15414
+          },
+          {
+            "year": 8,
+            "ages": "59 / 54",
+            "stepped": 16656,
+            "level": 15568
+          },
+          {
+            "year": 9,
+            "ages": "60 / 55",
+            "stepped": 18272,
+            "level": 15724
+          },
+          {
+            "year": 10,
+            "ages": "61 / 56",
+            "stepped": 20099,
+            "level": 15881
+          }
+        ]
+      }
+    }
+  ]
+}

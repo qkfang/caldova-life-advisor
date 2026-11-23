@@ -1,20 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Caldova Wealth">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Caldova Life Advice">
   <defs>
-    <linearGradient id="cw-gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ffd27a"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
+    <linearGradient id="cl-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e3c27a"/>
+      <stop offset="100%" stop-color="#c9a14a"/>
     </linearGradient>
-    <linearGradient id="cw-bg" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="cl-bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#13294f"/>
       <stop offset="100%" stop-color="#0b1d3a"/>
     </linearGradient>
   </defs>
   <!-- Rounded tile -->
-  <rect x="3" y="3" width="58" height="58" rx="14" fill="url(#cw-bg)"/>
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="url(#cl-bg)"/>
   <!-- "C" for Caldova -->
-  <path d="M44 20.5 A16 16 0 1 0 44 43.5" fill="none" stroke="url(#cw-gold)" stroke-width="7" stroke-linecap="round"/>
-  <!-- Rising bars: growing wealth -->
-  <rect x="27" y="35" width="4.5" height="8" rx="1.2" fill="#2dd4bf"/>
-  <rect x="33.5" y="30" width="4.5" height="13" rx="1.2" fill="#2dd4bf"/>
-  <rect x="40" y="25" width="4.5" height="18" rx="1.2" fill="#2dd4bf" opacity="0.9"/>
+  <path d="M44 20.5 A16 16 0 1 0 44 43.5" fill="none" stroke="url(#cl-gold)" stroke-width="7" stroke-linecap="round"/>
+  <!-- Teal shield: protection -->
+  <path d="M33 22.5 l9 3.4 v6.4 c0 6.3-3.9 10.6-9 12.6 c-5.1-2-9-6.3-9-12.6 v-6.4 z" fill="#14b8a6"/>
+  <path d="M28.6 33.2 l3.2 3.2 l5.6-6" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

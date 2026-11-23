@@ -1,0 +1,30 @@
+{
+  "id": "case-req-20261109-lif003-underwriting-decision",
+  "title": "Case REQ-20261109-LIF003 — underwriting decision",
+  "category": "Case File",
+  "requestType": "Business protection advice",
+  "caseNumber": "REQ-20261109-LIF003",
+  "clientNumber": "CL-104611",
+  "content": "Underwriting summary prepared by the Underwriting Agent for Uma (Underwriting & New Business), case REQ-20261109-LIF003. Insurer: Northbank Life.\n\nBefore any health question, Uma's agent explained the duty to take reasonable care to George and Harpreet in plain English, and told them they don't need to disclose genetic test results, which insurers can't ask for or use from 8 Oct 2026 (see 'Underwriting and the duty to take reasonable care').\n\nRequirements for the ages and sums insured (Northbank's thresholds — see 'Directory — insurers on the approved product list'):\n• George Papadopoulos, 52 — $1,600,000 of life and TPD cover on his life (buy-sell $1,200,000 plus key person $400,000): blood profile, medical examination and financial evidence (two years' company financial statements and the valuation).\n• Harpreet Kaur, 47 — $1,200,000 of life and TPD cover: blood profile and financial evidence.\n\nResults:\n• George: cholesterol 7.2 mmol/L and blood pressure 150/95. Northbank offers his life and TPD cover with a +25% loading, which it will review in two years.\n• Harpreet: accepted at standard rates.\n\nPremiums after underwriting (year 1, stepped):\n• George, buy-sell — $4,140 → $5,175\n• George, key person — $1,380 → $1,725 (paid by the company)\n• Harpreet, buy-sell — $3,100 (standard)\nTotal: $10,000 a year.\n\nDecision: George accepted the loading with Amelia on Thu 19 Nov 2026 — accepting a loading is a human decision. The commission on each policy was shown in dollars in the Statement of Advice, with written consent (see 'Commission rules — LIF caps, clawback and consent').\n\nPolicies in force from Fri 20 Nov 2026:\n• NB-26300418 — buy-sell life and TPD of $1,200,000 on George Papadopoulos, owned by George\n• NB-26300419 — buy-sell life and TPD of $1,200,000 on Harpreet Kaur, owned by Harpreet\n• NB-26300420 — key person life and TPD of $400,000 on George, owned by Northcote Custom Joinery Pty Ltd\n\nCooling-off: 14 days, from the earlier of receiving Northbank's confirmation and the end of the fifth business day after issue; it ends if a claim is made.\nFinancial Crime: KYC on the company and both beneficial owners — company extract and both IDs legitimate; no PEP or sanctions match.\nTax: as confirmed by Marcus Tan, the company's accountant (see 'Tax on life insurance — premiums and benefits').\nNext: Cara's letters to George and Harpreet; an update to Marcus, with their consent, that the cover is in place and their lawyer will finalise the buy-sell agreement.\n\nOutcome: ✅ Completed — buy-sell cover of $1.2 million each and $400,000 key person cover in force from 20 Nov 2026, with a 25% loading on George's cover.",
+  "severity": "medium",
+  "department": "Underwriting & New Business",
+  "tags": [
+    "george-papadopoulos",
+    "harpreet-kaur",
+    "REQ-20261109-LIF003",
+    "CL-104611",
+    "CL-104612",
+    "underwriting-decision",
+    "northbank-life",
+    "blood-profile",
+    "medical-examination",
+    "financial-evidence",
+    "loading-25-percent",
+    "NB-26300418",
+    "NB-26300419",
+    "NB-26300420",
+    "in-force-20-nov-2026",
+    "10000-a-year"
+  ],
+  "lastUpdated": "2026-11-20T00:00:00Z"
+}

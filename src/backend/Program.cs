@@ -1,21 +1,22 @@
 using System.Text.Json;
-using CaldovaSuper.App.Api;
-using CaldovaSuper.App.Components;
-using CaldovaSuper.App.Mcp;
-using CaldovaSuper.App.Models;
-using CaldovaSuper.App.Services;
+using CaldovaLife.App.Api;
+using CaldovaLife.App.Components;
+using CaldovaLife.App.Mcp;
+using CaldovaLife.App.Models;
+using CaldovaLife.App.Services;
 
-// Wealth Team in a Day — Caldova Wealth client operations web app.
+// Advice Team in a Day — the Caldova Life Advice agent console.
 // Hosts one page per Foundry agent (/agents/{id}), the five scenario pages
-// (/scenarios/{id}), the Try-it-out demo endpoints for each agent, and the
-// in-process MCP server the Foundry agents call back into.
+// (/scenarios/{id}), the Try-it-out endpoints for each agent, the "Ask AI"
+// assistant (/account) and the in-process MCP server the Foundry agents call
+// back into (/mcp).
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// ChatService backs the Account page's "Ask AI" chatbot (/api/chat/ask).
+// ChatService backs the Account page's "Ask AI" assistant (/api/chat/ask).
 builder.Services.AddHttpClient<ChatService>();
 
 // Bind Foundry configuration (project endpoint, model deployment, search /
@@ -33,43 +34,47 @@ var agentOptions = new CaldovaAgentOptions
     // APP_MCP_URL must be a publicly reachable URL (e.g. a dev tunnel) because
     // the Foundry Responses API enumerates MCP tools from the cloud — it
     // cannot reach http://localhost on the developer's machine. When unset,
-    // agents are created without the MCP tool surface so the demo runs out
-    // of the box; set it to enable the investments / transfers / payments
+    // agents are created without the MCP tool surface so the app runs out
+    // of the box; set it to enable the research / underwriting / claims
     // MCP tools.
     AppMcpUrl = builder.Configuration["APP_MCP_URL"],
 };
 builder.Services.AddSingleton(agentOptions);
 builder.Services.AddSingleton<CaldovaAgentFactory>();
 
-// HttpClient factory for MCP tools (e.g. fetching fact sheets from URLs).
+// HttpClient factory for MCP tools (e.g. fetching insurer product sheets from URLs).
 builder.Services.AddHttpClient();
 
-// MCP server for the in-process tool surface used by Foundry agents:
-//   - InvestmentsMcpTools (analyzeFactSheet / compareModels / generateClientWorkbook)
-//   - TransfersMcpTools   (lookupFunds / verifySmsf / generateTransferRequestPdf)
-//   - PaymentsMcpTools    (payments_* — payee validation, case approval,
-//     benefit calculation, authority check, Teams approval request, gated release)
-//   - TeamsMcpTools       (teams_sendApprovalCard — Microsoft Teams Adaptive Card delivery)
+// MCP server (label caldova-ops-mcp) for the in-process tool surface used by
+// the Foundry agents:
+//   - ResearchMcpTools     (Ivy) research_analysePolicyDocument /
+//     research_compareInsurers / research_generateComparisonWorkbook
+//   - UnderwritingMcpTools (Uma) underwriting_lookupInsurer /
+//     underwriting_checkRequirements / underwriting_generateApplicationSummaryPdf
+//   - ClaimsMcpTools       (Ben) claims_validateClaimant / claims_checkPolicy /
+//     claims_calculateBenefit / claims_checkApprovalRules / claims_requestApproval /
+//     claims_getApprovalStatus / claims_lodgeClaim (refuses unless approved)
+//   - TeamsMcpTools        teams_sendApprovalCard — Microsoft Teams Adaptive Card delivery
 builder.Services.AddMcpServer()
     .WithHttpTransport(options => { options.Stateless = true; })
-    .WithTools<InvestmentsMcpTools>()
-    .WithTools<TransfersMcpTools>()
-    .WithTools<PaymentsMcpTools>()
+    .WithTools<ResearchMcpTools>()
+    .WithTools<UnderwritingMcpTools>()
+    .WithTools<ClaimsMcpTools>()
     .WithTools<TeamsMcpTools>();
 builder.Services.AddCors();
 
-// In-memory Member Case store, seeded with the five scenario cases and
-// extended by the Onboarding demo's "Try it out" tab.
+// In-memory Client Case store, seeded with the five scenario cases
+// (REQ-…-LIF001 to LIF005) and extended by the Onboarding Agent's
+// "Try it out" tab.
 builder.Services.AddSingleton<CaseStore>();
 builder.Services.AddSingleton<TeamLeaderGroupChatService>();
 
-// Payments flow services. PaymentsMcpTools and the /payments/* endpoints
-// depend on these; TeamsMcpTools is also invoked in-process for the
-// deterministic demo fallback path.
-builder.Services.AddSingleton<PaymentApprovalStore>();
+// Claims flow services. ClaimsMcpTools and the /claims/* endpoints depend on
+// these; TeamsMcpTools is also invoked in-process for the offline path.
+builder.Services.AddSingleton<ClaimApprovalStore>();
 builder.Services.AddSingleton<TeamsMcpTools>();
 
-// Financial Crime document-authenticity demo: loads the static sample
+// Financial Crime document-authenticity checks: loads the static sample
 // manifest from wwwroot/fincrime/samples/manifest.json and tracks per-case
 // document attachments. Falls back to manifest expectations when Content
 // Understanding isn't configured.
@@ -79,9 +84,9 @@ builder.Services.AddSingleton<FinCrimeDocumentVerifier>(sp => new FinCrimeDocume
     sp.GetRequiredService<IConfiguration>(),
     sp.GetRequiredService<ILogger<FinCrimeDocumentVerifier>>()));
 
-// Transfer / rollover request PDF generator used by both the deterministic
-// /transfers/process flow and the TransfersMcpTools MCP tool surface.
-builder.Services.AddSingleton<TransferRequestPdfService>();
+// Application and disclosure summary PDF generator used by both the offline
+// /underwriting/* flow and the UnderwritingMcpTools MCP tool surface.
+builder.Services.AddSingleton<ApplicationPdfService>();
 
 var app = builder.Build();
 
@@ -93,7 +98,7 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseAntiforgery();
 
 // CORS + MCP Accept-header normalisation are always enabled because the MCP
-// server hosts the investments, transfers and payments tool surfaces.
+// server hosts the research, underwriting and claims tool surfaces.
 app.UseCors(policy => policy
     .AllowAnyOrigin()
     .AllowAnyMethod()
@@ -135,8 +140,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Serves dynamically-generated files (e.g. workbooks written by the
-// generateClientWorkbook MCP tool to wwwroot/investments/output/).
+// Serves dynamically-generated files (e.g. comparison workbooks written by
+// the research_generateComparisonWorkbook MCP tool to wwwroot/research/output/).
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -161,7 +166,7 @@ app.UseWebSockets();
 // ── Markdown rendering endpoint (used by agent pages to format agent output) ──
 app.MapMarkdownEndpoints();
 
-// ── "Ask AI" chatbot endpoint (Account page) ────────────────────────────────
+// ── "Ask AI" assistant endpoint (Account page) ──────────────────────────────
 app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
 {
     using var reader = new StreamReader(ctx.Request.Body);
@@ -174,7 +179,7 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
 
     var agentResponse = await chatService.SendMessageWithOptionsAsync(message, temperature);
 
-    // References: surface the relevant Caldova operations agents from the
+    // References: surface the relevant Caldova Life Advice agents from the
     // AgentCatalog using simple keyword matching against the question.
     var keywords = (message ?? string.Empty).ToLowerInvariant()
         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -198,7 +203,7 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
             Category = x.Agent.Department,
             Sentiment = "Neutral",
             Author = x.Agent.Persona,
-            PublishedDate = "Caldova client operations",
+            PublishedDate = "Caldova Life Advice",
             Url = $"/agents/{x.Agent.Id}"
         })
         .ToList();
@@ -218,16 +223,16 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
     caseStore.SeedDefaults();
 
     app.MapOnboardingEndpoints(caseStore, factory, logger);              // /onboarding/*
-    app.MapBenefitsEndpoints(caseStore, factory, logger);                // /benefits/*
-    app.MapInvestmentsEndpoints(caseStore, factory, logger);             // /investments/*
+    app.MapParaplanningEndpoints(caseStore, factory, logger);            // /paraplanning/*
+    app.MapResearchEndpoints(caseStore, factory, logger);                // /research/*
     app.MapFinancialCrimeEndpoints(                                      // /fincrime/*
         caseStore,
         factory,
         app.Services.GetRequiredService<FinCrimeCaseDocumentStore>(),
         app.Services.GetRequiredService<FinCrimeDocumentVerifier>(),
         logger);
-    app.MapTransfersEndpoints(caseStore, factory, logger);               // /transfers/*
-    app.MapPaymentsEndpoints(caseStore, factory, logger);                // /payments/*
+    app.MapUnderwritingEndpoints(caseStore, factory, logger);            // /underwriting/*
+    app.MapClaimsEndpoints(caseStore, factory, logger);                  // /claims/*
     app.MapCommunicationsEndpoints(caseStore, factory, logger);          // /communications/*
     app.MapCommunicationsVoiceLiveEndpoints(agentOptions, factory, loggerFactory);
     app.MapTeamLeaderEndpoints(caseStore, factory, logger);              // /team-leader/*
@@ -239,19 +244,21 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
     app.MapAgentMetadataEndpoints(agentOptions);
 }
 
-// ── Investment workbook download ────────────────────────────────────────────
-//    Streams .xlsx files written by the generateClientWorkbook MCP tool.
-app.MapGet("/investments/download/{fileName}", (string fileName, IWebHostEnvironment env) =>
+// ── Insurance Research comparison workbook download ─────────────────────────
+//    Streams .xlsx files written by the research_generateComparisonWorkbook
+//    MCP tool (and the /research/workbook endpoint) to wwwroot/research/output/.
+app.MapGet("/research/download/{fileName}", (string fileName, IWebHostEnvironment env) =>
 {
     if (string.IsNullOrWhiteSpace(fileName) ||
         fileName.Contains("..") ||
         fileName.Contains('/') ||
-        fileName.Contains('\\'))
+        fileName.Contains('\\') ||
+        !fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
     {
         return Results.BadRequest(new { error = "Invalid file name." });
     }
 
-    var dir = Path.Combine(env.WebRootPath ?? "wwwroot", "investments", "output");
+    var dir = Path.Combine(env.WebRootPath ?? "wwwroot", "research", "output");
     var path = Path.Combine(dir, fileName);
     var fullDir = Path.GetFullPath(dir);
     var fullPath = Path.GetFullPath(path);

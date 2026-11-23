@@ -1,6 +1,7 @@
-// Drives the "Try it out" tab on the Financial Crime Agent page
-// (/agents/financial-crime): pick a case → review its account activity →
-// scan the documents on the case → engage Felix's agent → risk summary.
+// Drives the "Try it out" flow on the Financial Crime Agent page
+// (/agents/financial-crime): pick a Client Case → review the client activity,
+// KYC and screening → scan the documents on the case → engage Felix's agent →
+// risk summary and recommended actions (each marked when it needs approval).
 // Loaded as a permanent script from App.razor so init runs reliably on full
 // page load AND on Blazor enhanced navigation (inline <script> tags inside
 // razor pages don't re-execute on enhanced navigation).
@@ -16,9 +17,12 @@
         const emptyEl = $('#fc-empty');
         const caseStep = $('#fc-case-step');
         const caseDetails = $('#fc-case-details');
+        const focusEl = $('#fc-focus');
         const timelineEl = $('#fc-timeline');
         const screeningEl = $('#fc-screening');
         const partiesEl = $('#fc-parties');
+        const referencesEl = $('#fc-references');
+        const nextInlineEl = $('#fc-next-inline');
         const docsStep = $('#fc-docs-step');
         const docsGrid = $('#fc-case-docs');
         const sampleHost = $('#fc-sample-host');
@@ -31,6 +35,7 @@
         const processBtn = $('#fc-process-btn');
         const processStatus = $('#fc-process-status');
         const outputStep = $('#fc-output-step');
+        const riskCard = $('#fc-risk-card');
         const riskPill = $('#fc-risk-pill');
         const riskNum = $('#fc-risk-num');
         const riskSummary = $('#fc-risk-summary');
@@ -40,7 +45,12 @@
         const actionsEl = $('#fc-actions');
         const clearEl = $('#fc-clear');
         const approvalEl = $('#fc-approval');
-        const smrEl = $('#fc-smr');
+        const reportingEl = $('#fc-reporting');
+        const nextStepEl = $('#fc-next-step');
+        const outcomeEl = $('#fc-outcome');
+        const outcomeIcon = $('#fc-outcome-icon');
+        const outcomeHeadline = $('#fc-outcome-headline');
+        const outcomeDetail = $('#fc-outcome-detail');
         const engageScope = $('.engage-tabs-scope');
 
         let cases = [];
@@ -54,18 +64,31 @@
         const KIND_LABELS = {
             'driver-licence': 'Driver licence',
             'passport': 'Passport',
-            'bank-statement': 'Bank statement',
-            'smsf-registration': 'SMSF registration',
+            'payslip': 'Payslip',
+            'medical-report': 'Medical report',
             'death-certificate': 'Death certificate',
-            'income-support-letter': 'Income support letter',
+            'bank-statement': 'Bank statement',
+            'bas-profit-loss': 'BAS and profit and loss',
+            'company-extract': 'Company extract',
         };
+        const VERDICTS = ['legit', 'suspicious', 'tampered', 'fake'];
         const kindLabel = kind => KIND_LABELS[kind] || String(kind || '').replace(/-/g, ' ');
-        // "a driver licence", "an SMSF registration", "an income support letter"
+        // "a driver licence", "a BAS and profit and loss summary", "an ID"
         const kindWithArticle = kind => {
             const label = kindLabel(kind);
             const noun = /^[A-Z]{2}/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1);
-            return (/^(SMSF|[aeiou])/i.test(noun) ? 'an ' : 'a ') + noun;
+            return (/^[aeiou]/i.test(noun) ? 'an ' : 'a ') + noun;
         };
+
+        const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        // "2026-11-06" -> "Fri 6 Nov 2026" (Australian style); anything else is shown as is.
+        function formatDate(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+            if (!m) return iso || '';
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+        }
 
         function escapeHtml(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -87,30 +110,36 @@
 
         // ── Step 2 — case review ─────────────────────────────────
         function renderCase(c) {
-            const adviser = c.adviserPractice ? `${c.adviserName} (${c.adviserPractice})` : c.adviserName;
             caseDetails.innerHTML =
                 row('Case', c.caseNumber) +
-                row('Received', c.receivedDate) +
-                row('Member / client', c.clientName) +
-                row('Member no.', c.memberNumber) +
-                row('Product', c.product) +
+                row('Received', formatDate(c.receivedDate)) +
+                row('Client', c.clientName) +
+                row('Client no.', c.clientNumber) +
                 row('Request type', c.requestType) +
                 row('Amount', c.amount) +
-                row('Adviser', adviser) +
+                row('Cover', c.cover, true) +
+                row('Adviser', c.adviserName) +
+                row('Referred by', c.referredBy) +
                 row('Priority', c.priority ? `${c.priority} — ${c.priorityReason || ''}` : '', true) +
                 row('Summary', c.requestSummary, true);
+            if (c.focus) {
+                focusEl.innerHTML = `<strong>What Felix's agent checks:</strong> ${escapeHtml(c.focus)}`;
+                focusEl.hidden = false;
+            } else {
+                focusEl.hidden = true;
+            }
         }
 
         function renderTimeline(events) {
             if (!events || !events.length) {
-                timelineEl.innerHTML = '<li class="fc-muted-item">No account activity recorded.</li>';
+                timelineEl.innerHTML = '<li class="fc-muted-item">No client activity recorded.</li>';
                 return;
             }
             timelineEl.innerHTML = events.map(e => `
                 <li class="flag-${escapeHtml(e.flag || 'info')}">
                     <div class="fc-tl-when">${escapeHtml(e.when)}</div>
                     <div>
-                        <div class="fc-tl-channel">${escapeHtml(e.channel)}</div>
+                        <div class="fc-tl-channel">${escapeHtml(e.channel)}${e.location ? `<span class="fc-tl-location">${escapeHtml(e.location)}</span>` : ''}</div>
                         <div class="fc-tl-summary">${escapeHtml(e.summary)}</div>
                         <div class="fc-tl-detail">${escapeHtml(e.detail)}</div>
                     </div>
@@ -118,27 +147,54 @@
         }
 
         function renderScreening(results) {
-            screeningEl.innerHTML = (results && results.length)
-                ? results.map(s => `<li>${statusIcon(s.status)}<div><span class="fc-check-name">${escapeHtml(s.check)}</span> — ${escapeHtml(s.result)}</div></li>`).join('')
-                : '<li class="fc-muted-item">No screening results on this case.</li>';
+            if (!results || !results.length) {
+                screeningEl.innerHTML = '<span class="fc-muted-item">No screening results on this case.</span>';
+                return;
+            }
+            const groups = new Map();
+            results.forEach(s => {
+                const key = s.group || 'Other checks';
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(s);
+            });
+            screeningEl.innerHTML = Array.from(groups.entries()).map(([group, items]) => `
+                <div>
+                    <div class="fc-screen-group-title">${escapeHtml(group)}</div>
+                    <ul class="fc-screening">${items.map(s => `<li>${statusIcon(s.status)}<div><span class="fc-check-name">${escapeHtml(s.check)}</span> — ${escapeHtml(s.result)}</div></li>`).join('')}</ul>
+                </div>`).join('');
         }
 
         function renderParties(activity) {
             const parties = (activity.parties || []).map(p =>
-                `<span class="fc-party">${escapeHtml(p.name)} <small>· ${escapeHtml(p.role)}${p.dateOfBirth ? ' · DOB ' + escapeHtml(p.dateOfBirth) : ''}</small></span>`).join('');
-            const smsf = activity.receivingSmsf
-                ? `<p class="fc-trusted">SMSF named on the request: <strong style="color:#b45309">${escapeHtml(activity.receivingSmsf.fundName)}</strong> · ABN ${escapeHtml(activity.receivingSmsf.abn)} · ESA ${escapeHtml(activity.receivingSmsf.esa)}</p>`
+                `<span class="fc-party${p.isCompany ? ' company' : ''}">${escapeHtml(p.name)} <small>· ${escapeHtml(p.role)}${p.dateOfBirth ? ' · DOB ' + escapeHtml(p.dateOfBirth) : ''}</small></span>`).join('');
+            const travel = activity.travelNotice
+                ? `<p class="fc-travel">Travel notice: <strong>${escapeHtml(activity.travelNotice.place)}, ${escapeHtml(activity.travelNotice.from)} – ${escapeHtml(activity.travelNotice.to)}</strong> (recorded at ${escapeHtml(activity.travelNotice.recordedAt)})</p>`
                 : '';
             partiesEl.innerHTML =
-                `<div class="fc-parties">${parties || '<span class="fc-muted-item">No parties recorded.</span>'}</div>` +
+                `<div class="fc-parties">${parties || '<span class="fc-muted-item">No people recorded.</span>'}</div>` +
                 `<p class="fc-trusted">Trusted contact for call-backs: <strong>${escapeHtml(activity.verifiedContact || '—')}</strong></p>` +
-                smsf;
+                travel;
+        }
+
+        function renderReferences(activity) {
+            const refs = activity.references || [];
+            referencesEl.innerHTML = refs.length
+                ? refs.map(r => `<li>${escapeHtml(r)}</li>`).join('')
+                : '<li class="fc-muted-item">No knowledge documents listed for this case.</li>';
+            if (activity.nextStep) {
+                nextInlineEl.innerHTML = `<strong>Next if the checks are clear:</strong> ${escapeHtml(activity.nextStep)}`;
+                nextInlineEl.hidden = false;
+            } else {
+                nextInlineEl.hidden = true;
+            }
         }
 
         async function loadActivity(caseNumber) {
             timelineEl.innerHTML = '<li class="fc-muted-item">Loading…</li>';
-            screeningEl.innerHTML = '<li class="fc-muted-item">Loading…</li>';
+            screeningEl.innerHTML = '<span class="fc-muted-item">Loading…</span>';
             partiesEl.innerHTML = '<span class="fc-muted-item">Loading…</span>';
+            referencesEl.innerHTML = '<li class="fc-muted-item">Loading…</li>';
+            nextInlineEl.hidden = true;
             try {
                 const res = await fetch(`/fincrime/cases/${encodeURIComponent(caseNumber)}/activity`);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -147,10 +203,12 @@
                 renderTimeline(activity.timeline);
                 renderScreening(activity.screening);
                 renderParties(activity);
+                renderReferences(activity);
             } catch (err) {
-                timelineEl.innerHTML = `<li class="fc-muted-item">Failed to load account activity: ${escapeHtml(err.message)}</li>`;
+                timelineEl.innerHTML = `<li class="fc-muted-item">Failed to load the client activity: ${escapeHtml(err.message)}</li>`;
                 screeningEl.innerHTML = '';
                 partiesEl.innerHTML = '';
+                referencesEl.innerHTML = '';
             }
         }
 
@@ -247,7 +305,7 @@
                 <button type="button" class="fc-sample-trigger" aria-haspopup="dialog">📎 Add specimen documents</button>
                 <div class="fc-sample-popover" role="dialog" aria-label="Specimen documents">
                     <div class="fc-sample-popover-title">Specimen documents</div>
-                    <div class="fc-sample-popover-hint">Click an image to preview it, or "Add" to attach it to this case. All specimens are fictional.</div>
+                    <div class="fc-sample-popover-hint">Click an image to preview it, or "Add" to attach it to this case. Every specimen is fictional and marked "SPECIMEN — NOT A REAL DOCUMENT".</div>
                     <div class="fc-sample-grid"><div class="muted" style="padding:0.4rem;">Loading specimens…</div></div>
                 </div>`;
             const trigger = sampleHost.querySelector('.fc-sample-trigger');
@@ -266,7 +324,7 @@
                 grid.innerHTML = samples.map(s => `
                     <div class="fc-sample-tile" data-sample-id="${escapeHtml(s.id)}">
                         <img src="${escapeHtml(s.src)}" alt="${escapeHtml(s.label)}" loading="lazy" />
-                        <div class="fc-sample-expected">${escapeHtml(kindLabel(s.kind))} · case file: ${escapeHtml(s.expected)}</div>
+                        <div class="fc-sample-expected">${escapeHtml(kindLabel(s.kind))}${s.ownerName ? ' · ' + escapeHtml(s.ownerName) : ''} · case file: ${escapeHtml(s.expected)}</div>
                         <div class="fc-sample-label">${escapeHtml(s.label)}</div>
                         <button type="button" class="fc-sample-add"></button>
                     </div>`).join('');
@@ -313,6 +371,14 @@
             return Array.from(caseDocs.values()).filter(d => d.selected).map(d => d.id);
         }
 
+        function verdictCounts(docs) {
+            return VERDICTS
+                .map(v => [v, docs.filter(d => d.verdict === v).length])
+                .filter(([, n]) => n > 0)
+                .map(([v, n]) => `${n} ${v}`)
+                .join(', ');
+        }
+
         function renderDocCards(documents, cuConfigured, note) {
             if (!documents || !documents.length) {
                 docOutputEl.hidden = false;
@@ -325,10 +391,10 @@
             docOutputHint.textContent = (note ? note + ' ' : '') + (usedCu
                 ? 'Each document was read by Azure Content Understanding and scored by the deterministic checks layer.'
                 : cuConfigured
-                    ? 'Content Understanding was unavailable, so the checks layer ran on the case-file record of each document.'
-                    : 'Content Understanding is not configured — the checks layer ran on the case-file record of each document.');
+                    ? 'Content Understanding was unavailable, so the checks layer ran on the case-file record of each document (offline).'
+                    : 'Content Understanding is not configured — the checks layer ran on the case-file record of each document (offline).');
             docCardsEl.innerHTML = documents.map((d, idx) => {
-                const verdict = (d.verdict || 'suspicious').toLowerCase();
+                const verdict = VERDICTS.includes((d.verdict || '').toLowerCase()) ? d.verdict.toLowerCase() : 'suspicious';
                 const checks = d.checks || [];
                 const applicable = checks.filter(c => (c.status || '').toLowerCase() !== 'n/a');
                 const notApplicable = checks.filter(c => (c.status || '').toLowerCase() === 'n/a');
@@ -343,7 +409,7 @@
                 const cuBlock = d.cuMarkdown
                     ? `<details class="fc-doc-cu"><summary>Content Understanding output (markdown)</summary><pre>${escapeHtml(d.cuMarkdown)}</pre></details>`
                     : '';
-                const source = d.source === 'content-understanding' ? 'Content Understanding' : 'Case-file record';
+                const source = d.source === 'content-understanding' ? 'Content Understanding' : 'Case-file record (offline)';
                 return `
                     <div class="fc-doc-card" data-doc-id="${escapeHtml(d.id)}">
                         <div><img src="${escapeHtml(d.src)}" alt="${escapeHtml(d.label)}" loading="lazy" /></div>
@@ -390,11 +456,7 @@
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
                 const docs = data.documents || [];
-                const counts = ['legit', 'suspicious', 'fake']
-                    .map(v => [v, docs.filter(d => d.verdict === v).length])
-                    .filter(([, n]) => n > 0)
-                    .map(([v, n]) => `${n} ${v}`);
-                scanStatus.textContent = `Scanned ${docs.length} document${docs.length === 1 ? '' : 's'}: ${counts.join(', ')}.`;
+                scanStatus.textContent = `Scanned ${docs.length} document${docs.length === 1 ? '' : 's'}: ${verdictCounts(docs)}.`;
                 renderDocCards(docs, !!data.contentUnderstandingConfigured);
             } catch (err) {
                 scanStatus.className = 'fc-status error';
@@ -456,10 +518,15 @@
             loadCaseDocs(selectedCase.caseNumber);
         }
 
+        function approverName(approver) {
+            return String(approver || '').split(',')[0].trim() || 'a person';
+        }
+
         function renderOutput(data) {
             const level = (data.riskLevel || 'Medium').toString();
             riskPill.textContent = level;
             riskPill.className = 'fc-risk-pill ' + level.toLowerCase();
+            riskCard.className = 'fc-risk-card ' + level.toLowerCase();
             riskNum.textContent = typeof data.riskScore === 'number' ? `Score: ${data.riskScore}/100` : '';
             riskSummary.textContent = data.riskSummary || '';
 
@@ -468,10 +535,10 @@
                 agentView.textContent = `Felix's agent rated this case ${parts.join(' · ')} — see the Agent Narrative tab. The score above comes from the explainable checks layer.`;
                 agentView.hidden = false;
             } else if (data.agentConfigured && data.agentError) {
-                agentView.textContent = 'The agent call failed, so this assessment comes from the explainable checks layer only.';
+                agentView.textContent = 'The agent wasn\'t reachable, so this assessment comes from the explainable checks layer (offline).';
                 agentView.hidden = false;
             } else if (!data.agentConfigured) {
-                agentView.textContent = 'Foundry agent not configured — this assessment comes from the explainable checks layer.';
+                agentView.textContent = 'Foundry agent not configured — this assessment comes from the explainable checks layer (offline).';
                 agentView.hidden = false;
             } else {
                 agentView.hidden = true;
@@ -491,28 +558,47 @@
                 : '<li class="fc-muted-item">No risk indicators found.</li>';
 
             if (typeof data.riskScore === 'number') {
+                const baseline = typeof data.baseline === 'number' ? data.baseline : 5;
                 const points = indicators.map(i => i.points);
-                const sum = 5 + points.reduce((a, b) => a + b, 0);
-                let text = `Score = 5 (baseline)${points.map(p => ' + ' + p).join('')} = ${Math.min(sum, 99)}`;
-                if (data.riskScore > Math.min(sum, 99)) text += ` → raised to ${data.riskScore}: an altered document always needs human review`;
+                const sum = Math.min(baseline + points.reduce((a, b) => a + b, 0), 99);
+                let text = `Score = ${baseline} (baseline)${points.map(p => ' + ' + p).join('')} = ${sum}`;
+                if (data.scoreNote) text += ` → ${data.scoreNote}`;
                 breakdownEl.textContent = text;
             } else {
                 breakdownEl.textContent = '';
             }
 
             actionsEl.innerHTML = (data.actions || []).map(a =>
-                `<li><strong>${escapeHtml(a.action)}</strong>${a.requiresApproval ? '<span class="fc-approval-badge">Human approval</span>' : ''} — ${escapeHtml(a.detail)}</li>`).join('')
+                `<li><strong>${escapeHtml(a.action)}</strong>${a.requiresApproval ? `<span class="fc-approval-badge">Needs ${escapeHtml(approverName(a.approver))}'s approval</span>` : ''} — ${escapeHtml(a.detail)}</li>`).join('')
                 || '<li class="fc-muted-item">No further action recommended.</li>';
 
             clearEl.innerHTML = (data.checksClear || []).map(c => `<li>${statusIcon('pass')}<div>${escapeHtml(c)}</div></li>`).join('')
                 || '<li class="fc-muted-item">Nothing confirmed clear yet.</li>';
 
             approvalEl.textContent = data.approvalRequired || 'Yes — financial-crime decisions always need human approval.';
-            if (data.smrNote) {
-                smrEl.textContent = data.smrNote;
-                smrEl.hidden = false;
+            if (data.reportingNote) {
+                reportingEl.textContent = data.reportingNote;
+                reportingEl.className = 'fc-reporting' + (level.toLowerCase() === 'high' ? ' high' : '');
+                reportingEl.hidden = false;
             } else {
-                smrEl.hidden = true;
+                reportingEl.hidden = true;
+            }
+            if (data.nextStep) {
+                nextStepEl.innerHTML = `<strong>Next:</strong> ${escapeHtml(data.nextStep)}`;
+                nextStepEl.hidden = false;
+            } else {
+                nextStepEl.hidden = true;
+            }
+
+            const outcome = data.outcome;
+            if (outcome && outcome.headline) {
+                outcomeIcon.textContent = outcome.icon || '';
+                outcomeHeadline.textContent = outcome.headline;
+                outcomeDetail.textContent = outcome.detail || '';
+                outcomeEl.className = 'fc-output-block fc-output-wide fc-outcome ' + (String(outcome.status || '').toLowerCase() === 'blocked' ? 'blocked' : 'cleared');
+                outcomeEl.hidden = false;
+            } else {
+                outcomeEl.hidden = true;
             }
         }
 
@@ -542,13 +628,13 @@
                 if (!data) throw new Error('No response from the agent');
 
                 if (data.agentError) {
-                    processStatus.className = 'fc-status error';
-                    processStatus.textContent = 'Agent error: ' + data.agentError + ' — showing the deterministic assessment.';
+                    processStatus.className = 'fc-status';
+                    processStatus.textContent = 'Foundry agent unavailable — showing the offline assessment from the explainable checks layer.';
                 } else {
                     processStatus.className = 'fc-status';
                     processStatus.textContent = data.agentConfigured
                         ? 'Financial Crime Agent completed the review.'
-                        : 'Reviewed (Foundry agent not configured — using the deterministic assessment).';
+                        : 'Reviewed offline (Foundry agent not configured — using the explainable checks layer).';
                 }
 
                 // Keep the document cards in step 3 in sync with the numbering
@@ -578,8 +664,8 @@
 
     init();
 
-    if (!window.__fincrimeDemoEnhancedHook) {
-        window.__fincrimeDemoEnhancedHook = true;
+    if (!window.__fincrimeScenarioHook) {
+        window.__fincrimeScenarioHook = true;
         const hook = () => init();
         if (typeof Blazor !== 'undefined' && typeof Blazor.addEventListener === 'function') {
             Blazor.addEventListener('enhancedload', hook);

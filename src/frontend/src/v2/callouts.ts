@@ -1,7 +1,7 @@
 /**
  * Labels for the far ends of a selection's beams: small chips beside each
  * end's node, so a beam that dives through a floor still says where it goes
- * ("1 · Benefits & Eligibility Agent", "B · Microsoft Foundry"). They are
+ * ("1 · Claims Agent", "B · Microsoft Foundry"). They are
  * HTML, so they stay sharp at any zoom, and clicking one goes there.
  */
 import { Matrix, Vector3, type Scene } from "@babylonjs/core";
