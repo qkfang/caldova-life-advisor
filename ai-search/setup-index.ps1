@@ -7,7 +7,7 @@
 # Adapted from https://github.com/qkfang/quant-agent/blob/main/ai-search/setup-index.ps1.
 
 $SearchServiceName = "search-lifeguru"     # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-lifeguru)
-$ResourceGroupName = "rg-life-advice-guru"
+$ResourceGroupName = "rg-caldova-life"
 $IndexPrefix = "life"
 $FoundryEndpoint = "https://aif-lifeguru.cognitiveservices.azure.com"  # Update to match foundryAccountEndpoint output
 

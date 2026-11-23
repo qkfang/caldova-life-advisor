@@ -23,13 +23,13 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     #   - name: Create Resource Group
-    #     run: az group create --name 'rg-life-advice-guru' --location 'eastus2'
+    #     run: az group create --name 'rg-caldova-life' --location 'westus'
 
       - name: Deploy Bicep
         working-directory: bicep
         run: |
           az deployment group create \
             --name 'life-advice-guru-dev' \
-            --resource-group 'rg-life-advice-guru' \
+            --resource-group 'rg-caldova-life' \
             --template-file './main.bicep' \
             --parameters './main.bicepparam'

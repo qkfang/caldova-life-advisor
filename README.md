@@ -143,7 +143,7 @@ dotnet run -- --onboarding "Referral from Hannah Lewis (Yarra Home Loans): Priya
 
 The other flags are `--paraplanning`, `--research`, `--fincrime`, `--underwriting`, `--claims`, `--communications` and `--team-leader`.
 
-To deploy to Azure (resource group `rg-life-advice-guru`), see `bicep/` and the GitHub Actions workflows in `.github/workflows/`.
+To deploy to Azure (resource group `rg-caldova-life`), see `bicep/` and the GitHub Actions workflows in `.github/workflows/`.
 
 ---
 

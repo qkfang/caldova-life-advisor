@@ -197,7 +197,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 
 | Sign | Component | What it does | Used by |
 |---|---|---|---|
-| MICROSOFT FOUNDRY | Agent platform and model | Hosts the nine agents and the `gpt-5.4` deployment (GlobalStandard, default content filters) | Every agent |
+| MICROSOFT FOUNDRY | Agent platform and model | Hosts the nine agents and the `gpt-5.4` deployment (DataZoneStandard, default content filters) | Every agent |
 | MCP TOOLS | `guru-ops-mcp` at `/mcp` | Tools that let agents act on systems | Ivy and Uma (Protection Advice), Ben (Claims & Care) |
 | TEAMS APPROVALS | Microsoft Teams adaptive cards | A claim waits for a human approval before it is lodged (sent by `teams_sendApprovalCard`; delivery is simulated in the scenarios) | Ben, approved by Theo |
 | CONTENT UNDERSTANDING | Azure Content Understanding | Legit, suspicious or fake verdicts on IDs, medical reports, death certificates, payslips, BAS and bank statements | Felix (shared) |

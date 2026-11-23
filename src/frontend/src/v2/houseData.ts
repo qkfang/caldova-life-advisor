@@ -621,7 +621,7 @@ export const INFRA: InfraInfo[] = [
       "Hosts the nine agents (eight staff agents plus Cara’s voice agent) and the gpt-5.4 model they reason with.",
     details: [
       "Declarative agents created from code with Azure.AI.Projects, on a shared GuruAgent base class",
-      "Model deployment gpt-5.4 (GlobalStandard) with the default responsible-AI content filters",
+      "Model deployment gpt-5.4 (DataZoneStandard) with the default responsible-AI content filters",
       "Theo’s group chat coordinates the specialist agents on a single case",
     ],
     security:

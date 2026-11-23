@@ -34,7 +34,7 @@ This shows that client requests don't disappear into a chatbot: every email beco
 The workflow definitions reference the following resources by name. Environment-specific values (subscription id, tenant) need to be substituted at deploy time:
 
 - **Foundry project** — `https://aif-lifeguru.services.ai.azure.com/api/projects/aif-lifeguru-project`
-- **User-assigned managed identity** — `/subscriptions/<sub>/resourceGroups/rg-life-advice-guru/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid` (granted access to Foundry, OneLake and Blob storage). `return-email-processing` calls Foundry with the Logic App's system-assigned identity, so grant that identity Foundry access too.
+- **User-assigned managed identity** — `/subscriptions/<sub>/resourceGroups/rg-caldova-life/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid` (granted access to Foundry, OneLake and Blob storage). `return-email-processing` calls Foundry with the Logic App's system-assigned identity, so grant that identity Foundry access too.
 - **Fabric Lakehouse** — workspace `Life_Advice_Guru`, lakehouse `LH_Practice.Lakehouse`
 - **Blob container** — `email-attachment` on the Logic App's storage account
 - **Mailboxes (fictional)** — `requests@lifeadviceguru.example` (practice inbox watched through `conn-office365`) and `practice-team-leader@lifeadviceguru.example` (Teams recipient of the human-in-the-loop card)

@@ -51,8 +51,10 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   dependsOn: [
     project
   ]
+  // DataZoneStandard has its own quota; the subscription's GlobalStandard gpt-5.4 quota in
+  // eastus2 is almost fully used by other workloads.
   sku: {
-    name: 'GlobalStandard'
+    name: 'DataZoneStandard'
     capacity: 100
   }
   properties: {

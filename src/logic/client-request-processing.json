@@ -65,7 +65,7 @@
                     },
                     "authentication": {
                         "type": "ManagedServiceIdentity",
-                        "identity": "/subscriptions/873a4995-e21b-47e2-953e-f2e88e2fa4f9/resourcegroups/rg-life-advice-guru/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid",
+                        "identity": "/subscriptions/873a4995-e21b-47e2-953e-f2e88e2fa4f9/resourcegroups/rg-caldova-life/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid",
                         "audience": "https://ai.azure.com"
                     }
                 },
@@ -92,7 +92,7 @@
                     },
                     "authentication": {
                         "type": "ManagedServiceIdentity",
-                        "identity": "/subscriptions/873a4995-e21b-47e2-953e-f2e88e2fa4f9/resourcegroups/rg-life-advice-guru/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid",
+                        "identity": "/subscriptions/873a4995-e21b-47e2-953e-f2e88e2fa4f9/resourcegroups/rg-caldova-life/providers/Microsoft.ManagedIdentity/userAssignedIdentities/guru-ops-logic-uid",
                         "audience": "https://ai.azure.com"
                     }
                 },
