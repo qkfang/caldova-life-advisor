@@ -147,7 +147,7 @@ export class Storybook {
 
   goTo(target: number | PageId): void {
     const i = typeof target === "number" ? target : pageIndex(target);
-    if (i < 0 || i >= PAGES.length) return;
+    if (!Number.isInteger(i) || i < 0 || i >= PAGES.length) return;
     const from = this.index;
     this.index = i;
     this.renderPage();
@@ -363,7 +363,7 @@ export class Storybook {
       <div class="lift-display" aria-hidden="true"><span class="lift-arrow"></span><span class="lift-floor">${esc(PAGES[0].floor)}</span></div>
       ${buttons}`;
     this.lift.addEventListener("click", (e) => {
-      const el = (e.target as HTMLElement).closest<HTMLElement>("[data-page]");
+      const el = (e.target as HTMLElement).closest<HTMLElement>(".lift-btn");
       if (el) this.goTo(Number(el.dataset.page));
     });
     this.updateLift(0);
