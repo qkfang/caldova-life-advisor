@@ -1,5 +1,5 @@
 /**
- * Voxel construction kit for Caldova House.
+ * Voxel construction kit for Guru House.
  *
  * - `mat()` caches flat-shaded materials, optionally multiplied with a tiny
  *   pixel texture (brick, render, bluestone, timber, asphalt…) that tiles in
@@ -42,7 +42,10 @@ export type TextureKey =
   | "asphalt"
   | "paving"
   | "parquet"
-  | "copper";
+  | "copper"
+  | "paleOak"
+  | "flags"
+  | "tiles";
 
 export interface MatOptions {
   /** Self-illumination as a fraction of the colour (0–1). */
@@ -128,6 +131,11 @@ const TONES: Record<TextureKey, string[]> = {
   paving: ["#bfc1c4", "#b7b9bc", "#c6c8cb", "#b1b3b6"],
   parquet: ["#c08a52", "#b47f49", "#cb955c", "#a97444"],
   copper: ["#b9733e", "#ad6834", "#c5824b", "#a0602f"],
+  // Near-white finishes for the office floors: the material's colour gives the floor its tone,
+  // and the texture only adds a quiet plank, flag or tile line.
+  paleOak: ["#fbf7f0", "#f6f0e5", "#fdfaf5", "#f3ece0"],
+  flags: ["#f8f8f6", "#f3f3f0", "#fbfbf9", "#f0f0ec"],
+  tiles: ["#f7f9fb", "#f3f6f9", "#f9fbfc"],
 };
 
 function paintTexture(key: TextureKey, ctx: Ctx2D, size: number): void {
@@ -197,6 +205,36 @@ function paintTexture(key: TextureKey, ctx: Ctx2D, size: number): void {
     }
     return;
   }
+  if (key === "paleOak") {
+    // Long, calm planks: a soft tone change from board to board and a faint seam, no grain.
+    const rows = 4;
+    const ph = size / rows;
+    for (let row = 0; row < rows; row++) {
+      ctx.fillStyle = pick();
+      ctx.fillRect(0, row * ph, size, ph);
+      ctx.fillStyle = "rgba(90,64,30,0.09)";
+      ctx.fillRect(0, row * ph + ph - 1, size, 1);
+      ctx.fillRect(row % 2 ? 6 : 22, row * ph, 1, ph);
+    }
+    return;
+  }
+  if (key === "flags" || key === "tiles") {
+    // Large square stone flags (two across) or one big tile, with a faint joint.
+    const n = key === "flags" ? 2 : 1;
+    const cs = size / n;
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        ctx.fillStyle = pick();
+        ctx.fillRect(x * cs, y * cs, cs, cs);
+      }
+    }
+    ctx.fillStyle = key === "flags" ? "rgba(70,60,40,0.08)" : "rgba(30,45,70,0.09)";
+    for (let i = 0; i < n; i++) {
+      ctx.fillRect(i * cs, 0, 1, size);
+      ctx.fillRect(0, i * cs, size, 1);
+    }
+    return;
+  }
   if (key === "oak" || key === "walnut") {
     // Planks with staggered joints, a little grain and a dark seam.
     const rows = 8;
@@ -223,6 +261,13 @@ function paintTexture(key: TextureKey, ctx: Ctx2D, size: number): void {
       ctx.fillRect(x, y, cell, cell);
     }
   }
+}
+
+/** Mixes two colours, `t` of the way from `a` to `b`, as a hex string (for soft tints of the sides' colours). */
+export function mixHex(a: string, b: string, t: number): string {
+  const ca = Color3.FromHexString(a);
+  const cb = Color3.FromHexString(b);
+  return Color3.Lerp(ca, cb, t).toHexString();
 }
 
 function roundRect(ctx: Ctx2D, x: number, y: number, w: number, h: number, r: number): void {

@@ -62,7 +62,7 @@
             "Create_Conversation": {
                 "type": "Http",
                 "inputs": {
-                    "uri": "https://aif-caldovacl.services.ai.azure.com/api/projects/aif-caldovacl-project/openai/conversations?api-version=2025-05-15-preview",
+                    "uri": "https://aif-lifeguru.services.ai.azure.com/api/projects/aif-lifeguru-project/openai/conversations?api-version=2025-05-15-preview",
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
@@ -90,7 +90,7 @@
             "Generate_Agent_Response": {
                 "type": "Http",
                 "inputs": {
-                    "uri": "https://aif-caldovacl.services.ai.azure.com/api/projects/aif-caldovacl-project/openai/responses?api-version=2025-05-15-preview",
+                    "uri": "https://aif-lifeguru.services.ai.azure.com/api/projects/aif-lifeguru-project/openai/responses?api-version=2025-05-15-preview",
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
@@ -173,7 +173,7 @@
                                                 "Click to Complete Manual Review"
                                             ],
                                             "recipient": {
-                                                "to": "practice-team-leader@caldova.example",
+                                                "to": "practice-team-leader@lifeadviceguru.example",
                                                 "summary": "Return Email Process Issue"
                                             },
                                             "messageBody": "[manual review required]\n\nsender_email: @{variables('fabricLog')['sender_email']}\n\nsender_email_title: @{variables('fabricLog')['sender_email_title']}\n\nsender_email_body: @{variables('fabricLog')['sender_email_body']}\n\ncase_number: @{variables('agentResponse')?['case_number']}\n\nfabric_filename: @{variables('fabricFileName')}\n\nprocessing_note: @{variables('agentResponse')['processing_note']}",

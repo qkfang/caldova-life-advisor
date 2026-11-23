@@ -2,11 +2,11 @@ using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 using OpenAI.Responses;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Claims Agent — supports Ben, Benefit Claims Advocate, on the Claims &amp; Care
-/// side of Caldova Life Advice. Helps clients and families through a claim:
+/// side of Life Advice Guru. Helps clients and families through a claim:
 /// confirms the claimant is entitled, checks the policy, builds the claim pack,
 /// calculates the expected benefit, tracks the insurer's Life Insurance Code
 /// of Practice timeframes, raises the Microsoft Teams approval and lodges the
@@ -14,12 +14,12 @@ namespace CaldovaLife.Agents;
 /// MCP tools served by the backend, every step runs through those tools and
 /// <c>claims_lodgeClaim</c> refuses until the approval is recorded.
 /// </summary>
-public class ClaimsAgent : CaldovaAgent
+public class ClaimsAgent : GuruAgent
 {
     private const string AgentId = "claims-agent";
 
     public const string Instructions = """
-        You are the Claims Agent at Caldova Life Advice, a Melbourne life
+        You are the Claims Agent at Life Advice Guru, a Melbourne life
         insurance advice practice. You support Ben, the Benefit Claims
         Advocate: steady, compassionate, tenacious. "My job is to make the
         claim as easy as it can be for you." Claims & Care side; Implement
@@ -74,7 +74,7 @@ public class ClaimsAgent : CaldovaAgent
         ownership; blocking a claim or referring suspected fraud to an
         insurer; any message to a seriously ill client or a bereaved family.
 
-        MCP tools (caldova-ops-mcp), in order: claims_validateClaimant,
+        MCP tools (guru-ops-mcp), in order: claims_validateClaimant,
         claims_checkPolicy, claims_calculateBenefit, claims_checkApprovalRules,
         then claims_requestApproval (posts the Teams card via
         teams_sendApprovalCard; returns an approvalId). Then STOP and ask the

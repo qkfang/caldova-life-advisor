@@ -3,26 +3,26 @@ using Azure.AI.Projects.Agents;
 using Microsoft.Extensions.Logging;
 using OpenAI.Responses;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
-/// Shared base for every staff-character agent at Caldova Life Advice, the life
+/// Shared base for every staff-character agent at Life Advice Guru, the life
 /// insurance advice practice in "Advice Team in a Day".
 ///
 /// Each agent represents one specialist role from <c>docs/foundry_agents.md</c>
 /// and is wired up with the same Foundry tools: Azure AI Search over the
-/// <c>life_knowledge</c> index (insurer PDS extracts, Caldova's guides, advice,
+/// <c>life_knowledge</c> index (insurer PDS extracts, Life Advice Guru's guides, advice,
 /// underwriting, claims, tax and commission rules, and client case files) and
 /// Bing grounding for current public context. The Insurance Research,
 /// Underwriting and Claims agents also get the MCP tool surface served by the
-/// backend (server label <c>caldova-ops-mcp</c>).
+/// backend (server label <c>guru-ops-mcp</c>).
 /// Analogous to <c>QuantAgent</c> in
 /// https://github.com/qkfang/quant-agent/tree/main/src/quantlib/Agents/QuantAgent.cs.
 /// </summary>
-public class CaldovaAgent : BaseAgent
+public class GuruAgent : BaseAgent
 {
     /// <summary>Shared MCP server label for the backend's tool surface.</summary>
-    public const string DefaultMcpServerLabel = "caldova-ops-mcp";
+    public const string DefaultMcpServerLabel = "guru-ops-mcp";
 
     /// <summary>Display name of the staff character (e.g. "Olivia").</summary>
     public string Name { get; }
@@ -30,7 +30,7 @@ public class CaldovaAgent : BaseAgent
     /// <summary>Staff role (e.g. "Onboarding &amp; Requests Officer").</summary>
     public string Role { get; }
 
-    /// <summary>Department this agent supports at Caldova House (e.g. "Onboarding &amp; Requests").</summary>
+    /// <summary>Department this agent supports at Guru House (e.g. "Onboarding &amp; Requests").</summary>
     public string Department { get; }
 
     /// <summary>ANSI console colour used when streaming the agent's output.</summary>
@@ -43,7 +43,7 @@ public class CaldovaAgent : BaseAgent
     /// </summary>
     public IReadOnlyList<string> ConfiguredTools { get; }
 
-    public CaldovaAgent(
+    public GuruAgent(
         AIProjectClient aiProjectClient,
         string agentId,
         string name,

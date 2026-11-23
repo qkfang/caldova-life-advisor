@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 public record SearchCitation(string Title, string Url);
 
@@ -55,8 +55,8 @@ public record PendingToolApproval(string ResponseId, string ApprovalItemId, stri
 public record AgentStepResult(string? Result, PendingToolApproval? Pending, string? ResponseId);
 
 /// <summary>
-/// Base wrapper around an Azure AI Foundry declarative agent. Each Caldova Life
-/// Advice staff character is implemented as a subclass of <see cref="CaldovaAgent"/>
+/// Base wrapper around an Azure AI Foundry declarative agent. Each Life Advice Guru
+/// staff character is implemented as a subclass of <see cref="GuruAgent"/>
 /// (which in turn inherits from this <see cref="BaseAgent"/>) so that every
 /// agent shares the same response-handling, MCP approval and citation logic.
 ///

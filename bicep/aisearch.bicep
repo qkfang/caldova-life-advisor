@@ -16,7 +16,7 @@ param replicaCount int = 1
 @description('Partition count')
 param partitionCount int = 1
 
-// Azure AI Search service backing the Caldova life_knowledge index (insurer
+// Azure AI Search service backing the Life Advice Guru life_knowledge index (insurer
 // PDS extracts, rules, practice guides and client case files). Uses AAD-only auth (mirrors the quant-agent reference at
 // https://github.com/qkfang/quant-agent/blob/main/bicep/aisearch.bicep) so the
 // Foundry account/project and the backend Web App can call it via their

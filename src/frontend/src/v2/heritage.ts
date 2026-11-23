@@ -1,5 +1,5 @@
 /**
- * The heritage kit for Caldova House: the 1889 bank's red brick, cream
+ * The heritage kit for Guru House: the 1889 bank's red brick, cream
  * render and bluestone, built as crisp voxel pieces on any wall face.
  *
  * - `onFace()` places a block on a wall face, so the same code dresses the

@@ -1,8 +1,8 @@
 /**
  * Renders a tiny voxel-style character bust as an SVG string, mirroring the
- * look of the same persona in Caldova House (skin tone, hair color/style,
+ * look of the same persona in Guru House (skin tone, hair color/style,
  * shirt color, optional glasses, facial hair, shirt logo). Used for the
- * avatars on Caldova House's inspector cards, so they match the 3D cast.
+ * avatars on Guru House's inspector cards, so they match the 3D cast.
  */
 
 import type { VoxelCharacterPalette } from "./characterPalettes";

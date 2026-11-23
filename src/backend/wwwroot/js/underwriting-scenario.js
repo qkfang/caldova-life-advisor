@@ -176,7 +176,7 @@
                     '<div>' +
                         `<span class="k">Service standards</span><ul>${list(ins.serviceLevels)}</ul>` +
                         `<span class="k">Underwriting thresholds</span><ul>${list(ins.underwritingThresholds)}</ul>` +
-                        `<span class="k">Caldova cases</span><div>${escapeHtml(ins.caldovaCases)}</div>` +
+                        `<span class="k">Life Advice Guru cases</span><div>${escapeHtml(ins.practiceCases)}</div>` +
                         `<span class="k">Chasing</span><div>${escapeHtml(ins.chasing)}</div>` +
                     '</div>');
             } else {

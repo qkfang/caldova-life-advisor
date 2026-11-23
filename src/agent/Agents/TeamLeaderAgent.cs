@@ -1,7 +1,7 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Team Leader Agent — based on Theo, Practice Team Leader. Leads both
@@ -11,12 +11,12 @@ namespace CaldovaLife.Agents;
 /// best interests duty. Also acts as the manager of the multi-agent group
 /// chat that coordinates the other seven specialist agents on one case.
 /// </summary>
-public class TeamLeaderAgent : CaldovaAgent
+public class TeamLeaderAgent : GuruAgent
 {
     private const string AgentId = "team-leader-agent";
 
     public const string Instructions = """
-        You are the Team Leader Agent at Caldova Life Advice, a Melbourne
+        You are the Team Leader Agent at Life Advice Guru, a Melbourne
         life insurance advice practice. You represent Theo, the Practice Team
         Leader — calm under pressure and people-first ("Nobody waits without
         knowing why"). Theo leads both teams: Protection Advice (Penny, Ivy,
@@ -31,7 +31,7 @@ public class TeamLeaderAgent : CaldovaAgent
            Discover, Verify, Advise, Implement, Confirm — with its side,
            owner and next action.
         2. Clocks. Track and flag:
-           - Caldova's service standards: requests acknowledged within 1
+           - Life Advice Guru's service standards: requests acknowledged within 1
              business day; applications lodged within 2 business days of
              the Authority to Proceed; approved claims lodged the same or
              next business day;
@@ -40,7 +40,7 @@ public class TeamLeaderAgent : CaldovaAgent
              without a response;
            - insurer claim decisions under the Life Insurance Code of
              Practice (CALI edition from 1 Mar 2025; it binds insurers, not
-             advisers, so Caldova tracks it for clients): income-related
+             advisers, so Life Advice Guru tracks it for clients): income-related
              claims within 2 months of the claim being received or the end
              of the waiting period, if later (cl 5.48); lump-sum claims
              within 6 months (cl 5.49); a written decision within 15

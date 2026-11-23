@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.Json;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// Backs the "Ask AI" assistant on the Account page (<c>/account</c>): general
-/// information about Caldova Life Advice and how life insurance advice and
+/// information about Life Advice Guru and how life insurance advice and
 /// claims work — never personal advice. When <c>FoundryAgent:EndpointUrl</c> is
 /// configured the question is sent to that agent endpoint with
 /// <see cref="SystemPrompt"/>; otherwise an offline answer is returned so the
@@ -16,14 +16,14 @@ public class ChatService
 {
     /// <summary>Instructions for the client-facing assistant.</summary>
     public const string SystemPrompt = """
-        You are the Ask AI assistant for Caldova Life Advice, a Melbourne life
+        You are the Ask AI assistant for Life Advice Guru, a Melbourne life
         insurance advice practice ("Advice Team in a Day"). You answer clients'
         general questions about life cover, TPD, trauma and income protection,
-        insurance inside super, how Caldova's advice process works, how claims
+        insurance inside super, how Life Advice Guru's advice process works, how claims
         work, commission and the cooling-off period — in plain Australian English.
 
         - General information only. Never give personal advice or say what cover
-          someone should have; that is Amelia's job, Caldova's senior risk adviser.
+          someone should have; that is Amelia's job, Life Advice Guru's senior risk adviser.
         - Explain how the practice works: Olivia's Onboarding Agent opens the
           Client Case, Penny's Paraplanning Agent works out needs, Ivy's Insurance
           Research Agent compares insurers, Felix's Financial Crime Agent checks
@@ -76,7 +76,7 @@ public class ChatService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to get a response from the Ask AI agent");
-            return "Sorry, the Caldova Life Advice assistant is unavailable right now. Please try again later, or call us and Amelia will help.";
+            return "Sorry, the Life Advice Guru assistant is unavailable right now. Please try again later, or call us and Amelia will help.";
         }
     }
 
@@ -106,7 +106,7 @@ public class ChatService
 
         if (Has("died", "death", "passed away", "bereave", "funeral"))
         {
-            return "We're so sorry if you've lost someone. When a client dies, Ben's Claims Agent prepares the claim so the family has as little to do as possible, and you'll have one named contact. Life cover paid outside super is generally not taxable. Under the Life Insurance Code of Practice, insurers decide lump-sum claims within 6 months and give you an update at least every 20 business days — most death claims are much quicker. A person at Caldova approves every death claim before it's lodged." + GeneralOnly;
+            return "We're so sorry if you've lost someone. When a client dies, Ben's Claims Agent prepares the claim so the family has as little to do as possible, and you'll have one named contact. Life cover paid outside super is generally not taxable. Under the Life Insurance Code of Practice, insurers decide lump-sum claims within 6 months and give you an update at least every 20 business days — most death claims are much quicker. A person at Life Advice Guru approves every death claim before it's lodged." + GeneralOnly;
         }
 
         if (Has("income protection", "can't work", "cannot work", "injur", "sick leave", "waiting period"))
@@ -116,7 +116,7 @@ public class ChatService
 
         if (Has("claim"))
         {
-            return "Here's how a claim works at Caldova: Olivia's Onboarding Agent opens your Client Case, Ben's Claims Agent checks your policy and the evidence, builds the claim pack and works out the expected benefit, and a person approves before anything is lodged with your insurer. Under the Life Insurance Code of Practice, insurers decide income-related claims within 2 months and lump-sum claims (death, TPD, trauma) within 6 months, and update you at least every 20 business days. You can bring a support person — insurers must recognise them." + GeneralOnly;
+            return "Here's how a claim works at Life Advice Guru: Olivia's Onboarding Agent opens your Client Case, Ben's Claims Agent checks your policy and the evidence, builds the claim pack and works out the expected benefit, and a person approves before anything is lodged with your insurer. Under the Life Insurance Code of Practice, insurers decide income-related claims within 2 months and lump-sum claims (death, TPD, trauma) within 6 months, and update you at least every 20 business days. You can bring a support person — insurers must recognise them." + GeneralOnly;
         }
 
         if (Has("super", "inactive", "lapse"))
@@ -126,7 +126,7 @@ public class ChatService
 
         if (Has("commission", "fee", "paid", "cost of advice"))
         {
-            return "Caldova is paid by commission from the insurer when you take out cover we recommend. Under the Life Insurance Framework, upfront commission is capped at 60% of the first year's premium and 20% of each later year's (excluding GST), and for cover issued from 9 July 2025 the law requires your informed consent to it. Your Statement of Advice always shows the commission in dollars." + GeneralOnly;
+            return "Life Advice Guru is paid by commission from the insurer when you take out cover we recommend. Under the Life Insurance Framework, upfront commission is capped at 60% of the first year's premium and 20% of each later year's (excluding GST), and for cover issued from 9 July 2025 the law requires your informed consent to it. Your Statement of Advice always shows the commission in dollars." + GeneralOnly;
         }
 
         if (Has("cooling", "change my mind", "cancel"))
@@ -141,11 +141,11 @@ public class ChatService
 
         if (Has("business", "key person", "buy-sell", "buy sell", "partner"))
         {
-            return "Business protection helps owners plan for the worst: buy-sell cover funds a buy-out if an owner dies or is seriously disabled, and key person cover helps the business through the loss of someone vital. Ownership and tax treatment matter, so we work with your accountant, and your lawyer drafts the buy-sell agreement. Total cover of $2,000,000 or more on one case gets a second review at Caldova." + GeneralOnly;
+            return "Business protection helps owners plan for the worst: buy-sell cover funds a buy-out if an owner dies or is seriously disabled, and key person cover helps the business through the loss of someone vital. Ownership and tax treatment matter, so we work with your accountant, and your lawyer drafts the buy-sell agreement. Total cover of $2,000,000 or more on one case gets a second review at Life Advice Guru." + GeneralOnly;
         }
 
         return
-            "Thanks for your question. I'm the Caldova Life Advice assistant (offline mode), so I can share general information about life cover, TPD, trauma and income protection, insurance inside super, how claims work, commission and the cooling-off period.\n\n" +
+            "Thanks for your question. I'm the Life Advice Guru assistant (offline mode), so I can share general information about life cover, TPD, trauma and income protection, insurance inside super, how claims work, commission and the cooling-off period.\n\n" +
             "Behind the scenes, eight specialist agents support our team — Onboarding, Paraplanning, Insurance Research, Financial Crime, Underwriting, Claims, Client Communications and the Team Leader — and people approve every decision that matters." +
             GeneralOnly;
     }

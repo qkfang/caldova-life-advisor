@@ -1,14 +1,14 @@
 # Advice Practice Characters
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Overview
 
-This document describes the people at **Caldova Life Advice**, the life insurance advice practice featured in *Advice Team in a Day*. They are the **staff**, the **business owner**, Caldova's **adviser**, two **referral partners** and five **clients**. You can use these characters for journey mapping, product walkthroughs, AI agent design, training scenarios, service design or role-play.
+This document describes the people at **Life Advice Guru**, the life insurance advice practice featured in *Advice Team in a Day*. They are the **staff**, the **business owner**, Life Advice Guru's **adviser**, two **referral partners** and five **clients**. You can use these characters for journey mapping, product walkthroughs, AI agent design, training scenarios, service design or role-play.
 
 Each staff member is supported by a specialised AI agent, and each agent has two specialised assistants. The agents take on the repeatable day-to-day work: reading fact finds and claim notifications, checking documents and policy wording, calculating needs and benefits, comparing insurers and drafting. They report their findings, drafts and recommendations back to the person they support, who keeps the judgement and the accountability.
 
-Agents never give personal advice. **Amelia**, Caldova's adviser, gives the advice and signs every Statement of Advice.
+Agents never give personal advice. **Amelia**, Life Advice Guru's adviser, gives the advice and signs every Statement of Advice.
 
 To make the cast easy to remember, each name starts with the same letter as a keyword in the role:
 
@@ -139,7 +139,7 @@ Cara and Felix sit with the Claims & Care team, but their work spans both sides,
 
 ## 3. Ivy — Insurance Research Analyst
 
-**Role:** Researches the insurers on Caldova's approved product list (APL): Harbourline Life, Corella Life, Lyrebird Life and Northbank Life. Ivy works on the Protection Advice side.
+**Role:** Researches the insurers on Life Advice Guru's approved product list (APL): Harbourline Life, Corella Life, Lyrebird Life and Northbank Life. Ivy works on the Protection Advice side.
 
 **What she does:**
 
@@ -355,7 +355,7 @@ Cara and Felix sit with the Claims & Care team, but their work spans both sides,
 
 ## Maya Ashworth — Managing Director (Business Owner)
 
-**Role:** The business owner for both sides of Caldova Life Advice: Protection Advice and Claims & Care. Maya appears on Level 3 of the Caldova House storybook ([storybook.md](storybook.md)), in her office under the copper dome, next to her idea, "the brain". Her name follows the same rule as the staff: **M**aya, **M**anaging director.
+**Role:** The business owner for both sides of Life Advice Guru: Protection Advice and Claims & Care. Maya appears on Level 3 of the Guru House storybook ([storybook.md](storybook.md)), in her office under the copper dome, next to her idea, "the brain". Her name follows the same rule as the staff: **M**aya, **M**anaging director.
 
 **What she does:**
 
@@ -378,7 +378,7 @@ Maya isn't part of the day-to-day practice team and has no AI agent of her own. 
 
 ## Amelia — Senior Risk Adviser (Front Desk)
 
-**Role:** Caldova's adviser. In the Caldova House storybook she works at the front desk under the heritage verandah, and she helps every visitor get started on either side of the practice. Her name follows the same rule as the staff: **A**melia, **A**dviser.
+**Role:** Life Advice Guru's adviser. In the Guru House storybook she works at the front desk under the heritage verandah, and she helps every visitor get started on either side of the practice. Her name follows the same rule as the staff: **A**melia, **A**dviser.
 
 **What she does:**
 
@@ -394,7 +394,7 @@ Maya isn't part of the day-to-day practice team and has no AI agent of her own. 
 
 > "Hi Priya! Hannah sent your details ahead — let's look after your family."
 
-**Look:** A burgundy blazer with a gold Caldova badge. She carries a tablet that lights up in the colour of the agent she links a visitor with.
+**Look:** A burgundy blazer with a gold Life Advice Guru badge. She carries a tablet that lights up in the colour of the agent she links a visitor with.
 
 Amelia isn't one of the eight practice staff and has no AI agent of her own. She works with all of them: Penny's Paraplanning Agent drafts her Statements of Advice, and every other agent works on her clients' cases.
 
@@ -402,7 +402,7 @@ Amelia isn't one of the eight practice staff and has no AI agent of her own. She
 
 # Referral Partners
 
-Two fictional referral partners send clients to Caldova. They only hear what the client has agreed they can hear, and never health details without consent.
+Two fictional referral partners send clients to Life Advice Guru. They only hear what the client has agreed they can hear, and never health details without consent.
 
 - **Hannah Lewis**, mortgage broker, **Yarra Home Loans** (hannah.lewis@yarrahomeloans.example.com.au). Hannah refers families who have just bought a home and want to protect the loan. She referred Priya.
 - **Marcus Tan**, accountant, **Bayside Business Accountants** (marcus.tan@baysideaccountants.example.com.au). Marcus refers business owners, values their businesses and confirms the tax treatment of business cover. He referred George and Harpreet.
@@ -415,7 +415,7 @@ The five clients are fictional, and each one anchors a scenario.
 
 ## 9. Priya — New Family Protection Advice
 
-**Situation:** Priya Natarajan is 34 and a physiotherapist at a private clinic in Brunswick, earning $105,000 a year plus super. She lives in Coburg with her partner, Arjun Mehta (36, a software engineer), and their daughter Asha (2), and their second baby is due in March 2027. In October 2026 they bought a home with a joint mortgage of $680,000. Their mortgage broker, Hannah Lewis, referred Priya to Caldova with her consent.
+**Situation:** Priya Natarajan is 34 and a physiotherapist at a private clinic in Brunswick, earning $105,000 a year plus super. She lives in Coburg with her partner, Arjun Mehta (36, a software engineer), and their daughter Asha (2), and their second baby is due in March 2027. In October 2026 they bought a home with a joint mortgage of $680,000. Their mortgage broker, Hannah Lewis, referred Priya to Life Advice Guru with her consent.
 
 **Needs:**
 
@@ -447,7 +447,7 @@ Organised and practical, and short on time.
 
 ## 10. Grace — Client Targeted by Identity Takeover
 
-**Situation:** Grace Williams is 61, a semi-retired school principal from Hawthorn who still does some relief teaching. She was widowed in 2018, and her sons are Daniel (32) and James (29). She has been a Caldova client since 2019, with a Lyrebird Life policy for $500,000 of life cover and $200,000 of trauma cover, and her sons as her nominated beneficiaries. At her annual review in September she told Amelia she'd be in Italy from 20 Oct to 1 Dec 2026. While she is away, someone impersonates her, changes her contact details and sends a fake trauma claim.
+**Situation:** Grace Williams is 61, a semi-retired school principal from Hawthorn who still does some relief teaching. She was widowed in 2018, and her sons are Daniel (32) and James (29). She has been a Life Advice Guru client since 2019, with a Lyrebird Life policy for $500,000 of life cover and $200,000 of trauma cover, and her sons as her nominated beneficiaries. At her annual review in September she told Amelia she'd be in Italy from 20 Oct to 1 Dec 2026. While she is away, someone impersonates her, changes her contact details and sends a fake trauma claim.
 
 **Needs:**
 
@@ -467,7 +467,7 @@ Independent, careful and warm. She is rattled when she hears.
 
 **Example dialogue:**
 
-> **Cara:** "Hi Grace, it's Cara from Caldova. I'm calling on the number we've always had for you. Is now a good time?"
+> **Cara:** "Hi Grace, it's Cara from Life Advice Guru. I'm calling on the number we've always had for you. Is now a good time?"
 >
 > **Grace:** "Yes, I'm in Florence. Is everything all right?"
 >
@@ -479,7 +479,7 @@ Independent, careful and warm. She is rattled when she hears.
 
 ## 11. George and Harpreet — Business Owners Protecting Their Business
 
-**Situation:** George Papadopoulos is 52, a master joiner and the co-founder of Northcote Custom Joinery Pty Ltd, which he owns 50/50 with his business partner, Harpreet Kaur (47), the operations and finance director. The business was founded in 2011 and has 14 staff, revenue of $3.1m and net profit of $520,000. George lives in Thornbury with his wife, Helen. Their accountant, Marcus Tan, valued the business at $2,400,000 and referred them to Caldova because they have no succession plan.
+**Situation:** George Papadopoulos is 52, a master joiner and the co-founder of Northcote Custom Joinery Pty Ltd, which he owns 50/50 with his business partner, Harpreet Kaur (47), the operations and finance director. The business was founded in 2011 and has 14 staff, revenue of $3.1m and net profit of $520,000. George lives in Thornbury with his wife, Helen. Their accountant, Marcus Tan, valued the business at $2,400,000 and referred them to Life Advice Guru because they have no succession plan.
 
 **Needs:**
 
@@ -513,7 +513,7 @@ George is a proud craftsman and practical. Harpreet is organised and direct, and
 
 ## 12. Tom — Income Protection Claim After an Injury
 
-**Situation:** Tom Bradley is 41, a self-employed electrician in Frankston who trades as Bradley Electrical. His wife, Kylie (39), is a part-time bookkeeper, and they have two children, aged 8 and 5. He has been a Caldova client since 2023, with a Harbourline Life income protection policy with an insured benefit of $7,000 a month and a 30-day waiting period. On 14 Oct 2026 he fell from a ladder on a job and tore the rotator cuff in his right shoulder. He had surgery on 21 Oct and expects four to six months off work.
+**Situation:** Tom Bradley is 41, a self-employed electrician in Frankston who trades as Bradley Electrical. His wife, Kylie (39), is a part-time bookkeeper, and they have two children, aged 8 and 5. He has been a Life Advice Guru client since 2023, with a Harbourline Life income protection policy with an insured benefit of $7,000 a month and a 30-day waiting period. On 14 Oct 2026 he fell from a ladder on a job and tore the rotator cuff in his right shoulder. He had surgery on 21 Oct and expects four to six months off work.
 
 **Needs:**
 
@@ -543,7 +543,7 @@ Practical and proud, and stressed.
 
 ## 13. Robert — Death Claim After the Sudden Death of His Wife
 
-**Situation:** Robert Chen is 44, a secondary school teacher in Box Hill. His wife, Mei, a pharmacist, died suddenly of a brain aneurysm on 12 Oct 2026, aged 42. Their children are Lily (12) and Max (9). Robert and Mei have been Caldova clients since 2019. Mei's Corella Life policy has $1,000,000 of life cover with Robert as the nominated beneficiary, and her super account also had default death cover.
+**Situation:** Robert Chen is 44, a secondary school teacher in Box Hill. His wife, Mei, a pharmacist, died suddenly of a brain aneurysm on 12 Oct 2026, aged 42. Their children are Lily (12) and Max (9). Robert and Mei have been Life Advice Guru clients since 2019. Mei's Corella Life policy has $1,000,000 of life cover with Robert as the nominated beneficiary, and her super account also had default death cover.
 
 **Needs:**
 

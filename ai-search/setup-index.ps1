@@ -1,15 +1,15 @@
 # Creates / updates the two Azure AI Search indexes used by Advice Team in a Day
-# (Caldova Life Advice) and uploads the JSON documents from the sibling folders:
+# (Life Advice Guru) and uploads the JSON documents from the sibling folders:
 #   life_knowledge  <- life_knowledge/*.json (client case files + practice guides)
 #                      + life_rules/*.json projected onto the knowledge schema
-#   life_rules      <- life_rules/*.json (insurer PDS extracts, Caldova's FSG and
+#   life_rules      <- life_rules/*.json (insurer PDS extracts, Life Advice Guru's FSG and
 #                      APL, and the rule guides)
 # Adapted from https://github.com/qkfang/quant-agent/blob/main/ai-search/setup-index.ps1.
 
-$SearchServiceName = "search-caldovacl"     # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacl)
-$ResourceGroupName = "rg-caldova-life"
+$SearchServiceName = "search-lifeguru"     # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-lifeguru)
+$ResourceGroupName = "rg-life-advice-guru"
 $IndexPrefix = "life"
-$FoundryEndpoint = "https://aif-caldovacl.cognitiveservices.azure.com"  # Update to match foundryAccountEndpoint output
+$FoundryEndpoint = "https://aif-lifeguru.cognitiveservices.azure.com"  # Update to match foundryAccountEndpoint output
 
 $ErrorActionPreference = "Stop"
 
@@ -185,7 +185,7 @@ New-SearchIndex -IndexName $knowledgeIndexName -IndexDefinition $knowledgeIndexD
 Upload-Documents -IndexName $knowledgeIndexName -DocumentFolder (Join-Path $scriptDir "life_knowledge") -RulesFolder (Join-Path $scriptDir "life_rules")
 
 # --- life_rules index ------------------------------------------------------
-# Insurer PDS extracts, Caldova's FSG and approved product list, and the rule
+# Insurer PDS extracts, Life Advice Guru's FSG and approved product list, and the rule
 # guides (advice, insurance inside super, underwriting, claims, tax and
 # commission) in their structured form, with their legal sources.
 $rulesIndexName = "${IndexPrefix}_rules"

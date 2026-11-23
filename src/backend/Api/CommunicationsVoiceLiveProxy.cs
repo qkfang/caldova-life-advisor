@@ -2,9 +2,9 @@ using System.Net.WebSockets;
 using System.Text;
 using Azure.Core;
 using Azure.Identity;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>
 /// Browser ↔ Azure AI Foundry Voice Live API WebSocket proxy that powers
@@ -17,7 +17,7 @@ namespace CaldovaLife.App.Api;
 /// <c>agent-name</c> + <c>agent-project-name</c> so the live call is driven
 /// by Cara's conversational voice agent
 /// (<c>client-communications-voice-agent</c>) — clients, families and
-/// referral partners talk to Caldova Life Advice's Client Communications
+/// referral partners talk to Life Advice Guru's Client Communications
 /// Specialist directly.
 ///
 /// Browsers can't set <c>Authorization</c> headers on a <c>new WebSocket()</c>,
@@ -60,13 +60,13 @@ public static class CommunicationsVoiceLiveProxy
     // Sent as the first user item on a new call (followed by response.create)
     // so the caller hears Cara straight away.
     private const string GreetingPrompt =
-        "Please greet me as Cara from Caldova Life Advice and ask how you can help today. " +
+        "Please greet me as Cara from Life Advice Guru and ask how you can help today. " +
         "Keep it to one or two short, warm sentences.";
 
     public static void MapCommunicationsVoiceLiveEndpoints(
         this WebApplication app,
-        CaldovaAgentOptions options,
-        CaldovaAgentFactory agentFactory,
+        GuruAgentOptions options,
+        GuruAgentFactory agentFactory,
         ILoggerFactory loggerFactory)
     {
         var logger = loggerFactory.CreateLogger("CommunicationsVoiceLiveProxy");
@@ -122,7 +122,7 @@ public static class CommunicationsVoiceLiveProxy
             }
 
             // Make sure the Foundry agent version exists in the project so
-            // Voice Live can resolve the agent name. CaldovaAgent constructors
+            // Voice Live can resolve the agent name. GuruAgent constructors
             // call CreateAgentVersion under the hood; we discard the result.
             try
             {

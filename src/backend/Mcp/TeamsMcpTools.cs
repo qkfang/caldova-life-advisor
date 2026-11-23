@@ -2,15 +2,15 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using ModelContextProtocol.Server;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Mcp;
+namespace LifeAdviceGuru.App.Mcp;
 
 /// <summary>
 /// MCP tool surface that owns Microsoft Teams notifications for the claim
 /// approvals raised by the Claims Agent (Ben, Benefit Claims Advocate). The
 /// agent (or any in-process caller) invokes <c>teams_sendApprovalCard</c> and
-/// gets back where the "Caldova Life Advice — Claim lodgement approval"
+/// gets back where the "Life Advice Guru — Claim lodgement approval"
 /// Adaptive Card was delivered.
 ///
 /// Delivery is simulated in the scenarios: the Adaptive Card payload is built
@@ -22,11 +22,11 @@ namespace CaldovaLife.App.Mcp;
 [McpServerToolType]
 public class TeamsMcpTools
 {
-    private const string SimulatedChannel = "caldova-claim-approvals";
+    private const string SimulatedChannel = "guru-claim-approvals";
     private const string ApprovalPagePath = "/agents/claims";
 
-    public const string LodgementCardTitle = "Caldova Life Advice — Claim lodgement approval";
-    public const string BlockCardTitle = "Caldova Life Advice — Claim block approval";
+    public const string LodgementCardTitle = "Life Advice Guru — Claim lodgement approval";
+    public const string BlockCardTitle = "Life Advice Guru — Claim block approval";
 
     private static readonly Regex BsbRegex = new(@"(?<![\d-])(\d{3})-?\d{3}(?![\d-])", RegexOptions.Compiled);
     private static readonly Regex AccountRegex = new(@"(?<![\d-])\d{5,}(?![\d-])", RegexOptions.Compiled);
@@ -46,7 +46,7 @@ public class TeamsMcpTools
     public bool IsConfigured => true;
 
     [McpServerTool(Name = "teams_sendApprovalCard"),
-     Description("Post the Microsoft Teams Adaptive Card 'Caldova Life Advice — Claim lodgement approval' to the approver (the Team Leader). The card shows the case, the client, the policy, the cover, the claim type, the expected benefit, the checks, the recommendation and why approval is needed, with Approve / Reject actions. Use decision='block' for a claim that must NOT be lodged (the card then asks the approver to confirm the block and the referral to Financial Crime). claims_requestApproval calls this for you after minting an approvalId.")]
+     Description("Post the Microsoft Teams Adaptive Card 'Life Advice Guru — Claim lodgement approval' to the approver (the Team Leader). The card shows the case, the client, the policy, the cover, the claim type, the expected benefit, the checks, the recommendation and why approval is needed, with Approve / Reject actions. Use decision='block' for a claim that must NOT be lodged (the card then asks the approver to confirm the block and the referral to Financial Crime). claims_requestApproval calls this for you after minting an approvalId.")]
     public async Task<string> SendApprovalCard(
         [Description("Approval id minted by claims_requestApproval (e.g. CLM-XXXXXXXXXX).")] string approvalId,
         [Description("Client Case number (e.g. REQ-20261111-LIF004).")] string caseNumber,
@@ -258,7 +258,7 @@ public class TeamsMcpTools
                 new
                 {
                     type = "Action.OpenUrl",
-                    title = "Open case in Caldova",
+                    title = "Open case in Life Advice Guru",
                     url = approvalUrl
                 }
             }

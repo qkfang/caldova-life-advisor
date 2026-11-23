@@ -1,6 +1,6 @@
 # Scenario 1: New Family Protection Advice
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Scenario Summary
 
@@ -9,7 +9,7 @@ A mortgage broker refers a young family who have just bought a home. Priya wants
 - a referral and fact find turned into a Client Case in one pass
 - an existing-cover check that catches super cover about to stop
 - a needs analysis with every step of the working shown
-- research across the insurers on Caldova's approved product list (APL), with stepped and level premiums
+- research across the insurers on Life Advice Guru's approved product list (APL), with stepped and level premiums
 - a Statement of Advice (SoA) drafted for Amelia, with the commission shown in dollars
 - underwriting, with the duty to take reasonable care explained first, and an exclusion the client decides on with her adviser
 - a referral-partner update that shares only what Priya agreed to share
@@ -38,7 +38,7 @@ Amelia gives the advice and signs the SoA. Priya makes every decision about her 
 
 ## Client and Family
 
-**Priya Natarajan** is a new Caldova client.
+**Priya Natarajan** is a new Life Advice Guru client.
 
 - She is 34 and a physiotherapist at a private clinic in Brunswick. She earns $105,000 a year plus super, and she is a non-smoker.
 - She lives in Coburg with her partner, Arjun Mehta (36, a software engineer), and their daughter Asha (2). Their second baby is due in March 2027.
@@ -50,7 +50,7 @@ Amelia gives the advice and signs the SoA. Priya makes every decision about her 
 
 ## Life Event
 
-In October 2026 Priya and Arjun bought a home in Coburg with a joint mortgage of $680,000. Their mortgage broker, Hannah Lewis of Yarra Home Loans, suggested they get advice on protecting the loan and the family. With Priya's consent, Hannah refers her to Caldova on Tue 3 Nov 2026.
+In October 2026 Priya and Arjun bought a home in Coburg with a joint mortgage of $680,000. Their mortgage broker, Hannah Lewis of Yarra Home Loans, suggested they get advice on protecting the loan and the family. With Priya's consent, Hannah refers her to Life Advice Guru on Tue 3 Nov 2026.
 
 Priya's fact find shows:
 
@@ -178,7 +178,7 @@ For new income protection policies, APRA expects all benefits combined to be no 
 ### 4. Research — Insurance Research Agent (Ivy)
 
 - The **Policy Comparison** assistant reads each insurer's product sheet (`research_analysePolicyDocument`), citing *Corella Life — Protection PDS extract*, *Harbourline Life — Protection PDS extract* and *Lyrebird Life — Protection PDS extract*. It compares the definitions, features and exclusions that matter for Priya (`research_compareInsurers`). The key difference: Corella Life's super-linked own-occupation TPD extension covers physiotherapists.
-- The **Premium Quotes** assistant compares year-1 stepped premiums for the full package, following *Caldova Life Advice — Approved product list and research method*:
+- The **Premium Quotes** assistant compares year-1 stepped premiums for the full package, following *Life Advice Guru — Approved product list and research method*:
 
 | Insurer | Year-1 premium (stepped, full package) | Notes |
 |---|---|---|
@@ -215,16 +215,16 @@ The **SoA Drafting** assistant drafts the Statement of Advice for Amelia on Thu 
 - **Ownership:** life and any-occupation TPD inside super, and the own-occupation TPD extension, trauma and income protection outside super.
 - **Best-interests steps** (Corporations Act s961B): Priya's objectives, financial situation and needs from the fact find; reasonable inquiries, such as the existing-cover check; a reasonable investigation of the products on the APL; and judgements based on her circumstances, including why Corella Life suits her needs and budget.
 - **Existing cover:** the Riverbend Super cover is kept, and the Kestrel Retail Super cover is kept until the new cover starts. No existing cover is replaced. Any later decision to cancel the Kestrel cover is Priya's, with Amelia.
-- **Premiums and commission, in dollars**, as the law requires (Corporations Act s947B), citing *Caldova Life Advice — Financial Services Guide and remuneration* and *Commission rules — LIF caps, clawback and consent*:
+- **Premiums and commission, in dollars**, as the law requires (Corporations Act s947B), citing *Life Advice Guru — Financial Services Guide and remuneration* and *Commission rules — LIF caps, clawback and consent*:
 
 | Item | Amount |
 |---|---|
-| Advice fee | $0. Caldova charges no advice fee for protection-only advice |
+| Advice fee | $0. Life Advice Guru charges no advice fee for protection-only advice |
 | Year-1 premium | $3,180 |
 | Upfront commission paid by Corella Life (60% of the first-year premium) | $1,908 |
 | Ongoing commission (20% of the premium), from year 2 | $636 a year, on a premium of $3,180 |
 
-The commission is within the Life Insurance Framework (LIF) caps: up to 60% of the first year's premium upfront, and up to 20% of the premium in each later year. The caps are tested on commission excluding GST. If the policy is cancelled in its first year, Caldova repays all of the upfront commission to Corella Life, and 60% of it if the policy is cancelled in the second year.
+The commission is within the Life Insurance Framework (LIF) caps: up to 60% of the first year's premium upfront, and up to 20% of the premium in each later year. The caps are tested on commission excluding GST. If the policy is cancelled in its first year, Life Advice Guru repays all of the upfront commission to Corella Life, and 60% of it if the policy is cancelled in the second year.
 
 **Commission consent.** Because the cover is issued after 9 Jul 2025, the law requires Priya's informed consent to the commission (Corporations Act s963BB). Before she consents, the SoA shows her the insurer, the commission rates as a percentage of the premium, and how often and for how long they are paid. It also tells her that the law requires her consent, and that her consent can't be withdrawn once given.
 
@@ -305,8 +305,8 @@ The year-1 premium is $3,180, with $193.50 a month from cash flow. Her old super
 From the `life_knowledge` index:
 
 - *Corella Life — Protection PDS extract*, *Harbourline Life — Protection PDS extract* and *Lyrebird Life — Protection PDS extract*
-- *Caldova Life Advice — Financial Services Guide and remuneration*
-- *Caldova Life Advice — Approved product list and research method*
+- *Life Advice Guru — Financial Services Guide and remuneration*
+- *Life Advice Guru — Approved product list and research method*
 - *Advice rules — best interests duty, SoA and replacement advice*
 - *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*
 - *Underwriting and the duty to take reasonable care*

@@ -15,7 +15,7 @@ import { STAFF_PERSONAS, findStaffById } from "../../personaData";
 import { VoxelCharacter } from "../../voxelCharacter";
 import { IDEA, SIDES, levelInfo } from "../houseData";
 import { Batch, type Kit, rng } from "../kit";
-import { CHARACTER_SCALE, DOME, FLOOR_Y, INSIDE, SPARE_CELLS, STATIONS, WINGS } from "../layout";
+import { CHARACTER_SCALE, DOME, FLOOR_Y, INSIDE, SPARE_CELLS, STATIONS, STOREY, WINGS } from "../layout";
 import { SIDE_BAYS, buildShell } from "../shell";
 import type { Anchor, Highlights, LevelBuild } from "../types";
 import { SpotBook, Wanderer, type Outing, type Pt, type Spot } from "../wander";
@@ -25,6 +25,10 @@ const CORAL = Color3.FromHexString("#ff8f6b");
 const CZ = -2.2;
 /** The huddle table, between Olivia at the front door and Theo. */
 const HUDDLE = { x: 0, z: 0.4 };
+/** The floor: warm light stone. */
+const STONE = "#aab0b6";
+/** Soft tints of each side's colour for the wings: gold, lilac and teal once lit. */
+const WING_TINT = { claims: "#b4b09c", shared: "#a6b0e0", protection: "#93b9c2" };
 
 type Errand =
   | "coffee"
@@ -62,7 +66,6 @@ export function buildPeopleLevel(kit: Kit): PeopleLevelBuild {
   const y = FLOOR_Y.people;
   const info = levelInfo("people");
 
-  const oak = kit.mat("#fff4e2", { texture: "oak" });
   const walnut = kit.mat("#ffffff", { texture: "walnut" });
   const white = kit.mat("#f4f1ea");
   const steel = kit.mat("#2b3240", { specular: 0.25 });
@@ -75,24 +78,28 @@ export function buildPeopleLevel(kit: Kit): PeopleLevelBuild {
     level: info,
     floorY: y,
     storey: "upper",
-    floor: oak,
+    // Warm light stone in large flags.
+    floor: kit.mat(STONE, { texture: "flags" }),
+    floorTile: 4,
     windows: { left: [-10.6, -6.2, -1.8], right: SIDE_BAYS, back: [-6.25, 6.25, 17.6] },
     cove: true,
     rail: {},
   });
 
   /* ---------------- The two wings and the middle ---------------- */
-  // Mid-tone rugs (each side's colour, about L* 64 once lit): pale ones wash out to white under the
-  // sun and sky, and then the white desks and everything else on the floor disappears into them.
+  // Each wing is a soft, light tint of its side's colour on the stone, with a thin strip of the
+  // full colour along the front: still clear which side is which, and calm enough that the desks,
+  // people and floor lettering read on it. (The hex values are darker than they look: the sun and
+  // sky lift every top face by about a third, and paler tints would wash out to white.)
   const rugZ0 = -11.6;
   const rugZ1 = 7.6;
   const rug = (x0: number, x1: number, hex: string, edge: string): void => {
-    kit.block(root, (x0 + x1) / 2, y, (rugZ0 + rugZ1) / 2, x1 - x0 - 0.3, 0.05, rugZ1 - rugZ0, kit.mat(hex));
+    kit.block(root, (x0 + x1) / 2, y, (rugZ0 + rugZ1) / 2, x1 - x0 - 0.3, 0.05, rugZ1 - rugZ0, kit.mat(hex, { texture: "flags" }), { tile: 4 });
     kit.block(root, (x0 + x1) / 2, y + 0.05, rugZ0 + 0.1, x1 - x0 - 0.3, 0.03, 0.12, kit.mat(edge, { unlit: true }));
   };
-  rug(WINGS.claims.x0, WINGS.claims.x1, "#86734d", SIDES.claims.color);
-  rug(WINGS.lead.x0, WINGS.lead.x1, "#707da7", SIDES.shared.color);
-  rug(WINGS.protection.x0, WINGS.protection.x1, "#3a8787", SIDES.protection.color);
+  rug(WINGS.claims.x0, WINGS.claims.x1, WING_TINT.claims, SIDES.claims.color);
+  rug(WINGS.lead.x0, WINGS.lead.x1, WING_TINT.shared, SIDES.shared.color);
+  rug(WINGS.protection.x0, WINGS.protection.x1, WING_TINT.protection, SIDES.protection.color);
   const floorText = (text: string, x: number, z: number, width: number, color: string): void => {
     const decal = kit.label(root, {
       lines: [{ text, size: 60, weight: 800, color }],
@@ -573,7 +580,9 @@ export function buildPeopleLevel(kit: Kit): PeopleLevelBuild {
           const e = local * local * (3 - 2 * local);
           const tx = ch.root.position.x;
           const tz = ch.root.position.z;
-          spark.position.set(fromX + (tx - fromX) * e, y + 5.2 - 2.4 * e + Math.sin(Math.PI * e) * 1.2, fromZ + (tz - fromZ) * e);
+          // From just under Level 3's floor, where the brain sits above, down to the desk.
+          const drop = STOREY.people + 0.2 - 2.8;
+          spark.position.set(fromX + (tx - fromX) * e, y + STOREY.people + 0.2 - drop * e + Math.sin(Math.PI * e) * 1.2, fromZ + (tz - fromZ) * e);
           spark.rotation.y = t * 4;
         });
         if (!running) introT = -1;

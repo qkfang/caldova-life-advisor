@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generator for the Financial Crime "Try it out" specimen documents
-(Advice Team in a Day — Caldova Life Advice).
+(Advice Team in a Day — Life Advice Guru).
 
 Produces visibly fictional PNG documents watermarked "SPECIMEN — NOT A REAL
 DOCUMENT" and the manifest.json the backend serves from
@@ -1217,7 +1217,7 @@ def manifest(harpreet_mrz: tuple[str, str]) -> list[dict]:
             "src": SRC_PREFIX + "bank-statement-g-williams-consulting.png",
             "expected": "suspicious",
             "owner": "grace",
-            "description": "Interim statement for the account the claim asks Caldova to pay. The account was opened "
+            "description": "Interim statement for the account the claim asks Life Advice Guru to pay. The account was opened "
                            "on 03/11/2026 with a $10 cash deposit, and it's in a company's name — not the policy "
                            "owner, Grace Williams.",
             "holderName": "G Williams Consulting Pty Ltd",

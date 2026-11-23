@@ -1,7 +1,7 @@
 /**
  * The front desk: under the cast-iron verandah on the footpath in front of
- * Caldova House, beside the tram stop. The greeter welcomes visitors off the
- * tram, Amelia, Caldova's adviser, links each one with the agents that get
+ * Guru House, beside the tram stop. The greeter welcomes visitors off the
+ * tram, Amelia, Life Advice Guru's adviser, links each one with the agents that get
  * them started (a gold beam runs from her to each agent's bay), and Olivia's
  * Fact Find Extraction agent walks out to read what they sign.
  *
@@ -26,16 +26,15 @@ import {
   type SideId,
 } from "./houseData";
 import { Batch, type Bubble, type Kit, rng } from "./kit";
-import { CHARACTER_SCALE, FRONT_DESK, KERB_Z, TRACK_Z, TRAM_STOP_X, VERANDAH } from "./layout";
+import { CHARACTER_SCALE, FRONT_DESK, KERB_Z, LIFT, PLATFORM, PLATFORM_EDGE, TRACK_Z, TRAM_STOP_X, VERANDAH } from "./layout";
+import { LIFT_FLOOR, type Lift, type LiftRider, type LiftTrip } from "./lift";
 import type { Anchor, Highlights } from "./types";
 
 type Pt = readonly [number, number];
 
 /** Height of the footpath, and of the tram stop's platform. */
 const PATH_Y = 0.15;
-const PLATFORM_Y = 0.36;
-/** The platform runs from the kerb out to the track. */
-const PLATFORM_EDGE = TRACK_Z.near + 1.4;
+const PLATFORM_Y = PLATFORM.y;
 /** The tram comes in from the left and leaves to the right, appearing and fading at the block's edges. */
 const TRAM_FROM = -58;
 const TRAM_TO = 58;
@@ -43,27 +42,40 @@ const TRAM_FADE = 9;
 const TRAM_MAX = 9;
 const TRAM_BRAKE = 4.2;
 /** The finale's client starts closer in, so the arrival doesn't drag. */
-const SCRIPTED_FROM = -40;
-/** Where visitors step off, and their walk along the footpath to the desk. */
+const SCRIPTED_FROM = TRAM_STOP_X - 32;
+/** Where visitors step off, and their walk across the forecourt to the desk, in under the verandah. */
 const DOOR: Pt = [TRAM_STOP_X, PLATFORM_EDGE - 0.1];
 const OFF: Pt = [TRAM_STOP_X + 0.3, PLATFORM_EDGE + 0.7];
 const SIGN_AT: Pt = [FRONT_DESK.x - 0.4, FRONT_DESK.z - 1.35];
-const WALK_IN: Pt[] = [OFF, [TRAM_STOP_X + 2.2, KERB_Z + 0.6], [SIGN_AT[0] - 2.6, SIGN_AT[1] - 0.15], SIGN_AT];
+/** In under the verandah between its first two posts, clear of the greeter. */
+const UNDER: Pt[] = [
+  [VERANDAH.x0 + 1.2, VERANDAH.z0 - 0.7],
+  [VERANDAH.x0 + 2.0, VERANDAH.z0 + 0.8],
+];
+const WALK_IN: Pt[] = [OFF, [TRAM_STOP_X + 2.2, KERB_Z + 0.6], ...UNDER, SIGN_AT];
+/** From the glass lift's street doors along the forecourt to the desk (the finale's clients from the party). */
+const LIFT_OUT: Pt = [LIFT.x - 0.6, LIFT.z0 - 1.5];
+const FROM_LIFT: Pt[] = [[LIFT.x + 2.6, LIFT.z0 - 1.6], ...UNDER, SIGN_AT];
 const WALK_SPEED = 2.6;
+/** A brisker walk over from the lift, which is further away than the tram stop. */
+const LIFT_PACE = 3.3;
 const GOLD = Color3.FromHexString("#ffc35a");
 /** Amelia stands out front of the desk, just under the verandah's edge. */
 const AMELIA_AT: Pt = [FRONT_DESK.x + 2.2, FRONT_DESK.z - 1.75];
-/** The greeter waits at the verandah's edge, facing the tram stop. */
-const GREETER_AT: Pt = [VERANDAH.x0 + 1.3, KERB_Z + 0.15];
+/** The greeter waits just inside the verandah's edge, facing the tram stop. */
+const GREETER_AT: Pt = [VERANDAH.x0 + 0.55, VERANDAH.z0 + 1.1];
 /** Amelia faces the tram stop between visitors, and turns toward the visitor while she helps them. */
-const FACE_IDLE = Math.PI + 0.55;
+const FACE_IDLE = Math.PI + 0.75;
 const FACE_HELP = Math.PI * 2 - 1.6;
 /** Seconds between the agents she links. */
 const LINK_EVERY = 1.6;
+/** A hold on the tram lapses after this long, so nobody can keep it at the stop for ever. */
+const HOLD_MAX = 8;
 
 type Phase =
   | "away"
   | "riding-in"
+  | "riding-down"
   | "stepping-off"
   | "walking-in"
   | "signing"
@@ -76,6 +88,7 @@ type Phase =
 const STATUS: Record<Phase, string> = {
   away: "",
   "riding-in": "On the tram",
+  "riding-down": "Coming down from the party in the glass lift",
   "stepping-off": "Stepping off the tram",
   "walking-in": "Walking up to the front desk",
   signing: "Signing at the front desk",
@@ -129,22 +142,41 @@ export interface FrontDeskHooks {
   agentReady(): boolean;
   /** Amelia has linked the visitor with these agents, by staff id (empty once they are on their way). */
   link(staffIds: string[]): void;
+  /**
+   * A finale client who came down from the party is back up on the roof (stepping out of the lift
+   * at `at`, visitor first), or, with no `at`, straight back at their table.
+   */
+  backToParty(id: ScenarioId, at?: Array<readonly [number, number]>): void;
+}
+
+/** The tram stop, shared by the front desk's visitors and the party guests who come and go by tram. */
+export interface TramStop {
+  /** A tram is standing at the stop. */
+  readonly standing: boolean;
+  /** Its doors are open. */
+  readonly open: boolean;
+  /** Keep the tram at the stop, with its doors open, while `key` steps on or off. */
+  hold(key: string, on: boolean): void;
 }
 
 export interface FrontDesk {
   readonly root: TransformNode;
   readonly anchors: Map<string, Anchor>;
+  readonly tramStop: TramStop;
   /** The scripted visitor has signed (the finale's request can set off). */
   readonly signed: boolean;
   /** Speed of the scripted arrival (0 pauses it), set by the finale's controls. */
   timeScale: number;
   update(dt: number): void;
-  /** The finale: the chosen client arrives by tram. */
+  /** The finale: the chosen client arrives by tram, or comes down from the party in the glass lift. */
   arrive(id: ScenarioId): void;
   /** Skip ahead to the signature. */
   fastForward(): void;
-  /** Back to everyday visitors. */
-  ambient(): void;
+  /**
+   * Back to everyday visitors. A client who came down from the party heads back up in the lift:
+   * returns their scenario, so the party keeps their place until they are back.
+   */
+  ambient(): ScenarioId | null;
   /** Freeze the front desk (and hide the tram) while the street is hidden. */
   setActive(on: boolean): void;
   visitor(): VisitorInfo | null;
@@ -262,7 +294,7 @@ function buildTram(kit: Kit): Tram {
   return { node, meshes, doors, x: TRAM_FROM, v: 0, target: TRAM_FROM, open: 0, wantOpen: false };
 }
 
-export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDeskHooks): FrontDesk {
+export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDeskHooks, lift: Lift): FrontDesk {
   const scene = kit.scene;
   const root = new TransformNode("v2_frontDesk", scene);
   root.parent = street;
@@ -322,7 +354,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   const sign = kit.label(root, {
     lines: [
       { text: "FRONT DESK", size: 64, weight: 800, color: "#0f1a2e", serif: true },
-      { text: "Welcome to Caldova", size: 32, weight: 600, color: "#5b6476" },
+      { text: "Welcome to Life Advice Guru", size: 32, weight: 600, color: "#5b6476" },
     ],
     width: 3.8,
     px: 640,
@@ -376,7 +408,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
     ctx.fillRect(0, 0, 256, 44);
     ctx.fillStyle = "#ffffff";
     ctx.font = '800 20px "Segoe UI", sans-serif';
-    ctx.fillText("CALDOVA", 16, 30);
+    ctx.fillText("LIFE ADVICE GURU", 16, 30);
     ctx.fillStyle = "#0f1a2e";
     ctx.font = '700 21px "Segoe UI", sans-serif';
     wrapLines(ctx, title, 224).forEach((line, i) => ctx.fillText(line, 16, 76 + i * 26));
@@ -445,7 +477,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   const GREETER_FACE = Math.atan2(TRAM_STOP_X - GREETER_AT[0], PLATFORM_EDGE - GREETER_AT[1]);
   greeter.ch.root.rotation.y = GREETER_FACE;
 
-  /* ---------------- Amelia, Caldova's adviser ---------------- */
+  /* ---------------- Amelia, Life Advice Guru's adviser ---------------- */
   // She gives the advice, then links each visitor with the agents that get them started. Her
   // tablet shows the agent she is linking, in its colour.
   const amelia = person(ADVISER.id, ADVISER.palette, ADVISER.color, 2.6);
@@ -532,6 +564,10 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   /* ---------------- The tram ---------------- */
   const tram = buildTram(kit);
   let tramShown = false;
+  /** Who is keeping the tram at the stop (party guests stepping on or off), and since when. */
+  const holds = new Map<string, number>();
+  /** The front desk's visitor is clear of the doors: the tram leaves once nobody is holding it. */
+  let leaving = false;
   const showTram = (on: boolean): void => {
     tramShown = on;
     tram.node.setEnabled(on && active);
@@ -544,10 +580,19 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
     }
     tram.target = target;
     tram.wantOpen = false;
+    leaving = false;
     showTram(true);
+  };
+  /** The tram moves on, as soon as anyone still stepping on or off is clear. */
+  const leave = (): void => {
+    if (holds.size) leaving = true;
+    else runTram(TRAM_TO);
   };
   const updateTram = (dt: number): void => {
     if (!tramShown) return;
+    for (const [key, since] of holds) if (clock - since > HOLD_MAX) holds.delete(key);
+    if (tramAtStop() && holds.size) tram.wantOpen = true;
+    if (leaving && !holds.size) runTram(TRAM_TO);
     const dist = tram.target - tram.x;
     if (Math.abs(dist) > 0.001) {
       const stopping = tram.target < TRAM_TO - 1;
@@ -589,6 +634,12 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   let greeterWait = 6;
   let greeterSays = 0;
   let clock = 0;
+  /** The finale's client came down from the party in the glass lift, rather than by tram. */
+  let byLift = false;
+  let liftTrip: LiftTrip | null = null;
+  let welcomed = false;
+  /** A finale client walking back to the lift, and riding it up to the party. */
+  let back: { v: Visitor; route: Pt[]; trip: LiftTrip | null } | null = null;
   const greet = (text: string): void => {
     greeter.bubble.say(text);
     greeterSays = 3.4;
@@ -646,11 +697,12 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
     v.ch.setWalking(on);
     v.companion?.ch.setWalking(on);
   };
-  const walk = (v: Visitor, dt: number): boolean => {
+  /** Walks the visitor (and their companion) along `path`; true once they are there. */
+  const walkPath = (v: Visitor, path: Pt[], speed: number, dt: number): boolean => {
     const node = v.ch.root;
-    let step = WALK_SPEED * dt;
-    while (step > 0 && route.length) {
-      const [tx, tz] = route[0];
+    let step = speed * dt;
+    while (step > 0 && path.length) {
+      const [tx, tz] = path[0];
       const ddx = tx - node.position.x;
       const ddz = tz - node.position.z;
       const dist = Math.hypot(ddx, ddz);
@@ -658,7 +710,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
         node.position.x = tx;
         node.position.z = tz;
         step -= dist;
-        route.shift();
+        path.shift();
       } else {
         node.position.x += (ddx / dist) * step;
         node.position.z += (ddz / dist) * step;
@@ -669,20 +721,43 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
     // Up on the platform, or down on the footpath.
     node.position.y = node.position.z < KERB_Z ? PLATFORM_Y : y;
     followCompanion(v);
-    return route.length === 0;
+    return path.length === 0;
+  };
+  const walk = (v: Visitor, dt: number): boolean => walkPath(v, route, byLift ? LIFT_PACE : WALK_SPEED, dt);
+  /** The visitor and their companion, as riders for the glass lift. */
+  const ridersOf = (v: Visitor): LiftRider[] => [
+    { node: v.ch.root, ch: v.ch, name: v.name, bubble: v.bubble },
+    ...(v.companion ? [{ node: v.companion.ch.root, ch: v.companion.ch, name: v.companion.info.name, bubble: v.companion.bubble }] : []),
+  ];
+  /** Back from the lift (or anywhere) into the front desk's own space. */
+  const home = (v: Visitor): void => {
+    for (const n of [v.ch.root, v.companion?.ch.root]) if (n && n.parent !== root) n.parent = root;
+  };
+  const hideVisitor = (v: Visitor): void => {
+    setWalking(v, false);
+    showVisitor(v, false);
+    v.bubble.hide();
+    v.companion?.bubble.hide();
+    home(v);
+  };
+  /** Drops a finale client who was heading back up: straight back to their table. */
+  const dropBack = (): void => {
+    if (!back) return;
+    if (back.trip) lift.cancel(back.trip);
+    hideVisitor(back.v);
+    if (back.v.scenario) hooks.backToParty(back.v.scenario);
+    back = null;
   };
 
   const reset = (): void => {
     if (agentOut) hooks.releaseAgent();
     agentOut = false;
     releaseIn = -1;
-    if (current) {
-      setWalking(current, false);
-      showVisitor(current, false);
-      current.bubble.hide();
-      current.companion?.bubble.hide();
-    }
+    if (liftTrip) lift.cancel(liftTrip);
+    liftTrip = null;
+    if (current) hideVisitor(current);
     current = null;
+    byLift = false;
     doc.setEnabled(false);
     pen.setEnabled(false);
     beam.setEnabled(false);
@@ -710,6 +785,69 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
     // The finale's client is expected: the agent heads out while the tram is still on its way.
     if (scripted) callAgent();
   };
+  /** The finale's client comes down from the party on the roof in the glass lift, already aboard. */
+  const beginByLift = (v: Visitor): void => {
+    current = v;
+    rushed = false;
+    byLift = true;
+    welcomed = false;
+    showVisitor(v, true);
+    setWalking(v, false);
+    paintDoc(v.doc, v.side, false);
+    phase = "riding-down";
+    callAgent();
+    lift.flush();
+    // Already in the car on the roof, with its doors open.
+    v.ch.root.position.set(LIFT.x, LIFT_FLOOR.roof, (LIFT.z0 + LIFT.z1) / 2);
+    followCompanion(v);
+    liftTrip = {
+      from: "roof",
+      aboard: true,
+      first: true,
+      riders: ridersOf(v),
+      say: v.companion ? "Down to the front desk!" : "Off to the front desk!",
+      speed: () => timeScale.value,
+      done: () => {
+        liftTrip = null;
+        home(v);
+        route = [...FROM_LIFT];
+        setWalking(v, true);
+        greet("Welcome to Life Advice Guru!");
+        phase = "walking-in";
+      },
+    };
+    lift.call(liftTrip);
+  };
+  /** After the finale, a client who came down from the party walks back to the lift and rides up. */
+  const returnUp = (v: Visitor): void => {
+    back = { v, route: [...UNDER].reverse().concat([[LIFT.x + 2.6, LIFT.z0 - 1.6], lift.waitAt("street", 0)]), trip: null };
+    setWalking(v, true);
+    v.bubble.say("Back to the party!");
+  };
+  /** Steps the walk back to the lift and the ride up. */
+  const stepBack = (dt: number): void => {
+    const b = back;
+    if (!b || b.trip) return;
+    b.v.ch.update(dt);
+    b.v.companion?.ch.update(dt);
+    if (!walkPath(b.v, b.route, LIFT_PACE, dt)) return;
+    setWalking(b.v, false);
+    b.v.bubble.hide();
+    b.v.ch.root.rotation.y = lift.waitFace("street");
+    followCompanion(b.v);
+    b.trip = {
+      from: "street",
+      riders: ridersOf(b.v),
+      say: "Up to the party!",
+      done: () => {
+        const at = ridersOf(b.v).map((r) => [r.node.position.x, r.node.position.z] as const);
+        hideVisitor(b.v);
+        if (b.v.scenario) hooks.backToParty(b.v.scenario, at);
+        if (back === b) back = null;
+      },
+    };
+    lift.call(b.trip);
+  };
   const startSigning = (v: Visitor, time: number): void => {
     setWalking(v, false);
     v.ch.root.rotation.y = 0;
@@ -728,6 +866,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   const step = (dt: number): void => {
     clock += dt;
     updateTram(dt);
+    stepBack(dt);
     greeter.ch.update(dt);
     const greeterFace = phase === "riding-in" || phase === "stepping-off" ? GREETER_FACE : GREETER_FACE + Math.sin(clock * 0.5) * 0.25;
     greeter.ch.root.rotation.y += (greeterFace - greeter.ch.root.rotation.y) * Math.min(1, dt * 3);
@@ -790,9 +929,12 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
             showVisitor(v, true);
             followCompanion(v);
             phase = "stepping-off";
-            greet("Welcome to Caldova!");
+            greet("Welcome to Life Advice Guru!");
           }
         }
+        return;
+      case "riding-down":
+        // The glass lift brings them down; its trip moves them on to "walking-in".
         return;
       case "stepping-off": {
         if (!v) return;
@@ -810,7 +952,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
           advise(v.welcome, 3.6);
           callAgent();
           // The tram moves on once they are clear of the doors.
-          runTram(TRAM_TO);
+          leave();
           phase = "walking-in";
         }
         return;
@@ -819,6 +961,12 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
         if (!v) return;
         v.ch.update(dt);
         v.companion?.ch.update(dt);
+        // Down from the party: Amelia welcomes them once they are on their way across the forecourt.
+        if (byLift && !welcomed && v.ch.root.position.x > LIFT.x + 10) {
+          welcomed = true;
+          greeter.bubble.hide();
+          advise(v.welcome, 3.6);
+        }
         if (walk(v, dt)) startSigning(v, 3.3);
         return;
       case "signing": {
@@ -903,7 +1051,7 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
         followCompanion(v);
         if (hop >= 1) {
           showVisitor(v, false);
-          runTram(TRAM_TO);
+          leave();
           phase = "riding-out";
         }
         return;
@@ -920,6 +1068,18 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
   return {
     root,
     anchors,
+    tramStop: {
+      get standing(): boolean {
+        return tramAtStop();
+      },
+      get open(): boolean {
+        return tramAtStop() && tram.open > 0.85;
+      },
+      hold(key: string, on: boolean): void {
+        if (on && !holds.has(key)) holds.set(key, clock);
+        else if (!on) holds.delete(key);
+      },
+    },
     get signed(): boolean {
       return signedFlag;
     },
@@ -934,22 +1094,32 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
       step(scripted ? dt * timeScale.value : dt);
     },
     arrive(id: ScenarioId): void {
+      dropBack();
       reset();
       scripted = true;
       signedFlag = false;
       timeScale.value = 1;
-      const v = ARRIVALS[id].visitor === "impostor" ? impostor : clients.get(id);
-      if (v) begin(v, SCRIPTED_FROM);
+      const arrival = ARRIVALS[id];
+      const v = arrival.visitor === "impostor" ? impostor : clients.get(id);
+      if (!v) return;
+      if (arrival.by === "lift") {
+        // No tram for this one: the stop stays quiet while they come down from the party.
+        showTram(false);
+        beginByLift(v);
+      } else begin(v, SCRIPTED_FROM);
     },
     fastForward(): void {
       const v = current;
       if (!v || !scripted) return;
+      if (phase === "riding-down") lift.flush();
       if (phase === "riding-in" || phase === "stepping-off" || phase === "walking-in") {
-        tram.x = TRAM_STOP_X;
-        tram.v = 0;
-        runTram(TRAM_TO);
+        if (!byLift) {
+          tram.x = TRAM_STOP_X;
+          tram.v = 0;
+          runTram(TRAM_TO);
+        }
         route = [];
-        const [sx, sz] = WALK_IN[WALK_IN.length - 1];
+        const [sx, sz] = SIGN_AT;
         v.ch.root.position.set(sx, y, sz);
         showVisitor(v, true);
         callAgent();
@@ -960,13 +1130,23 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
         wait = Math.min(wait, 0.5);
       }
     },
-    ambient(): void {
-      if (!scripted) return;
+    ambient(): ScenarioId | null {
+      if (!scripted) return null;
+      const v = current;
+      // A client who came down from the party, and has made it to the street, goes back up the same way.
+      const goingBack = byLift && v?.scenario && phase !== "riding-down" ? v : null;
+      if (goingBack) {
+        current = null;
+        liftTrip = null;
+      }
       reset();
       showTram(false);
       scripted = false;
       signedFlag = false;
       wait = 4;
+      if (!goingBack?.scenario) return null;
+      returnUp(goingBack);
+      return goingBack.scenario;
     },
     setActive(on: boolean): void {
       active = on;
@@ -996,6 +1176,8 @@ export function buildFrontDesk(kit: Kit, street: TransformNode, hooks: FrontDesk
         case "riding-in":
         case "stepping-off":
           return "Watching for the tram";
+        case "riding-down":
+          return `Watching for ${who} to come down from the party`;
         case "walking-in":
           return `Welcoming ${who}`;
         case "signing":

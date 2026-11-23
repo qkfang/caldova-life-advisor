@@ -1,10 +1,10 @@
 using System.Text;
 using OpenAI.Responses;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Mcp;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Mcp;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>Claim details confirmed on step 2 of the Claims page. Any field left null falls back to the case.</summary>
 record ClaimsProcessRequest(
@@ -45,7 +45,7 @@ public static class ClaimsApi
     public static void MapClaimsEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         // Always registered: TeamsMcpTools simulates delivery so the claim
@@ -65,7 +65,7 @@ public static class ClaimsApi
             try
             {
                 claimsMcpTool = ResponseTool.CreateMcpTool(
-                    serverLabel: CaldovaAgent.DefaultMcpServerLabel,
+                    serverLabel: GuruAgent.DefaultMcpServerLabel,
                     serverUri: new Uri($"{configuredMcpUrl.TrimEnd('/')}/mcp"),
                     toolCallApprovalPolicy: new McpToolCallApprovalPolicy(GlobalMcpToolCallApprovalPolicy.AlwaysRequireApproval));
             }
@@ -82,7 +82,7 @@ public static class ClaimsApi
         List<ResponseTool>? BuildExtraTools() =>
             claimsMcpTool is null ? null : new List<ResponseTool> { claimsMcpTool };
 
-        CaldovaAgent? TryCreateAgent(out string? error)
+        GuruAgent? TryCreateAgent(out string? error)
         {
             error = null;
             if (!factory.IsConfigured) return null;
@@ -1315,7 +1315,7 @@ public static class ClaimsApi
             "Under the Life Insurance Code of Practice, it decides within 6 months.");
         sb.AppendLine();
         sb.AppendLine(p.ProfileId == "death-claim-robert"
-            ? "Please take all the time you need. Amelia is your one contact at Caldova, and she's here whenever you're ready — about anything at all."
+            ? "Please take all the time you need. Amelia is your one contact at Life Advice Guru, and she's here whenever you're ready — about anything at all."
             : "Please take all the time you need. If you'd rather talk, just call us.");
         sb.AppendLine($"If you're ever unhappy with how the claim is handled, you can complain to {p.Insurer}, and then to the Australian Financial Complaints Authority (AFCA).");
         sb.AppendLine();
@@ -1363,7 +1363,7 @@ public static class ClaimsApi
         if (!string.IsNullOrWhiteSpace(p.ReferralNextStep))
             sb.AppendLine($"- **Next step:** {Md(p.ReferralNextStep)}");
         sb.AppendLine();
-        sb.AppendLine("Ben — Benefit Claims Advocate, Caldova Life Advice");
+        sb.AppendLine("Ben — Benefit Claims Advocate, Life Advice Guru");
         return sb.ToString();
     }
 
@@ -1376,14 +1376,14 @@ public static class ClaimsApi
             sb.AppendLine($"- **Why:** {Md(reason)}");
         sb.AppendLine($"- **Next step:** Ben confirms the details with Amelia and the client. Nothing goes to {run.Profile.Insurer} until then.");
         sb.AppendLine();
-        sb.AppendLine("Ben — Benefit Claims Advocate, Caldova Life Advice");
+        sb.AppendLine("Ben — Benefit Claims Advocate, Life Advice Guru");
         return sb.ToString();
     }
 
     private static void AppendSignOff(StringBuilder sb, string closing, string? footer)
     {
         sb.AppendLine(closing);
-        sb.AppendLine("Ben — Benefit Claims Advocate, Caldova Life Advice");
+        sb.AppendLine("Ben — Benefit Claims Advocate, Life Advice Guru");
         if (footer is not null)
         {
             sb.AppendLine();

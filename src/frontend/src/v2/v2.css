@@ -1,4 +1,4 @@
-/* v2 - Caldova House storybook (see docs/storybook.md). Keep this file ASCII-only. */
+/* v2 - Guru House storybook (see docs/storybook.md). Keep this file ASCII-only. */
 :root {
   --panel: rgba(12, 19, 34, 0.82);
   --panel-strong: rgba(9, 15, 28, 0.92);
@@ -165,6 +165,57 @@ body[data-page="finale"] .v2-sky::after {
   font-size: 12px;
   color: rgba(243, 246, 251, 0.88);
 }
+.v2-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------------- Shrink and expand: each panel's button, and one for them all ---------------- */
+.panel-toggle,
+.v2-shrink-all {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  font: 700 18px/1 var(--sans);
+}
+.panel-toggle {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+.panel-toggle:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.14);
+}
+.v2-shrink-all {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  color: var(--gold);
+  font-size: 22px;
+}
+.v2-shrink-all:hover {
+  background: #17243f;
+  border-color: rgba(255, 195, 90, 0.45);
+}
+.panel-toggle:focus-visible,
+.v2-shrink-all:focus-visible,
+.insp-close:focus-visible,
+.v2-brand:focus-visible,
+.v2-pill:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
 
 /* ---------------- Cover ---------------- */
 .v2-cover {
@@ -177,6 +228,7 @@ body[data-page="finale"] .v2-sky::after {
   animation: rise 0.6s ease both;
 }
 .cover-card {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
   border-top: 3px solid var(--gold);
@@ -184,6 +236,30 @@ body[data-page="finale"] .v2-sky::after {
   padding: 26px 28px 22px;
   backdrop-filter: blur(12px);
   box-shadow: 0 24px 60px rgba(9, 15, 28, 0.35);
+}
+.cover-card > .panel-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+/* Shrunk: just the kicker and the name, where the card's top edge was. */
+.v2-cover.shrunk {
+  width: auto;
+  animation: none;
+}
+.v2-cover.shrunk .cover-card {
+  padding: 10px 54px 10px 18px;
+}
+.v2-cover.shrunk .cover-card > :not(.cover-kicker):not(h1):not(.panel-toggle) {
+  display: none;
+}
+.v2-cover.shrunk .cover-card > .panel-toggle {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.v2-cover.shrunk .cover-card h1 {
+  font-size: 24px;
+  margin: 2px 0 0;
 }
 .cover-kicker {
   font-size: 12px;
@@ -322,20 +398,40 @@ body.inspecting .v2-page .pc-hint {
   font-size: 24px;
   line-height: 1.1;
 }
-.pc-collapse {
+.pc-head > .panel-toggle {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  width: 28px;
-  height: 28px;
-  font-size: 18px;
-  cursor: pointer;
 }
-.pc-collapse:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.12);
+/* Shrunk: a bar with the floor and the page's title, still at the bottom left. */
+.v2-page.shrunk {
+  width: auto;
+  max-width: calc(100vw - 280px);
+  padding: 8px 10px 8px 8px;
+  overflow: hidden;
+  animation: none;
+}
+.v2-page.shrunk .pc-body,
+.v2-page.shrunk .pc-trace,
+.v2-page.shrunk .pc-hint,
+.v2-page.shrunk .pc-nav,
+.v2-page.shrunk .pc-kicker {
+  display: none;
+}
+.v2-page.shrunk .pc-head {
+  gap: 10px;
+}
+.v2-page.shrunk .pc-head > .panel-toggle {
+  align-self: center;
+}
+.v2-page.shrunk .pc-floor {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.v2-page.shrunk .pc-titles h2 {
+  margin: 0;
+  font-size: 19px;
+  white-space: nowrap;
 }
 .pc-body p {
   margin: 8px 0 0;
@@ -553,6 +649,23 @@ body.inspecting .v2-page .pc-hint {
   color: #101827;
   box-shadow: 0 0 14px color-mix(in srgb, var(--c) 70%, transparent);
 }
+.v2-lift > .panel-toggle {
+  align-self: center;
+  width: 30px;
+  height: 22px;
+  font-size: 16px;
+}
+/* Shrunk: just the floor display, where the panel's top edge was. */
+.v2-lift.shrunk {
+  padding: 8px;
+}
+.v2-lift.shrunk .lift-btn {
+  display: none;
+}
+.v2-lift.shrunk .lift-display {
+  margin-bottom: 0;
+  padding: 0 10px;
+}
 
 /* ---------------- Arrows: slide the view left or right ---------------- */
 .v2-pan {
@@ -639,11 +752,50 @@ body.inspecting .v2-page .pc-hint {
 .insp-close:hover {
   color: var(--text);
 }
+.v2-inspector > .panel-toggle {
+  position: absolute;
+  top: 10px;
+  right: 44px;
+}
 .insp-head {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding-right: 28px;
+  padding-right: 64px;
+}
+/* Shrunk: the name and role, still at the top right. */
+.v2-inspector.shrunk {
+  width: auto;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  overflow: hidden;
+}
+.v2-inspector.shrunk .insp-body > :not(.insp-head),
+.v2-inspector.shrunk .insp-actions,
+.v2-inspector.shrunk .insp-level,
+.v2-inspector.shrunk .insp-open {
+  display: none;
+}
+.v2-inspector.shrunk .insp-head {
+  gap: 10px;
+  padding-right: 66px;
+}
+.v2-inspector.shrunk .insp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+.v2-inspector.shrunk .insp-head h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.v2-inspector.shrunk .insp-role {
+  margin-top: 0;
+}
+.v2-inspector.shrunk > .panel-toggle,
+.v2-inspector.shrunk > .insp-close {
+  top: 50%;
+  transform: translateY(-50%);
 }
 .insp-avatar {
   flex: none;

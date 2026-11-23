@@ -1,9 +1,9 @@
 # Advice Team in a Day — Frontend (`src/frontend`)
 
-The frontend for **Caldova Life Advice**, a fictional Melbourne life insurance advice practice.
-It is a voxel storybook, **Caldova House**, that you read from the top of the house to the
-bottom. Caldova House is a bank built in 1889 on a Melbourne city corner, with a super modern,
-futuristic office inside. Caldova is an advice practice for the agentic era with two sides,
+The frontend for **Life Advice Guru**, a fictional Melbourne life insurance advice practice.
+It is a voxel storybook, **Guru House**, that you read from the top of the house to the
+bottom. Guru House is a bank built in 1889 on a Melbourne city corner, with a super modern,
+futuristic office inside. Life Advice Guru is an advice practice for the agentic era with two sides,
 Protection Advice and Claims & Care:
 
 - **Level 3 · The Idea** is business owner Maya Ashworth's office under the copper dome, with her
@@ -19,11 +19,13 @@ Protection Advice and Claims & Care:
 
 The front of the house is cut away, dollhouse style, so every floor reads from the street.
 People and agents walk about their floors on errands, with a speech bubble saying what each is
-doing. Out front, clients arrive by tram and sign at the front desk under the cast-iron verandah,
-where Amelia, Caldova's adviser, links them with the agents that get them started. Up on the roof
-Caldova throws a party for its clients under a big CALDOVA LIFE ADVICE sign. Each chapter lifts
-the levels above it out of the way. Clicking anything follows its thread up or down the house.
-The finale starts at the front desk with the client signing, then pulls the house apart and traces
+doing. The house is set back behind its own forecourt. Out front, clients arrive by tram at the
+tram stop on its own platform and sign at the front desk under the cast-iron verandah, where
+Amelia, Life Advice Guru's adviser, links them with the agents that get them started. Up on the
+roof Life Advice Guru throws a party for its clients under a big LIFE ADVICE GURU sign, and the
+guests come and go by tram and the glass lift on the front-left corner. Each chapter lifts the
+levels above it out of the way. Clicking anything follows its thread up or down the house. The
+finale starts at the front desk with the client signing, then pulls the house apart and traces
 one of the five scenarios from top to bottom. The story, the cast, the controls and every page
 are in [docs/storybook.md](../../docs/storybook.md).
 
@@ -31,7 +33,9 @@ are in [docs/storybook.md](../../docs/storybook.md).
 
 - [Babylon.js](https://www.babylonjs.com/) (`@babylonjs/core`) for 3D rendering
 - [Vite](https://vitejs.dev/) + TypeScript for the dev server and build
-- A plain-CSS overlay for the storybook card, lift panel, view arrows, inspector and trace panel
+- A plain-CSS overlay for the storybook card, lift panel, view arrows, inspector and trace panel.
+  Each panel has a − / + that shrinks it to a bar, and the − / + beside the brand bar shrinks or
+  expands them all.
 
 The house, the city block, the tram, characters and props are built at runtime from
 `MeshBuilder` boxes (plus a few lathes and cylinders for the dome and columns), so there are no
@@ -97,7 +101,8 @@ November 2026):
 | 4 | Tom Bradley | Income protection claim — $7,000 a month insured | `REQ-20261111-LIF004` | Olivia → Ben → Felix → Theo → Ben → Cara | Partially approved — accepted at $5,600 a month |
 | 5 | Robert Chen | Death claim — his wife Mei's $1,000,000 life cover | `REQ-20261113-LIF005` | Olivia → Theo → Felix → Ben → Cara | Completed — $1,000,000 paid to Robert on 23 Nov 2026 |
 
-The client arrives by tram and signs at the front desk. The request then sets off: each step
+The client arrives by tram, or rides the glass lift down from the party on the roof (Priya, and
+George with Harpreet), and signs at the front desk. The request then sets off: each step
 starts with a person on Level 2, dips down to their agent on Level 1 and the engine-room
 component that agent leans on, then comes back up for the human decision. The result rises to
 the brain on Level 3, where Maya's idea is measured.
@@ -124,11 +129,11 @@ and visitors, the party, Microsoft IQ and the Azure components) lives in `src/v2
 
 ```
 src/frontend
-├── index.html                  # Page shell: canvas, storybook HUD, lift panel and view arrows
+├── index.html                  # Page shell: canvas, brand bar with the shrink-all button, storybook HUD, lift panel and view arrows
 ├── package.json                # Vite + Babylon dependencies
 ├── tsconfig.json
 ├── vite.config.ts              # Single page; dev server on port 5173
-├── public/                     # favicon.svg / favicon.png (Caldova "C")
+├── public/                     # favicon.svg / favicon.png (Life Advice Guru "G")
 └── src
     ├── personaData.ts          # Single source of truth for staff and client personas
     ├── agentStages.ts          # Each agent's specialised assistants, and the backend base URL
@@ -137,24 +142,26 @@ src/frontend
     ├── voxelCharacter.ts       # Box-built voxel humanoid + walk animation
     ├── cameraDirector.ts       # Eased camera moves for page turns and selections
     ├── scenarios/              # Scenario JSON (family, fraud, business, income, bereavement)
-    └── v2/                     # The Caldova House storybook (docs/storybook.md)
+    └── v2/                     # The Guru House storybook (docs/storybook.md)
         ├── main.ts             # Bootstrap, camera, picking, selection threads, page wiring
         ├── storyData.ts        # Storybook pages: text, camera shots, stack modes
         ├── houseData.ts        # The two sides, the business owner, the idea, agent sides and roles, handoffs, the front desk, Amelia, arrivals and visitors, the party, Microsoft IQ and Azure components
-        ├── storybook.ts        # Cover, page card, lift panel, view arrows, inspector, trace panel, keyboard
-        ├── inspector.ts        # Card content for the owner, brain, people, agents, roles, components, the front desk, Amelia, visitors and the party
+        ├── storybook.ts        # Cover, page card, lift panel, view arrows, inspector, trace panel, keyboard, and each panel's − / + shrink state
+        ├── inspector.ts        # Card content for the owner, brain, people, agents, roles, components, the front desk, Amelia, visitors, the party and the glass lift
         ├── levelStack.ts       # House / focus / exploded arrangements of the levels
         ├── threads.ts          # Lines between levels: the finale's tree, the selection's beams, and Amelia's live links
         ├── callouts.ts         # Labels on the far ends of the selection's beams
         ├── requestTrace.ts     # Finale: a scenario's request, from the front desk through the house
         ├── wander.ts           # Walking: errands for people, Maya and the agents' roles, with speech bubbles
-        ├── street.ts           # The city block: street, tram stop, laneway, café, park, towers, trees, lamps, clouds, drone
-        ├── frontDesk.ts        # The front desk: verandah, greeter, Amelia, the tram and the visitors who sign there
-        ├── party.ts            # The roof: the clients' party, the CALDOVA LIFE ADVICE sign, DJ, toasts and fireworks
+        ├── street.ts           # The city block: forecourt, street, tram stop, laneway, café, park, towers, trees, lamps, clouds, drone
+        ├── frontDesk.ts        # The front desk: verandah, greeter, Amelia, the tram and the visitors who sign there (by tram, or down the glass lift in the finale)
+        ├── lift.ts             # The glass lift on the front-left corner: frame, car, doors, ROOF PARTY sign and its rides
+        ├── party.ts            # The roof: the clients' party, the LIFE ADVICE GURU sign, DJ, toasts and fireworks
+        ├── partyTrips.ts       # Party guests who come and go by tram and the glass lift
         ├── heritage.ts         # Heritage pieces: brick, render, bluestone, arched windows, cornices, balustrades, cast-iron lace
         ├── shell.ts            # Each floor's slab, brick walls, facades, rails, brass lift doors and level tag
         ├── kit.ts              # Voxel kit: materials, textures, blocks, labels, batching
-        ├── layout.ts           # World layout: floor heights, footprint, desk/bay stations, wings, zones, dome, street and front desk
+        ├── layout.ts           # World layout: floor heights, footprint, desk/bay stations, wings, zones, dome, forecourt, street, tram stop, glass lift and front desk
         ├── types.ts
         ├── v2.css              # Storybook HUD styling
         └── levels/             # ideaLevel (+ dome and roof), peopleLevel, agentsLevel, engineLevel

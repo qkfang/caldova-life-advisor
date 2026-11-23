@@ -5,13 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-    <RootNamespace>CaldovaLife.App</RootNamespace>
-    <AssemblyName>cl-backend</AssemblyName>
+    <RootNamespace>LifeAdviceGuru.App</RootNamespace>
+    <AssemblyName>guru-backend</AssemblyName>
     <NoWarn>$(NoWarn);OPENAI001;SCME0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\agent\cl-agent.csproj" />
+    <ProjectReference Include="..\agent\guru-agent.csproj" />
   </ItemGroup>
 
   <ItemGroup>

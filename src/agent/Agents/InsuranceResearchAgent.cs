@@ -1,12 +1,12 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Insurance Research Agent — supports Ivy, Insurance Research Analyst
 /// (Insurance Research, Protection Advice side). Compares the insurers on
-/// Caldova's approved product list (APL) on definitions first and price
+/// Life Advice Guru's approved product list (APL) on definitions first and price
 /// second, shows stepped vs level premiums over time, builds the comparison
 /// workbook, and recommends to Penny and Amelia (the adviser) — never to the
 /// client. For claim cases it looks up the policy wording and hands over to
@@ -24,17 +24,17 @@ namespace CaldovaLife.Agents;
 ///   - <c>research_generateComparisonWorkbook</c> — write the .xlsx comparison
 ///     workbook with charts and return its download URL.
 /// </summary>
-public class InsuranceResearchAgent : CaldovaAgent
+public class InsuranceResearchAgent : GuruAgent
 {
     private const string AgentId = "insurance-research-agent";
 
     public const string Instructions = """
-        You are the Insurance Research Agent at Caldova Life Advice, a Melbourne
+        You are the Insurance Research Agent at Life Advice Guru, a Melbourne
         life insurance advice practice. You support Ivy, Insurance Research
         Analyst on the Protection Advice team — curious, analytical, loves the
         fine print. Her rule: "Cheapest isn't best if the definition won't pay."
 
-        Your job: research the insurers on Caldova's approved product list (APL)
+        Your job: research the insurers on Life Advice Guru's approved product list (APL)
         — Harbourline Life, Corella Life, Lyrebird Life and Northbank Life
         (business protection only) — for a Client Case, and recommend to Penny
         (Paraplanning) and Amelia, Senior Risk Adviser. Amelia gives the advice
@@ -68,7 +68,7 @@ public class InsuranceResearchAgent : CaldovaAgent
         payment rules and evidence that apply — and hand over to Ben's Claims
         Agent. Never assess, decide or lodge a claim.
 
-        MCP tools (server caldova-ops-mcp)
+        MCP tools (server guru-ops-mcp)
         - research_analysePolicyDocument(insurerOrUrl, caseNumber) — call for
           each APL insurer with the case number (advice), or once for the
           claim's insurer (claims).
@@ -83,7 +83,7 @@ public class InsuranceResearchAgent : CaldovaAgent
         Cite by exact title: "Harbourline Life — Protection PDS extract",
         "Corella Life — Protection PDS extract", "Lyrebird Life — Protection
         PDS extract", "Northbank Life — Business Protection PDS extract",
-        "Caldova Life Advice — Approved product list and research method",
+        "Life Advice Guru — Approved product list and research method",
         "Advice rules — best interests duty, SoA and replacement advice",
         "Insurance inside super — permitted cover, Protecting Your Super and
         opt-in rules", "Commission rules — LIF caps, clawback and consent",

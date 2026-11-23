@@ -1,9 +1,9 @@
 using System.Text;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Models;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Models;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record OnboardingProcessRequest(string SampleId);
 
@@ -42,7 +42,7 @@ public record OnboardingRoute(string AgentId, string Reason, bool Primary);
 ///
 /// 1. List the five sample inbound requests (a referral email, an urgent
 ///    claim email, a call note or a death notification, each with its
-///    attachment and what Caldova already holds on file) from
+///    attachment and what Life Advice Guru already holds on file) from
 ///    <see cref="RequestSampleCatalog"/>.
 /// 2. Run a sample through the <see cref="OnboardingAgent"/> to produce the
 ///    Client Case fields, the fact find, the in-good-order checklist, the
@@ -65,7 +65,7 @@ public static class OnboardingApi
     public static void MapOnboardingEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         // Sample listing — the email body and attachment text are only
@@ -303,7 +303,7 @@ public static class OnboardingApi
     /// is logged and returned as an error so the stream still completes with
     /// the offline extraction.
     /// </summary>
-    private static (CaldovaAgent? Agent, string? Error) TryCreateAgent(CaldovaAgentFactory factory, ILogger logger)
+    private static (GuruAgent? Agent, string? Error) TryCreateAgent(GuruAgentFactory factory, ILogger logger)
     {
         if (!factory.IsConfigured) return (null, null);
         try
@@ -426,11 +426,11 @@ public static class OnboardingApi
 
     /// <summary>
     /// Prompt sent to the Onboarding Agent: the inbound email or call note,
-    /// the already-text-extracted attachment and what Caldova holds on file,
+    /// the already-text-extracted attachment and what Life Advice Guru holds on file,
     /// plus the Client Case fields and request types it should use.
     /// </summary>
     private static string BuildPrompt(RequestSample sample) =>
-        "INBOUND REQUEST — CALDOVA LIFE ADVICE\n" +
+        "INBOUND REQUEST — LIFE ADVICE GURU\n" +
         "=====================================\n" +
         $"From: {sample.EmailFrom}\n" +
         $"Date: {sample.EmailDate}\n" +
@@ -439,7 +439,7 @@ public static class OnboardingApi
         $"\n\nATTACHMENT ({sample.FormFileName})\n" +
         "=====================================\n" +
         sample.FormDocumentText +
-        "\n\nWHAT CALDOVA HOLDS ON FILE\n" +
+        "\n\nWHAT LIFE ADVICE GURU HOLDS ON FILE\n" +
         "=====================================\n" +
         sample.ClientFile +
         "\n\n" +
@@ -506,7 +506,7 @@ public static class OnboardingApi
         else if (sample.RequestType == RequestTypes.TraumaClaimBankChange)
             sb.AppendLine($"- Still to resolve: {string.Join("; ", outstanding)}. Don't reply to the request — Financial Crime and Theo decide first, and only the verified contact details are used.");
         else
-            sb.AppendLine($"- Still to resolve: {string.Join("; ", outstanding)}. Nothing is rejected — Caldova says exactly what's missing within 1 business day and keeps everything else moving.");
+            sb.AppendLine($"- Still to resolve: {string.Join("; ", outstanding)}. Nothing is rejected — Life Advice Guru says exactly what's missing within 1 business day and keeps everything else moving.");
         sb.Append("- Olivia confirms the Client Case before it opens. The agent gathers and checks — Amelia gives the advice, and people approve every decision that matters.");
         return sb.ToString();
     }

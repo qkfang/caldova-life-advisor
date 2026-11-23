@@ -4,9 +4,9 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ModelContextProtocol.Server;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Mcp;
+namespace LifeAdviceGuru.App.Mcp;
 
 /// <summary>
 /// MCP tools that back the Underwriting Agent (Uma, Underwriting
@@ -42,7 +42,7 @@ public class UnderwritingMcpTools
     }
 
     [McpServerTool(Name = "underwriting_lookupInsurer"),
-     Description("Look up an insurer on Caldova Life Advice's approved product list (APL): Harbourline Life (HL-), Corella Life (CR-), Lyrebird Life (LB-) and Northbank Life (NB-). Returns each match's profile and strengths, new business, underwriting and claims contacts, service levels, how it underwrites, its evidence thresholds by age and sum insured, its cooling-off offer and notes. Call it first to identify the insurer for the application.")]
+     Description("Look up an insurer on Life Advice Guru's approved product list (APL): Harbourline Life (HL-), Corella Life (CR-), Lyrebird Life (LB-) and Northbank Life (NB-). Returns each match's profile and strengths, new business, underwriting and claims contacts, service levels, how it underwrites, its evidence thresholds by age and sum insured, its cooling-off offer and notes. Call it first to identify the insurer for the application.")]
     public string LookupInsurer(
         [Description("Insurer name, policy prefix (HL, CR, LB, NB), a policy number such as 'CR-26118204', or a keyword such as 'business protection', 'income protection' or 'trauma'. Use 'all' to list the whole APL.")]
         string query) => Serialize(LookupInsurerResult(query));
@@ -55,7 +55,7 @@ public class UnderwritingMcpTools
             query = query ?? string.Empty,
             count = insurers.Count,
             insurers = insurers.Select(InsurerDirectory.ToView),
-            note = insurers.Count == 0 ? "No insurer on Caldova's APL matches — only the four APL insurers can be recommended." : null
+            note = insurers.Count == 0 ? "No insurer on Life Advice Guru's APL matches — only the four APL insurers can be recommended." : null
         };
     }
 
@@ -80,14 +80,14 @@ public class UnderwritingMcpTools
     {
         var entry = InsurerDirectory.Find(insurer);
         if (entry is null)
-            return new { error = $"'{insurer}' isn't on Caldova's approved product list. Use Harbourline Life, Corella Life, Lyrebird Life or Northbank Life." };
+            return new { error = $"'{insurer}' isn't on Life Advice Guru's approved product list. Use Harbourline Life, Corella Life, Lyrebird Life or Northbank Life." };
         if (age is < 18 or > 70)
             return new { error = $"Age {age} is outside the 18–70 range the APL insurers accept for new cover." };
         return InsurerDirectory.CheckRequirements(entry, age, life, tpd, trauma, ipMonthly, businessCover, selfEmployed, lifeInsured);
     }
 
     [McpServerTool(Name = "underwriting_generateApplicationSummaryPdf"),
-     Description("Generate the Caldova Life Advice 'Application and disclosure summary' PDF for a Client Case: the client, the insurer, every cover with its sum insured, ownership, premium and terms, a summary of the disclosures (without health detail), the underwriting requirements and their status, and the duty-to-take-reasonable-care acknowledgement. Built from the case's application on file; optional arguments override the status line and add notes. Returns JSON with a downloadUrl to include in your reply.")]
+     Description("Generate the Life Advice Guru 'Application and disclosure summary' PDF for a Client Case: the client, the insurer, every cover with its sum insured, ownership, premium and terms, a summary of the disclosures (without health detail), the underwriting requirements and their status, and the duty-to-take-reasonable-care acknowledgement. Built from the case's application on file; optional arguments override the status line and add notes. Returns JSON with a downloadUrl to include in your reply.")]
     public string GenerateApplicationSummaryPdf(
         [Description("Client Case number, e.g. REQ-20261103-LIF001.")] string caseNumber,
         [Description("Optional status line for the banner, e.g. 'LODGED — AWAITING TELE-INTERVIEW' or 'ACCEPTED — POLICY CR-26118204 IN FORCE FROM WED 18 NOV 2026'. Taken from the application on file when omitted.")]

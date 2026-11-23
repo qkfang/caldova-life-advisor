@@ -1,5 +1,5 @@
 /**
- * "Caldova House", the storybook served at / (see docs/storybook.md).
+ * "Guru House", the storybook served at / (see docs/storybook.md).
  *
  * A bank built in 1889 on a Melbourne city corner, with a futuristic office
  * inside, for a life insurance advice practice with two sides, read from the
@@ -13,7 +13,7 @@
  * The front of the house is cut away, dollhouse style. The storybook pages
  * open one level at a time (the levels above lift away). Out front, visitors
  * arrive by tram and sign at the front desk under the verandah, where Amelia,
- * Caldova's adviser, links them with the agents that get them started. The
+ * Life Advice Guru's adviser, links them with the agents that get them started. The
  * finale starts there: the client signs, then the house pulls apart to trace
  * their request from the top of the house to the bottom and back.
  */
@@ -40,6 +40,7 @@ import { Kit } from "./kit";
 import {
   ADVISER,
   AGENTS,
+  ARRIVALS,
   DESK_ROLE,
   TIERS,
   agentsUsing,
@@ -55,7 +56,9 @@ import { buildAgentsLevel } from "./levels/agentsLevel";
 import { buildEngineLevel } from "./levels/engineLevel";
 import { buildIdeaLevel, buildRoof } from "./levels/ideaLevel";
 import { buildPeopleLevel } from "./levels/peopleLevel";
+import { LIFT_FLOOR, buildLift } from "./lift";
 import { buildParty } from "./party";
+import { buildPartyTrips } from "./partyTrips";
 import { RequestTrace, type TraceFocus, type TraceStep } from "./requestTrace";
 import { buildStreet } from "./street";
 import { Storybook } from "./storybook";
@@ -125,7 +128,7 @@ function bootstrap(): void {
   sun.diffuse = new Color3(1, 0.9, 0.76);
   // No glow layer or bloom: lit parts are plain unlit colours, so every sign stays sharp.
 
-  /* ---------------- Build Caldova House ---------------- */
+  /* ---------------- Build Guru House ---------------- */
   const kit = new Kit(scene);
   const street = buildStreet(kit);
   const ideaLevel = buildIdeaLevel(kit);
@@ -138,7 +141,7 @@ function bootstrap(): void {
     engine: buildEngineLevel(kit),
   };
   const roof = buildRoof(kit);
-  // Up on the roof, Caldova throws a party for its clients. Built before the stack, so it
+  // Up on the roof, Life Advice Guru throws a party for its clients. Built before the stack, so it
   // lifts away and fades with the roof.
   const party = buildParty(kit, roof);
   const stack = new LevelStack({
@@ -148,29 +151,44 @@ function bootstrap(): void {
     agents: levels.agents.root,
     engine: levels.engine.root,
   });
+  // The glass lift on the front-left corner, from the forecourt up to the party: its frame is cut
+  // with the levels, and it hides with the street.
+  const lift = buildLift(kit, street.front, party.root, stack, () => street.frontAlpha);
   // The front desk out front: visitors arrive by tram and sign under the verandah, where Amelia
   // links them with their agents and the Fact Find Extraction agent comes out to read what they signed.
   let liveLinks: string[] = [];
-  const desk = buildFrontDesk(kit, street.front, {
-    callAgent: () => agentsLevel.callToDesk(),
-    releaseAgent: () => agentsLevel.releaseDesk(),
-    agentReady: () => agentsLevel.deskReady(),
-    link: (ids) => {
-      liveLinks = ids;
-      agentsLevel.setLinked(new Set(ids));
-      refreshLive();
+  const desk = buildFrontDesk(
+    kit,
+    street.front,
+    {
+      callAgent: () => agentsLevel.callToDesk(),
+      releaseAgent: () => agentsLevel.releaseDesk(),
+      agentReady: () => agentsLevel.deskReady(),
+      link: (ids) => {
+        liveLinks = ids;
+        agentsLevel.setLinked(new Set(ids));
+        refreshLive();
+      },
+      backToParty: (id, at) => party.comeBack(id, at),
     },
-  });
+    lift,
+  );
+  // Party guests come and go by tram and the glass lift, while the whole house is together.
+  const trips = buildPartyTrips(party, lift, desk.tramStop, () => stack.current.kind === "house" && stack.alpha("roof") > 0.99);
   let streetShown = true;
   const setStreet = (on: boolean): void => {
     streetShown = on;
     street.setFrontVisible(on);
     desk.setActive(on);
+    lift.setActive(on);
+    trips.setActive(on);
   };
 
   const anchors = new Map<string, Anchor>();
   for (const level of Object.values(levels)) for (const [key, a] of level.anchors) anchors.set(key, a);
   for (const [key, a] of desk.anchors) anchors.set(key, a);
+  // Halfway up the glass lift, for its beams and the framing of its card.
+  anchors.set("lift", { node: lift.anchor, group: "agents", dy: LIFT_FLOOR.roof / 2 });
   const anchor = (key: string): Anchor | undefined => anchors.get(key);
 
   // The whole house as one tree: idea → people → agents → Microsoft Foundry.
@@ -201,6 +219,7 @@ function bootstrap(): void {
       infra: new Set<InfraId>(),
       party: false,
       guests: new Set<string>(),
+      lift: false,
     };
     if (!t) return h;
     switch (t.type) {
@@ -247,6 +266,9 @@ function bootstrap(): void {
         break;
       case "guest":
         h.guests.add(t.id);
+        break;
+      case "lift":
+        h.lift = true;
         break;
     }
     return h;
@@ -367,11 +389,13 @@ function bootstrap(): void {
           infra: new Set(traceFocus.infra ?? []),
           party: false,
           guests: new Set<string>(),
+          lift: false,
         }
       : highlightsFor(selection);
     for (const level of Object.values(levels)) level.setHighlights(h);
     desk.setHighlights(h);
     party.setHighlights(h);
+    lift.setHighlight(h.lift);
   };
 
   // Amelia's live links from the front desk to the agents' bays. They show while the front desk and the
@@ -398,6 +422,8 @@ function bootstrap(): void {
   const director = new CameraDirector(camera);
   let cameraBusyUntil = 0;
   let coverSpin = true;
+  /** The visitor has orbited, zoomed or slid the view since the page turned. */
+  let viewMoved = false;
   let flyingTo: CameraShot | null = null;
   const flyTo = (s: CameraShot, durationSec = 1.8): void => {
     // Already on the way there: let the flight finish.
@@ -420,8 +446,8 @@ function bootstrap(): void {
   const PAN_SPEED = 0.55;
   /** Seconds an arrow is held before it keeps moving. */
   const PAN_HOLD = 0.35;
-  /** The centre stays within this reach of the middle of the house and the front desk, so the house stays in view. */
-  const PAN_HOME = { x: 0, z: -6 };
+  /** The centre stays within this reach of the middle of the house and its forecourt, so the house stays in view. */
+  const PAN_HOME = { x: -2, z: -8 };
   const PAN_REACH = 30;
   /** World units still to glide; positive is to the right on screen. */
   let panAhead = 0;
@@ -439,6 +465,7 @@ function bootstrap(): void {
     cameraBusyUntil = 0;
     coverSpin = false;
     revealPending = false;
+    viewMoved = true;
     panAhead += dir * viewWidth() * PAN_STEP;
   };
   const updatePan = (dt: number): void => {
@@ -485,6 +512,29 @@ function bootstrap(): void {
   let scenario: ScenarioId = "family";
   let traceStep: TraceStep | null = null;
   let storybook: Storybook | null = null;
+  /** Where the finale opens: the front desk, or wide enough to take in the glass lift for a client coming down from the party. */
+  const arrivalShot = (id: ScenarioId): CameraShot => (ARRIVALS[id].by === "lift" ? finale.lift : finale.desk) ?? finale.shot;
+  /**
+   * A page's shot, slid over to the middle of the room a shrunk panel has handed back: the cover
+   * card and the finale's page card run down the left of the view, and the shots are framed beside them.
+   */
+  const framed = (s: CameraShot): CameraShot => {
+    const id = storybook?.page.id;
+    const freed = id === "cover" ? storybook?.freedWidth("cover") : id === "finale" ? storybook?.freedWidth("page") : 0;
+    if (!freed) return s;
+    const perPx = (2 * s.radius * Math.tan(camera.fov / 2)) / Math.max(1, window.innerHeight);
+    const d = (freed / 2) * perPx;
+    // The screen's right, level with the ground, for a camera at this shot's alpha.
+    const [x, y, z] = s.target;
+    return { ...s, target: [x - Math.sin(s.alpha) * d, y, z + Math.cos(s.alpha) * d] };
+  };
+  /** The shot the page is showing right now (for the finale, the arrival or the house pulled apart). */
+  const currentShot = (): CameraShot | null => {
+    const page = storybook?.page;
+    if (!page) return null;
+    if (page.id !== "finale") return page.shot;
+    return stack.current.kind === "exploded" ? finale.shot : arrivalShot(scenario);
+  };
   const pushTraceState = (): void =>
     storybook?.setTrace({ scenario, step: traceStep, paused: trace.paused, speed: trace.speed, done: trace.done });
   const trace = new RequestTrace(
@@ -504,10 +554,10 @@ function bootstrap(): void {
         if (storybook?.page.id !== "finale") return;
         if (s === "desk") {
           setMode({ kind: "house" });
-          flyTo(finale.desk ?? finale.shot);
+          flyTo(framed(arrivalShot(scenario)));
         } else {
           setMode(finale.mode);
-          flyTo(finale.shot, 2.2);
+          flyTo(framed(finale.shot), 2.2);
         }
       },
       done: () => pushTraceState(),
@@ -519,6 +569,8 @@ function bootstrap(): void {
     window.clearTimeout(pending);
     scenario = id;
     traceStep = null;
+    // The street and the lift are the finale's now: the party's comings and goings wait until it ends.
+    trips.setPaused(true);
     // The client is down at the front desk now, not up at the party.
     party.setAway(id);
     trace.start(id);
@@ -535,11 +587,15 @@ function bootstrap(): void {
     adviserTask: () => desk.adviserTask(),
     partyNow: () => party.now(),
     guestTask: (id) => party.guestTask(id),
+    liftNow: () => lift.now(),
+    liftRiders: () => lift.riders(),
   };
   let shownVisitor: string | null = null;
+  let shownRiders = "";
   const renderInspector = (): void => {
     if (!selection) return;
     shownVisitor = desk.visitor()?.name ?? null;
+    shownRiders = lift.riders().join(", ");
     storybook?.showInspector(inspectorView(selection, live));
   };
   // Labels for the far ends of the selection's beams; clicking one goes there.
@@ -574,6 +630,8 @@ function bootstrap(): void {
         return "desk";
       case "adviser":
         return "adviser";
+      case "lift":
+        return "lift";
       default:
         return null;
     }
@@ -657,16 +715,20 @@ function bootstrap(): void {
   const onPage = (page: StoryPage): void => {
     window.clearTimeout(pending);
     coverSpin = page.id === "cover";
+    viewMoved = false;
     if (page.id === "finale") {
-      // Open at the front desk, where the client's tram is coming in.
+      // Open at the front desk, where the client's tram is coming in (or the lift is coming down).
       setMode({ kind: "house" });
-      flyTo(page.desk ?? page.shot);
+      flyTo(framed(arrivalShot(scenario)));
       pending = window.setTimeout(() => startTrace(scenario), 600);
     } else {
       setMode(page.mode);
-      flyTo(page.shot);
-      if (trace.active) trace.stop();
+      flyTo(framed(page.shot));
+      // A client who came down from the party heads back up in the lift; the party keeps their place.
+      const returning = trace.active ? trace.stop() : null;
+      if (returning) party.holdAway(returning);
       party.setAway(null);
+      trips.setPaused(false);
       traceFocus = null;
       applyHighlights();
       if (page.mode.kind === "focus") {
@@ -691,8 +753,9 @@ function bootstrap(): void {
     if (a.page && a.page !== book.page.id) book.goTo(a.page);
     else if (a.scenario && book.page.id === "finale") startTrace(a.scenario);
     if (a.shot) {
-      // A closer look needs the house together, as on the cover.
+      // A closer look needs the house together, as on the cover; the cover card shrinks out of the way.
       if (stack.current.kind !== "house") book.goTo("cover");
+      if (book.page.id === "cover") book.setShrunk("cover", true);
       coverSpin = false;
       flyTo(a.shot);
     }
@@ -712,6 +775,19 @@ function bootstrap(): void {
       else startTrace(scenario);
       pushTraceState();
     },
+    // When a panel shrinks or grows, the view makes the most of the room: a card slides what it is
+    // about back beside it, and on the cover and the finale (where the card runs down the side of
+    // the view) the scene slides over to the middle of the freed room, and back.
+    layout: (panel) => {
+      if (panel === "inspector") {
+        if (selection) revealPending = true;
+        return;
+      }
+      const id = book.page.id;
+      const sideCard = (panel === "cover" && id === "cover") || (panel === "page" && id === "finale");
+      const s = currentShot();
+      if (sideCard && s && !viewMoved && !selection) flyTo(framed(s), 1.1);
+    },
   });
   storybook = book;
 
@@ -720,7 +796,7 @@ function bootstrap(): void {
   // underneath. The front desk is out front, so it stays clickable whenever the street is showing.
   const pickable = (m: AbstractMesh): boolean => {
     if (!m.isPickable || !m.isEnabled()) return false;
-    if (m.isDescendantOf(desk.root)) return streetShown;
+    if (m.isDescendantOf(desk.root) || m.isDescendantOf(lift.root)) return streetShown;
     const mode = stack.current;
     return mode.kind !== "focus" || m.isDescendantOf(levels[mode.level].root);
   };
@@ -747,6 +823,7 @@ function bootstrap(): void {
       hoverAt = { x: scene.pointerX, y: scene.pointerY };
     } else if (info.type === PointerEventTypes.POINTERDOWN) {
       coverSpin = false;
+      viewMoved = true;
       // The visitor has the camera now.
       revealPending = false;
     } else if (info.type === PointerEventTypes.POINTERTAP) {
@@ -760,6 +837,7 @@ function bootstrap(): void {
     book.hideTooltip();
     canvas.classList.remove("hover");
   });
+  canvas.addEventListener("wheel", () => (viewMoved = true), { passive: true });
 
   /* ---------------- First page ---------------- */
   const requested = new URLSearchParams(window.location.search).get("page") as PageId | null;
@@ -768,7 +846,7 @@ function bootstrap(): void {
   if (first > 0) {
     // Deep link: open straight onto the chapter (the finale opens at the front desk).
     scene.stopAnimation(camera);
-    const s = PAGES[first].desk ?? PAGES[first].shot;
+    const s = PAGES[first].id === "finale" ? arrivalShot(scenario) : PAGES[first].shot;
     camera.setTarget(new Vector3(...s.target));
     camera.alpha = s.alpha;
     camera.beta = s.beta;
@@ -792,6 +870,9 @@ function bootstrap(): void {
     street.update(dt, time);
     for (const level of Object.values(levels)) level.update(dt, time);
     desk.update(dt);
+    trips.update(dt);
+    // After the street, so the lift's frame fades with both its level and the street.
+    lift.update(dt);
     // The party only runs while the roof is showing.
     if (stack.alpha("roof") > 0.01) party.update(dt);
     threads.update(dt);
@@ -804,9 +885,11 @@ function bootstrap(): void {
     nowClock += dt;
     if (selection && nowClock > 0.4) {
       nowClock = 0;
-      // A new visitor at the front desk gets a fresh card; otherwise just the "Now" line moves on.
+      // A new visitor at the front desk, or new riders in the lift, get a fresh card; otherwise just the "Now" line moves on.
       const atDesk = selection.type === "visitor" || selection.type === "desk" || selection.type === "adviser";
       if (atDesk && (desk.visitor()?.name ?? null) !== shownVisitor) {
+        renderInspector();
+      } else if (selection.type === "lift" && lift.riders().join(", ") !== shownRiders) {
         renderInspector();
       } else {
         book.setInspectorNow(nowText(selection, live));
@@ -834,7 +917,7 @@ function bootstrap(): void {
   });
   if ((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV) {
     // Dev-only handle for inspecting the scene from the browser console.
-    (window as unknown as { __v2: unknown }).__v2 = { scene, camera, stack, book, desk, party, trace, levels, select, threads, street };
+    (window as unknown as { __v2: unknown }).__v2 = { scene, camera, stack, book, desk, party, trace, levels, select, threads, street, lift, trips };
   }
 }
 

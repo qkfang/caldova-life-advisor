@@ -17,7 +17,7 @@
 #      upload can only add or replace documents. When the index matches the
 #      folders this is a no-op.
 
-$SearchServiceName = "search-caldovacl"   # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-caldovacl)
+$SearchServiceName = "search-lifeguru"   # Update to the aiSearchName output from main.bicep (search-<baseName>, e.g. search-lifeguru)
 $IndexPrefix = "life"
 
 $ErrorActionPreference = "Stop"

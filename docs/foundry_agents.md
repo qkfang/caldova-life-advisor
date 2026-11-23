@@ -1,24 +1,24 @@
 # Mapping Practice Staff into Foundry Agents
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Core Design Idea
 
-Each staff character at **Caldova Life Advice** becomes a specialised **Microsoft Foundry** agent.
+Each staff character at **Life Advice Guru** becomes a specialised **Microsoft Foundry** agent.
 
 *Advice Team in a Day* doesn't build one generic "insurance chatbot". It models a digital advice practice, where every agent owns a specific part of the request lifecycle:
 
 > **Discover → Verify → Advise → Implement → Confirm**
 
-All agents read from and write to one shared object, the **Client Case**. Amelia, Caldova's adviser, gives the advice and signs every Statement of Advice. The agents gather facts, explain rules, calculate needs and benefits, compare products, draft documents and recommend, for human approval.
+All agents read from and write to one shared object, the **Client Case**. Amelia, Life Advice Guru's adviser, gives the advice and signs every Statement of Advice. The agents gather facts, explain rules, calculate needs and benefits, compare products, draft documents and recommend, for human approval.
 
 **How it's built**
 
 - The agents are declarative Foundry agents created from code with `Azure.AI.Projects`.
-- They share a `CaldovaAgent` base class, which wires up two grounding sources:
+- They share a `GuruAgent` base class, which wires up two grounding sources:
   - **Azure AI Search** over the `life_knowledge` index
   - **Bing**
-- The agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `caldova-ops-mcp`): Ivy's Insurance Research Agent, Uma's Underwriting Agent and Ben's Claims Agent.
+- The agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `guru-ops-mcp`): Ivy's Insurance Research Agent, Uma's Underwriting Agent and Ben's Claims Agent.
 - Every agent has its own page in the backend console at `/agents/{route id}`.
 
 ---
@@ -36,15 +36,15 @@ The example column shows Priya's case ([scenario 1](scenario-1-family-protection
 | `ClientName` | The client: the person advised, or the claimant | Priya Natarajan |
 | `ClientEmail` | Client email | priya.natarajan@example.com |
 | `ClientPhone` | Client phone | 0491 570 156 |
-| `ClientNumber` | Caldova client number, `CL-…` | `CL-104582` |
+| `ClientNumber` | Life Advice Guru client number, `CL-…` | `CL-104582` |
 | `Cover` | Existing or requested cover, in one line | Riverbend Super death and TPD $210,000 (keep); Kestrel Retail Super death $50,000 (at risk 30 Nov 2026); nothing outside super |
 | `RequestType` | New protection advice · Trauma claim and bank change · Business protection advice · Income protection claim · Death claim | New protection advice |
 | `ReceivedDate` | Date the request arrived | Tue 3 Nov 2026 |
-| `AdviserName` | Caldova's adviser, always "Amelia, Senior Risk Adviser" | Amelia, Senior Risk Adviser |
+| `AdviserName` | Life Advice Guru's adviser, always "Amelia, Senior Risk Adviser" | Amelia, Senior Risk Adviser |
 | `ReferredBy` | Referral partner and firm, or "Existing client" | Hannah Lewis, Yarra Home Loans |
 | `RequestSummary` | One-paragraph summary of the request | New family protection advice after buying a home with a $680,000 joint mortgage |
 | `Amount` | The headline figure | $680,000 joint mortgage to protect |
-| `PreferredContact` | How the client wants to hear from Caldova, and what may be shared | Mobile or email. Updates to Hannah: the outcome only |
+| `PreferredContact` | How the client wants to hear from Life Advice Guru, and what may be shared | Mobile or email. Updates to Hannah: the outcome only |
 | `Priority` | Standard, High or Urgent | High |
 | `PriorityReason` | Why | Existing cover at risk: the Kestrel Retail Super death cover stops on 30 Nov 2026 unless Priya elects in writing to keep it, and the family has a new $680,000 mortgage with no cover outside super |
 | `CreatedAt` | When the case was opened | When Olivia's agent opened the case |
@@ -90,7 +90,7 @@ Capture every request accurately, run the fact find and the in-good-order checkl
 
 ### Tools
 
-- Azure AI Search over `life_knowledge`: *Guide — in-good-order checklist for advice and claims*, *Caldova Life Advice — Financial Services Guide and remuneration*, *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*, and the case files
+- Azure AI Search over `life_knowledge`: *Guide — in-good-order checklist for advice and claims*, *Life Advice Guru — Financial Services Guide and remuneration*, *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*, and the case files
 - Bing grounding
 - Structured field extraction into the Client Case
 - Backend `/onboarding/*` endpoints, which open the case in `CaseStore` and route it
@@ -107,7 +107,7 @@ Capture every request accurately, run the fact find and the in-good-order checkl
 
 ### Example Instruction
 
-> You are the Onboarding Agent for Caldova Life Advice, supporting Olivia, the Onboarding & Requests Officer. Read the enquiry, referral or claim notification and its attachments. Extract the goals, dependants, debts, income, occupation, health basics and existing cover into the Client Case. Run the in-good-order checklist for this request type, classify the request, set a priority with a reason, and route the case: new advice to Paraplanning, claims to Claims, and every new client to Financial Crime. Mask TFNs and treat health information as sensitive. Flag vulnerable clients, including anyone who is seriously ill, injured, bereaved or in financial stress. Never give advice.
+> You are the Onboarding Agent for Life Advice Guru, supporting Olivia, the Onboarding & Requests Officer. Read the enquiry, referral or claim notification and its attachments. Extract the goals, dependants, debts, income, occupation, health basics and existing cover into the Client Case. Run the in-good-order checklist for this request type, classify the request, set a priority with a reason, and route the case: new advice to Paraplanning, claims to Claims, and every new client to Financial Crime. Mask TFNs and treat health information as sensitive. Flag vulnerable clients, including anyone who is seriously ill, injured, bereaved or in financial stress. Never give advice.
 
 ### Human Approval
 
@@ -148,7 +148,7 @@ Work out how much cover is needed and how to hold it, and draft the Statement of
   - *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*
   - *Tax on life insurance — premiums and benefits*
   - *Commission rules — LIF caps, clawback and consent*
-  - *Caldova Life Advice — Financial Services Guide and remuneration*
+  - *Life Advice Guru — Financial Services Guide and remuneration*
   - the insurers' PDS extracts
 - Product and rule document texts used for citations (`ProductDocuments`)
 - Bing grounding
@@ -165,7 +165,7 @@ Work out how much cover is needed and how to hold it, and draft the Statement of
 
 ### Example Instruction
 
-> You are the Paraplanning Agent for Caldova Life Advice, supporting Penny, the Paraplanner. From the Client Case, calculate life, TPD, trauma and income protection needs, showing every step and the existing cover you have taken into account. Draft the ownership structure and the Statement of Advice for Amelia: scope, strategy, ownership, best-interests steps, the replacement analysis, and premiums and commission in dollars. Cite the title of every rule document you rely on. Never invent figures or rules. You draft; Amelia gives the advice and signs. Flag any case with total cover of $2,000,000 or more for a second review, and never recommend cancelling existing cover without a human decision.
+> You are the Paraplanning Agent for Life Advice Guru, supporting Penny, the Paraplanner. From the Client Case, calculate life, TPD, trauma and income protection needs, showing every step and the existing cover you have taken into account. Draft the ownership structure and the Statement of Advice for Amelia: scope, strategy, ownership, best-interests steps, the replacement analysis, and premiums and commission in dollars. Cite the title of every rule document you rely on. Never invent figures or rules. You draft; Amelia gives the advice and signs. Flag any case with total cover of $2,000,000 or more for a second review, and never recommend cancelling existing cover without a human decision.
 
 ### Human Approval
 
@@ -187,22 +187,22 @@ Required for:
 
 ### Purpose
 
-Compare the insurers on Caldova's approved product list (APL) on definitions, features, exclusions and premiums, and build the comparison workbook.
+Compare the insurers on Life Advice Guru's approved product list (APL) on definitions, features, exclusions and premiums, and build the comparison workbook.
 
 ### Inputs
 
 - The Client Case and the needs analysis: cover types and sums insured
 - The client's age, occupation and smoker status
 - The insurers' product sheets and PDS extracts
-- Caldova's APL and research method
+- Life Advice Guru's APL and research method
 
 ### Tools
 
-- MCP tools (`caldova-ops-mcp`):
+- MCP tools (`guru-ops-mcp`):
   - `research_analysePolicyDocument`: reads a product sheet or PDS extract for definitions, features and exclusions
   - `research_compareInsurers`: compares the APL insurers for the client's cover, including stepped and level premiums, definitions and features
   - `research_generateComparisonWorkbook`: builds an Excel workbook with a premium chart, downloadable from `/research/download/{fileName}`
-- Azure AI Search over the insurers' PDS extracts and *Caldova Life Advice — Approved product list and research method*
+- Azure AI Search over the insurers' PDS extracts and *Life Advice Guru — Approved product list and research method*
 - Backend `/research/*` endpoints
 
 ### Outputs
@@ -214,7 +214,7 @@ Compare the insurers on Caldova's approved product list (APL) on definitions, fe
 
 ### Example Instruction
 
-> You are the Insurance Research Agent for Caldova Life Advice, supporting Ivy, the Insurance Research Analyst. Use the MCP tools to read each APL insurer's product sheet, compare the definitions, features, exclusions and premiums for the client's cover, and build the comparison workbook. Explain the definitions that decide whether a claim would pay, such as own-occupation TPD for the client's occupation. Compare stepped and level premiums. Shortlist with reasons, but never make a personal recommendation: the choice of insurer is Amelia's advice.
+> You are the Insurance Research Agent for Life Advice Guru, supporting Ivy, the Insurance Research Analyst. Use the MCP tools to read each APL insurer's product sheet, compare the definitions, features, exclusions and premiums for the client's cover, and build the comparison workbook. Explain the definitions that decide whether a claim would pay, such as own-occupation TPD for the client's occupation. Compare stepped and level premiums. Shortlist with reasons, but never make a personal recommendation: the choice of insurer is Amelia's advice.
 
 ### Human Approval
 
@@ -263,7 +263,7 @@ Verify identity, check documents, and detect fraud, scams and identity takeover,
 
 ### Example Instruction
 
-> You are the Financial Crime Agent for Caldova Life Advice, supporting Felix, the Financial Crime Investigator. Verify identity for new clients, including companies and their beneficial owners. Review the activity log, documents and request for signs of fraud, scams or identity takeover. Explain every risk indicator in plain language and link it to a known pattern. Recommend controls such as a hold, or a call-back on the verified number on file, never a number in the request. Never accuse the client, who may be the victim. Decisions to block a request or refer suspected fraud to an insurer belong to people.
+> You are the Financial Crime Agent for Life Advice Guru, supporting Felix, the Financial Crime Investigator. Verify identity for new clients, including companies and their beneficial owners. Review the activity log, documents and request for signs of fraud, scams or identity takeover. Explain every risk indicator in plain language and link it to a known pattern. Recommend controls such as a hold, or a call-back on the verified number on file, never a number in the request. Never accuse the client, who may be the victim. Decisions to block a request or refer suspected fraud to an insurer belong to people.
 
 ### Human Approval
 
@@ -309,7 +309,7 @@ Take each application through underwriting with the insurer, explain the client'
 
 ### Tools
 
-- MCP tools (`caldova-ops-mcp`):
+- MCP tools (`guru-ops-mcp`):
   - `underwriting_lookupInsurer`: the APL directory, with contacts, service levels and underwriting thresholds
   - `underwriting_checkRequirements`: the medical and financial evidence needed for the client's age and sums insured
   - `underwriting_generateApplicationSummaryPdf`: the application and disclosure summary PDF
@@ -327,7 +327,7 @@ Take each application through underwriting with the insurer, explain the client'
 
 ### Example Instruction
 
-> You are the Underwriting Agent for Caldova Life Advice, supporting Uma, the Underwriting Coordinator. Before any health question, explain the duty to take reasonable care in plain English. Use the MCP tools to look up the insurer, check the medical and financial requirements for the client's age and sums insured, and generate the application summary. Track the requirements and explain each decision (standard rates, a loading or an exclusion) without jargon. Treat health information as sensitive, and never ask for or use genetic test results. Never accept a loading, an exclusion or a decline on the client's behalf: that is the client's decision with Amelia.
+> You are the Underwriting Agent for Life Advice Guru, supporting Uma, the Underwriting Coordinator. Before any health question, explain the duty to take reasonable care in plain English. Use the MCP tools to look up the insurer, check the medical and financial requirements for the client's age and sums insured, and generate the application summary. Track the requirements and explain each decision (standard rates, a loading or an exclusion) without jargon. Treat health information as sensitive, and never ask for or use genetic test results. Never accept a loading, an exclusion or a decline on the client's behalf: that is the client's decision with Amelia.
 
 ### Human Approval
 
@@ -361,7 +361,7 @@ Support clients and families through a claim: check the policy and the evidence,
 
 ### Tools
 
-- MCP tools (`caldova-ops-mcp`):
+- MCP tools (`guru-ops-mcp`):
   - `claims_validateClaimant`
   - `claims_checkPolicy`
   - `claims_calculateBenefit`
@@ -383,7 +383,7 @@ Support clients and families through a claim: check the policy and the evidence,
 
 ### Example Instruction
 
-> You are the Claims Agent for Caldova Life Advice, supporting Ben, the Benefit Claims Advocate. Validate the claimant and check the policy: definition, waiting period, exclusions, who is paid and the evidence. Build the claim pack and calculate the expected benefit, showing your working and citing the PDS extract. Check the approval rules, request approval in Microsoft Teams, and lodge the claim only when it is approved. Track the insurer's Code of Practice timeframes. Be gentle with people who are ill, injured or bereaved. Never promise an outcome the insurer hasn't decided, and never accuse a claimant of fraud: refer concerns to Financial Crime.
+> You are the Claims Agent for Life Advice Guru, supporting Ben, the Benefit Claims Advocate. Validate the claimant and check the policy: definition, waiting period, exclusions, who is paid and the evidence. Build the claim pack and calculate the expected benefit, showing your working and citing the PDS extract. Check the approval rules, request approval in Microsoft Teams, and lodge the claim only when it is approved. Track the insurer's Code of Practice timeframes. Be gentle with people who are ill, injured or bereaved. Never promise an outcome the insurer hasn't decided, and never accuse a claimant of fraud: refer concerns to Financial Crime.
 
 ### Human Approval
 
@@ -433,7 +433,7 @@ Draft clear, empathetic and compliant communications for clients, families and r
 
 ### Example Instruction
 
-> You are the Client Communications Agent for Caldova Life Advice, supporting Cara, the Client Communications Specialist. Explain the case outcome in clear, warm, plain English for the client, and in concise professional terms for a referral partner, sharing only what the client agreed to share and never health details without consent. Match the tone to the situation. Include the required disclosures and complaint rights. Never give personal advice, invent facts, or promise outcomes that haven't been decided.
+> You are the Client Communications Agent for Life Advice Guru, supporting Cara, the Client Communications Specialist. Explain the case outcome in clear, warm, plain English for the client, and in concise professional terms for a referral partner, sharing only what the client agreed to share and never health details without consent. Match the tone to the situation. Include the required disclosures and complaint rights. Never give personal advice, invent facts, or promise outcomes that haven't been decided.
 
 ### Human Approval
 
@@ -474,7 +474,7 @@ Let clients, families and referral partners talk to Cara by voice about a case.
 
 ### Example Instruction
 
-> You are Cara's voice assistant at Caldova Life Advice. Speak warmly and simply. Explain case status and next steps using only facts from the Client Case. Don't make decisions, give advice, or confirm anything that hasn't been decided. Never discuss health details unless you are sure you are speaking with the client. For complaints, vulnerable callers or identity concerns, offer a call-back from a person.
+> You are Cara's voice assistant at Life Advice Guru. Speak warmly and simply. Explain case status and next steps using only facts from the Client Case. Don't make decisions, give advice, or confirm anything that hasn't been decided. Never discuss health details unless you are sure you are speaking with the client. For complaints, vulnerable callers or identity concerns, offer a call-back from a person.
 
 ### Human Approval
 
@@ -525,7 +525,7 @@ Lead the practice: monitor the pipeline, service levels and complaint clocks, pr
 
 ### Example Instruction
 
-> You are the Team Leader Agent for Caldova Life Advice, supporting Theo, the Practice Team Leader. Monitor the advice pipeline, underwriting requirements, claims and complaint clocks, and identify cases at risk. Summarise the items that need approval, prepare second-review briefs for advice with total cover of $2,000,000 or more, and audit files against the best interests duty. In group chat, coordinate the specialist agents on one case and produce a consolidated plan. Never approve on Theo's behalf, and never override an approval rule.
+> You are the Team Leader Agent for Life Advice Guru, supporting Theo, the Practice Team Leader. Monitor the advice pipeline, underwriting requirements, claims and complaint clocks, and identify cases at risk. Summarise the items that need approval, prepare second-review briefs for advice with total cover of $2,000,000 or more, and audit files against the best interests duty. In group chat, coordinate the specialist agents on one case and produce a consolidated plan. Never approve on Theo's behalf, and never override an approval rule.
 
 ### Human Approval
 
@@ -583,7 +583,7 @@ Theo, the human team leader, approves:
 
 ## Option A: One Agent per Department
 
-Use this when the story needs to match Caldova House, where every person has an agent of their own. This is how the app is built: each department page engages its own agent.
+Use this when the story needs to match Guru House, where every person has an agent of their own. This is how the app is built: each department page engages its own agent.
 
 | Department | Foundry agent id |
 |---|---|
@@ -636,7 +636,7 @@ Best for:
 | **Insurer** | Insurance Research, Underwriting, Claims | The APL insurers: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life |
 | **Policy** | Underwriting, Claims | Policy number with the insurer's prefix, cover, sums insured, premiums, owner and nominated beneficiaries |
 | **Document** | Onboarding, Financial Crime, Claims | IDs, medical reports, death certificates, payslips, BAS and bank statements |
-| **Rule** | Paraplanning, Underwriting, Claims | The PDS extracts, Caldova's guides and the rule documents in `life_knowledge` |
+| **Rule** | Paraplanning, Underwriting, Claims | The PDS extracts, Life Advice Guru's guides and the rule documents in `life_knowledge` |
 | **Application** | Underwriting | Answers, disclosures, requirements and the insurer's decision |
 | **Claim** | Claims | The claim pack, benefit calculation, lodgement and the insurer's timeframes |
 | **Approval** | Claims, Team Leader | Microsoft Teams adaptive cards and decisions |
@@ -750,7 +750,7 @@ This walk-through follows Priya's family protection advice ([scenario 1](scenari
 
 ## Step 1: A referral arrives
 
-Hannah Lewis of Yarra Home Loans emails Caldova on 3 Nov 2026:
+Hannah Lewis of Yarra Home Loans emails Life Advice Guru on 3 Nov 2026:
 
 > With her consent, I'm referring Priya Natarajan. Priya and her partner Arjun have just bought in Coburg with a $680,000 joint mortgage, and they'd like to protect the loan and the family. Priya's fact find is attached.
 
@@ -808,9 +808,9 @@ The `team-leader-agent` shows the practice for the five scenario cases:
 
 ---
 
-# UI Mapping to Caldova House
+# UI Mapping to Guru House
 
-In the Caldova House storybook ([storybook.md](storybook.md)), every person's card on Level 2 and every agent's, assistant's and voice agent's card on Level 1 has an **Open the agent page ↗** link that opens that agent's page (`/agents/{route id}`) in a new tab.
+In the Guru House storybook ([storybook.md](storybook.md)), every person's card on Level 2 and every agent's, assistant's and voice agent's card on Level 1 has an **Open the agent page ↗** link that opens that agent's page (`/agents/{route id}`) in a new tab.
 
 | Agent page | Shows |
 |---|---|
@@ -837,6 +837,6 @@ The house, read from the top down:
 
 The strongest framing is:
 
-> Each staff member at Caldova Life Advice becomes a Foundry agent with a specialised role, governed tools, cited rules and human approval points. Together, they operate as a coordinated digital advice practice. The adviser gives the advice, and people stay in charge of every decision that matters.
+> Each staff member at Life Advice Guru becomes a Foundry agent with a specialised role, governed tools, cited rules and human approval points. Together, they operate as a coordinated digital advice practice. The adviser gives the advice, and people stay in charge of every decision that matters.
 
 This makes the app feel enterprise-ready. It shows AI supporting advice professionals rather than replacing them, and the agents never give personal advice.

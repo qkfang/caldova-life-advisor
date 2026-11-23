@@ -1,12 +1,12 @@
 # Scenario 5: Death Claim After the Sudden Death of a Wife and Mother
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Scenario Summary
 
-A quiet, careful scenario. A husband tells Caldova that his wife has died suddenly, leaving him with two young children. The scenario shows:
+A quiet, careful scenario. A husband tells Life Advice Guru that his wife has died suddenly, leaving him with two young children. The scenario shows:
 
-- a compassionate process with one named contact, Caldova's adviser
+- a compassionate process with one named contact, Life Advice Guru's adviser
 - light-touch document checks, so the family isn't asked for anything twice
 - a policy check that confirms the cover, the disclosure position and the beneficiary nomination
 - a second source of cover found in the wife's super fund
@@ -39,7 +39,7 @@ The agents step back and slow down. People approve every message to the family a
 
 - He is 44. His wife, Mei, was a pharmacist. She died suddenly on 12 Oct 2026, aged 42.
 - Their children are Lily (12) and Max (9).
-- Robert and Mei have been Caldova clients since 2019.
+- Robert and Mei have been Life Advice Guru clients since 2019.
 - Contact: robert.chen@example.com · 0491 570 313.
 - He is quiet and organised, and grieving. His focus is the children.
 
@@ -135,7 +135,7 @@ On Fri 13 Nov 2026 Robert emails Amelia to let her know. He attaches a certified
 ✅ **Completed.**
 
 - Corella Life paid **$1,000,000** to Robert on Mon 23 Nov 2026, directly under Mei's nomination and not through her estate.
-- Mei's **$180,000** super claim with Riverbend Super is under way, with a checklist and Caldova's help.
+- Mei's **$180,000** super claim with Riverbend Super is under way, with a checklist and Life Advice Guru's help.
 - Robert dealt with one person, Amelia, from start to finish.
 
 ## Human Approvals in This Scenario

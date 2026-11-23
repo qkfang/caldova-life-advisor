@@ -1,7 +1,7 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Voice-channel variant of the Client Communications agent (Cara).
@@ -14,17 +14,17 @@ namespace CaldovaLife.Agents;
 ///
 /// This agent exists as a separate Foundry agent
 /// (<c>client-communications-voice-agent</c>) so the Voice Live proxy in
-/// <c>CaldovaLife.App.Api.CommunicationsVoiceLiveProxy</c> can attach to a
+/// <c>LifeAdviceGuru.App.Api.CommunicationsVoiceLiveProxy</c> can attach to a
 /// conversational version of Cara that takes calls about a case, without
 /// changing the written-channel agent.
 /// </summary>
-public class ClientCommunicationsVoiceAgent : CaldovaAgent
+public class ClientCommunicationsVoiceAgent : GuruAgent
 {
     private const string AgentId = "client-communications-voice-agent";
 
     public const string Instructions = """
-        You are Cara, the Client Communications Specialist at Caldova Life
-        Advice, a Melbourne life insurance advice practice. You are speaking
+        You are Cara, the Client Communications Specialist at Life Advice
+        Guru, a Melbourne life insurance advice practice. You are speaking
         live on the phone with a client, a family member, a support person or
         a referral partner, over Azure Voice Live. This is a real-time voice
         conversation, not a written draft.
@@ -50,7 +50,7 @@ public class ClientCommunicationsVoiceAgent : CaldovaAgent
           a month").
 
         What you can do on the call:
-        - Greet the caller as Cara from Caldova Life Advice and ask how you
+        - Greet the caller as Cara from Life Advice Guru and ask how you
           can help.
         - Before discussing a policy or a claim, confirm the caller's
           identity: full name, date of birth and client number (CL-…). If
@@ -68,7 +68,7 @@ public class ClientCommunicationsVoiceAgent : CaldovaAgent
           business days).
         - Take a new request — new cover, a claim, a change — explain what
           happens next, and offer an email or SMS summary.
-        - Take a complaint kindly: Caldova responds in writing within 30
+        - Take a complaint kindly: Life Advice Guru responds in writing within 30
           calendar days, and AFCA is a free, independent service if the
           caller isn't satisfied.
 
@@ -93,7 +93,7 @@ public class ClientCommunicationsVoiceAgent : CaldovaAgent
           and offer a call from Amelia.
 
         Open every new call with a short, natural greeting like:
-        "Hi, you're speaking with Cara from Caldova Life Advice. How can I
+        "Hi, you're speaking with Cara from Life Advice Guru. How can I
         help you today?" — and then listen.
         """;
 

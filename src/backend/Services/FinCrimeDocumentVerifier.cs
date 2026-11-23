@@ -5,7 +5,7 @@ using Azure;
 using Azure.AI.ContentUnderstanding;
 using Azure.Identity;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>Outcome of one authenticity check against a document.</summary>
 /// <param name="Status"><c>pass</c>, <c>fail</c>, <c>warn</c> or <c>n/a</c>.</param>
@@ -52,7 +52,7 @@ public class FinCrimeDocumentVerifier
     public const string SourceContentUnderstanding = "content-understanding";
     public const string SourceManifestFallback = "manifest-fallback";
 
-    private const string DefaultAnalyzerId = "caldova_life_fincrime_authenticity_v1";
+    private const string DefaultAnalyzerId = "life_advice_guru_fincrime_authenticity_v1";
 
     private static readonly string[] DocumentKinds =
     [
@@ -382,7 +382,7 @@ public class FinCrimeDocumentVerifier
             ["consistencySummary"] = Text("One or two plain-English sentences on whether the document is internally consistent."),
         })
         {
-            Name = "caldova_life_fincrime_authenticity",
+            Name = "life_advice_guru_fincrime_authenticity",
             Description = "Authenticity-oriented fields for documents supporting life insurance advice and claims.",
         };
         foreach (var kind in DocumentKinds) schema.Fields["documentType"].Enum.Add(kind);
@@ -391,7 +391,7 @@ public class FinCrimeDocumentVerifier
         var analyzer = new ContentAnalyzer
         {
             BaseAnalyzerId = "prebuilt-document",
-            Description = "Caldova Life Advice financial-crime document authenticity: identity documents, payslips, specialist medical reports, death certificates, bank statements, BAS and profit and loss summaries, and company extracts. Every specimen carries a 'SPECIMEN — NOT A REAL DOCUMENT' watermark; that watermark is expected and is not a sign of tampering.",
+            Description = "Life Advice Guru financial-crime document authenticity: identity documents, payslips, specialist medical reports, death certificates, bank statements, BAS and profit and loss summaries, and company extracts. Every specimen carries a 'SPECIMEN — NOT A REAL DOCUMENT' watermark; that watermark is expected and is not a sign of tampering.",
             Config = new ContentAnalyzerConfig { EnableOcr = true, EnableLayout = true },
             FieldSchema = schema,
         };

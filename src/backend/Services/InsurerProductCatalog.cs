@@ -1,7 +1,7 @@
 using System.Globalization;
-using CaldovaLife.App.Models;
+using LifeAdviceGuru.App.Models;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>One person whose life is insured on the application, with the cover applied for on their life.</summary>
 public record LifeInsuredProfile(
@@ -253,7 +253,7 @@ public static class InsurerProductCatalog
             ReferredBy: string.IsNullOrWhiteSpace(plan.ReferredBy) ? "Existing client" : plan.ReferredBy,
             Insurer: plan.Insurer is null
                 ? "To be confirmed from the signed Statement of Advice"
-                : $"{plan.Insurer.Name} (policy prefix {plan.Insurer.PolicyPrefix}) — on Caldova's approved product list",
+                : $"{plan.Insurer.Name} (policy prefix {plan.Insurer.PolicyPrefix}) — on Life Advice Guru's approved product list",
             InsurerContact: plan.Insurer?.NewBusinessContact ?? "—",
             LodgedOn: plan.LodgedOn,
             AsAt: plan.AsAtLabel,
@@ -330,7 +330,7 @@ public static class InsurerProductCatalog
             new DisclosureItem("read-back", "Answers read back and confirmed", "done",
                 $"At the end of the tele-interview on {D(11, 10)} Corella's underwriter read the answers back and Priya confirmed them."),
             new DisclosureItem("privacy", "Health information kept to the people who need it", "info",
-                "Health details go only to Corella Life and Caldova's advice file. Hannah Lewis receives only the outcome — Priya consented to share that and nothing more."),
+                "Health details go only to Corella Life and Life Advice Guru's advice file. Hannah Lewis receives only the outcome — Priya consented to share that and nothing more."),
         };
 
         var timeline = new[]
@@ -414,7 +414,7 @@ public static class InsurerProductCatalog
             Notes: new[]
             {
                 "Super-linked structure: life and any-occupation TPD inside super (premiums funded by a partial rollover from Riverbend Super, so the Riverbend account and its cover stay open); own-occupation TPD extension, trauma and income protection outside super.",
-                "Lodged 1 business day after the Authority to Proceed (Caldova's standard: within 2 business days). Corella booked the tele-interview the next business day and decided 4 business days after it — within its 5-business-day standard.",
+                "Lodged 1 business day after the Authority to Proceed (Life Advice Guru's standard: within 2 business days). Corella booked the tele-interview the next business day and decided 4 business days after it — within its 5-business-day standard.",
                 "Policy issued; handed to Client Communications for the welcome letter, the plain-English policy summary and an outcome-only update to Hannah Lewis.",
             },
             HumanApprovalRequired: true,
@@ -497,7 +497,7 @@ public static class InsurerProductCatalog
             new DisclosureItem("read-back", "Answers read back and confirmed", "done",
                 $"Each tele-interview on {D(11, 13)} ended with the answers read back and confirmed."),
             new DisclosureItem("privacy", "Health information kept to the people who need it", "info",
-                "Test results go only to Northbank and Caldova's advice file. Marcus Tan receives only the outcome, with consent."),
+                "Test results go only to Northbank and Life Advice Guru's advice file. Marcus Tan receives only the outcome, with consent."),
         };
 
         var timeline = new[]
@@ -571,7 +571,7 @@ public static class InsurerProductCatalog
                     "What a loading is: the same cover at a higher premium because of a higher assessed risk — no exclusions.",
                     "Premiums after loading: $10,000 a year in total (quoted $8,620 at standard rates).",
                     "Northbank reviews the loading in two years if George asks, with new medical evidence.",
-                    "The buy-sell agreement is drafted and finalised by their lawyer — Caldova doesn't draft legal documents.",
+                    "The buy-sell agreement is drafted and finalised by their lawyer — Life Advice Guru doesn't draft legal documents.",
                 },
                 CoolingOff: CoolingOffLine(insurer, start),
                 ExistingCoverNote: "No existing cover is being replaced — these are new buy-sell and key person policies."),
@@ -579,7 +579,7 @@ public static class InsurerProductCatalog
             Notes: new[]
             {
                 "Total cover on the case is $2,800,000, so Theo's second review was completed before Amelia signed the SoA and before the applications went to underwriting.",
-                "Lodged the same day as the Authority to Proceed (Caldova's standard: within 2 business days). Northbank's financial underwriting decided the day after the evidence arrived, and the medical decision came 2 business days after the last result — both within its 5-business-day standards.",
+                "Lodged the same day as the Authority to Proceed (Life Advice Guru's standard: within 2 business days). Northbank's financial underwriting decided the day after the evidence arrived, and the medical decision came 2 business days after the last result — both within its 5-business-day standards.",
                 "Policies issued together; handed to Client Communications for letters to George and Harpreet and an outcome-only update to Marcus Tan (their lawyer will finalise the buy-sell agreement).",
             },
             HumanApprovalRequired: true,

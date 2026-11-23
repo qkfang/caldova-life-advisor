@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// Lifecycle of a claim decision prepared by the Claims Agent (Ben, Benefit
@@ -952,7 +952,7 @@ public static partial class ClaimRules
         Beneficiaries = [new("Daniel Williams", "son", 50m), new("James Williams", "son", 50m)],
         EventLabel = "Diagnosis date on the claim",
         EventDescription = "A trauma claim for breast cancer, emailed on Fri 6 Nov 2026 at 07:52 — marked urgent, for the full $200,000, to be paid into a new account.",
-        Notification = "Fri 6 Nov 2026 07:52 — email from grace.w.claims@example.net, the address set up on Mon 2 Nov, asking Caldova to use only the new mobile and email.",
+        Notification = "Fri 6 Nov 2026 07:52 — email from grace.w.claims@example.net, the address set up on Mon 2 Nov, asking Life Advice Guru to use only the new mobile and email.",
         ClaimantName = "Grace Williams",
         ClaimantRelationship = ClaimantRelationships.PolicyOwner,
         VerifiedContact = "0491 570 157 · grace.williams@example.com — the details verified before Mon 2 Nov 2026",
@@ -1550,7 +1550,7 @@ public static partial class ClaimRules
     /// <summary>
     /// The insurer's timeframes under the Code for the claim type (due dates
     /// counted from the date the insurer receives the claim), the insurer's
-    /// own service level from its PDS, and Caldova's service standards.
+    /// own service level from its PDS, and Life Advice Guru's service standards.
     /// </summary>
     public static IReadOnlyList<ClaimFact> Timeframes(
         string? claimType,
@@ -1594,7 +1594,7 @@ public static partial class ClaimRules
         facts.Add(new("Delays (cl 5.59, 5.60)", "If a delay is outside the insurer's control, it tells the claimant in writing before the deadline, updates them every 20 business days, and escalates past 12 months."));
         if (!string.IsNullOrWhiteSpace(profile?.InsurerService))
             facts.Add(new($"{profile!.Insurer} (PDS)", $"{profile.InsurerService} ({profile.PdsTitle})"));
-        facts.Add(new("Caldova standards",
+        facts.Add(new("Life Advice Guru standards",
             "Approved claims lodged the same or next business day; the client or family updated at least every 10 business days while the claim is open; "
             + "Theo is told at once if the insurer misses a Code timeframe or its own service standard (Matrix — authority, approvals and escalation)."));
         return facts;

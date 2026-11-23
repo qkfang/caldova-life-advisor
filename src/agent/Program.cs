@@ -2,11 +2,11 @@ using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using CaldovaLife.Agents;
+using LifeAdviceGuru.Agents;
 
-// Advice Team in a Day — Caldova Life Advice — .NET 10 Foundry agents
+// Advice Team in a Day — Life Advice Guru — .NET 10 Foundry agents
 //
-// Each staff character at Caldova Life Advice, a Melbourne life insurance
+// Each staff character at Life Advice Guru, a Melbourne life insurance
 // advice practice, is supported by a specialised Azure AI Foundry declarative
 // agent. This console host lets you drive any one agent from the command line
 // to try a prompt or test its instructions.
@@ -60,7 +60,7 @@ string request = args.Length > 1
     ? string.Join(" ", args.Skip(1))
     : "Walk me through how you would handle this request.";
 
-CaldovaAgent? agent = flag switch
+GuruAgent? agent = flag switch
 {
     "--onboarding"
         => new OnboardingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<OnboardingAgent>()),
@@ -99,7 +99,7 @@ Console.WriteLine();
 
 static void PrintUsage()
 {
-    Console.WriteLine("Advice Team in a Day — Caldova Life Advice — Foundry agents");
+    Console.WriteLine("Advice Team in a Day — Life Advice Guru — Foundry agents");
     Console.WriteLine();
     Console.WriteLine("Usage:");
     Console.WriteLine("  dotnet run -- --onboarding      \"<message>\"   Olivia — Onboarding & Requests");

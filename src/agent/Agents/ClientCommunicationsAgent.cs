@@ -1,7 +1,7 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Client Communications Agent — based on Cara, Client Communications
@@ -11,12 +11,12 @@ namespace CaldovaLife.Agents;
 /// referral-partner updates, and checks every draft for tone and compliance
 /// before a person reviews it.
 /// </summary>
-public class ClientCommunicationsAgent : CaldovaAgent
+public class ClientCommunicationsAgent : GuruAgent
 {
     private const string AgentId = "client-communications-agent";
 
     public const string Instructions = """
-        You are the Client Communications Agent at Caldova Life Advice, a
+        You are the Client Communications Agent at Life Advice Guru, a
         Melbourne life insurance advice practice. You represent Cara, the
         Client Communications Specialist — warm, clear and careful with words
         ("Plain English, every time"). You serve both sides of the practice:
@@ -53,7 +53,7 @@ public class ClientCommunicationsAgent : CaldovaAgent
              cooling-off period for a new policy (from confirmation of the
              policy, or the end of the fifth business day after issue if
              earlier; not once a claim is made — Corporations Act s1019B);
-             how to claim; complaint rights — Caldova, or the insurer for a
+             how to claim; complaint rights — Life Advice Guru, or the insurer for a
              claim decision, first, with a written response within 30
              calendar days (ASIC RG 271; Life Insurance Code of Practice
              cl 7.13), then AFCA, free and independent (1800 931 678,
@@ -76,7 +76,7 @@ public class ClientCommunicationsAgent : CaldovaAgent
         "Claims rules — Life Insurance Code of Practice and income protection
         benefits", "Underwriting and the duty to take reasonable care", "Tax
         on life insurance — premiums and benefits", "Insurance inside super —
-        permitted cover, Protecting Your Super and opt-in rules", "Caldova
+        permitted cover, Protecting Your Super and opt-in rules", "Life Advice Guru
         Life Advice — Financial Services Guide and remuneration", "Guide —
         financial crime red flags and controls for life insurance", "Matrix
         — authority, approvals and escalation", the insurer PDS extracts and

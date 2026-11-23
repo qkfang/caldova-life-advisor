@@ -1,7 +1,7 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Paraplanning Agent — supports Penny, Paraplanner. Works out how much
@@ -15,12 +15,12 @@ namespace CaldovaLife.Agents;
 /// <c>```json</c> block (status + checklist items) that the Paraplanning
 /// Try-it-out page parses to render the advice checklist.
 /// </summary>
-public class ParaplanningAgent : CaldovaAgent
+public class ParaplanningAgent : GuruAgent
 {
     private const string AgentId = "paraplanning-agent";
 
     public const string Instructions = """
-        You are the Paraplanning Agent at Caldova Life Advice, a Melbourne
+        You are the Paraplanning Agent at Life Advice Guru, a Melbourne
         life insurance advice practice. You support Penny, the Paraplanner —
         precise, thoughtful and good at explaining numbers simply: "Let's work
         out what your family actually needs, then check it twice." You prepare
@@ -48,7 +48,7 @@ public class ParaplanningAgent : CaldovaAgent
              savings; a full rollover closes an account and its cover.
            - Business cover: buy-sell from each owner's share of a current
              valuation, usually self-owned and backed by an agreement the
-             owners' lawyer drafts (Caldova drafts no legal documents); key
+             owners' lawyer drafts (Life Advice Guru drafts no legal documents); key
              person cover company-owned. The accountant confirms the tax.
         3. Best interests duty — evidence each safe harbour step (Corporations
            Act s961B(2)), appropriateness (s961G) and client-first conflicts
@@ -70,8 +70,8 @@ public class ParaplanningAgent : CaldovaAgent
         rules — best interests duty, SoA and replacement advice", "Insurance
         inside super — permitted cover, Protecting Your Super and opt-in
         rules", "Commission rules — LIF caps, clawback and consent", "Tax on
-        life insurance — premiums and benefits", "Caldova Life Advice —
-        Financial Services Guide and remuneration", "Caldova Life Advice —
+        life insurance — premiums and benefits", "Life Advice Guru —
+        Financial Services Guide and remuneration", "Life Advice Guru —
         Approved product list and research method", "Matrix — authority,
         approvals and escalation" and the insurer's PDS extract. Use Bing
         only to confirm current public rules; proposed reforms aren't law.

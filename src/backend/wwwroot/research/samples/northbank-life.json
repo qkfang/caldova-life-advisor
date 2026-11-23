@@ -8,8 +8,8 @@
   "pdsTitle": "Northbank Life — Business Protection PDS extract",
   "asAt": "2026-07-01",
   "aplListing": "Business protection",
-  "fictionNote": "Summary of the Northbank Life — Business Protection PDS extract (PDS dated 1 July 2026) for Caldova's research. Read the PDS extract before relying on any wording.",
-  "summary": "Buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting based on the accountant's valuation and two years' financial statements. On Caldova's APL for business protection; Northbank's personal covers are in a separate PDS.",
+  "fictionNote": "Summary of the Northbank Life — Business Protection PDS extract (PDS dated 1 July 2026) for Life Advice Guru's research. Read the PDS extract before relying on any wording.",
+  "summary": "Buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting based on the accountant's valuation and two years' financial statements. On Life Advice Guru's APL for business protection; Northbank's personal covers are in a separate PDS.",
   "strengths": [
     "Buy-sell cover sized to each owner's share of the business value, with self-ownership or cross-ownership",
     "Key person cover with the purpose recorded at application and the sum insured supported by the accountant's estimate of the loss",
@@ -287,7 +287,7 @@
     {
       "scenario": "family-protection",
       "caseNumber": "REQ-20261103-LIF001",
-      "reason": "Northbank Life is on Caldova's APL for business protection only — its personal covers are in a separate PDS that isn't on the APL."
+      "reason": "Northbank Life is on Life Advice Guru's APL for business protection only — its personal covers are in a separate PDS that isn't on the APL."
     }
   ]
 }

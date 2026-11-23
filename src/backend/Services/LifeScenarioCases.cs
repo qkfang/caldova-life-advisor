@@ -1,4 +1,4 @@
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// Maps the five seeded scenario cases (<c>REQ-yyyyMMdd-LIFnnn</c>) to a
@@ -39,18 +39,18 @@ internal static class LifeScenarioCases
 }
 
 /// <summary>
-/// Caldova Life Advice contact details used in client communications. All
+/// Life Advice Guru contact details used in client communications. All
 /// fictional: the landline is in the (03) 5550 range ACMA reserves for
 /// creative works, and the practice mailbox is the one in the FSG
-/// (<c>requests@caldova.example</c>).
+/// (<c>requests@lifeadviceguru.example</c>).
 /// </summary>
 internal static class PracticeContacts
 {
     public const string Phone = "(03) 5550 1889";
     public const string Hours = "8:30am–5:30pm Melbourne time, Monday to Friday";
-    public const string Email = "requests@caldova.example";
-    public const string AmeliaEmail = "amelia@caldova.example";
-    public const string Address = "Caldova House, Melbourne VIC 3000";
+    public const string Email = "requests@lifeadviceguru.example";
+    public const string AmeliaEmail = "amelia@lifeadviceguru.example";
+    public const string Address = "Guru House, Melbourne VIC 3000";
 }
 
 /// <summary>Australian date display for Client Case dates stored as <c>yyyy-MM-dd</c>.</summary>
@@ -94,7 +94,7 @@ internal static class LifeRules
     public const string PysInactivity = "16 months";
 
     // Life Insurance Code of Practice (CALI edition in force from 1 Mar 2025).
-    // It binds insurers, not advisers (cl 1.10) — Caldova tracks it for clients.
+    // It binds insurers, not advisers (cl 1.10) — Life Advice Guru tracks it for clients.
     public const string CodeIncomeClaimDecision =
         "Life Code cl 5.48 — the insurer decides an income-related claim within 2 months of receiving it, or of the end of the waiting period if later; " +
         "updates at least every 20 business days (cl 5.6)";

@@ -1,4 +1,4 @@
-/* Header navigation — Caldova Life Advice. White bar, serif wordmark with the
+/* Header navigation — Life Advice Guru. White bar, serif wordmark with the
    teal shield mark, underline active state and mega-menu dropdowns.
    NavLink renders its own <a>, so those anchors are reached with ::deep. */
 
@@ -51,6 +51,13 @@
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--cw-teal-ink);
+}
+
+/* The full nav needs the room between the menu breakpoint and wide screens. */
+@media (min-width: 1081px) and (max-width: 1360px) {
+    .brand-sub {
+        display: none;
+    }
 }
 
 /* ── Primary navigation ───────────────────────────────────────────────── */

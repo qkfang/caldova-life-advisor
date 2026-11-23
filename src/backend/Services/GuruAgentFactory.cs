@@ -2,19 +2,19 @@ using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using OpenAI.Responses;
-using CaldovaLife.Agents;
+using LifeAdviceGuru.Agents;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
-/// Factory for the Caldova Life Advice Foundry agents defined in the
+/// Factory for the Life Advice Guru Foundry agents defined in the
 /// <c>agent</c> project. The Blazor app references <c>src/agent</c> as a .NET library and
 /// uses this factory to invoke the same agents the CLI host exposes —
 /// analogous to how
 /// <see href="https://github.com/qkfang/quant-agent/tree/main/src/quantapi">quantapi</see>
 /// instantiates <c>QuantAgent</c> subclasses from <c>quantlib</c>.
 /// </summary>
-public class CaldovaAgentFactory
+public class GuruAgentFactory
 {
     /// <summary>
     /// How long to skip Foundry after it couldn't be reached (DNS, network or
@@ -23,17 +23,17 @@ public class CaldovaAgentFactory
     /// </summary>
     private static readonly TimeSpan UnreachableWindow = TimeSpan.FromMinutes(5);
 
-    private readonly CaldovaAgentOptions _options;
+    private readonly GuruAgentOptions _options;
     private readonly ILoggerFactory _loggerFactory;
-    private readonly ILogger<CaldovaAgentFactory> _logger;
+    private readonly ILogger<GuruAgentFactory> _logger;
     private readonly Lazy<AIProjectClient> _aiProjectClient;
     private long _unreachableUntilTicks;
 
-    public CaldovaAgentFactory(CaldovaAgentOptions options, ILoggerFactory loggerFactory)
+    public GuruAgentFactory(GuruAgentOptions options, ILoggerFactory loggerFactory)
     {
         _options = options;
         _loggerFactory = loggerFactory;
-        _logger = loggerFactory.CreateLogger<CaldovaAgentFactory>();
+        _logger = loggerFactory.CreateLogger<GuruAgentFactory>();
         _aiProjectClient = new Lazy<AIProjectClient>(CreateAIProjectClient);
     }
 
@@ -53,12 +53,12 @@ public class CaldovaAgentFactory
     /// <param name="extraTools">Optional Foundry response tools (e.g. an
     /// MCP tool surface) to wire onto the agent in addition to the default
     /// Azure AI Search and Bing tools.</param>
-    public CaldovaAgent Create(string role, IList<ResponseTool>? extraTools = null)
+    public GuruAgent Create(string role, IList<ResponseTool>? extraTools = null)
     {
         if (!IsConfigured)
         {
             throw new InvalidOperationException(
-                "Caldova Life Advice agent factory is not configured. Set AZURE_AI_PROJECT_ENDPOINT and " +
+                "Life Advice Guru agent factory is not configured. Set AZURE_AI_PROJECT_ENDPOINT and " +
                 "AZURE_AI_MODEL_DEPLOYMENT_NAME in appsettings.json or environment variables.");
         }
 
@@ -133,7 +133,7 @@ public class CaldovaAgentFactory
         _ => ex.InnerException is not null && IsConnectivityFailure(ex.InnerException),
     };
 
-    private CaldovaAgent CreateAgent(string role, IList<ResponseTool>? extraTools)
+    private GuruAgent CreateAgent(string role, IList<ResponseTool>? extraTools)
     {
         var client = _aiProjectClient.Value;
         var deployment = _options.ModelDeploymentName!;
@@ -164,7 +164,7 @@ public class CaldovaAgentFactory
                 => new ClientCommunicationsVoiceAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<ClientCommunicationsVoiceAgent>()),
             "team-leader" or "leader"
                 => new TeamLeaderAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<TeamLeaderAgent>()),
-            _ => throw new ArgumentException($"Unknown Caldova Life Advice agent role: '{role}'.", nameof(role))
+            _ => throw new ArgumentException($"Unknown Life Advice Guru agent role: '{role}'.", nameof(role))
         };
     }
 

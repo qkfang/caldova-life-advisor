@@ -2,10 +2,10 @@
  * Single source of truth for staff and client persona data.
  *
  * All persona-level facts (name, role or situation, personality, typical
- * line, palette, request type) live here so that Caldova House's cast, its
+ * line, palette, request type) live here so that Guru House's cast, its
  * cards and the finale never disagree.
  *
- * Mirrors the Caldova Life Advice canon (AGENTS.md, docs/characters.md and
+ * Mirrors the Life Advice Guru canon (AGENTS.md, docs/characters.md and
  * docs/foundry_agents.md) and matches the palette keys defined in
  * `characterPalettes.ts`.
  */
@@ -24,7 +24,7 @@ export type StaffRole =
   | "Practice Team Leader";
 
 /**
- * The two small teams of Caldova Life Advice, one for each side of the
+ * The two small teams of Life Advice Guru, one for each side of the
  * practice, plus the leadership that runs both. Olivia is listed with the
  * Protection Advice Team, but every request from both sides comes in through
  * her, so she sits at the front door in the middle of Level 2.
@@ -89,7 +89,7 @@ export interface ClientPersona {
 }
 
 /* ------------------------------------------------------------------------ */
-/* Staff cast — the Caldova Life Advice practice team                        */
+/* Staff cast — the Life Advice Guru practice team                        */
 /* ------------------------------------------------------------------------ */
 
 export const STAFF_PERSONAS: StaffPersona[] = [
@@ -100,7 +100,7 @@ export const STAFF_PERSONAS: StaffPersona[] = [
     team: "Protection Advice Team",
     department: "Onboarding & Requests",
     role_short:
-      "The front door of the practice: every enquiry, referral, review and claim notification starts with Olivia, from both sides of Caldova.",
+      "The front door of the practice: every enquiry, referral, review and claim notification starts with Olivia, from both sides of Life Advice Guru.",
     role_line: "The front door for every request, from both sides of the practice.",
     palette: "onboardingOfficer",
     color: "#0ea5e9",
@@ -162,7 +162,7 @@ export const STAFF_PERSONAS: StaffPersona[] = [
     team: "Protection Advice Team",
     department: "Insurance Research",
     role_short:
-      "Compares the insurers on Caldova’s approved product list on definitions, features, exclusions and premiums, so the advice rests on the fine print.",
+      "Compares the insurers on Life Advice Guru’s approved product list on definitions, features, exclusions and premiums, so the advice rests on the fine print.",
     role_line: "Compares the insurers on the approved product list.",
     palette: "researchAnalyst",
     color: "#f59e0b",
@@ -355,7 +355,7 @@ export const CLIENT_PERSONAS: ClientPersona[] = [
     name: "Priya Natarajan",
     situation: "Has just bought a home in Coburg, with a second baby on the way, and wants her family protected.",
     situation_long:
-      "Priya (34) is a physiotherapist in Brunswick. She lives in Coburg with her partner Arjun and their daughter Asha (2), and a second baby is due in March 2027. They bought a home in October 2026 with a $680,000 joint mortgage, and their mortgage broker, Hannah Lewis of Yarra Home Loans, referred Priya to Caldova.",
+      "Priya (34) is a physiotherapist in Brunswick. She lives in Coburg with her partner Arjun and their daughter Asha (2), and a second baby is due in March 2027. They bought a home in October 2026 with a $680,000 joint mortgage, and their mortgage broker, Hannah Lewis of Yarra Home Loans, referred Priya to Life Advice Guru.",
     need: [
       "Enough cover to clear the mortgage and look after the children",
       "Premiums that fit the budget: up to $300 a month",
@@ -374,7 +374,7 @@ export const CLIENT_PERSONAS: ClientPersona[] = [
     name: "Grace Williams",
     situation: "Travelling in Italy, while someone uses her name to claim her trauma cover.",
     situation_long:
-      "Grace (61) is a semi-retired school principal from Hawthorn and a Caldova client since 2019. Her Lyrebird Life policy holds $500,000 of life cover and $200,000 of trauma cover. She told Amelia she would be in Italy until 1 December. While she is away, someone changes her contact details and claims her trauma cover in her name.",
+      "Grace (61) is a semi-retired school principal from Hawthorn and a Life Advice Guru client since 2019. Her Lyrebird Life policy holds $500,000 of life cover and $200,000 of trauma cover. She told Amelia she would be in Italy until 1 December. While she is away, someone changes her contact details and claims her trauma cover in her name.",
     need: [
       "Her cover kept safe",
       "To be contacted on the number she already trusts",

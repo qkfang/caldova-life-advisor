@@ -147,6 +147,30 @@ export class Wanderer {
     this.goTo(this.o.home, null);
   }
 
+  /** Off its floor for a while (a party guest riding the lift down to the tram): drops its bookings. */
+  park(): void {
+    this.o.book.release((this.dest ?? this.spot).key);
+    this.pinned = false;
+    this.dest = null;
+    this.job = null;
+    this.o.body.walk(false);
+    this.o.bubble?.hide();
+    this.bubbleLeft = 0;
+  }
+
+  /** Back on its floor at `spot` (stepping out of the lift, say), and walking home from there. */
+  enterAt(spot: Spot): void {
+    this.o.book.release((this.dest ?? this.spot).key);
+    this.pinned = false;
+    this.dest = null;
+    this.job = null;
+    this.spot = spot;
+    const root = this.o.body.root;
+    root.position.x = spot.at[0];
+    root.position.z = spot.at[1];
+    this.goTo(this.o.home, null);
+  }
+
   /** Jump straight home, for when its floor is moved out of the way mid-walk. */
   snapHome(): void {
     this.o.book.release((this.dest ?? this.spot).key);

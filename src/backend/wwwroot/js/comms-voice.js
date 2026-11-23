@@ -43,7 +43,7 @@
             // current voice, greeting prompt and the verified caller's case
             // context when a call starts.
             const DEFAULT_VOICE = 'en-US-Ava:DragonHDLatestNeural';
-            const DEFAULT_GREETING = 'Please greet me as Cara from Caldova Life Advice and ask how you can help today. Keep it to one or two short, warm sentences.';
+            const DEFAULT_GREETING = 'Please greet me as Cara from Life Advice Guru and ask how you can help today. Keep it to one or two short, warm sentences.';
             let voiceName = DEFAULT_VOICE;
             let greetingText = DEFAULT_GREETING;
 

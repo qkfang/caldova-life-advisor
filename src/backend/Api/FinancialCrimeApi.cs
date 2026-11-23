@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Models;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Models;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record FinCrimeVerifyRequest(string CaseNumber, List<string>? DocumentIds);
 record FinCrimeProcessRequest(string CaseNumber, List<string>? DocumentIds);
@@ -67,7 +67,7 @@ public static class FinancialCrimeApi
     public static void MapFinancialCrimeEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         FinCrimeCaseDocumentStore docStore,
         FinCrimeDocumentVerifier verifier,
         ILogger logger)
@@ -252,7 +252,7 @@ public static class FinancialCrimeApi
                 // Creating the agent registers it with Foundry, so it can fail
                 // (or stall) too; the stream then still ends with the
                 // deterministic assessment.
-                CaldovaAgent? streamingAgent = null;
+                GuruAgent? streamingAgent = null;
                 if (factory.IsConfigured)
                 {
                     (streamingAgent, agentCreateError) = await TryCreateAgentAsync(factory, logger, httpContext.RequestAborted);
@@ -293,8 +293,8 @@ public static class FinancialCrimeApi
     /// the page: creation registers the agent version, so it can fail or stall.
     /// After a failure Foundry is skipped for a couple of minutes.
     /// </summary>
-    private static async Task<(CaldovaAgent? Agent, string? Error)> TryCreateAgentAsync(
-        CaldovaAgentFactory factory, ILogger logger, CancellationToken ct)
+    private static async Task<(GuruAgent? Agent, string? Error)> TryCreateAgentAsync(
+        GuruAgentFactory factory, ILogger logger, CancellationToken ct)
     {
         if (DateTime.UtcNow.Ticks < Volatile.Read(ref _skipFoundryUntilTicks))
             return (null, "Foundry wasn't reachable a moment ago, so this is the offline assessment.");
@@ -562,7 +562,7 @@ public static class FinancialCrimeApi
             var owner = p.AcceptedPayees.FirstOrDefault() ?? client;
             indicators.Add(new("payee",
                 "Benefit to be paid into a new account in another name",
-                $"The request asks Caldova to pay '{string.Join("', '", mismatched)}' — not {owner}, the policy owner.{opened} {(insurer ?? "The insurer")} pays benefits to the policy owner, so an account in another name can't be used.",
+                $"The request asks Life Advice Guru to pay '{string.Join("', '", mismatched)}' — not {owner}, the policy owner.{opened} {(insurer ?? "The insurer")} pays benefits to the policy owner, so an account in another name can't be used.",
                 "Claim email", 12, "high"));
         }
 
@@ -681,7 +681,7 @@ public static class FinancialCrimeApi
             "Normal for a new client. Until there's history, identity verification and PEP / sanctions screening carry the weight.",
             "Request type", 3, "info"),
         "george" => new("company-ownership", "Watch-point: cover owned by a company",
-            "The company would own the key person policy, so Caldova identifies the company and every person who owns or controls it — George and Harpreet, 50% each.",
+            "The company would own the key person policy, so Life Advice Guru identifies the company and every person who owns or controls it — George and Harpreet, 50% each.",
             "Request type", 2, "info"),
         "tom" => new("financial-stress", "Watch-point: client under financial stress",
             "Not a concern about Tom. People under financial stress can be targeted by scams, so any request to change where benefits are paid is verified with a call-back on his verified mobile.",
@@ -731,12 +731,12 @@ public static class FinancialCrimeApi
     private static string? ReportingNote(string level, FinCrimeCaseProfile p, string? insurer, string first) => level switch
     {
         "High" =>
-            $"Referral: {insurer ?? "the insurer"}'s fraud team decides whether to investigate the claim. Whether anything must also be reported to AUSTRAC is for Caldova's compliance adviser to decide — an advice licensee has AML/CTF reporting duties only when it arranges a designated service, and pure-risk cover like {first}'s generally isn't one. Keep the suspicion confidential.",
+            $"Referral: {insurer ?? "the insurer"}'s fraud team decides whether to investigate the claim. Whether anything must also be reported to AUSTRAC is for Life Advice Guru's compliance adviser to decide — an advice licensee has AML/CTF reporting duties only when it arranges a designated service, and pure-risk cover like {first}'s generally isn't one. Keep the suspicion confidential.",
         "Medium" => "No referral at this stage — reassess once the client has been verified on the trusted contact details.",
         _ => p.ScenarioKey switch
         {
-            "priya" => "AML/CTF: arranging the rollover from Riverbend Super that funds Priya's cover inside super may be a designated service Caldova arranges as a licensee (item 54). If so, this KYC is the initial customer due diligence it needs — Caldova's compliance adviser decides.",
-            "george" => "Caldova's KYC standard for business clients: identify the company and every person who owns or controls it. Pure-risk cover generally isn't an AML/CTF designated service — Caldova's compliance adviser decides whether any AML/CTF obligation applies.",
+            "priya" => "AML/CTF: arranging the rollover from Riverbend Super that funds Priya's cover inside super may be a designated service Life Advice Guru arranges as a licensee (item 54). If so, this KYC is the initial customer due diligence it needs — Life Advice Guru's compliance adviser decides.",
+            "george" => "Life Advice Guru's KYC standard for business clients: identify the company and every person who owns or controls it. Pure-risk cover generally isn't an AML/CTF designated service — Life Advice Guru's compliance adviser decides whether any AML/CTF obligation applies.",
             _ => null,
         },
     };

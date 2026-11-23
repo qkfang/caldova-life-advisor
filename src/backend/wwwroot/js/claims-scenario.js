@@ -669,7 +669,7 @@
                 el.innerHTML =
                     `<button type="button" class="tp-btn tp-approve" data-teams-action="approve">${isBlock(a) ? 'Approve block' : 'Approve'}</button>` +
                     '<button type="button" class="tp-btn tp-reject" data-teams-action="reject">Reject</button>' +
-                    `<a class="tp-btn" href="${escapeHtml(a.approvalUrl || '#')}" target="_blank" rel="noopener">Open case in Caldova</a>`;
+                    `<a class="tp-btn" href="${escapeHtml(a.approvalUrl || '#')}" target="_blank" rel="noopener">Open case in Life Advice Guru</a>`;
                 return;
             }
             const who = a.decidedBy ? ` by ${a.decidedBy}` : '';

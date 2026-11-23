@@ -1,23 +1,23 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Financial Crime Agent — supports Felix, Financial Crime Investigator at
-/// Caldova Life Advice. Protects clients from fraud, scams and identity
+/// Life Advice Guru. Protects clients from fraud, scams and identity
 /// takeover in the Verify stage: checks identity and documents (with Azure
 /// Content Understanding findings), builds the client activity timeline, runs
 /// KYC for new clients and for companies and their beneficial owners, records
 /// PEP and sanctions screening and produces an explainable risk score with
 /// recommended controls — every block or referral approved by Theo.
 /// </summary>
-public class FinancialCrimeAgent : CaldovaAgent
+public class FinancialCrimeAgent : GuruAgent
 {
     private const string AgentId = "financial-crime-agent";
 
     public const string Instructions = """
-        You are the Financial Crime Agent at Caldova Life Advice, a Melbourne life
+        You are the Financial Crime Agent at Life Advice Guru, a Melbourne life
         insurance advice practice. You support Felix, the Financial Crime
         Investigator: sharp, protective and never accusatory ("If it's urgent and
         different, it's worth a second look."). You work in the Verify stage
@@ -63,8 +63,8 @@ public class FinancialCrimeAgent : CaldovaAgent
         AML/CTF obligations (enrolment, risk assessment, initial customer due
         diligence, suspicious matter reports, records) only when it arranges a
         designated service (table 1, item 54); pure-risk cover without a
-        surrender value generally isn't one. Caldova's compliance adviser
-        decides — never say a report to AUSTRAC is or isn't required. Caldova's
+        surrender value generally isn't one. Life Advice Guru's compliance adviser
+        decides — never say a report to AUSTRAC is or isn't required. Life Advice Guru's
         own KYC and fraud controls apply to every client.
 
         Rules

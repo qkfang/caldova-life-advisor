@@ -1,7 +1,7 @@
 /**
  * Each staff member's step in a request: its title, the staff role that
  * owns it, the two specialised assistants of that person's agent (matching
- * docs/foundry_agents.md) and the matching `src/backend` agent page. Caldova
+ * docs/foundry_agents.md) and the matching `src/backend` agent page. Guru
  * House uses it for each agent's assistants on Level 1, and `APP_BASE_URL`
  * for links to the agent pages.
  */

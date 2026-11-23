@@ -1,6 +1,6 @@
 # Advice Team in a Day — Agent Console (`src/backend`)
 
-A .NET 10 Blazor Server web app for **Caldova Life Advice**, a fictional
+A .NET 10 Blazor Server web app for **Life Advice Guru**, a fictional
 Melbourne life insurance advice practice. It is the agent console behind
 *Advice Team in a Day*: every Microsoft Foundry agent in
 [`src/agent/Agents`](../agent/Agents) gets its own page that opens straight
@@ -12,16 +12,16 @@ proxy for Cara.
 
 Every request follows one lifecycle — **Discover → Verify → Advise → Implement
 → Confirm** — and the agents gather facts, check, calculate, compare and draft.
-Amelia, Caldova's senior risk adviser, gives the advice, and people approve
+Amelia, Life Advice Guru's senior risk adviser, gives the advice, and people approve
 every decision that matters.
 
 ## Run
 
 ```bash
-dotnet run --project src/backend/cl-backend.csproj
+dotnet run --project src/backend/guru-backend.csproj
 ```
 
-Then open <http://localhost:5212> (the `caldova-life-advice` launch profile).
+Then open <http://localhost:5212> (the `life-advice-guru` launch profile).
 Without a reachable Foundry project every Try-it-out flow still completes
 **offline**, using deterministic results that match the five scenarios exactly.
 Configure Foundry (below) to see the real agents stream their reasoning, cite
@@ -31,12 +31,12 @@ To build or run several copies side by side (for example while other changes
 are being built), give each its own output folders and port:
 
 ```bash
-dotnet build src/backend/cl-backend.csproj -p:IntermediateOutputPath=obj/mine/ -p:OutputPath=bin/mine/
-dotnet run --project src/backend/cl-backend.csproj -p:IntermediateOutputPath=obj/mine/ -p:OutputPath=bin/mine/ --urls http://localhost:5299
+dotnet build src/backend/guru-backend.csproj -p:IntermediateOutputPath=obj/mine/ -p:OutputPath=bin/mine/
+dotnet run --project src/backend/guru-backend.csproj -p:IntermediateOutputPath=obj/mine/ -p:OutputPath=bin/mine/ --urls http://localhost:5299
 ```
 
 If a previous run is still holding the build outputs, `./kill-sessions.ps1`
-stops the `cl-backend` / `cl-agent` processes.
+stops the `guru-backend` / `guru-agent` processes.
 
 ## Routes
 
@@ -46,7 +46,7 @@ stops the `cl-backend` / `cl-agent` processes.
 | `/agents/{id}` | Agent page with the live Try it out flow. `?caseNumber=REQ-…` pre-selects a case; on Onboarding, `?sample=onboarding-priya` (etc.) pre-selects an inbound request |
 | `/scenarios/{id}` | Scenario page — key facts, who approves what, and the case journey with a **Run this step** link to each agent |
 | `/account` | "Ask AI" assistant (general information only) with related-agent references |
-| `/mcp` | MCP server, label `caldova-ops-mcp` (research, underwriting, claims and Teams tools) |
+| `/mcp` | MCP server, label `guru-ops-mcp` (research, underwriting, claims and Teams tools) |
 
 ### Agent pages
 
@@ -82,7 +82,7 @@ produced.
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /onboarding/samples` | The five inbound requests (one per scenario) |
-| `GET /onboarding/samples/{id}` | One request: the email or call note, the attachment text and what Caldova holds on file |
+| `GET /onboarding/samples/{id}` | One request: the email or call note, the attachment text and what Life Advice Guru holds on file |
 | `POST /onboarding/process` | `{ "sampleId": "onboarding-priya" }` → Client Case fields, fact find (or claim details), in-good-order checklist, priority, vulnerability flags, routing and the agent narrative |
 | `GET /onboarding/routing?requestType=…` | Where a case of that request type is routed |
 | `POST /onboarding/submit` | Olivia confirms the (edited) Client Case → mints `REQ-YYYYMMDD-XXXXXX` and returns the routing |
@@ -91,7 +91,7 @@ produced.
 Sample ids: `onboarding-priya`, `onboarding-grace`, `onboarding-george`,
 `onboarding-tom`, `onboarding-robert`.
 
-### MCP tools (`/mcp`, label `caldova-ops-mcp`)
+### MCP tools (`/mcp`, label `guru-ops-mcp`)
 
 | Agent | Tools |
 | --- | --- |
@@ -122,20 +122,20 @@ the same Foundry configuration keys as the CLI host. Set them in
 
 | Key | Purpose |
 | --- | --- |
-| `AZURE_AI_PROJECT_ENDPOINT` | Microsoft Foundry project endpoint URL (`aif-caldovacl` / `aif-caldovacl-project`) |
+| `AZURE_AI_PROJECT_ENDPOINT` | Microsoft Foundry project endpoint URL (`aif-lifeguru` / `aif-lifeguru-project`) |
 | `AZURE_AI_MODEL_DEPLOYMENT_NAME` | Chat model deployment (e.g. `gpt-5.4`) |
 | `AZURE_TENANT_ID` | Optional tenant ID for `DefaultAzureCredential` |
 | `AZURE_AI_SEARCH_CONNECTION_ID` | Foundry connection ID for Azure AI Search |
 | `AZURE_AI_SEARCH_INDEX_NAME` | Knowledge index (`life_knowledge` — see [`ai-search/`](../../ai-search)) |
 | `AZURE_BING_CONNECTION_ID` | Foundry Bing grounding connection ID |
-| `APP_MCP_URL` | Public base URL of this app (e.g. a dev tunnel or `https://app-caldovacl-backend.azurewebsites.net`) so Foundry can reach `/mcp`. Leave it unset for purely local runs — otherwise agents call the MCP tools on that host. |
+| `APP_MCP_URL` | Public base URL of this app (e.g. a dev tunnel or `https://app-lifeguru-backend.azurewebsites.net`) so Foundry can reach `/mcp`. Leave it unset for purely local runs — otherwise agents call the MCP tools on that host. |
 | `FoundryAgent:EndpointUrl` | Optional. Agent endpoint for the "Ask AI" assistant; without it the assistant answers offline |
 | `AZURE_CONTENT_UNDERSTANDING_ENDPOINT` | Optional. Azure Content Understanding endpoint for the Financial Crime document checks (falls back to the manifest's expected verdicts when unset) |
 | `AZURE_CONTENT_UNDERSTANDING_KEY` | Optional API key (otherwise `DefaultAzureCredential` is used) |
 | `AZURE_CONTENT_UNDERSTANDING_ANALYZER_ID` | Optional analyzer id (created on first use) |
 | `AZURE_CONTENT_UNDERSTANDING_COMPLETION_MODEL` / `_EMBEDDING_MODEL` | Optional model deployments for the analyzer |
 
-When the endpoint and model are set, `CaldovaAgentFactory.IsConfigured` is
+When the endpoint and model are set, `GuruAgentFactory.IsConfigured` is
 `true` and pages invoke the real agents (`factory.Create("onboarding")`,
 `factory.Create("claims")`, …). If the call fails or Foundry isn't configured,
 the offline results are used and the page says so.

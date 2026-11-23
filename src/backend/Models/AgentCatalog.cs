@@ -1,8 +1,8 @@
-namespace CaldovaLife.App.Models;
+namespace LifeAdviceGuru.App.Models;
 
 /// <summary>
-/// The three groupings on the practice floor: the two sides of Caldova Life
-/// Advice and the agents both sides share. Colours match Caldova House
+/// The three groupings on the practice floor: the two sides of Life Advice Guru
+/// and the agents both sides share. Colours match Guru House
 /// (teal for Protection Advice, gold for Claims &amp; Care, lilac for shared).
 /// </summary>
 public static class PracticeSides
@@ -24,7 +24,7 @@ public static class PracticeSides
 }
 
 /// <summary>
-/// Lightweight metadata for one of the eight Caldova Life Advice agents. The
+/// Lightweight metadata for one of the eight Life Advice Guru agents. The
 /// detailed page content is hand-written in
 /// <c>Components/Pages/Agents/&lt;Agent&gt;.razor</c>; this catalog powers
 /// navigation (Home, NavMenu), the scenario pages, the onboarding routing
@@ -50,7 +50,7 @@ public record AgentDefinition(
     IReadOnlyList<string> Stages);
 
 /// <summary>
-/// Static catalog of the eight Caldova Life Advice agents, in request-journey
+/// Static catalog of the eight Life Advice Guru agents, in request-journey
 /// order. Mirrors the agents in <c>src/agent/Agents</c> and the department
 /// table in <c>AGENTS.md</c>.
 /// </summary>
@@ -108,7 +108,7 @@ public static class AgentCatalog
             Department: "Insurance Research",
             Persona: "Ivy — Insurance Research Analyst",
             Tagline: "Cheapest isn't best if the definition won't pay.",
-            Purpose: "Compares the insurers on Caldova's approved product list on definitions, features, exclusions and premiums — stepped and level, over time — and builds the comparison workbook and chart for the Statement of Advice.",
+            Purpose: "Compares the insurers on Life Advice Guru's approved product list on definitions, features, exclusions and premiums — stepped and level, over time — and builds the comparison workbook and chart for the Statement of Advice.",
             Responsibilities: new[]
             {
                 "Read each APL insurer's product sheet and PDS extract.",

@@ -1,8 +1,8 @@
 /**
- * Inspector card content for everything the visitor can click in Caldova
+ * Inspector card content for everything the visitor can click in Guru
  * House: Maya, the brain, each person, each agent and each of its roles, each
  * engine-room component, the front desk with whoever is signing there and
- * Amelia, Caldova's adviser, and the party on the roof with each of its
+ * Amelia, Life Advice Guru's adviser, and the party on the roof with each of its
  * guests. Each card ends with actions that move up or down the house along
  * the same thread (person ↔ agent ↔ infrastructure). Cards for Maya, people,
  * agents, roles and guests stay short: one plain-English line, then a few
@@ -41,7 +41,7 @@ import {
   type LevelId,
   type SideId,
 } from "./houseData";
-import { PARTY_SHOT, type CameraShot, type PageId } from "./storyData";
+import { LIFT_SHOT, PARTY_SHOT, type CameraShot, type PageId } from "./storyData";
 import type { InspectTarget } from "./types";
 
 export interface InspectorAction {
@@ -73,6 +73,9 @@ export interface Live {
   adviserTask(): string | null;
   partyNow(): string;
   guestTask(id: string): string | null;
+  /** What the glass lift is doing, and who is riding it. */
+  liftNow(): string;
+  liftRiders(): string[];
 }
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -117,6 +120,8 @@ export function nowText(target: InspectTarget, live?: Live): string | null {
       return live.partyNow();
     case "guest":
       return live.guestTask(target.id);
+    case "lift":
+      return live.liftNow();
     default:
       return null;
   }
@@ -333,6 +338,18 @@ function partySvg(): string {
     <rect x="24" y="8" width="11" height="12" rx="3" fill="#8b9cf7"/>
     <rect x="5" y="29" width="3" height="3" fill="#ff8f6b"/><rect x="31" y="27" width="3" height="3" fill="#5ce1ff"/>
     <rect x="27" y="33" width="3" height="3" fill="#ffc35a"/>
+  </svg>`;
+}
+
+/** The glass lift: a car with brass rails in a dark frame under a copper cap, going up. */
+function liftSvg(): string {
+  return `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="8" fill="rgba(255,255,255,0.04)"/>
+    <path d="M11 9 L20 3 L29 9 Z" fill="#c5824b"/>
+    <rect x="11" y="9" width="18" height="28" fill="none" stroke="#5b6476" stroke-width="2"/>
+    <rect x="13.5" y="15" width="13" height="15" rx="1" fill="rgba(255,195,90,0.18)" stroke="#c9a14a" stroke-width="1.6"/>
+    <rect x="13.5" y="21" width="13" height="1.4" fill="#c9a14a"/>
+    <path d="M33 22 L33 12 M30.5 15 L33 12 L35.5 15" stroke="#ffc35a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -555,7 +572,7 @@ function card(target: InspectTarget, link: Linker, live?: Live): Omit<InspectorV
       const george = PARTY_GUESTS.find((g) => g.id === "george");
       return {
         accent: GOLD,
-        html: `${head(partySvg(), "idea", PARTY.name, "A party for Caldova’s clients", "On the roof")}
+        html: `${head(partySvg(), "idea", PARTY.name, "A party for Life Advice Guru’s clients", "On the roof")}
           <p class="insp-lede">${esc(PARTY.summary)}</p>
           ${facts([
             ["Guests", esc(PARTY.guests)],
@@ -585,6 +602,22 @@ function card(target: InspectTarget, link: Linker, live?: Live): Omit<InspectorV
             ["Now", now(nowText(target, live))],
           ])}`,
         actions,
+      };
+    }
+    case "lift": {
+      const riders = live?.liftRiders() ?? [];
+      return {
+        accent: GOLD,
+        html: `${head(liftSvg(), "agents", "The glass lift", "Up to the party on the roof", "On the corner · beside the tram stop")}
+          <p class="insp-lede">A glass lift on the front corner of Guru House, beside the tram stop. Party guests step off the tram and ride straight up to the celebration on the roof, and ride back down to catch the tram home.</p>
+          ${facts([
+            ["Riding", esc(riders.length ? riders.join(", ") : "Nobody right now")],
+            ["Now", now(nowText(target, live))],
+          ])}`,
+        actions: [
+          { label: "Take a closer look", shot: LIFT_SHOT, primary: true },
+          { label: "The celebration", select: { type: "party" } },
+        ],
       };
     }
     case "infra": {
@@ -641,10 +674,12 @@ export function tooltipText(target: InspectTarget, live?: Live): string {
     case "adviser":
       return `${ADVISER.name} · ${ADVISER.role} at the front desk`;
     case "party":
-      return `${PARTY.name} · a party for Caldova’s clients`;
+      return `${PARTY.name} · a party for Life Advice Guru’s clients`;
     case "guest": {
       const g = PARTY_GUESTS.find((x) => x.id === target.id);
       return g ? `${g.name} · ${g.role}` : "";
     }
+    case "lift":
+      return "The glass lift · up to the party on the roof";
   }
 }

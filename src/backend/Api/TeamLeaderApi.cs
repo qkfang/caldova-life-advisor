@@ -1,8 +1,8 @@
 using System.Text;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record TeamLeaderProcessRequest(string CaseNumber);
 
@@ -84,7 +84,7 @@ public static class TeamLeaderApi
     public static void MapTeamLeaderEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         // Cases in the practice, most recent first — populates the case
@@ -154,7 +154,7 @@ public static class TeamLeaderApi
 
             if (AgentSseStreaming.WantsEventStream(httpContext))
             {
-                CaldovaAgent? streamingAgent = null;
+                GuruAgent? streamingAgent = null;
                 string? createError = null;
                 if (factory.IsConfigured)
                 {
@@ -442,7 +442,7 @@ public static class TeamLeaderApi
                     "Advice with total cover of $2,000,000 or more on one case gets a second review before the SoA is presented",
                     "Due now — $2,800,000 on the case", "due"),
                 new("Northbank Life underwriting", n, who,
-                    "Caldova lodges within 2 business days of the Authority to Proceed; Northbank's fast financial underwriting decides within 5 business days, and medical underwriting within 5 business days of the last requirement",
+                    "Life Advice Guru lodges within 2 business days of the Authority to Proceed; Northbank's fast financial underwriting decides within 5 business days, and medical underwriting within 5 business days of the last requirement",
                     "Not started — George: blood profile, medical examination and financial evidence; Harpreet: blood profile and financial evidence", "paused"),
             ],
             Escalation: new(n, who, "Watch",
@@ -471,7 +471,7 @@ public static class TeamLeaderApi
                 new("Ownership matches each purpose", "pass",
                     "Buy-sell self-owned by each partner; key person owned by the company for a revenue purpose."),
                 new("Legal documents left to the lawyer", "pass",
-                    "Their lawyer drafts the buy-sell agreement — Caldova doesn't draft legal documents."),
+                    "Their lawyer drafts the buy-sell agreement — Life Advice Guru doesn't draft legal documents."),
                 new("Tax treatment confirmed by the accountant", "pass",
                     "Marcus confirmed the treatment as their accountant."),
                 new("Reasonable investigation of products", "pass",
@@ -504,7 +504,7 @@ public static class TeamLeaderApi
             Clocks:
             [
                 new("Claim lodgement", n, who,
-                    "Lodging any claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Caldova service standard)",
+                    "Lodging any claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Life Advice Guru service standard)",
                     "Lodge Thu 12 Nov 2026", "due"),
                 new("Waiting period", n, who,
                     "30-day waiting period from the injury on 14 Oct 2026",
@@ -575,14 +575,14 @@ public static class TeamLeaderApi
             Clocks:
             [
                 new("Claim lodgement", n, who,
-                    "Every death or terminal illness claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Caldova service standard)",
+                    "Every death or terminal illness claim needs a person's approval (Teams); approved claims are lodged the same or next business day (Life Advice Guru service standard)",
                     "Lodge today, Mon 16 Nov 2026", "due"),
                 new("Corella's claim decision", n, who,
                     LifeRules.CodeLumpSumClaimDecision,
                     "Corella's own standard: a dedicated case manager, a death claim decision usually within 5 business days of having all information and payment within 3 business days of acceptance. " +
                     "Life Code backstop: by 16 May 2027; " + LifeRules.CodeWrittenDecision, "watch"),
                 new("Updates to the family", n, who,
-                    "At least every 10 business days while anything is open, from one named contact (Caldova service standard)",
+                    "At least every 10 business days while anything is open, from one named contact (Life Advice Guru service standard)",
                     "Amelia is the contact; Theo approves every message", "watch"),
                 new("Riverbend Super claim ($180,000)", n, who,
                     "A separate claim with the fund's trustee, paid under the fund's rules",
@@ -680,7 +680,7 @@ public static class TeamLeaderApi
             : null;
 
         var acknowledgement = new PracticeClock("Acknowledgement", n, who,
-            "Requests acknowledged, and anything not in good order explained, within 1 business day (Caldova service standard)",
+            "Requests acknowledged, and anything not in good order explained, within 1 business day (Life Advice Guru service standard)",
             $"Received {PracticeDates.Display(c.ReceivedDate)} — Cara's acknowledgement is drafted", "due");
 
         return new CaseProfile(
@@ -725,7 +725,7 @@ public static class TeamLeaderApi
     private static string BuildPrompt(CaseRecord c, CaseFocus focus, PracticeView practice)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("TEAM LEADER PRACTICE REVIEW — CALDOVA LIFE ADVICE");
+        sb.AppendLine("TEAM LEADER PRACTICE REVIEW — LIFE ADVICE GURU");
         sb.AppendLine("=================================================");
         sb.AppendLine($"Focus case     : {c.CaseNumber}");
         sb.AppendLine($"Client         : {c.ClientName} ({c.ClientNumber})");

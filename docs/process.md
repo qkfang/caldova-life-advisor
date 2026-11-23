@@ -1,10 +1,10 @@
 # Advice Practice AI Agent Characters
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Overview
 
-This document describes how work flows through **Caldova Life Advice** and the AI agent that supports each role. Each agent is based on a real advice-practice role. The agents are designed to:
+This document describes how work flows through **Life Advice Guru** and the AI agent that supports each role. Each agent is based on a real advice-practice role. The agents are designed to:
 
 - support the practice staff and the adviser
 - improve the experience for clients, families and referral partners
@@ -15,7 +15,7 @@ Every agent follows the same guardrails:
 
 - It works in plain English.
 - It never gives personal advice. Amelia, the adviser, gives the advice and signs every Statement of Advice.
-- It never invents figures or rules. It cites the insurer's PDS extract, Caldova's guides or the rule document.
+- It never invents figures or rules. It cites the insurer's PDS extract, Life Advice Guru's guides or the rule document.
 - It never accuses a client of fraud.
 - It masks TFNs as `*** *** 123` and bank accounts to the last few digits, and treats health information as sensitive.
 - It flags vulnerable clients (serious illness, injury, financial stress, bereavement, scams, age or cognitive decline) for human handling.
@@ -103,7 +103,7 @@ For the industry background behind each step, see [background.md](background.md)
 
 **Based on:** Insurance Research Analyst (Ivy)
 
-**Purpose:** Compare the insurers on Caldova's approved product list on definitions, features and premiums, so the adviser can recommend with confidence.
+**Purpose:** Compare the insurers on Life Advice Guru's approved product list on definitions, features and premiums, so the adviser can recommend with confidence.
 
 ## What the agent can do
 
@@ -114,7 +114,7 @@ For the industry background behind each step, see [background.md](background.md)
 | Definitions that matter | Checks the definitions that decide whether a claim would pay, such as own-occupation TPD for the client's occupation. |
 | Stepped and level premiums | Compares stepped and level premiums now and over time. |
 | Comparison workbook | Builds an Excel workbook with a premium chart and a download link (`research_generateComparisonWorkbook`). |
-| APL knowledge | Answers questions about Harbourline Life, Corella Life, Lyrebird Life and Northbank Life from their PDS extracts and *Caldova Life Advice — Approved product list and research method*. |
+| APL knowledge | Answers questions about Harbourline Life, Corella Life, Lyrebird Life and Northbank Life from their PDS extracts and *Life Advice Guru — Approved product list and research method*. |
 
 ## Example AI agent behaviour
 

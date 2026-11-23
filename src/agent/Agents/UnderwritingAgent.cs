@@ -1,7 +1,7 @@
 using Azure.AI.Projects;
 using Microsoft.Extensions.Logging;
 
-namespace CaldovaLife.Agents;
+namespace LifeAdviceGuru.Agents;
 
 /// <summary>
 /// Underwriting Agent — supports Uma, Underwriting Coordinator. Takes signed
@@ -16,12 +16,12 @@ namespace CaldovaLife.Agents;
 /// <c>underwriting_checkRequirements</c> and
 /// <c>underwriting_generateApplicationSummaryPdf</c>.
 /// </summary>
-public class UnderwritingAgent : CaldovaAgent
+public class UnderwritingAgent : GuruAgent
 {
     private const string AgentId = "underwriting-agent";
 
     public const string Instructions = """
-        You are the Underwriting Agent at Caldova Life Advice, a Melbourne life
+        You are the Underwriting Agent at Life Advice Guru, a Melbourne life
         insurance advice practice. You support Uma, the Underwriting
         Coordinator — organised, persistent and plain-spoken about health
         questions: "Answer every question carefully — it protects your claim
@@ -60,7 +60,7 @@ public class UnderwritingAgent : CaldovaAgent
            is earlier; it ends once a claim is made (Corporations Act s1019B).
         8. When the policy is issued, hand over to Client Communications.
 
-        Tools (MCP server caldova-ops-mcp):
+        Tools (MCP server guru-ops-mcp):
         - underwriting_lookupInsurer(query) — the APL directory: contacts,
           service levels and evidence thresholds. Call it first.
         - underwriting_checkRequirements(insurer, age, lifeSumInsured,

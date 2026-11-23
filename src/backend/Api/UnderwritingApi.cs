@@ -1,10 +1,10 @@
 using System.Text;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Mcp;
-using CaldovaLife.App.Models;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Mcp;
+using LifeAdviceGuru.App.Models;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record UnderwritingProcessRequest(string CaseNumber);
 
@@ -33,11 +33,11 @@ public static class UnderwritingApi
     public static void MapUnderwritingEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         var pdfService = app.Services.GetRequiredService<ApplicationPdfService>();
-        var agentOptions = app.Services.GetRequiredService<CaldovaAgentOptions>();
+        var agentOptions = app.Services.GetRequiredService<GuruAgentOptions>();
         var mcpEnabled = !string.IsNullOrWhiteSpace(agentOptions.AppMcpUrl);
 
         // Every Client Case in the shared store; claim cases are flagged so
@@ -155,7 +155,7 @@ public static class UnderwritingApi
                 };
             }
 
-            CaldovaAgent? agent = null;
+            GuruAgent? agent = null;
             if (factory.IsConfigured)
             {
                 try
@@ -344,7 +344,7 @@ public static class UnderwritingApi
         }
         else
         {
-            sb.AppendLine($"**{plan.Insurer.Name}** ({plan.Insurer.PolicyPrefix}, on Caldova's APL) — lodged {plan.LodgedOn}.");
+            sb.AppendLine($"**{plan.Insurer.Name}** ({plan.Insurer.PolicyPrefix}, on Life Advice Guru's APL) — lodged {plan.LodgedOn}.");
             sb.AppendLine();
             sb.AppendLine("| Life insured | Cover | Sum insured | Ownership | Premium (yr 1) |");
             sb.AppendLine("|---|---|--:|---|--:|");

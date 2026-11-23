@@ -1,7 +1,7 @@
 using System.Text.Json;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 internal record GroupChatStartRequest(string CaseNumber);
 

@@ -1,8 +1,9 @@
 /**
  * The finale: one client request travelling through the whole house.
  *
- * It starts at the front desk: the client arrives by tram and signs under the
- * verandah (frontDesk.ts). Once the form is signed, the request appears at
+ * It starts at the front desk: the client arrives by tram, or comes down from
+ * the party on the roof in the glass lift, and signs under the verandah
+ * (frontDesk.ts). Once the form is signed, the request appears at
  * the desk and sets off. Each step starts with a person on Level 2, dips down
  * to their agent on Level 1 and the engine-room component that agent leans
  * on, then comes back up for the human decision. The result rises to the
@@ -162,18 +163,19 @@ export class RequestTrace {
     this.announceArrival();
   }
 
-  /** Step 1 is told while the client is still on the tram, before the request exists. */
+  /** Step 1 is told while the client is still on their way, before the request exists. */
   private announceArrival(): void {
     this.arrival?.();
   }
 
-  stop(): void {
+  /** Stops the trace. A client who came down from the party heads back up: returns their scenario. */
+  stop(): ScenarioId | null {
     this.running = false;
     this.finished = false;
     this.orb.setEnabled(false);
     for (const m of this.trail) m.setEnabled(false);
-    this.desk.ambient();
     this.hooks.focus(null);
+    return this.desk.ambient();
   }
 
   /** Jump ahead to the next step. */
@@ -298,11 +300,12 @@ export class RequestTrace {
       const impostor = arrival.visitor === "impostor";
       const first = client.split(" ")[0];
       const visitor = impostor ? "Someone" : client;
+      const lift = arrival.by === "lift";
       const who = impostor
         ? `Someone · signing in ${first}’s name`
         : arrival.companion
-          ? `${client} and ${arrival.companion.name.split(" ")[0]} · arrive by tram`
-          : `${client} · arrives by tram`;
+          ? `${client} and ${arrival.companion.name.split(" ")[0]} · ${lift ? "come down in the lift" : "arrive by tram"}`
+          : `${client} · ${lift ? "comes down in the lift" : "arrives by tram"}`;
       this.arrival = () => {
         this.hooks.focus({ desk: true });
         this.hooks.step({

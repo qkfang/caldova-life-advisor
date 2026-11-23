@@ -81,7 +81,7 @@
       "src": "/fincrime/samples/bank-statement-g-williams-consulting.png",
       "expected": "suspicious",
       "owner": "grace",
-      "description": "Interim statement for the account the claim asks Caldova to pay. The account was opened on 03/11/2026 with a $10 cash deposit, and it's in a company's name — not the policy owner, Grace Williams.",
+      "description": "Interim statement for the account the claim asks Life Advice Guru to pay. The account was opened on 03/11/2026 with a $10 cash deposit, and it's in a company's name — not the policy owner, Grace Williams.",
       "holderName": "G Williams Consulting Pty Ltd",
       "documentNumber": "063-*** ****4471",
       "issuer": "Laneway Bank",

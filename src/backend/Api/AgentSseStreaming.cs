@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using CaldovaLife.Agents;
+using LifeAdviceGuru.Agents;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>
 /// Server-Sent Events helper used by every agent "Try it out" /process endpoint
@@ -55,7 +55,7 @@ internal static class AgentSseStreaming
     /// </summary>
     public static async Task StreamAsync(
         HttpContext httpContext,
-        CaldovaAgent? agent,
+        GuruAgent? agent,
         string prompt,
         Func<AgentTraceResult?, string?, object> buildEnvelope,
         ILogger logger,
@@ -110,12 +110,12 @@ internal static class AgentSseStreaming
     /// <summary>
     /// Same as <see cref="StreamAsync"/> but resumes a previous Foundry agent
     /// conversation by chaining off <paramref name="previousResponseId"/> via
-    /// <see cref="CaldovaLife.Agents.BaseAgent.ChatStreamingTraceAsync"/>. Used by
+    /// <see cref="LifeAdviceGuru.Agents.BaseAgent.ChatStreamingTraceAsync"/>. Used by
     /// the "Chat with the agent" follow-up panels on each agent page.
     /// </summary>
     public static async Task StreamChatAsync(
         HttpContext httpContext,
-        CaldovaAgent? agent,
+        GuruAgent? agent,
         string previousResponseId,
         string message,
         Func<AgentTraceResult?, string?, object> buildEnvelope,

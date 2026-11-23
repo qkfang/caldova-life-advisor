@@ -6,7 +6,7 @@
  *    through the practice, starting with the request at the front desk.
  *  - The result: how the case ends.
  *
- * The Caldova House finale (`v2/requestTrace.ts`) turns each beat into a stop
+ * The Guru House finale (`v2/requestTrace.ts`) turns each beat into a stop
  * on the request's route through the house, so one JSON edit changes the
  * finale's narration.
  */

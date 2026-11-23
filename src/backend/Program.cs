@@ -1,11 +1,11 @@
 using System.Text.Json;
-using CaldovaLife.App.Api;
-using CaldovaLife.App.Components;
-using CaldovaLife.App.Mcp;
-using CaldovaLife.App.Models;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Api;
+using LifeAdviceGuru.App.Components;
+using LifeAdviceGuru.App.Mcp;
+using LifeAdviceGuru.App.Models;
+using LifeAdviceGuru.App.Services;
 
-// Advice Team in a Day — the Caldova Life Advice agent console.
+// Advice Team in a Day — the Life Advice Guru agent console.
 // Hosts one page per Foundry agent (/agents/{id}), the five scenario pages
 // (/scenarios/{id}), the Try-it-out endpoints for each agent, the "Ask AI"
 // assistant (/account) and the in-process MCP server the Foundry agents call
@@ -23,7 +23,7 @@ builder.Services.AddHttpClient<ChatService>();
 // Bing connections) and register a singleton factory that the web app uses
 // to invoke agents from the referenced `agent` library — the same agents the
 // CLI host in `src/agent` exposes.
-var agentOptions = new CaldovaAgentOptions
+var agentOptions = new GuruAgentOptions
 {
     ProjectEndpoint = builder.Configuration["AZURE_AI_PROJECT_ENDPOINT"],
     ModelDeploymentName = builder.Configuration["AZURE_AI_MODEL_DEPLOYMENT_NAME"],
@@ -40,12 +40,12 @@ var agentOptions = new CaldovaAgentOptions
     AppMcpUrl = builder.Configuration["APP_MCP_URL"],
 };
 builder.Services.AddSingleton(agentOptions);
-builder.Services.AddSingleton<CaldovaAgentFactory>();
+builder.Services.AddSingleton<GuruAgentFactory>();
 
 // HttpClient factory for MCP tools (e.g. fetching insurer product sheets from URLs).
 builder.Services.AddHttpClient();
 
-// MCP server (label caldova-ops-mcp) for the in-process tool surface used by
+// MCP server (label guru-ops-mcp) for the in-process tool surface used by
 // the Foundry agents:
 //   - ResearchMcpTools     (Ivy) research_analysePolicyDocument /
 //     research_compareInsurers / research_generateComparisonWorkbook
@@ -179,7 +179,7 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
 
     var agentResponse = await chatService.SendMessageWithOptionsAsync(message, temperature);
 
-    // References: surface the relevant Caldova Life Advice agents from the
+    // References: surface the relevant Life Advice Guru agents from the
     // AgentCatalog using simple keyword matching against the question.
     var keywords = (message ?? string.Empty).ToLowerInvariant()
         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -203,7 +203,7 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
             Category = x.Agent.Department,
             Sentiment = "Neutral",
             Author = x.Agent.Persona,
-            PublishedDate = "Caldova Life Advice",
+            PublishedDate = "Life Advice Guru",
             Url = $"/agents/{x.Agent.Id}"
         })
         .ToList();
@@ -216,7 +216,7 @@ app.MapPost("/api/chat/ask", async (HttpContext ctx, ChatService chatService) =>
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
     var caseStore = app.Services.GetRequiredService<CaseStore>();
-    var factory = app.Services.GetRequiredService<CaldovaAgentFactory>();
+    var factory = app.Services.GetRequiredService<GuruAgentFactory>();
 
     // Pre-populate the case store with the five scenario cases so every
     // agent page has cases to pick from straight away.

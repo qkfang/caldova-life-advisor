@@ -5,7 +5,7 @@
 // enhanced-navigated pages are not reliably executed.
 //
 // Flow: 1 pick an inbound request (email or call note + attachment + what
-// Caldova holds on file) → 2 engage the Onboarding Agent (streamed narrative
+// Life Advice Guru holds on file) → 2 engage the Onboarding Agent (streamed narrative
 // + engage sub-tabs) → 3 review the Client Case form, the fact find, the
 // in-good-order checklist, the priority and vulnerability flags → 4 open the
 // case (REQ-…) and show where it is routed. Works offline: without Foundry

@@ -1,0 +1,41 @@
+{
+  "id": "apl-life-advice-guru-and-research-method",
+  "title": "Life Advice Guru — Approved product list and research method",
+  "product": "Life Advice Guru approved product list (APL)",
+  "version": "APL 2026-27 — reviewed 1 July 2026",
+  "summary": "Life Advice Guru's approved product list (APL) — the insurers and products Amelia can recommend — and the method Insurance Research (Ivy and the Insurance Research Agent) uses to research and compare them for every Statement of Advice. The APL supports the best interests duty; it doesn't replace it.",
+  "rules": "APL insurers for 2026-27:\n• Harbourline Life (HL-) — Harbourline Protection Plan: life, TPD (own occupation outside super only), trauma and income protection; key person and buy-sell cover. No super-linking.\n• Corella Life (CR-) — Corella Protection Plan and Corella Super Plan: super-linking (life and any-occupation TPD inside super, with an own-occupation TPD extension, trauma and income protection outside super); key person and buy-sell cover.\n• Lyrebird Life (LB-) — Lyrebird Life Protection: life, TPD, trauma and income protection for individuals and families. No business protection.\n• Northbank Life (NB-) — Northbank Business Protection: buy-sell and key person cover with fast financial underwriting. Always researched for business protection.\n\nHow insurers get on the APL: Insurance Research and Theo review the APL every year against definitions, features and exclusions; premiums over time, stepped and level; underwriting service; claims philosophy and claims data, including APRA's life insurance claims and disputes statistics; subscription to the Life Insurance Code of Practice; and each product's target market determination.\nContext from APRA's statistics for individual advised cover, 12 months to 30 Jun 2026 — claims admitted: death 97.1%, TPD 81.1%, trauma 87.9%, disability income 94.3%.\n\nResearch for each SoA — the reasonable investigation of products in the best interests duty (Corporations Act s961B(2)(e)):\n1 Start from the needs analysis and the client's relevant circumstances: occupation, health, budget and existing cover.\n2 Compare the definitions that matter for this client — for example own-occupation TPD for a physiotherapist, or a cancer definition that needs histopathology (research_analysePolicyDocument).\n3 Compare features and exclusions, such as super-linking, exclusion reviews and business protection options.\n4 Compare premiums in dollars: year-1 stepped premiums for the full package, and stepped against level over time (research_compareInsurers). Moneysmart now calls stepped premiums 'variable age-stepped' and level premiums 'variable'; the Life Insurance Code of Practice still says 'stepped' and 'level', and so does Life Advice Guru.\n5 Shortlist with reasons and build the comparison workbook with a premium chart for the file (research_generateComparisonWorkbook). Cheapest isn't best if the definition won't pay.\n6 Amelia decides what to recommend and records why in the SoA.\n\nTarget market determinations: insurers must make a TMD for each product (s994B). Giving personal advice, and arranging a product to implement it, are 'excluded conduct' under the design and distribution obligations (s994A, s994E(3)), so the best interests duty governs Amelia's recommendation. Ivy still notes when a client sits outside a product's target market.\nOff-APL products: if no APL product suits a client, Amelia can research a product off the APL with Theo's approval, or tell the client that Life Advice Guru can't help with that need.",
+  "limits": "The APL doesn't limit the best interests duty. Agents compare and shortlist; they never recommend a product to the client. Premiums are indicative, at standard rates, until the insurer has underwritten the application. Life Advice Guru doesn't research investment products.",
+  "evidenceRequired": [
+    "Needs analysis",
+    "Product comparison and premium workbook on the file",
+    "Reasons for the shortlisted product",
+    "Theo's approval for any product off the APL"
+  ],
+  "sources": [
+    "Corporations Act 2001 s961B(2)(e) (reasonable investigation of products), and s994A, s994B and s994E(3) (design and distribution obligations) — https://www.legislation.gov.au/C2004A00818/latest/text",
+    "APRA — Life insurance claims and disputes statistics, June 2026 (published 16 Oct 2026) — https://www.apra.gov.au/news-and-publications/life-insurance-claims-and-disputes-statistics",
+    "Moneysmart — how life insurance works (premium types) — https://moneysmart.gov.au/how-life-insurance-works/life-insurance-cover",
+    "Council of Australian Life Insurers — Life Insurance Code of Practice, 2025 edition (cl 2.14, stepped and level premiums) — https://cali.org.au/life-code/"
+  ],
+  "owner": "Insurance Research",
+  "tags": [
+    "apl",
+    "approved-product-list",
+    "research-method",
+    "harbourline-life",
+    "corella-life",
+    "lyrebird-life",
+    "northbank-life",
+    "best-interests-duty",
+    "reasonable-investigation",
+    "definitions",
+    "stepped-premium",
+    "level-premium",
+    "comparison-workbook",
+    "tmd",
+    "ddo",
+    "apra-claims-statistics"
+  ],
+  "lastUpdated": "2026-07-01T00:00:00Z"
+}

@@ -1,8 +1,8 @@
 # Life Insurance Advice Background
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
-This primer explains the industry behind the demo. Caldova Life Advice and all the people, insurers, super funds and businesses in the demo are fictional. The rules and numbers are real Australian settings for **FY2026-27** (1 July 2026 – 30 June 2027), current at 23 Nov 2026, and their sources are linked. Anything proposed but not yet law is marked as proposed.
+This primer explains the industry behind the demo. Life Advice Guru and all the people, insurers, super funds and businesses in the demo are fictional. The rules and numbers are real Australian settings for **FY2026-27** (1 July 2026 – 30 June 2027), current at 23 Nov 2026, and their sources are linked. Anything proposed but not yet law is marked as proposed.
 
 ---
 
@@ -21,18 +21,18 @@ A practice:
 
 **Who's who.**
 
-| Party | Role | Caldova example (fictional) |
+| Party | Role | Life Advice Guru example (fictional) |
 |---|---|---|
 | Client | The person advised. On a policy, the **life insured** is the person whose life or health is covered, the **policy owner** owns the policy, a **beneficiary** receives the benefit on death, and a **claimant** makes a claim | Priya, Grace, George and Harpreet, Tom, and Robert |
 | Adviser | A relevant provider on ASIC's Financial Advisers Register, who gives the advice and signs the SoA | Amelia, Senior Risk Adviser |
-| Licensee | The AFS licence holder responsible for its advisers | Caldova's advice is given under an AFS licence |
-| Insurer | A life company that issues policies, underwrites applications and decides claims | Harbourline Life, Corella Life, Lyrebird Life and Northbank Life, on Caldova's APL |
+| Licensee | The AFS licence holder responsible for its advisers | Life Advice Guru's advice is given under an AFS licence |
+| Insurer | A life company that issues policies, underwrites applications and decides claims | Harbourline Life, Corella Life, Lyrebird Life and Northbank Life, on Life Advice Guru's APL |
 | Super fund trustee | Holds cover inside super and pays insured benefits under the fund's rules | Riverbend Super (an industry fund) and Kestrel Retail Super |
 | Referral partner | Refers clients with their consent | Hannah Lewis, mortgage broker (Yarra Home Loans), and Marcus Tan, accountant (Bayside Business Accountants) |
 
-**How the practice is paid.** An adviser can be paid an advice fee, commission from the insurer, or both. Life-risk commission is capped under the Life Insurance Framework (LIF) and, for cover issued from 9 Jul 2025, needs the client's informed consent (see [section 6](#6-key-rules--numbers-fy2026-27)). Caldova charges no advice fee for protection-only advice and is paid by commission within the caps, disclosed in dollars. Its FSG explains why it can't describe itself as independent, impartial or unbiased ([Corporations Act s923A and s942B](https://www.legislation.gov.au/C2004A00818/latest/text)).
+**How the practice is paid.** An adviser can be paid an advice fee, commission from the insurer, or both. Life-risk commission is capped under the Life Insurance Framework (LIF) and, for cover issued from 9 Jul 2025, needs the client's informed consent (see [section 6](#6-key-rules--numbers-fy2026-27)). Life Advice Guru charges no advice fee for protection-only advice and is paid by commission within the caps, disclosed in dollars. Its FSG explains why it can't describe itself as independent, impartial or unbiased ([Corporations Act s923A and s942B](https://www.legislation.gov.au/C2004A00818/latest/text)).
 
-### The Cover Caldova Advises On
+### The Cover Life Advice Guru Advises On
 
 | Cover | What it pays | Inside super? | Scenarios |
 |---|---|---|---|
@@ -73,7 +73,7 @@ Sources: [SIS Regulations reg 4.07D](https://www.legislation.gov.au/F1996B00580/
 
 > **Referral or enquiry → Fact find → Needs analysis → Research → Statement of Advice → Authority to Proceed → Application and underwriting → Policy issued → Reviews**
 
-| Step | What happens | Rules that apply | Caldova department | Scenarios |
+| Step | What happens | Rules that apply | Life Advice Guru department | Scenarios |
 |---|---|---|---|---|
 | **Referral or enquiry** | A client asks for help, or a referral partner refers them with their consent. The client gets the Financial Services Guide (FSG) | The hawking prohibition (no offers in unsolicited real-time contact). FSG | Onboarding & Requests | [1](scenario-1-family-protection.md), [3](scenario-3-business-protection.md) |
 | **Fact find** | Goals, dependants, debts, income, occupation, health basics and existing cover. Privacy and health-information consent, and authority to obtain existing policy details | Best interests duty: identify the client's objectives, financial situation and needs, and make reasonable inquiries | Onboarding & Requests | All |
@@ -93,11 +93,11 @@ Sources: [SIS Regulations reg 4.07D](https://www.legislation.gov.au/F1996B00580/
 
 > **Claim notification → Policy and evidence check → Claim pack → Approval and lodgement → Insurer's assessment → Decision → Payment and follow-up**
 
-| Step | What happens | The insurer's obligations under the Life Code | Caldova department |
+| Step | What happens | The insurer's obligations under the Life Code | Life Advice Guru department |
 |---|---|---|---|
-| **Notification** | The client, the family or a support person tells Caldova about the claim | Within 10 business days of receiving a claim, the insurer explains the Code, the cover, waiting periods, benefits and the process (cl 5.5). Support persons are recognised (cl 6.13) | Onboarding & Requests |
+| **Notification** | The client, the family or a support person tells Life Advice Guru about the claim | Within 10 business days of receiving a claim, the insurer explains the Code, the cover, waiting periods, benefits and the process (cl 5.5). Support persons are recognised (cl 6.13) | Onboarding & Requests |
 | **Policy and evidence check** | The definition, waiting period, exclusions, who is paid, and the evidence | | Claims |
-| **Approval and lodgement** | A person at Caldova approves before any claim is lodged | | Claims, Team Leader Office |
+| **Approval and lodgement** | A person at Life Advice Guru approves before any claim is lodged | | Claims, Team Leader Office |
 | **Assessment** | The insurer gathers what it needs | Reply to information requests within 10 business days (cl 5.7). Updates at least every 20 business days (cl 5.6). Surveillance limited to 4 months (cl 5.42(h)) | Claims |
 | **Decision** | The insurer accepts, partially accepts or declines | Income-related claims within 2 months of receiving the claim, or of the end of the waiting period if later. Lump-sum claims within 6 months. A written decision within 15 business days of having all the information (cl 5.48–5.50) | Claims |
 | **Payment** | The benefit is paid | Income protection benefits paid by the due date, or within 5 business days of all information (cl 5.63). For accepted lump sums of $25,000 or more, the insurer suggests independent financial advice (cl 5.61) | Claims, Client Communications |
@@ -111,9 +111,9 @@ Source: [Life Insurance Code of Practice (CALI, effective 1 Mar 2025)](https://c
 
 ## 5. The Request Lifecycle Inside the Practice
 
-Every request moves through the same five steps, shown on the "One process for both sides" board in the Caldova office. A request might be new advice, a review, a change or a claim.
+Every request moves through the same five steps, shown on the "One process for both sides" board in the Life Advice Guru office. A request might be new advice, a review, a change or a claim.
 
-| Step | Question it answers | Caldova departments | Typical checks and controls |
+| Step | Question it answers | Life Advice Guru departments | Typical checks and controls |
 |---|---|---|---|
 | **1. Discover** | What does the client need, and who is asking? | Onboarding & Requests | Capture the fact find into the Client Case, classify the request, set its priority and flag vulnerable clients |
 | **2. Verify** | Is it in good order, and is it really the client? | Onboarding & Requests, Financial Crime | The in-good-order checklist, ID and KYC, document authenticity, and a call-back on the verified number on file |
@@ -227,7 +227,7 @@ These are the settings the agents use, current at 23 Nov 2026. All amounts are i
 | Advisers | Financial advisers aren't one of the new sectors. An AFS licensee is a reporting entity only when it arranges for a person to receive a designated service (item 54), with reduced obligations: enrolment, a risk assessment, customer due diligence policies, suspicious matter reports and records | [AUSTRAC](https://www.austrac.gov.au/industry-and-business/obligations-and-guidance/additional-guidance/exemptions-amlctf-obligations-businesses-providing-only-item-54-designated-services) |
 | Life policies | Issuing a "life policy" is a designated service for the insurer, but the definition excludes policies with no minimum surrender value and small-premium policies | [AML/CTF Act s5, s6](https://www.legislation.gov.au/C2006A00169/latest/text) |
 
-Whether a risk-only practice has item 54 obligations depends on what it arranges. Pure-risk cover usually has no surrender value, so arranging it may fall outside the definition, but that is an inference: check with the licensee. Caldova verifies every new client and checks documents as its own controls, whatever its AML/CTF status.
+Whether a risk-only practice has item 54 obligations depends on what it arranges. Pure-risk cover usually has no surrender value, so arranging it may fall outside the definition, but that is an inference: check with the licensee. Life Advice Guru verifies every new client and checks documents as its own controls, whatever its AML/CTF status.
 
 ### Professional standards
 
@@ -252,7 +252,7 @@ Premiums for cover inside super come out of these balances, so the contribution 
 
 ## 7. Financial Crime Patterns in Life Insurance
 
-The patterns that Caldova's *Guide — financial crime red flags and controls for life insurance* watches for:
+The patterns that Life Advice Guru's *Guide — financial crime red flags and controls for life insurance* watches for:
 
 - **Identity takeover before a claim.** Someone impersonates a client, changes the contact details, then claims or asks for the benefit to be paid somewhere new. The tell-tale signs are a recent contact change with weak verification, a new device or location, urgency, and a new bank account in another name. This is Grace's story in [scenario 2](scenario-2-fraudulent-claim.md).
 - **Fabricated or altered evidence.** Fake specialist reports, edited dates, pasted letterheads, provider numbers in the wrong format, and tampered IDs and bank statements.
@@ -293,7 +293,7 @@ These controls are practice, not regulator text.
 
 ## 9. Presenter Notes: Why This Matters for Advice Practices, Licensees and Life Insurers
 
-> **For presenters only.** This is the only place in the demo docs where real organisations are named. The demo itself always uses the fictional **Caldova Life Advice** and its fictional insurers. Never put a real insurer's, licensee's or practice's name, logo, products or address in the UI. Keep any mention factual and neutral.
+> **For presenters only.** This is the only place in the demo docs where real organisations are named. The demo itself always uses the fictional **Life Advice Guru** and its fictional insurers. Never put a real insurer's, licensee's or practice's name, logo, products or address in the UI. Keep any mention factual and neutral.
 
 ### Who They Are
 
@@ -346,7 +346,7 @@ Use these as context. Don't build the story around pending reform.
 - **AI advice.** The agents never give personal advice. Don't describe the demo as "AI advice": Amelia gives the advice.
 - **Regulatory endorsement.** Nothing in the demo has been reviewed or approved by a regulator. It is a concept.
 - **Proposals as law.** Tranche 2, the New Class of Adviser and the narrower hawking exemption are proposals.
-- **The Life Code and advisers.** The Code binds subscribing insurers, not advisers. Ben's agent tracks the insurer's obligations; it doesn't impose them on Caldova.
+- **The Life Code and advisers.** The Code binds subscribing insurers, not advisers. Ben's agent tracks the insurer's obligations; it doesn't impose them on Life Advice Guru.
 - **AML/CTF.** Don't say a risk-only practice is, or isn't, a reporting entity. It depends on what the practice arranges.
 - **Income protection.** Don't say APRA requires a 5-year contract term (that measure is suspended) or a switch from own-occupation to any-occupation (there is no such rule).
 - **Key person tax.** IT 155 is long-standing, but its currency isn't confirmed. Defer to the client's accountant.

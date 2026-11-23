@@ -1,7 +1,7 @@
 # Advice Team in a Day — Foundry Agents (`src/agent`)
 
 This project hosts the **.NET 10** Microsoft Foundry agents behind
-**Caldova Life Advice**, a fictional Melbourne life insurance advice practice
+**Life Advice Guru**, a fictional Melbourne life insurance advice practice
 (*Advice Team in a Day*). Each staff character described in
 [`docs/characters.md`](../../docs/characters.md) is supported by a specialised
 Foundry declarative agent, following the role and tooling design in
@@ -13,11 +13,11 @@ The C# pattern is modelled on
 - `Agents/BaseAgent.cs` — wraps a Foundry declarative agent and the project
   Responses client, with MCP auto-approval, streaming, tracing and citation
   extraction.
-- `Agents/CaldovaAgent.cs` — shared base for every staff agent; wires up
+- `Agents/GuruAgent.cs` — shared base for every staff agent; wires up
   Azure AI Search grounding over the `life_knowledge` index (insurer PDS
-  extracts, Caldova's guides, advice, underwriting, claims, tax and commission
+  extracts, Life Advice Guru's guides, advice, underwriting, claims, tax and commission
   rules, and client case files), Bing grounding, and an optional MCP tool
-  surface (server label `caldova-ops-mcp`).
+  surface (server label `guru-ops-mcp`).
 - One class per staff character, each with its own Foundry agent id, persona,
   instructions and structured output format.
 
@@ -37,7 +37,7 @@ The C# pattern is modelled on
 
 Every agent supports — never replaces — human judgement. Agents gather facts,
 explain rules, calculate needs and benefits, compare products, draft documents
-and recommend. They never give personal advice: Amelia, Caldova's senior risk
+and recommend. They never give personal advice: Amelia, Life Advice Guru's senior risk
 adviser, gives the advice and signs every Statement of Advice. People approve
 replacing or cancelling cover, loadings, exclusions and declines, every claim
 lodgement, financial-crime blocks, changes to ownership, beneficiaries or bank
@@ -50,7 +50,7 @@ Set the following keys in `appsettings.json` (or as environment variables):
 
 | Key | Purpose |
 | --- | --- |
-| `AZURE_AI_PROJECT_ENDPOINT` | Microsoft Foundry project endpoint URL (e.g. `https://aif-caldovacl.services.ai.azure.com/api/projects/aif-caldovacl-project`) |
+| `AZURE_AI_PROJECT_ENDPOINT` | Microsoft Foundry project endpoint URL (e.g. `https://aif-lifeguru.services.ai.azure.com/api/projects/aif-lifeguru-project`) |
 | `AZURE_AI_MODEL_DEPLOYMENT_NAME` | Chat model deployment (e.g. `gpt-5.4`) |
 | `AZURE_TENANT_ID` | Optional tenant ID for `DefaultAzureCredential` |
 | `AZURE_AI_SEARCH_CONNECTION_ID` | Foundry connection ID for the Azure AI Search service |
@@ -80,12 +80,12 @@ Run with no arguments to print the full usage list.
 
 ## Used as a .NET library
 
-The project is a `Microsoft.NET.Sdk` Exe assembly (`cl-agent.csproj`, the same
+The project is a `Microsoft.NET.Sdk` Exe assembly (`guru-agent.csproj`, the same
 shape as [`quantlib`](https://github.com/qkfang/quant-agent/tree/main/src/quantlib)),
 so it can run as a command-line host **and** be referenced as a library.
 
 The Blazor agent console in [`src/backend`](../backend) takes a
-`ProjectReference` on `cl-agent.csproj` and resolves a `CaldovaAgentFactory`
+`ProjectReference` on `guru-agent.csproj` and resolves a `GuruAgentFactory`
 from DI to invoke the same `OnboardingAgent`, `ParaplanningAgent`, … classes
 the CLI exposes. Factory role keys match the CLI flags (`onboarding`,
 `paraplanning`, `research`, `fincrime`, `underwriting`, `claims`,
@@ -94,11 +94,11 @@ route ids are accepted too.
 
 ## Adding a new agent
 
-1. Create `Agents/<Name>Agent.cs` that extends `CaldovaAgent`.
+1. Create `Agents/<Name>Agent.cs` that extends `GuruAgent`.
 2. Define a unique Foundry agent id (kebab-case, ending in `-agent`).
 3. Provide a public `Instructions` constant that follows the structure in
    `docs/foundry_agents.md`: role and persona, job steps, the rules it applies
    (citing `life_knowledge` documents by title), tools, constraints and human
    approvals, and an output format.
 4. Add a CLI flag in `Program.cs` and a role key in
-   `src/backend/Services/CaldovaAgentFactory.cs`.
+   `src/backend/Services/GuruAgentFactory.cs`.

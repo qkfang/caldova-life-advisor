@@ -2,22 +2,22 @@
 
 ## Project Name
 
-The project is called **Advice Team in a Day**. It is built for **Caldova Life Advice** (short name **Caldova**), a fictional life insurance advice practice. Caldova is headquartered in Melbourne and helps families and business owners protect their income, their family and their business. Use these names consistently across all UI, documentation, and demo narration.
+The project is called **Advice Team in a Day**. It is built for **Life Advice Guru**, a fictional life insurance advice practice. Life Advice Guru is headquartered in Melbourne and helps families and business owners protect their income, their family and their business. Always use the full name, **Life Advice Guru**, with no short form. The building it works from is **Guru House**. Use these names consistently across all UI, documentation, and demo narration.
 
 ## Demo Purpose
 
-**Advice Team in a Day** shows how an AI-powered advice practice could work at **Caldova Life Advice**, inside Australia's life insurance advice industry. The goal is a realistic, easy-to-understand practice where each staff role is supported by a specialised AI agent.
+**Advice Team in a Day** shows how an AI-powered advice practice could work at **Life Advice Guru**, inside Australia's life insurance advice industry. The goal is a realistic, easy-to-understand practice where each staff role is supported by a specialised AI agent.
 
 The demo shows that the practice team is the engine room of good advice, not a separate business. Something starts each piece of work: a mortgage broker refers a family who has just bought a home, an accountant refers business owners with no succession plan, or a client has to make a claim after an injury, an illness or a death in the family. The practice turns that into completed, compliant work. It runs the fact find, works out how much cover is needed, researches the insurers, prepares the Statement of Advice, takes the application through underwriting, supports clients and families through claims, and keeps everyone informed.
 
-Caldova's advisers recommend cover from the fictional insurers on Caldova's **approved product list (APL)**:
+Life Advice Guru's advisers recommend cover from the fictional insurers on Life Advice Guru's **approved product list (APL)**:
 
 - **Harbourline Life**
 - **Corella Life**
 - **Lyrebird Life**
 - **Northbank Life**
 
-The cover Caldova advises on:
+The cover Life Advice Guru advises on:
 
 - **life cover**, with a terminal illness benefit
 - **TPD cover** (total and permanent disability)
@@ -31,7 +31,7 @@ For the industry background, see [docs/background.md](docs/background.md).
 
 ## Core Concept
 
-The demo shows Caldova Life Advice as **Caldova House**: a heritage building on a Melbourne city corner, built in 1889 as a bank, with a super modern, futuristic office inside. It is a voxel diorama, read from the top down.
+The demo shows Life Advice Guru as **Guru House**: a heritage building on a Melbourne city corner, built in 1889 as a bank, with a super modern, futuristic office inside. It is a voxel diorama, read from the top down.
 
 - **Level 3, the idea:** the business owner's office under the old copper dome, and her idea for running an advice practice in the agentic era.
 - **Level 2, the people:** two small teams, one for each side of the practice (**Protection Advice** and **Claims & Care**), with one team leader between them. Each role is a real advice-practice function.
@@ -50,7 +50,7 @@ For the setting, the cast, every page and the visual direction, see [docs/storyb
 
 The demo should communicate this story:
 
-> A family, a business owner, or a client who needs to claim comes to Caldova. Inside the practice, specialist agents take the request from the first conversation through the fact find, identity checks, needs analysis, research, the Statement of Advice, underwriting or the claim, and communication. The adviser gives the advice, and people approve every decision that matters.
+> A family, a business owner, or a client who needs to claim comes to Life Advice Guru. Inside the practice, specialist agents take the request from the first conversation through the fact find, identity checks, needs analysis, research, the Statement of Advice, underwriting or the claim, and communication. The adviser gives the advice, and people approve every decision that matters.
 
 The experience should make life insurance advice feel tangible and understandable.
 
@@ -121,7 +121,7 @@ For detailed AI agent capabilities, tools and approval rules, see [docs/foundry_
 - **C**ara: Client **C**ommunications Specialist
 - **T**heo: Practice **T**eam Leader
 
-**Owner and adviser.** **Maya Ashworth** is the **M**anaging director and business owner. **Amelia** is Caldova's senior risk **A**dviser. She works at the front desk, gives the advice and signs every Statement of Advice.
+**Owner and adviser.** **Maya Ashworth** is the **M**anaging director and business owner. **Amelia** is Life Advice Guru's senior risk **A**dviser. She works at the front desk, gives the advice and signs every Statement of Advice.
 
 **Clients.** There are five client personas, one for each scenario:
 
@@ -133,7 +133,7 @@ For detailed AI agent capabilities, tools and approval rules, see [docs/foundry_
 | Tom Bradley | Income protection claim after an injury |
 | Robert Chen | Death claim after the sudden death of his wife |
 
-**Referral partners.** Two fictional referral partners send clients to Caldova:
+**Referral partners.** Two fictional referral partners send clients to Life Advice Guru:
 
 - Hannah Lewis, mortgage broker, Yarra Home Loans
 - Marcus Tan, accountant, Bayside Business Accountants
@@ -172,7 +172,7 @@ When you generate code, content, UI components, or documentation for this demo, 
 
 **Metaphor and roles**
 
-- Preserve the Caldova House metaphor (the idea, the people, the agents and the engine room, read from the top down), and keep the **Discover → Verify → Advise → Implement → Confirm** lifecycle visible.
+- Preserve the Guru House metaphor (the idea, the people, the agents and the engine room, read from the top down), and keep the **Discover → Verify → Advise → Implement → Confirm** lifecycle visible.
 - Represent each AI agent as a specialised role that supports a named human staff member.
 - Show AI supporting, triaging, drafting, summarising, checking, calculating and recommending. Humans approve, override and finalise. Never make the system appear to replace human judgement.
 
@@ -198,8 +198,8 @@ When you generate code, content, UI components, or documentation for this demo, 
 | Concept | Use |
 |---|---|
 | Unit of work | A **request** becomes a **case**, the **Client Case**, numbered `REQ-YYYYMMDD-XXXXXX` |
-| People | **client** for the person advised; **life insured**, **policy owner**, **beneficiary** and **claimant** where the difference matters; **adviser** for Caldova's human adviser; **referral partner** for brokers and accountants |
-| Cover | **policy**, **cover**, **sum insured**, **premium** and **benefit**. Caldova client numbers are `CL-…`. Policy numbers carry the insurer's prefix: `HL-` Harbourline, `CR-` Corella, `LB-` Lyrebird, `NB-` Northbank |
+| People | **client** for the person advised; **life insured**, **policy owner**, **beneficiary** and **claimant** where the difference matters; **adviser** for Life Advice Guru's human adviser; **referral partner** for brokers and accountants |
+| Cover | **policy**, **cover**, **sum insured**, **premium** and **benefit**. Life Advice Guru client numbers are `CL-…`. Policy numbers carry the insurer's prefix: `HL-` Harbourline, `CR-` Corella, `LB-` Lyrebird, `NB-` Northbank |
 | Other terms | **needs analysis**, **underwriting**, **claim**, **insurer**, **financial crime** |
 | Outcomes | **completed**, **declined**, **blocked** or **partially approved** |
 
@@ -210,7 +210,7 @@ When you generate code, content, UI components, or documentation for this demo, 
 
 **Accuracy and care**
 
-- Never invent figures or rules. Cite the insurer's PDS, Caldova's guides or the rule document from the `life_knowledge` Azure AI Search index by its title.
+- Never invent figures or rules. Cite the insurer's PDS, Life Advice Guru's guides or the rule document from the `life_knowledge` Azure AI Search index by its title.
 - Never accuse a client of fraud.
 - Protect privacy: mask TFNs as `*** *** 123`, and treat health information as sensitive, shared only with the people who need it.
 - Flag vulnerable clients (serious illness, injury, financial stress, bereavement, scams, age, cognitive decline) for human handling.
@@ -218,13 +218,13 @@ When you generate code, content, UI components, or documentation for this demo, 
 
 **Presentation**
 
-- Keep visual elements aligned with Caldova House in [docs/storybook.md](docs/storybook.md): sharp and readable, one accent colour per level and one colour per side of the practice.
+- Keep visual elements aligned with Guru House in [docs/storybook.md](docs/storybook.md): sharp and readable, one accent colour per level and one colour per side of the practice.
 - Prefer structured layouts with departments, cards, panels, checklists or workflow stages.
 - Make the demo feel like an enterprise advice-practice product, not a consumer chatbot.
 
 **Fiction and sources**
 
-- All people, practices, insurers, super funds, businesses and Caldova itself are fictional. Don't use real insurer, licensee, fund, adviser or business names, logos, product names or addresses in the UI or docs. The only exception is the presenter notes in [docs/background.md](docs/background.md).
+- All people, practices, insurers, super funds, businesses and Life Advice Guru itself are fictional. Don't use real insurer, licensee, fund, adviser or business names, logos, product names or addresses in the UI or docs. The only exception is the presenter notes in [docs/background.md](docs/background.md).
 - Reference the docs files for character details, scenarios, rules and agent capabilities instead of duplicating that content.
 
 ---
@@ -236,7 +236,7 @@ When you generate code, content, UI components, or documentation for this demo, 
 - [docs/process.md](docs/process.md): practice process detail and AI agent capabilities for each role.
 - [docs/foundry_agents.md](docs/foundry_agents.md): Foundry agent design, covering the Client Case, inputs, tools, outputs, handoffs and human approval.
 - [docs/agent-demo.md](docs/agent-demo.md): the presenter click-path and 10-minute golden path.
-- [docs/storybook.md](docs/storybook.md): the Caldova House storybook, the frontend at `/`. Caldova is shown as an advice practice for the agentic era with two sides, Protection Advice and Claims & Care. The house is read from the top down: the business owner's idea, two small teams, one group of agents (dedicated to a side or shared by both, with each agent's specialised assistants as their own roles), and Microsoft IQ and the Azure services in the engine room. Out front, visitors arrive by tram and sign at the front desk under the verandah, where Amelia, Caldova's adviser, links them with the agents that get them started, and on the roof Caldova throws a party for its clients. The doc covers the setting, the business owner and adviser characters, the visual direction and every page.
+- [docs/storybook.md](docs/storybook.md): the Guru House storybook, the frontend at `/`. Life Advice Guru is shown as an advice practice for the agentic era with two sides, Protection Advice and Claims & Care. The house is read from the top down: the business owner's idea, two small teams, one group of agents (dedicated to a side or shared by both, with each agent's specialised assistants as their own roles), and Microsoft IQ and the Azure services in the engine room. Out front, visitors arrive by tram and sign at the front desk under the verandah, where Amelia, Life Advice Guru's adviser, links them with the agents that get them started, and on the roof Life Advice Guru throws a party for its clients. The doc covers the setting, the business owner and adviser characters, the visual direction and every page.
 - Scenarios:
   - [docs/scenario-1-family-protection.md](docs/scenario-1-family-protection.md) (Priya)
   - [docs/scenario-2-fraudulent-claim.md](docs/scenario-2-fraudulent-claim.md) (Grace)
@@ -248,13 +248,13 @@ When you generate code, content, UI components, or documentation for this demo, 
 
 ## Project Name
 
-The demo is called **Advice Team in a Day**. The fictional business it represents is **Caldova Life Advice**. Always refer to the demo by this name. Don't introduce alternative or legacy names.
+The demo is called **Advice Team in a Day**. The fictional business it represents is **Life Advice Guru**. Always refer to the demo by this name. Don't introduce alternative or legacy names.
 
 ---
 
 ## Summary
 
-**Advice Team in a Day** presents **Caldova Life Advice** as Caldova House, a heritage building with a futuristic office inside. Its two small teams work on one floor, and each staff member is supported by a specialised AI agent on the floor below. The purpose is to explain and visualise how AI can assist with:
+**Advice Team in a Day** presents **Life Advice Guru** as Guru House, a heritage building with a futuristic office inside. Its two small teams work on one floor, and each staff member is supported by a specialised AI agent on the floor below. The purpose is to explain and visualise how AI can assist with:
 
 - onboarding and requests
 - paraplanning and needs analysis

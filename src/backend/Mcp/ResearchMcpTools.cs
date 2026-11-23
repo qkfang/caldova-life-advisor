@@ -7,7 +7,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -18,7 +18,7 @@ using C = DocumentFormat.OpenXml.Drawing.Charts;
 using S = DocumentFormat.OpenXml.Spreadsheet;
 using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
-namespace CaldovaLife.App.Mcp;
+namespace LifeAdviceGuru.App.Mcp;
 
 /// <summary>
 /// MCP tools surfaced to the Insurance Research Agent (Ivy, Insurance
@@ -39,7 +39,7 @@ namespace CaldovaLife.App.Mcp;
 ///   (<c>/research/download/{fileName}</c>, served by Program.cs).
 ///
 /// The same internals back the <c>/research/*</c> endpoints in
-/// <see cref="CaldovaLife.App.Api.ResearchApi"/>, so the page shows the same
+/// <see cref="LifeAdviceGuru.App.Api.ResearchApi"/>, so the page shows the same
 /// numbers whether or not the Foundry agent is configured. Product sheets are
 /// fictional and live in <c>wwwroot/research/samples/</c>.
 /// </summary>
@@ -52,7 +52,7 @@ public class ResearchMcpTools
     /// <summary>App-relative URL prefix of the workbook download endpoint (Program.cs).</summary>
     internal const string DownloadUrlPrefix = "/research/download/";
 
-    /// <summary>One product sheet per insurer on Caldova's approved product list (APL).</summary>
+    /// <summary>One product sheet per insurer on Life Advice Guru's approved product list (APL).</summary>
     internal static readonly string[] AplSheetFiles =
     {
         "corella-life.json",
@@ -61,7 +61,7 @@ public class ResearchMcpTools
         "northbank-life.json",
     };
 
-    internal const string AplResearchTitle = "Caldova Life Advice — Approved product list and research method";
+    internal const string AplResearchTitle = "Life Advice Guru — Approved product list and research method";
     internal const string AdviceRulesTitle = "Advice rules — best interests duty, SoA and replacement advice";
     internal const string InsideSuperTitle = "Insurance inside super — permitted cover, Protecting Your Super and opt-in rules";
     internal const string CommissionRulesTitle = "Commission rules — LIF caps, clawback and consent";
@@ -133,7 +133,7 @@ public class ResearchMcpTools
             var loaded = await LoadDocumentAsync(insurerOrUrl);
             if (loaded.Sheet is null && loaded.Text is null)
             {
-                return JsonError($"No product sheet found for '{insurerOrUrl}'. Caldova's APL insurers are Harbourline Life, " +
+                return JsonError($"No product sheet found for '{insurerOrUrl}'. Life Advice Guru's APL insurers are Harbourline Life, " +
                                  "Corella Life, Lyrebird Life and Northbank Life.");
             }
 
@@ -143,7 +143,7 @@ public class ResearchMcpTools
                 {
                     source = loaded.Source,
                     format = "text",
-                    note = "Not a Caldova product sheet, so it wasn't parsed into definitions. Read the excerpt and cite the document by its title.",
+                    note = "Not a Life Advice Guru product sheet, so it wasn't parsed into definitions. Read the excerpt and cite the document by its title.",
                     excerpt = Truncate(loaded.Text!, 6000)
                 });
             }
@@ -163,7 +163,7 @@ public class ResearchMcpTools
     // ─────────────────────────────────────────────────────────────────────
 
     [McpServerTool(Name = "research_compareInsurers"),
-     Description("Compare the insurers on Caldova's approved product list for an advice case (new family or business protection). Ranks definitions first and price second: must-have definitions for this client (for example own-occupation TPD for a physiotherapist), then year-1 stepped premiums. Returns per-insurer year-1 stepped and level premiums, monthly and cash-flow cost, 10-year totals (illustrative), the definitions that matter with each insurer's result, a stepped-vs-level projection, the recommendation rationale for Amelia (research for the adviser, not advice to the client), the commission note, markdown tables (comparisonMarkdown, definitionsMarkdown, projectionMarkdown) and Mermaid charts (chartMermaid, projectionMermaid) to embed verbatim, and the document titles to cite. Claim cases have no comparison — use research_analysePolicyDocument for the policy wording instead.")]
+     Description("Compare the insurers on Life Advice Guru's approved product list for an advice case (new family or business protection). Ranks definitions first and price second: must-have definitions for this client (for example own-occupation TPD for a physiotherapist), then year-1 stepped premiums. Returns per-insurer year-1 stepped and level premiums, monthly and cash-flow cost, 10-year totals (illustrative), the definitions that matter with each insurer's result, a stepped-vs-level projection, the recommendation rationale for Amelia (research for the adviser, not advice to the client), the commission note, markdown tables (comparisonMarkdown, definitionsMarkdown, projectionMarkdown) and Mermaid charts (chartMermaid, projectionMermaid) to embed verbatim, and the document titles to cite. Claim cases have no comparison — use research_analysePolicyDocument for the policy wording instead.")]
     public async Task<string> CompareInsurers(
         [Description("Client Case number, e.g. REQ-20261103-LIF001 (Priya Natarajan, family protection) or REQ-20261109-LIF003 (George Papadopoulos and Harpreet Kaur, business protection).")]
         string caseNumber,
@@ -979,7 +979,7 @@ public class ResearchMcpTools
         var ws = wb.Worksheets.Add("Summary");
         sheets.Add(ws.Name);
 
-        ws.Cell(1, 1).Value = "Caldova Life Advice — Insurance Research";
+        ws.Cell(1, 1).Value = "Life Advice Guru — Insurance Research";
         ws.Range(1, 1, 1, 2).Merge().Style
             .Font.SetBold().Font.SetFontSize(14).Font.SetFontColor(XLColor.White)
             .Fill.SetBackgroundColor(BrandFill);
@@ -2034,7 +2034,7 @@ internal static class ResearchBriefs
             "George Papadopoulos, 52, master joiner and co-founder (50%) of Northcote Custom Joinery Pty Ltd; Harpreet Kaur, 47, operations and finance director (50%). Both non-smokers.",
             "The business was founded in 2011: 14 staff, revenue $3.1m, net profit $520,000. Valued at $2,400,000 by Marcus Tan (Bayside Business Accountants) at 30 Jun 2026.",
             "Referred by Marcus Tan on 9 Nov 2026 — there is no succession plan in place.",
-            "Their lawyer drafts the buy-sell agreement; Caldova doesn't draft legal documents.",
+            "Their lawyer drafts the buy-sell agreement; Life Advice Guru doesn't draft legal documents.",
             "Total cover on the case is $2,800,000, so the advice gets Theo's second review ($2,000,000 or more).",
         },
         CoverRequested: new[]
@@ -2060,7 +2060,7 @@ internal static class ResearchBriefs
         Observations: new[]
         {
             "The tax treatment of key person and buy-sell premiums and benefits depends on the purpose and the ownership — Marcus Tan, as their accountant, confirms it (see 'Tax on life insurance — premiums and benefits').",
-            "Caldova doesn't draft the buy-sell agreement — the owners' lawyer does, and its death and TPD triggers should match each policy's definitions.",
+            "Life Advice Guru doesn't draft the buy-sell agreement — the owners' lawyer does, and its death and TPD triggers should match each policy's definitions.",
             "Quotes are at standard rates before underwriting; the insurer may add a loading or an exclusion once it has the medical evidence.",
         },
         QuotesOnFile: true,
@@ -2099,7 +2099,7 @@ internal static class ResearchBriefs
                  "the request is with Ben (Claims) and Felix (Financial Crime).",
         KeyFacts: new[]
         {
-            "Grace Williams, 61, semi-retired school principal (relief teaching), Hawthorn; a Caldova client since 2019 (CL-100377).",
+            "Grace Williams, 61, semi-retired school principal (relief teaching), Hawthorn; a Life Advice Guru client since 2019 (CL-100377).",
             "At her annual review on 28 Sep 2026 Grace told Amelia she'd be in Italy from 20 Oct to 1 Dec 2026.",
             "On 2 Nov 2026 a caller changed the mobile and email on Grace's file; on 6 Nov a request arrived from the new email for a $200,000 trauma claim for breast cancer, to be paid into a new account ending 4471 in the name 'G Williams Consulting Pty Ltd'.",
             "The oncologist's report attached to the request has no histopathology report.",
@@ -2245,7 +2245,7 @@ internal static class ResearchBriefs
             new BriefItem("benefit-payment", "How the benefit is paid", BriefPriorities.AppliesToClaim,
                 "Only into an account in Robert's own name. Life cover paid to a nominated beneficiary outside super is generally not taxable (see 'Tax on life insurance — premiums and benefits')."),
             new BriefItem("claims-support", "Support through the claim", BriefPriorities.AppliesToClaim,
-                "Corella gives the family a dedicated case manager for the claim, alongside Amelia as their one named contact at Caldova."),
+                "Corella gives the family a dedicated case manager for the claim, alongside Amelia as their one named contact at Life Advice Guru."),
             new BriefItem("rule-icas29", "Time limit on non-disclosure", BriefPriorities.AppliesToClaim,
                 "Mei's policy started in March 2019 — more than seven years ago — so it can't be avoided for a non-fraudulent non-disclosure.",
                 Wording: "Under the Insurance Contracts Act 1984 s29(3), an insurer can avoid a life policy for a non-fraudulent failure to disclose or misrepresentation only within three years of the contract being entered into.",

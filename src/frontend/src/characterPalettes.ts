@@ -1,7 +1,7 @@
 /**
  * Visual palettes and style options for the voxel cast.
  *
- * Each entry maps to a persona in `personaData.ts` (the Caldova Life Advice
+ * Each entry maps to a persona in `personaData.ts` (the Life Advice Guru
  * practice team and its clients) or to someone the storybook adds (the
  * greeter at the front desk, family members and referral partners). Style
  * options (hair, glasses, beard, lower body shape, etc.) let the simple block
@@ -109,7 +109,7 @@ export const PALETTES: Record<string, VoxelCharacterPalette> = {
     shoes: "#3a2a20", hairStyle: "ponytail",
   },
 
-  // ----- Staff (the Caldova Life Advice practice team) -----
+  // ----- Staff (the Life Advice Guru practice team) -----
   // Staff shirts are matched to each person's accent colour (`color` in
   // personaData.ts), so each role reads with their desk and their agent's bay.
   // Olivia — Onboarding & Requests Officer (sky blue).

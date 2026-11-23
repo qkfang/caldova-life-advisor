@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record CommunicationsProcessRequest(string CaseNumber);
 
@@ -34,7 +34,7 @@ public static class CommunicationsApi
     public static void MapCommunicationsEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         // Lightweight list for the case pickers (Try it out + Voice chat),
@@ -119,7 +119,7 @@ public static class CommunicationsApi
 
             if (AgentSseStreaming.WantsEventStream(httpContext))
             {
-                CaldovaAgent? streamingAgent = null;
+                GuruAgent? streamingAgent = null;
                 string? createError = null;
                 if (factory.IsConfigured)
                 {
@@ -338,7 +338,7 @@ public static class CommunicationsApi
         sb.AppendLine();
         sb.AppendLine("For each draft give Channel & Audience, Draft Message, Tone & Compliance Check and Human Approval Required.");
         sb.AppendLine($"Compliance must cover: no personal advice (Amelia gives the advice); facts that match the case; next steps and dates; " +
-                      $"contact details (Caldova Life Advice {PracticeContacts.Phone}); complaint rights where relevant — Caldova (or the insurer, for a " +
+                      $"contact details (Life Advice Guru {PracticeContacts.Phone}); complaint rights where relevant — Life Advice Guru (or the insurer, for a " +
                       $"claim decision) first, a written response within {LifeRules.IdrResponse}, then AFCA ({LifeRules.AfcaContact}); and health " +
                       "information shared only with the people who need it.");
         sb.AppendLine("Use only the facts above — never invent amounts, dates or rules. Mask TFNs and bank accounts. Cite documents by their exact titles.");
@@ -348,7 +348,7 @@ public static class CommunicationsApi
     private static string BuildVoicePrompt(CaseRecord? record, string message)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("You are Cara from Caldova Life Advice, speaking with a caller on a voice call. Reply in two to four short, warm, " +
+        sb.AppendLine("You are Cara from Life Advice Guru, speaking with a caller on a voice call. Reply in two to four short, warm, " +
                       "plain-English sentences — no markdown, lists or headings. Never invent case facts; if you don't know, say you'll check " +
                       "and follow up. Never give personal advice — Amelia, the adviser, does that.");
         sb.AppendLine();
@@ -387,7 +387,7 @@ public static class CommunicationsApi
             var condolence = (record.RequestType ?? string.Empty).Contains("death", StringComparison.OrdinalIgnoreCase)
                 ? "I'm so sorry for your loss. "
                 : string.Empty;
-            return $"Hi {first}, it's Cara from Caldova Life Advice. {condolence}Your request, {record.CaseNumber}, is with our team now, and we'll be in " +
+            return $"Hi {first}, it's Cara from Life Advice Guru. {condolence}Your request, {record.CaseNumber}, is with our team now, and we'll be in " +
                    "touch as soon as there's an update — there's nothing you need to do right now. Is there anything I can help with in the meantime?";
         }
         return $"Hi {first}. " + GenericReply(intent);
@@ -434,7 +434,7 @@ public static class CommunicationsApi
         switch (LifeScenarioCases.KeyOf(record))
         {
             case LifeScenarioCases.Priya when intent is not ("security" or "bereavement" or "business" or "claim" or "claim-injury" or "claim-illness"):
-                return "Hi Priya, it's Cara from Caldova Life Advice. Your Corella Life cover started on Wednesday the 18th of November — life cover of " +
+                return "Hi Priya, it's Cara from Life Advice Guru. Your Corella Life cover started on Wednesday the 18th of November — life cover of " +
                        "$750,000, TPD of $600,000, trauma of $150,000 and income protection of $6,125 a month. The one thing to know is that your income " +
                        "protection doesn't cover back or spine conditions, and Corella will review that after two symptom-free years. Your welcome letter " +
                        "and plain-English summary are in your email — is there anything you'd like me to explain?";
@@ -444,7 +444,7 @@ public static class CommunicationsApi
                        "on we'll only contact you on 0491 570 157. You haven't done anything wrong. Would you like me to go through a few steps to protect " +
                        "your identity?";
             case LifeScenarioCases.George when intent is not ("security" or "bereavement" or "claim" or "claim-injury" or "claim-illness"):
-                return "Hi George, it's Cara from Caldova Life Advice. Your Northbank Life cover has been in force since Friday the 20th of November — " +
+                return "Hi George, it's Cara from Life Advice Guru. Your Northbank Life cover has been in force since Friday the 20th of November — " +
                        "$1.2 million of buy-sell cover each for you and Harpreet, and $400,000 of key person cover on you, owned by the company. Your " +
                        "lawyer is finalising the buy-sell agreement, and Northbank will review your loading in two years. Anything I can help with?";
             case LifeScenarioCases.Tom when intent is not ("security" or "bereavement" or "business" or "new-advice"):
@@ -498,7 +498,7 @@ public static class CommunicationsApi
         "status" =>
             "I can check that for you. Could you give me your client number, starting with C-L, or the case reference starting with R-E-Q?",
         _ =>
-            "Hi, you're speaking with Cara from Caldova Life Advice. I can help with your cover, a claim, or a request you've made. What can I help " +
+            "Hi, you're speaking with Cara from Life Advice Guru. I can help with your cover, a claim, or a request you've made. What can I help " +
             "you with today?"
     };
 

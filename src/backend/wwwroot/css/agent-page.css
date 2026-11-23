@@ -1,4 +1,4 @@
-/* Shared styles for the Caldova Life Advice agent pages under /agents/{id}
+/* Shared styles for the Life Advice Guru agent pages under /agents/{id}
    and the scenario pages under /scenarios/{id}. Each agent page is a
    hand-written static .razor file that uses these classes. */
 
@@ -160,7 +160,7 @@
 
 /* Agent and scenario page hero — a light banner: soft teal-to-ivory wash,
    navy type, the department accent as a top rule and gentle glow, and gold
-   hairline rings (the copper dome of Caldova House). */
+   hairline rings (the copper dome of Guru House). */
 .agent-header {
     position: relative;
     isolation: isolate;

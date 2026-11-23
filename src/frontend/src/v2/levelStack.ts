@@ -60,6 +60,11 @@ export class LevelStack {
     return this.groups.get(id)?.alpha ?? 1;
   }
 
+  /** How far a group is lifted or pulled apart right now. */
+  offset(id: GroupId): number {
+    return this.groups.get(id)?.offset ?? 0;
+  }
+
   /**
    * How far an anchor's level is lifted out of the way right now: 0 while the level is in view,
    * or when the anchor doesn't move with a level (the front desk). Beams use it to keep an end where
@@ -127,7 +132,13 @@ export class LevelStack {
 
   private applyAlpha(g: GroupState): void {
     g.root.setEnabled(g.alpha > 0.01);
-    for (const m of g.meshes) m.visibility = (this.base.get(m) ?? 1) * g.alpha;
+    // Gathered afresh, so a party guest who has gone down to the street no longer fades with the
+    // roof, and one who has come back up does.
+    g.meshes = g.root.getChildMeshes(false);
+    for (const m of g.meshes) {
+      if (!this.base.has(m)) this.base.set(m, m.visibility);
+      m.visibility = (this.base.get(m) ?? 1) * g.alpha;
+    }
   }
 
   /** Refresh each group's mesh list, remembering each mesh's own visibility the first time it is seen. */

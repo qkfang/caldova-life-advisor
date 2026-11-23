@@ -1,4 +1,4 @@
-namespace CaldovaLife.App.Models;
+namespace LifeAdviceGuru.App.Models;
 
 /// <summary>
 /// One step in a scenario's Client Case journey, owned by one AI agent.
@@ -13,7 +13,7 @@ public record ScenarioStep(
     string Stage);
 
 /// <summary>
-/// Metadata and steps for one of the five Caldova Life Advice scenarios.
+/// Metadata and steps for one of the five Life Advice Guru scenarios.
 /// Rendered by <c>Components/Pages/Scenarios/Scenario.razor</c> and listed in
 /// the NavMenu and on the agent console home page.
 /// </summary>
@@ -41,9 +41,9 @@ public record ScenarioDefinition(
     string Accent);
 
 /// <summary>
-/// Static catalog of the five Caldova Life Advice scenarios. Mirrors
+/// Static catalog of the five Life Advice Guru scenarios. Mirrors
 /// <c>docs/scenario-1..5</c>, the seeded cases in
-/// <c>CaseStore.SeedDefaults</c> and the Caldova House frontend scenarios.
+/// <c>CaseStore.SeedDefaults</c> and the Guru House frontend scenarios.
 /// </summary>
 public static class ScenarioCatalog
 {
@@ -195,7 +195,7 @@ public static class ScenarioCatalog
                 "Amelia reviews and signs the Statement of Advice.",
                 "George accepts the 25% loading with Amelia (Thu 19 Nov).",
                 "Marcus, as their accountant, confirms the tax treatment of each policy.",
-                "Their lawyer drafts the buy-sell agreement — Caldova doesn't draft legal documents.",
+                "Their lawyer drafts the buy-sell agreement — Life Advice Guru doesn't draft legal documents.",
             },
             Steps: new[]
             {

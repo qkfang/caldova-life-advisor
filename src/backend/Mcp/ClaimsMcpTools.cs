@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using ModelContextProtocol.Server;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Mcp;
+namespace LifeAdviceGuru.App.Mcp;
 
 /// <summary>
 /// MCP tool surface for the Claims Agent (Ben, Benefit Claims Advocate):
@@ -129,7 +129,7 @@ public class ClaimsMcpTools
     }
 
     [McpServerTool(Name = "claims_requestApproval"),
-     Description("Raise the approval and post the 'Caldova Life Advice — Claim lodgement approval' Adaptive Card to the Team Leader in Microsoft Teams (via teams_sendApprovalCard). Returns the approvalId. One live approval per case: if the Claims desk already raised one, that approvalId is returned. When the claimant checks fail, it raises a block decision instead — that can never be lodged. Nothing is raised when the claim isn't ready (claimant not entitled, cover not on the policy). MUST be called before claims_lodgeClaim.")]
+     Description("Raise the approval and post the 'Life Advice Guru — Claim lodgement approval' Adaptive Card to the Team Leader in Microsoft Teams (via teams_sendApprovalCard). Returns the approvalId. One live approval per case: if the Claims desk already raised one, that approvalId is returned. When the claimant checks fail, it raises a block decision instead — that can never be lodged. Nothing is raised when the claim isn't ready (claimant not entitled, cover not on the policy). MUST be called before claims_lodgeClaim.")]
     public async Task<string> RequestApproval(
         [Description("Client Case number.")] string caseNumber,
         [Description("Expected benefit in AUD, from claims_calculateBenefit (optional — checked against the case).")] decimal? expectedBenefit = null,

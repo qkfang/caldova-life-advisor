@@ -1,10 +1,10 @@
 # Scenario 3: Business Protection — Buy-Sell and Key Person Cover
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Scenario Summary
 
-Two business owners built a joinery together but have no plan for what happens if one of them dies or can't work again. Their accountant refers them to Caldova. The scenario shows:
+Two business owners built a joinery together but have no plan for what happens if one of them dies or can't work again. Their accountant refers them to Life Advice Guru. The scenario shows:
 
 - business needs worked out from the business valuation, with the working shown
 - buy-sell cover owned by each partner, and key person cover owned by the company
@@ -13,7 +13,7 @@ Two business owners built a joinery together but have no plan for what happens i
 - full medical and financial underwriting, and a loading the client decides on with his adviser
 - a referral-partner update that shares only what the clients agreed to share
 
-Amelia gives the advice and signs the SoA. The clients' lawyer drafts the buy-sell agreement, because Caldova doesn't draft legal documents.
+Amelia gives the advice and signs the SoA. The clients' lawyer drafts the buy-sell agreement, because Life Advice Guru doesn't draft legal documents.
 
 ## At a Glance
 
@@ -55,7 +55,7 @@ Amelia gives the advice and signs the SoA. The clients' lawyer drafts the buy-se
 
 ## Life Event
 
-Northcote Custom Joinery has grown to 14 staff since 2011. Their accountant, Marcus Tan of Bayside Business Accountants, asks what would happen to the business if George or Harpreet died or couldn't work again. They have no succession plan. With their consent, Marcus refers them to Caldova on Mon 9 Nov 2026, along with his valuation of the business at **$2,400,000** as at 30 Jun 2026.
+Northcote Custom Joinery has grown to 14 staff since 2011. Their accountant, Marcus Tan of Bayside Business Accountants, asks what would happen to the business if George or Harpreet died or couldn't work again. They have no succession plan. With their consent, Marcus refers them to Life Advice Guru on Mon 9 Nov 2026, along with his valuation of the business at **$2,400,000** as at 30 Jun 2026.
 
 ---
 
@@ -101,7 +101,7 @@ The **Needs Analysis** assistant works from Marcus's valuation and shows its wor
 | Cover on each owner | Life and TPD cover of $1,200,000 |
 | Ownership | Self-ownership: each owner holds the policy on their own life |
 
-If George dies or is totally and permanently disabled, the benefit is paid to him or his estate, and the buy-sell agreement passes his 50% to Harpreet. The same works the other way. The agreement is drafted by their lawyer, because Caldova doesn't draft legal documents.
+If George dies or is totally and permanently disabled, the benefit is paid to him or his estate, and the buy-sell agreement passes his 50% to Harpreet. The same works the other way. The agreement is drafted by their lawyer, because Life Advice Guru doesn't draft legal documents.
 
 **Key person cover**
 
@@ -252,7 +252,7 @@ Premiums total $10,000 a year. Their lawyer is finalising the buy-sell agreement
 From the `life_knowledge` index:
 
 - *Northbank Life — Business Protection PDS extract*, *Corella Life — Protection PDS extract* and *Harbourline Life — Protection PDS extract*
-- *Caldova Life Advice — Approved product list and research method*
+- *Life Advice Guru — Approved product list and research method*
 - *Advice rules — best interests duty, SoA and replacement advice*
 - *Underwriting and the duty to take reasonable care*
 - *Tax on life insurance — premiums and benefits*

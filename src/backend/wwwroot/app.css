@@ -1,9 +1,9 @@
 /* ============================================================
-   Advice Team in a Day — global theme (Caldova Life Advice)
+   Advice Team in a Day — global theme (Life Advice Guru)
    A modern life insurance advice practice: light ivory pages,
-   white cards, deep navy brand ink, Caldova teal for actions,
+   white cards, deep navy brand ink, brand teal for actions,
    serif display headlines and a quiet gold highlight (the
-   copper-dome gold of Caldova House). Teal is the Protection
+   copper-dome gold of Guru House). Teal is the Protection
    Advice side, gold the Claims & Care side and lilac is shared.
    ============================================================ */
 
@@ -13,12 +13,12 @@
     --cw-navy-900: #071d38;
     --cw-navy-800: #0b2a4f;
     --cw-navy-700: #123866;
-    --cw-teal: #14b8a6;           /* Caldova teal — Protection Advice */
+    --cw-teal: #14b8a6;           /* brand teal — Protection Advice */
     --cw-teal-ink: #0f766e;       /* teal for text on light surfaces */
     --cw-primary: #0f766e;        /* action teal — CTAs and links */
     --cw-primary-hover: #115e59;
     --cw-primary-soft: #e6f6f3;
-    --cw-gold: #c9a14a;           /* Caldova gold — Claims & Care */
+    --cw-gold: #c9a14a;           /* brand gold — Claims & Care */
     --cw-gold-ink: #8a6a1e;       /* gold for text on light surfaces */
     --cw-lilac: #8b9cf7;          /* shared by both sides */
     --cw-success: #0f7b55;

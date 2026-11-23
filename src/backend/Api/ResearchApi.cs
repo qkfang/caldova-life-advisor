@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Mcp;
-using CaldovaLife.App.Services;
-using static CaldovaLife.App.Mcp.ResearchMcpTools;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Mcp;
+using LifeAdviceGuru.App.Services;
+using static LifeAdviceGuru.App.Mcp.ResearchMcpTools;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record ResearchProcessRequest(string CaseNumber);
 record ResearchWorkbookRequest(string CaseNumber, string? Notes);
@@ -42,10 +42,10 @@ public static class ResearchApi
     public static void MapResearchEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
-        var agentOptions = app.Services.GetRequiredService<CaldovaAgentOptions>();
+        var agentOptions = app.Services.GetRequiredService<GuruAgentOptions>();
         var tools = ActivatorUtilities.CreateInstance<ResearchMcpTools>(app.Services);
         var mcpEnabled = !string.IsNullOrWhiteSpace(agentOptions.AppMcpUrl);
 
@@ -155,7 +155,7 @@ public static class ResearchApi
                 };
             }
 
-            CaldovaAgent? agent = null;
+            GuruAgent? agent = null;
             if (factory.IsConfigured)
             {
                 try
@@ -231,7 +231,7 @@ public static class ResearchApi
             logger.LogInformation("Research chat: live={Live} caseNumber={CaseNumber}", live, Sanitize(request.CaseNumber ?? string.Empty));
 
             string? createError = null;
-            CaldovaAgent? agent = null;
+            GuruAgent? agent = null;
             if (live)
             {
                 try

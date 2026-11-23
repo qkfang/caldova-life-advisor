@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using CaldovaLife.App.Models;
+using LifeAdviceGuru.App.Models;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
-/// One Client Case — the shared record every agent at Caldova Life Advice
+/// One Client Case — the shared record every agent at Life Advice Guru
 /// reads from. Opened by the Onboarding Agent's "Try it out" flow (or seeded
 /// at start-up) and looked up by case number on every other agent page.
 /// </summary>
@@ -13,11 +13,11 @@ namespace CaldovaLife.App.Services;
 /// <param name="ClientName">Client name (for a death claim, the claimant).</param>
 /// <param name="ClientEmail">Verified email for the client or claimant.</param>
 /// <param name="ClientPhone">Verified phone for the client or claimant.</param>
-/// <param name="ClientNumber">Caldova client number(s), e.g. <c>CL-104582</c>.</param>
+/// <param name="ClientNumber">Life Advice Guru client number(s), e.g. <c>CL-104582</c>.</param>
 /// <param name="Cover">Existing or requested cover, on one line.</param>
 /// <param name="RequestType">One of the canonical request types (see <see cref="RequestTypes"/>).</param>
 /// <param name="ReceivedDate">Date the request was received (<c>yyyy-MM-dd</c>).</param>
-/// <param name="AdviserName">Always Caldova's adviser, "Amelia, Senior Risk Adviser".</param>
+/// <param name="AdviserName">Always Life Advice Guru's adviser, "Amelia, Senior Risk Adviser".</param>
 /// <param name="ReferredBy">Referral partner and firm, or "Existing client".</param>
 /// <param name="RequestSummary">One-paragraph plain-English summary of the request.</param>
 /// <param name="Amount">Headline figure in AUD (e.g. "$680,000 joint mortgage to protect").</param>
@@ -103,7 +103,7 @@ public class CaseStore
     /// every downstream agent page has cases to pick from the moment the app
     /// starts. Case numbers are deterministic —
     /// <c>REQ-{received yyyyMMdd}-LIF{nnn}</c> — and match the case ids used by
-    /// the Caldova House frontend scenarios (e.g. <c>REQ-20261103-LIF001</c>).
+    /// the Guru House frontend scenarios (e.g. <c>REQ-20261103-LIF001</c>).
     /// No-op if the store already contains records.
     /// </summary>
     public void SeedDefaults()
@@ -162,7 +162,7 @@ public class CaseStore
 
     /// <summary>
     /// Generate a case number of the form <c>REQ-YYYYMMDD-XXXXXX</c>, dated in
-    /// Melbourne time (Caldova's home). The 6-character suffix uses
+    /// Melbourne time (Life Advice Guru's home). The 6-character suffix uses
     /// cryptographically-strong randomness so two near-simultaneous submissions
     /// cannot collide.
     /// </summary>

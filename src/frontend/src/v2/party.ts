@@ -1,20 +1,21 @@
 /**
- * The roof: Caldova Life Advice's party for its clients.
+ * The roof: Life Advice Guru's party for its clients.
  *
- * A timber party deck round the copper dome, under a big CALDOVA LIFE ADVICE
+ * A timber party deck round the copper dome, under a big LIFE ADVICE GURU
  * marquee sign along the back. Clients, their families and the referral
  * partners who sent them dance to the DJ, get a drink at the bar, try the
  * welcome cake, take in the city and peek down at the brain through the
  * dome's cut. Every so often the DJ calls a toast (confetti over the dance
- * floor), and fireworks go up behind the sign. A storybook touch: see
- * "The roof" in docs/storybook.md.
+ * floor), and fireworks go up behind the sign. Guests come and go by tram
+ * and the glass lift on the front-left corner (partyTrips.ts). A storybook
+ * touch: see "The roof" in docs/storybook.md.
  */
-import { Color3, type Mesh, Quaternion, type StandardMaterial, TransformNode, Vector3 } from "@babylonjs/core";
+import { type AbstractMesh, Color3, type Mesh, Quaternion, type StandardMaterial, TransformNode, Vector3 } from "@babylonjs/core";
 import type { ScenarioId } from "../personaData";
 import { VoxelCharacter } from "../voxelCharacter";
 import { PARTY, PARTY_DJ_PALETTE, PARTY_GUESTS, PARTY_SIGN, SIDES, type PartyGuest } from "./houseData";
 import { Batch, type Bubble, type Kit, rng } from "./kit";
-import { CHARACTER_SCALE, DOME, HOUSE, INSIDE, ROOF_Y, SLAB } from "./layout";
+import { CHARACTER_SCALE, DOME, HOUSE, INSIDE, LIFT, ROOF_Y, SLAB } from "./layout";
 import type { Highlights } from "./types";
 import { SpotBook, Wanderer, type Outing, type Pt, type Spot } from "./wander";
 
@@ -40,9 +41,12 @@ const FONT: Record<string, string[]> = {
   I: ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"],
   F: ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
   E: ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
+  G: [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".###."],
+  U: ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+  R: ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
 };
-/** The sign: voxel size, centre, bottom edge and depth position. */
-const SIGN = { v: 0.26, x: 4.2, y: 21.2, z: INSIDE.z1 - 0.5, margin: 0.6 };
+/** The sign: voxel size, centre, bottom edge (on legs above the deck) and depth position. */
+const SIGN = { v: 0.29, x: 4.2, y: SLAB_TOP + 3.4, z: INSIDE.z1 - 0.5, margin: 0.6 };
 
 /* ---------------- Where the guests go ---------------- */
 
@@ -57,8 +61,11 @@ const TABLES = [
   { x: 12.0, z: -6.6 },
 ];
 const CAKE_AT = { x: -10.4, z: -1.2 };
-const LOUNGE = { x: -17.4, z: -9.0 };
+/** The lounge sits back from the front-left corner, clear of the way in from the glass lift. */
+const LOUNGE = { x: -16.0, z: -7.8 };
 const BAR_AT = { x: 16.4, z: -1.2 };
+/** The way down the left side of the deck to the glass lift's landing on the roof, past the lounge. */
+const LIFT_LANE = LIFT.x - 0.8;
 
 /** Front row faces the DJ, back row faces the front row. */
 const DANCE: Spot[] = [
@@ -76,7 +83,12 @@ const CAKE: Spot[] = [
 const VIEW: Spot[] = [
   at(INSIDE.x1 - 1.0, -9.0, Math.PI / 2, "view:0"),
   at(INSIDE.x1 - 1.0, 2.2, Math.PI / 2, "view:1"),
-  at(-14.9, -11.6, Math.PI, "view:2"),
+  // At the front parapet beside the lift's bridge, down the lane and round in front of the lounge.
+  at(-15.4, -11.9, Math.PI, "view:2", [
+    [LIFT_LANE, CZ],
+    [LIFT_LANE, -10.9],
+    [-15.4, -10.9],
+  ]),
 ];
 /** At the gallery rail round the dome's cut, looking down at the brain. */
 const DOME_PEEK: Spot[] = [40, 140].map((deg, i) => {
@@ -96,12 +108,52 @@ const HOMES: Record<string, [Spot, string]> = {
   marcus: [at(TABLES[1].x + 0.85, TABLES[1].z, -Math.PI / 2, "home:marcus"), "their table"],
   helen: [at(TABLES[1].x, TABLES[1].z + 0.85, Math.PI, "home:helen"), "their table"],
   harpreet: [at(TABLES[1].x + 0.2, TABLES[1].z - 0.9, 0, "home:harpreet"), "their table"],
-  backatwork: [at(LOUNGE.x + 1.3, LOUNGE.z - 1.2, towards(LOUNGE.x + 1.3, LOUNGE.z - 1.2, LOUNGE.x, LOUNGE.z), "home:backatwork"), "the lounge"],
-  "retired-1": [at(LOUNGE.x - 1.2, LOUNGE.z - 1.3, towards(LOUNGE.x - 1.2, LOUNGE.z - 1.3, LOUNGE.x, LOUNGE.z), "home:retired-1"), "the lounge"],
+  backatwork: [
+    at(LOUNGE.x + 1.9, LOUNGE.z - 1.0, towards(LOUNGE.x + 1.9, LOUNGE.z - 1.0, LOUNGE.x, LOUNGE.z), "home:backatwork", [
+      [LOUNGE.x + 2.6, CZ],
+      [LOUNGE.x + 2.6, LOUNGE.z - 1.0],
+    ]),
+    "the lounge",
+  ],
+  "retired-1": [
+    at(LOUNGE.x - 1.2, LOUNGE.z - 1.3, towards(LOUNGE.x - 1.2, LOUNGE.z - 1.3, LOUNGE.x, LOUNGE.z), "home:retired-1", [
+      [LOUNGE.x - 2.9, CZ],
+      [LOUNGE.x - 2.9, LOUNGE.z - 1.3],
+    ]),
+    "the lounge",
+  ],
   "retired-2": [at(LOUNGE.x - 1.4, LOUNGE.z + 1.2, towards(LOUNGE.x - 1.4, LOUNGE.z + 1.2, LOUNGE.x, LOUNGE.z), "home:retired-2"), "the lounge"],
 };
 
-const DJ_LINES = ["Next one’s a request!", "Make some noise!", "Hands up for Caldova!", "This one’s for our clients!"];
+const DJ_LINES = ["Next one’s a request!", "Make some noise!", "Hands up for Life Advice Guru!", "This one’s for our clients!"];
+
+/** A guest's body, for their trips down to the tram and back up (partyTrips.ts). */
+export interface GuestBody {
+  id: string;
+  name: string;
+  /** Moves the guest about; it rides in the lift's car. */
+  node: TransformNode;
+  ch: VoxelCharacter;
+  bubble: Bubble;
+}
+
+/** How the party lets guests go home by tram and the glass lift, and come back. */
+export interface PartyTravel {
+  /** These guests are at the party, at their spot and free to leave together. */
+  free(ids: readonly string[]): boolean;
+  /** Send them to the lift's landing on the roof, one spot each, saying goodbye. */
+  goToLift(ids: readonly string[], spots: readonly Pt[], line: string): void;
+  /** They are all standing at their spots on the landing. */
+  atLift(ids: readonly string[]): boolean;
+  /** Off the roof and on their way: the party stops moving them, and their card shows `status`. */
+  take(id: string, status: string): GuestBody;
+  /** What a guest on a trip is doing, for their card. */
+  setStatus(id: string, status: string): void;
+  /** Back on the roof, stepping out of the lift at `at`: they walk back to their spot. */
+  giveBack(id: string, at: Pt): void;
+  /** Straight back to their spot, without the walk. */
+  snapBack(id: string): void;
+}
 
 export interface Party {
   readonly root: TransformNode;
@@ -109,6 +161,12 @@ export interface Party {
   setHighlights(h: Highlights): void;
   /** The finale's client is down at the front desk, so they are not up here as well. */
   setAway(id: ScenarioId | null): void;
+  /** Keep this finale client's guests off the roof until `comeBack` (they are riding the lift back up). */
+  holdAway(id: ScenarioId): void;
+  /** They are back: stepping out of the lift at `at` (the client first), or straight back at their spot. */
+  comeBack(id: ScenarioId, at?: ReadonlyArray<Pt>): void;
+  /** Guests who go home by tram and the glass lift, and come back (partyTrips.ts). */
+  readonly travel: PartyTravel;
   /** What the party is up to right now, for the card. */
   now(): string;
   /** What a guest is doing right now, for their card. */
@@ -120,6 +178,7 @@ interface Guest {
   mover: TransformNode;
   ch: VoxelCharacter;
   w: Wanderer;
+  bubble: Bubble;
   /** Keeps the drink upright whatever the arm is doing. */
   glass: TransformNode;
   /** The shoulder the drink hangs from. */
@@ -127,6 +186,10 @@ interface Guest {
   style: number;
   phase: number;
   away: boolean;
+  /** On a trip down to the tram and back: what they are doing, for their card. */
+  trip: string | null;
+  /** Their spot on the lift's landing while they wait to go down. */
+  liftSpot: Spot | null;
   left: number;
   right: number;
 }
@@ -387,7 +450,10 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     kit.block(root, CAKE_AT.x + dx, FLOOR + 1.66, CAKE_AT.z, 0.05, 0.07, 0.05, kit.mat("#ffb347", { unlit: true }));
   }
   const cakeSign = kit.label(root, {
-    lines: [{ text: "Welcome to the Caldova family", size: 40, weight: 700, color: "#0f1a2e" }],
+    lines: [
+      { text: "Welcome to the", size: 34, weight: 600, color: "#3b4557" },
+      { text: "Life Advice Guru family", size: 40, weight: 700, color: "#0f1a2e" },
+    ],
     width: 1.9,
     px: 680,
     bg: "rgba(255,251,242,0.96)",
@@ -422,7 +488,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   for (const [i, [x, z]] of [
     [-1.2, -2.6],
     [9.6, 2.6],
-    [-19.4, -11.8],
+    [-20.0, -2.2],
     [19.6, -11.8],
   ].entries()) {
     const node = new TransformNode("v2_balloons", scene);
@@ -516,16 +582,27 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
       mover,
       ch,
       w,
+      bubble,
       glass,
       shoulder: ch.getHandAnchor().parent as TransformNode,
       style: i % 3,
       phase: r() * Math.PI * 2,
       away: false,
+      trip: null,
+      liftSpot: null,
       left: 0,
       right: info.child ? 0 : 0.55,
     });
   });
   const guestList = [...guests.values()];
+  // Each guest's meshes and their own visibility (0 for the click target), so a guest who leaves the
+  // roof or comes back to it always shows as themselves, whatever the roof's fade last set.
+  const baseVis = new Map<string, Array<[Mesh | AbstractMesh, number]>>(
+    guestList.map((g) => [g.info.id, g.mover.getChildMeshes(false).map((m) => [m, m.visibility] as [AbstractMesh, number])]),
+  );
+  const restore = (id: string): void => {
+    for (const [m, v] of baseVis.get(id) ?? []) m.visibility = v;
+  };
 
   const dj = new VoxelCharacter(scene, "party:dj", PARTY_DJ_PALETTE);
   dj.root.parent = root;
@@ -608,7 +685,10 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
   const launches: number[] = [];
   let djIn = 6;
   let djSays = 0;
-  const here = (id: string): boolean => !guests.get(id)?.away;
+  const here = (id: string): boolean => {
+    const g = guests.get(id);
+    return !!g && !g.away && !g.trip;
+  };
   const djSay = (text: string): void => {
     djBubble.say(text);
     djSays = 3.4;
@@ -678,6 +758,93 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     if (q) Quaternion.RotationYawPitchRollToRef(s.y, s.x, s.z, q).conjugateInPlace();
   };
 
+  /* ---------------- Coming and going ---------------- */
+  let selectedGuests: ReadonlySet<string> = new Set();
+  /** The finale's client (and whoever came with them) is down at the front desk. */
+  let awayFor: ScenarioId | null = null;
+  /** Finale clients riding the lift back up: their places are kept until they step out. */
+  const holding = new Set<ScenarioId>();
+  /** Where guests coming back up the lift step out, for the next refresh. */
+  const arriving = new Map<string, Pt>();
+  /** A spot on the lift's landing, reached down the left side of the deck. */
+  const landing = (p: Pt, key?: string): Spot => ({ at: p, face: Math.PI, via: [[LIFT_LANE, CZ], [LIFT_LANE, p[1] + 0.9]], key });
+  const refresh = (): void => {
+    for (const g of guestList) {
+      const lf = g.info.leavesFor;
+      const away = !!lf && (lf === awayFor || holding.has(lf));
+      if (away === g.away) continue;
+      g.away = away;
+      g.ch.root.position.set(0, 0, 0);
+      g.ch.root.rotation.y = 0;
+      const at = arriving.get(g.info.id);
+      if (!away && at) g.w.enterAt(landing(at));
+      else g.w.snapHome();
+      g.mover.setEnabled(!away);
+    }
+    arriving.clear();
+  };
+  const travel: PartyTravel = {
+    free: (ids) =>
+      ids.every((id) => {
+        const g = guests.get(id);
+        return !!g && !g.away && !g.trip && !g.liftSpot && g.w.isHome && !selectedGuests.has(id);
+      }),
+    goToLift: (ids, spots, line) =>
+      ids.forEach((id, i) => {
+        const g = guests.get(id);
+        if (!g) return;
+        g.liftSpot = landing(spots[i], `lift:${i}`);
+        g.w.pin({ spot: g.liftSpot, task: "Heading for the glass lift", where: "the glass lift", dwell: Infinity });
+        if (i === 0) g.w.say(line, 3.2);
+      }),
+    atLift: (ids) =>
+      ids.every((id) => {
+        const g = guests.get(id);
+        return !!g?.liftSpot && !g.w.walking && g.w.here === g.liftSpot;
+      }),
+    take: (id, status) => {
+      const g = guests.get(id);
+      if (!g) throw new Error(`No party guest ${id}`);
+      g.trip = status;
+      g.liftSpot = null;
+      g.w.park();
+      g.ch.root.position.set(0, 0, 0);
+      g.ch.root.rotation.y = 0;
+      g.ch.setWalking(false);
+      // They put their drink down on the way out.
+      g.glass.setEnabled(false);
+      restore(id);
+      return { id, name: g.info.name, node: g.mover, ch: g.ch, bubble: g.bubble };
+    },
+    setStatus: (id, status) => {
+      const g = guests.get(id);
+      if (g?.trip) g.trip = status;
+    },
+    giveBack: (id, at) => {
+      const g = guests.get(id);
+      if (!g) return;
+      g.trip = null;
+      g.glass.setEnabled(true);
+      g.mover.parent = root;
+      g.mover.position.set(at[0], FLOOR, at[1]);
+      g.mover.setEnabled(!g.away);
+      restore(id);
+      g.w.enterAt(landing(at));
+    },
+    snapBack: (id) => {
+      const g = guests.get(id);
+      if (!g) return;
+      g.trip = null;
+      g.liftSpot = null;
+      g.glass.setEnabled(true);
+      g.mover.parent = root;
+      g.mover.position.y = FLOOR;
+      g.mover.setEnabled(!g.away);
+      restore(id);
+      g.w.snapHome();
+    },
+  };
+
   return {
     root,
     update(dt: number): void {
@@ -728,7 +895,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
         toastFor -= dt;
         if (!cheered && toastFor < 3.6) {
           cheered = true;
-          for (const g of guestList) if (!g.away && !g.w.walking) g.w.say("Cheers!", 3.2);
+          for (const g of guestList) if (!g.away && !g.trip && !g.liftSpot && !g.w.walking) g.w.say("Cheers!", 3.2);
           fireConfetti();
         }
       }
@@ -747,7 +914,7 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
       else dj.setArmPose(0.95 + Math.sin(ph * 0.5) * 0.18, 0.95 + Math.cos(ph * 0.5) * 0.18, 0.1);
 
       for (const g of guestList) {
-        if (g.away) continue;
+        if (g.away || g.trip) continue;
         g.w.update(dt);
         g.ch.update(dt);
         pose(g, ph, dt);
@@ -826,20 +993,31 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     },
     setHighlights(h: Highlights): void {
       selected = h.party;
+      selectedGuests = h.guests;
       for (const g of guestList) g.ch.setHighlight(h.party || h.guests.has(g.info.id), GOLD);
       dj.setHighlight(h.party, GOLD);
     },
     setAway(id: ScenarioId | null): void {
-      for (const g of guestList) {
-        const away = !!id && g.info.leavesFor === id;
-        if (away === g.away) continue;
-        g.away = away;
-        g.w.snapHome();
-        g.ch.root.position.set(0, 0, 0);
-        g.ch.root.rotation.y = 0;
-        g.mover.setEnabled(!away);
-      }
+      awayFor = id;
+      refresh();
     },
+    holdAway(id: ScenarioId): void {
+      holding.add(id);
+      refresh();
+    },
+    comeBack(id: ScenarioId, at?: ReadonlyArray<Pt>): void {
+      holding.delete(id);
+      if (at) {
+        // The client steps out first, then whoever came with them.
+        const list = guestList.filter((g) => g.info.leavesFor === id);
+        list.sort((a, b) => Number(b.info.scenario === id) - Number(a.info.scenario === id));
+        list.forEach((g, i) => {
+          if (at[i]) arriving.set(g.info.id, at[i]);
+        });
+      }
+      refresh();
+    },
+    travel,
     now(): string {
       if (toastFor > 0) return toastNow;
       if (fireFor > 0) return "Fireworks over the city";
@@ -848,7 +1026,8 @@ export function buildParty(kit: Kit, roof: TransformNode): Party {
     guestTask(id: string): string | null {
       const g = guests.get(id);
       if (!g) return null;
-      if (g.away) return "Down at the front desk";
+      if (g.away) return g.info.leavesFor && holding.has(g.info.leavesFor) ? "Riding the glass lift back up to the party" : "Down at the front desk";
+      if (g.trip) return g.trip;
       if (cheering() && !g.w.walking) return g.info.child ? "Clapping along" : "Raising a glass";
       return g.w.task;
     },

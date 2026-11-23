@@ -1,6 +1,6 @@
 /**
  * B · The Engine Room — Microsoft IQ and the Azure services, in the old bank
- * vault under Caldova House.
+ * vault under Guru House.
  *
  * The vault keeps its 1889 bones: bluestone walls lined with brass
  * safe-deposit boxes, and a huge round vault door standing open by the

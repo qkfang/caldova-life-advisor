@@ -1,5 +1,5 @@
 /**
- * The building shell shared by every level of Caldova House: the floor slab,
+ * The building shell shared by every level of Guru House: the floor slab,
  * the 1889 brick walls on three sides, the lift core and the level tag.
  *
  * The front of the house is cut away, dollhouse style, so every level reads
@@ -25,6 +25,8 @@ export interface ShellSpec {
   storey: Storey;
   /** Floor finish on top of the slab. */
   floor: StandardMaterial;
+  /** World size of one repeat of the floor's texture (default 2). */
+  floorTile?: number;
   /** Inside finish of the walls (default: the exposed brick). */
   inner?: StandardMaterial;
   /** Window centres along each wall: x for the back wall, z for the side walls. */
@@ -59,7 +61,7 @@ export function buildShell(kit: Kit, s: ShellSpec): { tag: Mesh } {
   kit.block(root, scx, y - SLAB, scz, sw, SLAB - 0.06, sd, concrete);
   const fw = INSIDE.x1 - INSIDE.x0;
   const fd = INSIDE.z1 - INSIDE.z0;
-  kit.block(root, scx, y - 0.06, (INSIDE.z0 + INSIDE.z1) / 2, fw - 0.04, 0.06, fd - 0.04, s.floor);
+  kit.block(root, scx, y - 0.06, (INSIDE.z0 + INSIDE.z1) / 2, fw - 0.04, 0.06, fd - 0.04, s.floor, { tile: s.floorTile });
   const front: Face = { axis: "x", at: HOUSE.z0, out: -1 };
   if (s.storey !== "basement") {
     cornice(kit, root, front, HOUSE.x0, HOUSE.x1, y - SLAB, SLAB, 0.12, m.render);
@@ -93,10 +95,12 @@ export function buildShell(kit: Kit, s: ShellSpec): { tag: Mesh } {
 
   if (s.storey !== "basement") {
     // The facades: a bluestone base on the ground floor, the floor-line cornice with dentils,
-    // pilasters between the bays and render quoins at the corners.
+    // pilasters between the bays and render quoins at the corners. The windows grow with the
+    // storey, tall like the old bank's: the opening is half the storey, and the sill sits just
+    // above the bluestone base on the ground floor, a fifth of the way up on the floors above.
     const ground = s.storey === "ground";
-    const sill = y + (ground ? 1.55 : 1.0);
-    const open = ground ? 3.0 : 2.45;
+    const sill = y + (ground ? 1.55 + (h - 6) * 0.15 : h * 0.2);
+    const open = h * (ground ? 0.5 : 0.49);
     const winW = ground ? 2.3 : 2.1;
     for (const side of ["left", "right", "back"] as const) {
       const f = outside[side];
@@ -203,7 +207,8 @@ export function buildShell(kit: Kit, s: ShellSpec): { tag: Mesh } {
     billboard: true,
   });
   if (s.tagAt) tag.position.set(...s.tagAt);
-  // Out over the footpath, in front of the café's awning and clear of the lamp posts.
-  else tag.position.set(HOUSE.x0 - 5.4, y + 2.6, HOUSE.z0 - 3.4);
+  // Out over the footpath, well in front of the café's awning (billboarded, the tag swings back
+  // towards it as the camera circles), clear of the lamp posts and the glass lift.
+  else tag.position.set(HOUSE.x0 - 8.6, y + 2.6, HOUSE.z0 - 5.2);
   return { tag };
 }

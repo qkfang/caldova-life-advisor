@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);OPENAI001;CS0108</NoWarn>
-    <RootNamespace>CaldovaLife</RootNamespace>
-    <AssemblyName>cl-agent</AssemblyName>
+    <RootNamespace>LifeAdviceGuru</RootNamespace>
+    <AssemblyName>guru-agent</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

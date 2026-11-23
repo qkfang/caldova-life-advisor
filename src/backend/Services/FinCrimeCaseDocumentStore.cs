@@ -3,9 +3,9 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using CaldovaLife.App.Models;
+using LifeAdviceGuru.App.Models;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// One specimen document available to the Financial Crime "Try it out" tab.
@@ -95,7 +95,7 @@ public record FinCrimeActivityEvent(
 /// </summary>
 public record FinCrimeScreeningResult(string Group, string Check, string Result, string Status);
 
-/// <summary>A travel notice the client gave Caldova (e.g. at an annual review).</summary>
+/// <summary>A travel notice the client gave Life Advice Guru (e.g. at an annual review).</summary>
 public record FinCrimeTravelNotice(DateTime From, DateTime To, string Place, string RecordedAt);
 
 /// <summary>How the scenario ends once people have made their decisions.</summary>
@@ -112,7 +112,7 @@ public record FinCrimeScenarioOutcome(string Status, string Icon, string Headlin
 /// <param name="ScenarioKey"><c>priya</c>, <c>grace</c>, <c>george</c>, <c>tom</c>, <c>robert</c>, or empty for a live case.</param>
 /// <param name="PaymentRequested">True when a claim, benefit or other money-out request is on the case.</param>
 /// <param name="AcceptedPayees">Names a benefit may be paid to (the policy owner or the nominated beneficiary).</param>
-/// <param name="RequestedPayees">Account names on the payment account the request asks Caldova to use.</param>
+/// <param name="RequestedPayees">Account names on the payment account the request asks Life Advice Guru to use.</param>
 /// <param name="IncomeOnFile">Income the earnings evidence should support (fact find or claim).</param>
 /// <param name="EvidenceRule">The policy's evidence rule for a medical claim, with its source, when it matters.</param>
 /// <param name="AmountAtRisk">The amount a block would protect, when money is being requested.</param>
@@ -351,7 +351,7 @@ public class FinCrimeCaseDocumentStore
                 "ok"),
             new(On(2026, 11, 3), false, "kyc", "PEP and sanctions screening",
                 "No politically exposed person or sanctions match",
-                "Screened before Caldova starts the advice.",
+                "Screened before Life Advice Guru starts the advice.",
                 "ok"),
             new(On(2026, 11, 3), false, "info", "Client history",
                 "New client — no account history yet",
@@ -413,7 +413,7 @@ public class FinCrimeCaseDocumentStore
                 "amber"),
             new(At(11, 6, 7, 52), true, "claim", "Email · from the changed address",
                 "Trauma claim for breast cancer — the full $200,000, marked \"urgent\"",
-                "From grace.w.claims@example.net, about 93 hours after the contact change. Asks for the whole trauma benefit to be paid into the new account ending 4471 in the name 'G Williams Consulting Pty Ltd', and for Caldova to contact her only on the new mobile 0491 570 159 and the new email address. Attached: an oncologist's report, a driver licence and a bank statement.",
+                "From grace.w.claims@example.net, about 93 hours after the contact change. Asks for the whole trauma benefit to be paid into the new account ending 4471 in the name 'G Williams Consulting Pty Ltd', and for Life Advice Guru to contact her only on the new mobile 0491 570 159 and the new email address. Attached: an oncologist's report, a driver licence and a bank statement.",
                 "red"),
             new(On(2026, 11, 6), false, "referral", "Claims · Ben's policy check",
                 "Claims referred the case to Financial Crime",
@@ -481,7 +481,7 @@ public class FinCrimeCaseDocumentStore
                 "ok"),
             new(On(2026, 11, 10), false, "kyc", "PEP and sanctions screening",
                 "Company, George and Harpreet — no match",
-                "Screened before Caldova starts the advice.",
+                "Screened before Life Advice Guru starts the advice.",
                 "ok"),
         ],
         Screening:

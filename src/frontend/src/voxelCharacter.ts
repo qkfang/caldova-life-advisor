@@ -23,7 +23,7 @@ export interface CharacterPickMetadata {
 /**
  * A blocky humanoid built from boxes — head, torso, two arms, two legs —
  * with optional details (hair styles, glasses, beard, dress, etc.) so that
- * each persona reads as a distinct individual in Caldova House.
+ * each persona reads as a distinct individual in Guru House.
  *
  * Exposes `setWalking()` to drive a tiny limb-swing animation and `root`
  * so callers can move the character around the scene.

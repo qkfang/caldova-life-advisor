@@ -1,4 +1,4 @@
-@description('Base resource name abbreviation for Caldova Life Advice (Advice Team in a Day)')
+@description('Base resource name abbreviation for Life Advice Guru (Advice Team in a Day)')
 param baseName string = 'zc'
 
 @description('Azure region for all resources')
@@ -11,7 +11,7 @@ param appServiceLocation string = location
 param principals array = []
 
 var commonTags = {
-  workload: 'caldova-life-advisor'
+  workload: 'life-advice-guru'
   demo: 'life-advice-practice'
 }
 
@@ -158,7 +158,7 @@ resource principalAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-
 //
 // The backend Web App is the identity that signs Voice Live WebSocket
 // upgrades (CommunicationsVoiceLiveProxy.cs) and that drives the
-// CaldovaAgentFactory + Foundry agent CRUD. Without these roles Voice
+// GuruAgentFactory + Foundry agent CRUD. Without these roles Voice
 // Live accepts the bearer token but rejects the agent attach with
 // "Failed to initialize AI agent, check connection string and the
 // identity permissions".
@@ -200,7 +200,7 @@ resource backendAIDeveloperRole 'Microsoft.Authorization/roleAssignments@2022-04
 //   can read/write documents directly when needed)
 // Foundry account & project managed identities → Search Index Data Reader +
 //   Search Service Contributor (so the AzureAISearchTool wired into each
-//   CaldovaAgent can issue queries against the life_knowledge index using
+//   GuruAgent can issue queries against the life_knowledge index using
 //   the Foundry-side managed identity)
 // User principals → Search Index Data Contributor + Search Service Contributor
 //   (operators running the ai-search/setup-index.ps1 / ingest-documents.ps1

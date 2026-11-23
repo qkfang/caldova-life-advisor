@@ -35,9 +35,9 @@ param backendLinuxFxVersion string = 'DOTNETCORE|10.0'
 param frontendAppCommandLine string = 'pm2 serve /home/site/wwwroot --no-daemon --spa'
 
 @description('Startup command for the backend Web App (.NET self-contained app entry)')
-param backendAppCommandLine string = 'dotnet cl-backend.dll'
+param backendAppCommandLine string = 'dotnet guru-backend.dll'
 
-@description('Microsoft Foundry project endpoint URL consumed by the backend CaldovaAgentFactory')
+@description('Microsoft Foundry project endpoint URL consumed by the backend GuruAgentFactory')
 param projectEndpoint string
 
 @description('Default chat model deployment name (e.g. gpt-5.4)')
@@ -49,7 +49,7 @@ param tenantId string = tenant().tenantId
 @description('Foundry connection ID for the life knowledge Azure AI Search index (optional)')
 param searchConnectionId string = ''
 
-@description('Azure AI Search index name for the Caldova Life Advice knowledge base')
+@description('Azure AI Search index name for the Life Advice Guru knowledge base')
 param searchIndexName string = 'life_knowledge'
 
 @description('Foundry project Bing grounding connection ID')

@@ -18,7 +18,20 @@ export interface StorybookHooks {
   pan(dir: -1 | 0 | 1): void;
   scenario(id: ScenarioId): void;
   trace(cmd: "toggle" | "skip" | "speed" | "replay"): void;
+  /** A panel has shrunk to its bar or grown back; `freed` is how much narrower it got, in pixels (negative when it grew). */
+  layout(panel: PanelId, shrunk: boolean, freed: number): void;
 }
+
+/** The panels that shrink to a bar: the cover, the page card (with the finale's trace), the inspector card and the lift panel. */
+export type PanelId = "cover" | "page" | "inspector" | "lift";
+const PANELS: PanelId[] = ["cover", "page", "inspector", "lift"];
+const PANEL_NAME: Record<PanelId, string> = {
+  cover: "the cover",
+  page: "the page card",
+  inspector: "the card",
+  lift: "the lift panel",
+};
+const MINUS = "\u2212";
 
 export interface TraceState {
   scenario: ScenarioId;
@@ -39,14 +52,33 @@ function byId<T extends HTMLElement>(id: string): T {
 
 /** Short name for navigation buttons and the lift. */
 function shortTitle(p: StoryPage): string {
-  if (p.id === "cover") return "Caldova House";
+  if (p.id === "cover") return "Guru House";
   if (p.id === "finale") return "Top to bottom";
   return LEVELS.find((l) => l.id === p.id)?.name ?? p.title;
+}
+
+/** A panel's shrink/expand button. */
+function toggleHtml(id: PanelId, shrunk: boolean): string {
+  const label = `${shrunk ? "Expand" : "Shrink"} ${PANEL_NAME[id]}`;
+  return `<button type="button" class="panel-toggle" data-shrink="${id}" aria-controls="v2-${id}" aria-expanded="${!shrunk}" aria-label="${label}" title="${label}"><span aria-hidden="true">${shrunk ? "+" : MINUS}</span></button>`;
 }
 
 export class Storybook {
   private index = 0;
   private collapsed = false;
+  /**
+   * Which panels are shrunk to their bar. Each panel keeps its own state across page turns. Shrink
+   * all and expand all set every panel, the inspector's included while it is closed, so a card
+   * opened later opens the way the inspector was last left.
+   */
+  private readonly shrunk: Record<PanelId, boolean> = { cover: false, page: false, inspector: false, lift: false };
+  /** The cover and the lift panel are centred up and down: their expanded heights, to keep their top edge put when they shrink. */
+  private readonly tall: Partial<Record<PanelId, number>> = {};
+  /** The last expanded right edge and height of each panel (the page card's for each page), to tell how much room shrinking it freed. */
+  private readonly wide = new Map<string, { right: number; height: number }>();
+  private wideKey(id: PanelId): string {
+    return id === "page" ? `page:${PAGES[this.index].id}` : id;
+  }
   private actions: InspectorAction[] = [];
   private links: InspectorAction[] = [];
   private trace: TraceState | null = null;
@@ -57,6 +89,7 @@ export class Storybook {
   private readonly inspector = byId<HTMLElement>("v2-inspector");
   private readonly tooltip = byId<HTMLElement>("v2-tooltip");
   private readonly pill = byId<HTMLButtonElement>("v2-pill");
+  private readonly all = byId<HTMLButtonElement>("v2-shrink-all");
 
   constructor(private readonly hooks: StorybookHooks) {
     this.renderCover();
@@ -72,7 +105,21 @@ export class Storybook {
         if (a) this.hooks.action(a);
       }
     });
+    // Every panel's own shrink/expand button.
+    document.addEventListener("click", (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>("[data-shrink]");
+      const id = el?.dataset.shrink as PanelId | undefined;
+      if (id && PANELS.includes(id)) this.setShrunk(id, !this.shrunk[id]);
+    });
+    this.all.addEventListener("click", () => {
+      const open = this.anyOpen();
+      for (const id of PANELS) this.setShrunk(id, open, false);
+      this.updateAll();
+    });
     this.pill.addEventListener("click", () => this.setCollapsed(false));
+    window.addEventListener("resize", () => {
+      for (const id of ["cover", "lift"] as const) if (this.shrunk[id]) this.pin(id);
+    });
     window.addEventListener("keydown", (e) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
@@ -91,6 +138,7 @@ export class Storybook {
         this.hooks.closeInspector();
       }
     });
+    this.updateAll();
   }
 
   get page(): StoryPage {
@@ -103,6 +151,7 @@ export class Storybook {
     const from = this.index;
     this.index = i;
     this.renderPage();
+    this.updateAll();
     this.updateLift(from);
     this.hooks.page(PAGES[i], i);
   }
@@ -115,6 +164,112 @@ export class Storybook {
   setCollapsed(collapsed: boolean): void {
     this.collapsed = collapsed;
     this.renderPage();
+    this.updateAll();
+  }
+
+  /** Shrinks a panel to its bar, or expands it again. */
+  setShrunk(id: PanelId, on: boolean, update = true): void {
+    if (this.shrunk[id] !== on) {
+      const el = this.panelEl(id);
+      const shown = this.visible(id);
+      const before = shown ? el.getBoundingClientRect() : null;
+      if (on && before) {
+        if (id === "cover" || id === "lift") this.tall[id] = before.height;
+        this.wide.set(this.wideKey(id), { right: before.right, height: before.height });
+      }
+      this.shrunk[id] = on;
+      this.applyShrink(id);
+      if (before) this.hooks.layout(id, on, before.width - el.getBoundingClientRect().width);
+    }
+    if (update) this.updateAll();
+  }
+
+  isShrunk(id: PanelId): boolean {
+    return this.shrunk[id];
+  }
+
+  /**
+   * How much of the screen's width a shrunk panel on the left has handed back, in CSS pixels: none
+   * for a panel that only covered a corner (a chapter's page card), so the view only slides over
+   * for panels that ran down the side of it (the cover, and the finale's page card).
+   */
+  freedWidth(id: "cover" | "page"): number {
+    if (!this.shrunk[id] || !this.visible(id)) return 0;
+    const el = this.panelEl(id);
+    const now = el.getBoundingClientRect();
+    const was = this.wide.get(this.wideKey(id)) ?? this.guessWide(id);
+    return was.height > window.innerHeight * 0.6 ? Math.max(0, was.right - now.right) : 0;
+  }
+
+  /** The expanded size of a panel that has never been seen expanded, from its CSS width. */
+  private guessWide(id: "cover" | "page"): { right: number; height: number } {
+    const vw = window.innerWidth;
+    if (id === "cover") return { right: 40 + Math.min(470, vw - 48), height: window.innerHeight * 0.75 };
+    return { right: 20 + Math.min(560, vw - 280), height: this.index === PAGES.length - 1 ? window.innerHeight * 0.85 : 360 };
+  }
+
+  private panelEl(id: PanelId): HTMLElement {
+    return id === "cover" ? this.cover : id === "page" ? this.card : id === "inspector" ? this.inspector : this.lift;
+  }
+
+  private visible(id: PanelId): boolean {
+    switch (id) {
+      case "cover":
+        return !this.collapsed && this.index === 0;
+      case "page":
+        return !this.collapsed && this.index !== 0;
+      case "inspector":
+        return !this.inspector.classList.contains("hidden");
+      default:
+        return true;
+    }
+  }
+
+  /** Whether any panel on screen is open (not shrunk). */
+  private anyOpen(): boolean {
+    return PANELS.some((id) => this.visible(id) && !this.shrunk[id]);
+  }
+
+  /** The shrink-all button shows − while any panel on screen is open, and + once they are all shrunk. */
+  private updateAll(): void {
+    const open = this.anyOpen();
+    const label = open ? "Shrink all panels" : "Expand all panels";
+    this.all.setAttribute("aria-expanded", String(open));
+    this.all.setAttribute("aria-label", label);
+    this.all.title = label;
+    this.all.innerHTML = `<span aria-hidden="true">${open ? MINUS : "+"}</span>`;
+  }
+
+  /** Shows a panel's state: its class, and its button's glyph and label. */
+  private applyShrink(id: PanelId): void {
+    const el = this.panelEl(id);
+    const on = this.shrunk[id];
+    el.classList.toggle("shrunk", on);
+    const b = el.querySelector<HTMLButtonElement>(`[data-shrink="${id}"]`);
+    if (b) {
+      const label = `${on ? "Expand" : "Shrink"} ${PANEL_NAME[id]}`;
+      b.setAttribute("aria-expanded", String(!on));
+      b.setAttribute("aria-label", label);
+      b.title = label;
+      b.innerHTML = `<span aria-hidden="true">${on ? "+" : MINUS}</span>`;
+    }
+    if (id === "cover" || id === "lift") {
+      if (on) this.pin(id);
+      else {
+        el.style.top = "";
+        el.style.transform = "";
+      }
+    }
+  }
+
+  /** The cover and the lift panel are centred up and down: shrunk, they keep their top edge where it was. */
+  private pin(id: "cover" | "lift"): void {
+    const el = this.panelEl(id);
+    // On a narrow screen the cover sits at the bottom instead, and keeps to it.
+    if (id === "cover" && window.innerWidth <= 720) return;
+    const h = this.tall[id] ?? (id === "cover" ? 640 : 420);
+    el.style.top = `${Math.max(76, Math.round((window.innerHeight - h) / 2))}px`;
+    el.style.transform = "none";
   }
 
   showInspector(view: InspectorView): void {
@@ -130,17 +285,21 @@ export class Storybook {
       })
       .join("");
     this.inspector.innerHTML = `
-      <button type="button" class="insp-close" data-insp="close" aria-label="Close">×</button>
+      ${toggleHtml("inspector", this.shrunk.inspector)}
+      <button type="button" class="insp-close" data-insp="close" aria-label="Close the card" title="Close the card">×</button>
       <div class="insp-body">${view.html}</div>
       <div class="insp-actions">${buttons}</div>`;
+    this.inspector.classList.toggle("shrunk", this.shrunk.inspector);
     this.inspector.classList.remove("hidden");
     this.inspector.scrollTop = 0;
     document.body.classList.add("inspecting");
+    this.updateAll();
   }
 
   hideInspector(): void {
     this.inspector.classList.add("hidden");
     document.body.classList.remove("inspecting");
+    this.updateAll();
   }
 
   /** Refresh the open card's live "Now" line without re-rendering it. */
@@ -175,8 +334,9 @@ export class Storybook {
     ).join("");
     this.cover.innerHTML = `
       <div class="cover-card">
+        ${toggleHtml("cover", this.shrunk.cover)}
         <div class="cover-kicker">${esc(p.kicker)}</div>
-        <h1>Caldova House</h1>
+        <h1>Guru House</h1>
         <p class="cover-title">${esc(p.title)}</p>
         ${p.body.map((b) => `<p class="cover-lede">${esc(b)}</p>`).join("")}
         <ol class="cover-levels">${levels}</ol>
@@ -199,6 +359,7 @@ export class Storybook {
       return `<button type="button" class="lift-btn" data-page="${i}" style="--c:${p.accent}" title="${esc(label)}"><b>${esc(p.floor)}</b><span>${esc(label)}</span></button>`;
     }).join("");
     this.lift.innerHTML = `
+      ${toggleHtml("lift", this.shrunk.lift)}
       <div class="lift-display" aria-hidden="true"><span class="lift-arrow"></span><span class="lift-floor">${esc(PAGES[0].floor)}</span></div>
       ${buttons}`;
     this.lift.addEventListener("click", (e) => {
@@ -262,7 +423,10 @@ export class Storybook {
     this.cover.classList.toggle("hidden", !onCover || this.collapsed);
     this.card.classList.toggle("hidden", onCover || this.collapsed);
     this.pill.classList.toggle("hidden", !this.collapsed);
-    if (onCover) return;
+    if (onCover) {
+      this.applyShrink("cover");
+      return;
+    }
     const prev = PAGES[this.index - 1];
     const next = PAGES[this.index + 1];
     const dots = PAGES.map(
@@ -270,6 +434,7 @@ export class Storybook {
         `<li><button type="button" data-pc="dot" data-i="${k}" class="${k === this.index ? "on" : ""}" aria-label="${esc(shortTitle(q))}"></button></li>`,
     ).join("");
     this.card.style.setProperty("--accent", p.accent);
+    this.card.classList.toggle("shrunk", this.shrunk.page);
     this.card.innerHTML = `
       <div class="pc-head">
         <span class="pc-floor">${esc(p.floor)}</span>
@@ -277,7 +442,7 @@ export class Storybook {
           <div class="pc-kicker">${esc(p.chapter)} · ${esc(p.kicker)}</div>
           <h2>${esc(p.title)}</h2>
         </div>
-        <button type="button" class="pc-collapse" data-pc="collapse" aria-label="Hide the storybook" title="Hide the storybook">–</button>
+        ${toggleHtml("page", this.shrunk.page)}
       </div>
       <div class="pc-body">${p.body.map((b) => `<p>${esc(b)}</p>`).join("")}</div>
       ${p.id === "finale" ? `<div class="pc-trace"></div>` : ""}
@@ -288,6 +453,10 @@ export class Storybook {
         <button type="button" class="btn primary" data-pc="next">${next ? `${esc(shortTitle(next))} ›` : "Back to the cover ↺"}</button>
       </nav>`;
     this.renderTrace();
+    if (!this.shrunk.page && !this.collapsed) {
+      const r = this.card.getBoundingClientRect();
+      this.wide.set(this.wideKey("page"), { right: r.right, height: r.height });
+    }
   }
 
   private renderTrace(): void {
@@ -331,9 +500,6 @@ export class Storybook {
       return;
     }
     switch (el.dataset.pc) {
-      case "collapse":
-        this.setCollapsed(true);
-        break;
       case "prev":
         this.step(-1);
         break;

@@ -1,15 +1,15 @@
 # Azure AI Search — Advice Team in a Day
 
 This folder provisions the Azure AI Search indexes behind **Advice Team in a
-Day** for **Caldova Life Advice** and seeds them with fictional knowledge, so
+Day** for **Life Advice Guru** and seeds them with fictional knowledge, so
 every staff-character agent — Onboarding, Paraplanning, Insurance Research,
 Financial Crime, Underwriting, Claims, Client Communications and Team Leader —
-can ground its answers in the insurers' PDS extracts, Caldova's guides, the
+can ground its answers in the insurers' PDS extracts, Life Advice Guru's guides, the
 rules and the client case files, and **cite each document by its title**.
 
 The pattern mirrors the
 [quant-agent ai-search](https://github.com/qkfang/quant-agent/tree/main/ai-search)
-reference: each `CaldovaAgent` is wired up with the Foundry **Azure AI
+reference: each `GuruAgent` is wired up with the Foundry **Azure AI
 Search** tool pointing at the project-level connection created in
 `bicep/foundry.bicep`, querying the `life_knowledge` index.
 
@@ -34,7 +34,7 @@ simple keyword query path by default (`AzureAISearchQueryType.Simple`).
 ## Documents
 
 All people, insurers, super funds, businesses, policy numbers, premiums and
-product features are fictional, and so is Caldova Life Advice. The rule
+product features are fictional, and so is Life Advice Guru. The rule
 documents summarise the FY2026-27 rules (from 1 July 2026) and list their
 legal references and official source URLs in `sources`. They are general
 information for the agents to cite, not legal or tax advice.
@@ -47,8 +47,8 @@ information for the agents to cite, not legal or tax advice.
 | `pds-corella-life-protection.json` | Corella Life — Protection PDS extract | Insurance Research |
 | `pds-lyrebird-life-protection.json` | Lyrebird Life — Protection PDS extract | Insurance Research |
 | `pds-northbank-life-business-protection.json` | Northbank Life — Business Protection PDS extract | Insurance Research |
-| `fsg-caldova-life-advice-and-remuneration.json` | Caldova Life Advice — Financial Services Guide and remuneration | Team Leader Office |
-| `apl-caldova-life-advice-and-research-method.json` | Caldova Life Advice — Approved product list and research method | Insurance Research |
+| `fsg-life-advice-guru-and-remuneration.json` | Life Advice Guru — Financial Services Guide and remuneration | Team Leader Office |
+| `apl-life-advice-guru-and-research-method.json` | Life Advice Guru — Approved product list and research method | Insurance Research |
 | `rules-advice-best-interests-soa-and-replacement.json` | Advice rules — best interests duty, SoA and replacement advice | Paraplanning |
 | `rules-insurance-inside-super.json` | Insurance inside super — permitted cover, Protecting Your Super and opt-in rules | Paraplanning |
 | `rules-underwriting-and-duty-of-reasonable-care.json` | Underwriting and the duty to take reasonable care | Underwriting & New Business |
@@ -110,7 +110,7 @@ Each file holds one JSON object, and its `id` must equal the file name without
 | `category` | `Case File`, `Case Evidence`, `Practice Guide` or `Directory` (`Product & Rules` for projected rules documents). |
 | `requestType` | `New protection advice`, `Trauma claim and bank change`, `Business protection advice`, `Income protection claim`, `Death claim`, or `All`. |
 | `caseNumber` | e.g. `REQ-20261111-LIF004`; empty for guides. |
-| `clientNumber` | Caldova client number, e.g. `CL-102265`; empty for guides. |
+| `clientNumber` | Life Advice Guru client number, e.g. `CL-102265`; empty for guides. |
 | `content` | Body text. |
 | `severity` | `low`, `medium` or `high` (`reference` for projected rules documents). |
 | `department` | Owning department, e.g. `Financial Crime`. |
@@ -123,7 +123,7 @@ Each file holds one JSON object, and its `id` must equal the file name without
 | --- | --- |
 | `id` | Document key. |
 | `title` | Document title — what the agents cite. |
-| `product` | The insurer's product, the Caldova document, or the area of law. |
+| `product` | The insurer's product, the Life Advice Guru document, or the area of law. |
 | `version` | Version and effective date. |
 | `summary` | What the document covers. |
 | `rules` | The definitions, features, rules or worked examples. |
@@ -151,8 +151,8 @@ Each file holds one JSON object, and its `id` must equal the file name without
 * PowerShell 7+ (`pwsh`).
 * Check the variables at the top of each script: `$SearchServiceName` must
   match the `aiSearchName` output of `main.bicep` (`search-<baseName>`, e.g.
-  `search-caldovacl`), and `$FoundryEndpoint` in `setup-index.ps1` must match the
-  `foundryAccountEndpoint` output (e.g. `https://aif-caldovacl.cognitiveservices.azure.com`).
+  `search-lifeguru`), and `$FoundryEndpoint` in `setup-index.ps1` must match the
+  `foundryAccountEndpoint` output (e.g. `https://aif-lifeguru.cognitiveservices.azure.com`).
 * Index fields can't be removed or renamed in place. If an index with these
   names already exists with a different schema, delete it before running
   `setup-index.ps1`. Indexes left over from earlier versions of this
@@ -171,4 +171,4 @@ Once the indexes are populated, the backend Web App reads
 `AZURE_AI_SEARCH_CONNECTION_ID` and `AZURE_AI_SEARCH_INDEX_NAME` (set to
 `life_knowledge`) from app settings (set by `bicep/appservice.bicep`) and
 wires the connection into every Foundry agent created by
-`CaldovaAgentFactory`.
+`GuruAgentFactory`.

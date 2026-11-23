@@ -4,7 +4,7 @@ using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
 using PdfSharp.Fonts;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// One generated application and disclosure summary PDF, kept in memory so
@@ -58,7 +58,7 @@ public record ApplicationPdfInput(
     IReadOnlyList<string> Notes);
 
 /// <summary>
-/// Generates the "Caldova Life Advice — Application and disclosure summary"
+/// Generates the "Life Advice Guru — Application and disclosure summary"
 /// PDF for a Client Case using PDFsharp + MigraDoc (pure managed,
 /// cross-platform), and caches it in memory so the Underwriting &amp; New
 /// Business page and the <c>underwriting_generateApplicationSummaryPdf</c>
@@ -110,7 +110,7 @@ public class ApplicationPdfService
         var id = Guid.NewGuid().ToString("N").Substring(0, 12);
         var safeCase = new string((input.CaseNumber ?? "case").Where(c => char.IsAsciiLetterOrDigit(c) || c == '-').ToArray());
         if (string.IsNullOrEmpty(safeCase)) safeCase = "case";
-        var fileName = $"Caldova-ApplicationSummary-{safeCase}-{id}.pdf";
+        var fileName = $"LifeAdviceGuru-ApplicationSummary-{safeCase}-{id}.pdf";
 
         var doc = BuildDocument(input, safeCase, id);
         var renderer = new PdfDocumentRenderer { Document = doc };
@@ -138,8 +138,8 @@ public class ApplicationPdfService
     private static Document BuildDocument(ApplicationPdfInput input, string safeCase, string id)
     {
         var doc = new Document();
-        doc.Info.Title = $"Caldova Life Advice — Application and disclosure summary {safeCase}";
-        doc.Info.Author = "Caldova Life Advice — Underwriting & New Business";
+        doc.Info.Title = $"Life Advice Guru — Application and disclosure summary {safeCase}";
+        doc.Info.Author = "Life Advice Guru — Underwriting & New Business";
         doc.Info.Subject = "Application and disclosure summary";
 
         var normal = doc.Styles["Normal"]!;
@@ -171,7 +171,7 @@ public class ApplicationPdfService
         table.AddColumn(Unit.FromCentimeter(8.8));
         var row = table.AddRow();
 
-        var brand = row.Cells[0].AddParagraph("CALDOVA LIFE ADVICE");
+        var brand = row.Cells[0].AddParagraph("LIFE ADVICE GURU");
         brand.Format.Font.Size = 16;
         brand.Format.Font.Bold = true;
         brand.Format.Font.Color = BrandNavy;
@@ -203,7 +203,7 @@ public class ApplicationPdfService
     private static void BuildFooter(Section section)
     {
         var footer = section.Footers.Primary;
-        var p = footer.AddParagraph("Caldova Life Advice · Underwriting & New Business · Caldova House, Melbourne VIC · Contains personal information — keep it confidential");
+        var p = footer.AddParagraph("Life Advice Guru · Underwriting & New Business · Guru House, Melbourne VIC · Contains personal information — keep it confidential");
         p.Format.Alignment = ParagraphAlignment.Center;
         p.Format.Font.Size = 7.5;
         p.Format.Font.Color = TextSubtle;
@@ -357,7 +357,7 @@ public class ApplicationPdfService
 
         AddSectionHeading(section, "Important");
         AddBullet(section, "Existing cover is never cancelled or reduced before the new cover is accepted and in force — that decision is the client's, with the adviser.");
-        AddBullet(section, "Accepting a loading, an exclusion or a decline is the client's decision with the adviser. Caldova's agents never accept terms for a client.");
+        AddBullet(section, "Accepting a loading, an exclusion or a decline is the client's decision with the adviser. Life Advice Guru's agents never accept terms for a client.");
         foreach (var note in input.Notes)
             AddBullet(section, note);
     }

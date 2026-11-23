@@ -1,8 +1,8 @@
 # Advice Team in a Day
 
-A demo for **Caldova Life Advice**, a fictional life insurance advice practice in Melbourne that helps families and business owners protect their income, their family and their business. It shows an advice practice run with a coordinated team of specialised AI agents.
+A demo for **Life Advice Guru**, a fictional life insurance advice practice in Melbourne that helps families and business owners protect their income, their family and their business. It shows an advice practice run with a coordinated team of specialised AI agents.
 
-At Caldova, each department has its own AI agent that supports a named staff member through the full request lifecycle: **Discover → Verify → Advise → Implement → Confirm**. The departments cover:
+At Life Advice Guru, each department has its own AI agent that supports a named staff member through the full request lifecycle: **Discover → Verify → Advise → Implement → Confirm**. The departments cover:
 
 - onboarding and requests
 - paraplanning and needs analysis
@@ -13,9 +13,9 @@ At Caldova, each department has its own AI agent that supports a named staff mem
 - client communications
 - team leadership
 
-The agents gather facts, explain rules, calculate needs and benefits, compare insurers and draft. **Amelia**, Caldova's adviser, gives the advice and signs every Statement of Advice, and people approve every decision that matters.
+The agents gather facts, explain rules, calculate needs and benefits, compare insurers and draft. **Amelia**, Life Advice Guru's adviser, gives the advice and signs every Statement of Advice, and people approve every decision that matters.
 
-See [AGENTS.md](AGENTS.md) for the overview, and the [docs/](docs/) folder for the industry background, characters, process, scenarios and the Caldova House [storybook](docs/storybook.md) behind the frontend.
+See [AGENTS.md](AGENTS.md) for the overview, and the [docs/](docs/) folder for the industry background, characters, process, scenarios and the Guru House [storybook](docs/storybook.md) behind the frontend.
 
 ---
 
@@ -39,7 +39,7 @@ Human approval is always required for:
 |---|---|---|---|
 | 1 | **Onboarding Agent** (Olivia) | Onboarding & Requests Officer | Reads enquiries, referrals, fact finds and claim notifications, and extracts every field. It runs the in-good-order checklist, flags existing cover at risk and vulnerable clients, then opens the Client Case and routes it. |
 | 2 | **Paraplanning Agent** (Penny) | Paraplanner | Works out how much life, TPD, trauma, income protection and business cover is needed, showing its working, and how to hold it inside or outside super. It drafts the Statement of Advice for the adviser, with commission in dollars, and cites each rule. |
-| 3 | **Insurance Research Agent** (Ivy) | Insurance Research Analyst | Compares the insurers on Caldova's approved product list (APL) on definitions, features, exclusions and stepped and level premiums, and builds an Excel workbook with a premium chart. |
+| 3 | **Insurance Research Agent** (Ivy) | Insurance Research Analyst | Compares the insurers on Life Advice Guru's approved product list (APL) on definitions, features, exclusions and stepped and level premiums, and builds an Excel workbook with a premium chart. |
 | 4 | **Financial Crime Agent** (Felix) | Financial Crime Investigator | Checks that IDs, medical reports, death certificates, payslips, BAS and bank statements are authentic, and builds a risk timeline of contact and bank-detail changes. It screens for politically exposed person (PEP) and sanctions matches, gives an explainable risk rating, and recommends holds and call-backs. |
 | 5 | **Underwriting Agent** (Uma) | Underwriting Coordinator | Explains the duty to take reasonable care, prepares the application, tracks the medical and financial evidence the insurer needs, explains loadings and exclusions, and generates the application summary PDF. |
 | 6 | **Claims Agent** (Ben) | Benefit Claims Advocate | Checks the claimant, the policy and the evidence, builds the claim pack and calculates the benefit. It raises a Microsoft Teams approval card, lodges the claim only after a person approves, and tracks the insurer's Code of Practice timeframes. |
@@ -84,10 +84,10 @@ Each staff role is a **Microsoft Foundry** agent. Every agent showcases at least
 
 | Capability | How the demo uses it | Agents |
 |---|---|---|
-| **Declarative agents** (`Azure.AI.Projects`) | Each role is a Foundry agent created from code on a shared `CaldovaAgent` base class, with its own instructions and structured output. | All nine (eight staff agents plus Cara's voice agent) |
-| **Azure AI Search grounding** | Answers are grounded in, and cite, the `life_knowledge` index: the insurers' PDS extracts, Caldova's Financial Services Guide and APL, the rules on advice, insurance in super, underwriting, claims, tax and commission, Caldova's guides, and the case files. | All. Paraplanning cites a rule for every step |
+| **Declarative agents** (`Azure.AI.Projects`) | Each role is a Foundry agent created from code on a shared `GuruAgent` base class, with its own instructions and structured output. | All nine (eight staff agents plus Cara's voice agent) |
+| **Azure AI Search grounding** | Answers are grounded in, and cite, the `life_knowledge` index: the insurers' PDS extracts, Life Advice Guru's Financial Services Guide and APL, the rules on advice, insurance in super, underwriting, claims, tax and commission, Life Advice Guru's guides, and the case files. | All. Paraplanning cites a rule for every step |
 | **Bing grounding** | Public web grounding for up-to-date reference information. | All, through the shared base class |
-| **MCP tools** (served by the backend at `/mcp`, server label `caldova-ops-mcp`) | **Insurance Research:** analyse policy documents, compare insurers, build the comparison workbook. **Underwriting:** look up insurers, check underwriting requirements, generate the application summary PDF. **Claims:** validate the claimant, check the policy, calculate the benefit, check the approval rules, request and track approval, and lodge the claim. **Teams:** send the approval card. | Ivy, Uma, Ben |
+| **MCP tools** (served by the backend at `/mcp`, server label `guru-ops-mcp`) | **Insurance Research:** analyse policy documents, compare insurers, build the comparison workbook. **Underwriting:** look up insurers, check underwriting requirements, generate the application summary PDF. **Claims:** validate the claimant, check the policy, calculate the benefit, check the approval rules, request and track approval, and lodge the claim. **Teams:** send the approval card. | Ivy, Uma, Ben |
 | **Azure Content Understanding** | Checks the authenticity of IDs, medical reports, death certificates, payslips, BAS and bank statements, and returns a legit, suspicious or fake verdict with the reasons. | Felix |
 | **Microsoft Teams adaptive-card approvals** | A claim is lodged only after a person approves the card in Teams. | Ben, with Theo approving |
 | **Voice Live** | Talk to Cara by voice about a case. | Cara (voice agent) |
@@ -116,17 +116,17 @@ Each staff role is a **Microsoft Foundry** agent. Every agent showcases at least
 - `AZURE_AI_SEARCH_INDEX_NAME`, set to `life_knowledge`
 - `AZURE_BING_CONNECTION_ID`
 
-The backend also uses `APP_MCP_URL`, the public base URL where Foundry reaches the backend's `/mcp` endpoint. When you run locally, point it at the deployed `app-caldovacl-backend` or at a dev tunnel.
+The backend also uses `APP_MCP_URL`, the public base URL where Foundry reaches the backend's `/mcp` endpoint. When you run locally, point it at the deployed `app-lifeguru-backend` or at a dev tunnel.
 
 If Foundry isn't configured or can't be reached, the agent pages fall back to **offline** results for the five scenario cases.
 
 **Backend** (Blazor agent console and APIs, at <http://localhost:5212>):
 
 ```powershell
-dotnet run --project src/backend/cl-backend.csproj
+dotnet run --project src/backend/guru-backend.csproj
 ```
 
-**Frontend** (the voxel Caldova House storybook, at <http://localhost:5173>):
+**Frontend** (the voxel Guru House storybook, at <http://localhost:5173>):
 
 ```powershell
 cd src/frontend
@@ -143,7 +143,7 @@ dotnet run -- --onboarding "Referral from Hannah Lewis (Yarra Home Loans): Priya
 
 The other flags are `--paraplanning`, `--research`, `--fincrime`, `--underwriting`, `--claims`, `--communications` and `--team-leader`.
 
-To deploy to Azure (resource group `rg-caldova-life`), see `bicep/` and the GitHub Actions workflows in `.github/workflows/`.
+To deploy to Azure (resource group `rg-life-advice-guru`), see `bicep/` and the GitHub Actions workflows in `.github/workflows/`.
 
 ---
 
@@ -151,39 +151,39 @@ To deploy to Azure (resource group `rg-caldova-life`), see `bicep/` and the GitH
 
 ### Backend: Agent Console
 
-The backend home page lists the eight agents at Caldova Life Advice. Each card opens the agent's page, where **Try it out** runs the agent live against the scenario cases. Every run shows the agent's narrative, the references it cited, its prompt and tools, its input and its raw output.
+The backend home page lists the eight agents at Life Advice Guru. Each card opens the agent's page, where **Try it out** runs the agent live against the scenario cases. Every run shows the agent's narrative, the references it cited, its prompt and tools, its input and its raw output.
 
 ![Backend agent console](docs/res/app-backend.png)
 
-### Frontend: the Caldova House Storybook
+### Frontend: the Guru House Storybook
 
-The frontend shows the same team as a voxel storybook you read from the top of Caldova House to the bottom. Caldova House is a heritage building on a Melbourne city corner, built in 1889 as a bank, with a super modern, futuristic office inside. Caldova is an advice practice for the agentic era, with two sides: Protection Advice and Claims & Care.
+The frontend shows the same team as a voxel storybook you read from the top of Guru House to the bottom. Guru House is a heritage building on a Melbourne city corner, built in 1889 as a bank, with a super modern, futuristic office inside. Life Advice Guru is an advice practice for the agentic era, with two sides: Protection Advice and Claims & Care.
 
 - **Level 3** is business owner Maya Ashworth's office under the old copper dome, with her idea, "the brain", with one half for each side.
 - **Level 2** holds two small teams, one for each side, with Olivia at the front door and Theo leading both teams.
 - **Level 1**, the old banking chamber at street level, has one group of Microsoft Foundry agents that supports both teams. Some agents are dedicated to a side and some are shared by both. Each agent and each of its specialised assistants is its own robot: 25 roles in all.
 - **The engine room**, in the old bank vault in the basement, holds Microsoft IQ (Work IQ, Fabric IQ, Foundry IQ and Web IQ) with the Azure services around it.
 
-People and agents move about their floors as they work. Out front, clients, families and referral partners arrive by tram and sign at the front desk under the heritage verandah, where Amelia links them with the agents that get them started. Up on the roof, Caldova throws a party for its clients under a big CALDOVA LIFE ADVICE sign. Each chapter opens up one level. The finale starts at the front desk, then opens up the house to trace a client's request from top to bottom. See [docs/storybook.md](docs/storybook.md).
+People and agents move about their floors as they work. Out front, clients, families and referral partners arrive by tram and sign at the front desk under the heritage verandah, where Amelia links them with the agents that get them started. Up on the roof, Life Advice Guru throws a party for its clients under a big LIFE ADVICE GURU sign, and guests step off the tram and ride the glass lift on the front corner straight up to it. Each chapter opens up one level, and every panel has a − / + to shrink it out of the way, with one more by the brand bar to shrink or open them all. The finale starts at the front desk, then opens up the house to trace a client's request from top to bottom. See [docs/storybook.md](docs/storybook.md).
 
-![Frontend: the Caldova House storybook](docs/res/storybook/v2-finale.jpg)
+![Frontend: the Guru House storybook](docs/res/storybook/v2-finale.jpg)
 
 ---
 
 ## Contributing
 
-Contributions are very welcome! You could add or refine an agent, sharpen a scenario, polish Caldova House, or fix a typo.
+Contributions are very welcome! You could add or refine an agent, sharpen a scenario, polish Guru House, or fix a typo.
 
 Ways to contribute:
 
 - **Open an issue** to report a bug, suggest an enhancement, or propose a new client scenario.
 - **Submit a pull request** with code, content or documentation changes. Small PRs are perfect.
-- **Share ideas** for new agents, client personas or practice workflows that fit the Caldova Life Advice story.
+- **Share ideas** for new agents, client personas or practice workflows that fit the Life Advice Guru story.
 - **Improve the docs** in the [docs/](docs/) folder: background, characters, process, scenarios and visual themes.
 
 Keep contributions aligned with these principles:
 
-- Keep the Caldova House metaphor and the guidance in [AGENTS.md](AGENTS.md).
+- Keep the Guru House metaphor and the guidance in [AGENTS.md](AGENTS.md).
 - Agents support people and never give personal advice. The adviser gives the advice.
 - Rules and numbers must be real, current and cited.
 - People, insurers, super funds and businesses stay fictional.

@@ -1,6 +1,6 @@
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Models;
+namespace LifeAdviceGuru.App.Models;
 
 /// <summary>
 /// One sample inbound request — an email (or call note) plus its attached
@@ -10,7 +10,7 @@ namespace CaldovaLife.App.Models;
 /// Case in <see cref="CaseStore.SeedDefaults"/> so every downstream agent page
 /// has a case to work on.
 /// </summary>
-/// <param name="ClientFile">What Caldova already holds about the client, or a note that they're new.</param>
+/// <param name="ClientFile">What Life Advice Guru already holds about the client, or a note that they're new.</param>
 /// <param name="ExpectedFactFind">The fact find (or claim details) the agent extracts.</param>
 /// <param name="ExpectedChecklist">The in-good-order checklist the agent runs.</param>
 /// <param name="VulnerabilityFlags">Vulnerability indicators for human handling (empty when none).</param>
@@ -47,7 +47,7 @@ public record RequestSample(
 /// <summary>
 /// Canonical fields the Onboarding Agent maps from the email and its
 /// attachments onto the Client Case. Mirrors the "Client Case Fields" section
-/// of the <see cref="CaldovaLife.Agents.OnboardingAgent"/> instructions.
+/// of the <see cref="LifeAdviceGuru.Agents.OnboardingAgent"/> instructions.
 /// </summary>
 public record RequestExtractedFields(
     string ClientName,
@@ -85,7 +85,7 @@ public record GoodOrderCheck(string Id, string Label, string Status, string Note
 /// </summary>
 public static class RequestSampleCatalog
 {
-    /// <summary>Caldova's adviser on every case — she gives the advice and signs every SoA.</summary>
+    /// <summary>Life Advice Guru's adviser on every case — she gives the advice and signs every SoA.</summary>
     public const string Adviser = "Amelia, Senior Risk Adviser";
 
     public static IReadOnlyList<RequestSample> All { get; } = Build();
@@ -126,7 +126,7 @@ public static class RequestSampleCatalog
                 "Driver-licence-Natarajan.jpg; Payslip-Oct-2026-Natarajan.pdf",
             FormFileName: "Fact-find-Priya-Natarajan.pdf",
             FormDocumentText:
-                "CALDOVA LIFE ADVICE — PERSONAL FACT FIND (PROTECTION)\n" +
+                "LIFE ADVICE GURU — PERSONAL FACT FIND (PROTECTION)\n" +
                 "=====================================================\n\n" +
                 "1. About you\n" +
                 "Name: Priya Natarajan            Date of birth: 14/02/1992 (34)\n" +
@@ -164,7 +164,7 @@ public static class RequestSampleCatalog
                 "ID: Victorian driver licence (copy attached)    Payslip: October 2026 (attached)\n\n" +
                 "Signed: Priya Natarajan        Date: 03/11/2026",
             ClientFile:
-                "New client — no Caldova client file yet. Client number CL-104582 reserved at intake.\n" +
+                "New client — no Life Advice Guru client file yet. Client number CL-104582 reserved at intake.\n" +
                 "Referral partner on file: Hannah Lewis, Yarra Home Loans (referral agreement in place).",
             ExpectedFields: new RequestExtractedFields(
                 ClientName: "Priya Natarajan",
@@ -199,7 +199,7 @@ public static class RequestSampleCatalog
             },
             ExpectedChecklist: new[]
             {
-                new GoodOrderCheck("fsg", "Financial Services Guide given", "ok", "Caldova's FSG was sent with the fact-find pack and Priya confirms she received it (3 Nov 2026)."),
+                new GoodOrderCheck("fsg", "Financial Services Guide given", "ok", "Life Advice Guru's FSG was sent with the fact-find pack and Priya confirms she received it (3 Nov 2026)."),
                 new GoodOrderCheck("privacy", "Privacy and health-information consent", "ok", "Signed by Priya on 3 Nov 2026."),
                 new GoodOrderCheck("id", "Identity", "ok", "Driver licence and payslip received — sent to Financial Crime for KYC, as for every new client."),
                 new GoodOrderCheck("authority", "Authority to obtain existing cover details", "ok", "Signed for Riverbend Super and Kestrel Retail Super on 3 Nov 2026."),
@@ -254,9 +254,9 @@ public static class RequestSampleCatalog
                 "3. Bank-statement-GW-Consulting.pdf\n" +
                 "   Interim statement — BSB 06*-***, account ****4471\n" +
                 "   Account name: G Williams Consulting Pty Ltd\n" +
-                "   This is the account the email asks Caldova to pay",
+                "   This is the account the email asks Life Advice Guru to pay",
             ClientFile:
-                "CALDOVA CLIENT FILE — Grace Williams (CL-100377) — client since 2019\n" +
+                "LIFE ADVICE GURU CLIENT FILE — Grace Williams (CL-100377) — client since 2019\n" +
                 "Verified contact details (held before 02/11/2026): mobile 0491 570 157 · grace.williams@example.com\n" +
                 "Cover: Lyrebird Life LB-19004417 (outside super, stepped) — life $500,000; trauma $200,000\n" +
                 "Nominated beneficiaries: Daniel Williams 50%, James Williams 50%\n" +
@@ -352,7 +352,7 @@ public static class RequestSampleCatalog
                 "Attachments: Business-details-Northcote-Custom-Joinery.pdf",
             FormFileName: "Business-details-Northcote-Custom-Joinery.pdf",
             FormDocumentText:
-                "CALDOVA LIFE ADVICE — BUSINESS PROTECTION FACT FIND\n" +
+                "LIFE ADVICE GURU — BUSINESS PROTECTION FACT FIND\n" +
                 "===================================================\n\n" +
                 "The business\n" +
                 "Name: Northcote Custom Joinery Pty Ltd (founded 2011)\n" +
@@ -383,7 +383,7 @@ public static class RequestSampleCatalog
                 "ID: George — Victorian driver licence; Harpreet — Australian passport; company extract (attached)\n\n" +
                 "Signed: George Papadopoulos · Harpreet Kaur        Date: 09/11/2026",
             ClientFile:
-                "New clients — no Caldova client file yet. Client numbers reserved at intake: George CL-104611, " +
+                "New clients — no Life Advice Guru client file yet. Client numbers reserved at intake: George CL-104611, " +
                 "Harpreet CL-104612.\n" +
                 "Referral partner on file: Marcus Tan, Bayside Business Accountants (referral agreement in place).",
             ExpectedFields: new RequestExtractedFields(
@@ -418,13 +418,13 @@ public static class RequestSampleCatalog
             },
             ExpectedChecklist: new[]
             {
-                new GoodOrderCheck("fsg", "Financial Services Guide given", "ok", "Both owners confirm they received Caldova's FSG on 9 Nov 2026."),
+                new GoodOrderCheck("fsg", "Financial Services Guide given", "ok", "Both owners confirm they received Life Advice Guru's FSG on 9 Nov 2026."),
                 new GoodOrderCheck("privacy", "Privacy and health-information consent", "ok", "Signed by George and Harpreet on 9 Nov 2026."),
                 new GoodOrderCheck("id", "Identity and company KYC", "ok", "Company extract and ID for both beneficial owners (George's driver licence, Harpreet's passport) received — sent to Financial Crime for KYC, as for every new client."),
-                new GoodOrderCheck("authority", "Authorities", "ok", "Both owners authorised Caldova to obtain existing cover details, and Marcus to share the valuation and the last two years' financial statements."),
+                new GoodOrderCheck("authority", "Authorities", "ok", "Both owners authorised Life Advice Guru to obtain existing cover details, and Marcus to share the valuation and the last two years' financial statements."),
                 new GoodOrderCheck("financial-evidence", "Business evidence", "ok", "Valuation of $2.4 million at 30 Jun 2026, Marcus's key person estimate (about $400,000 over 18 months) and two years' financial statements — the insurer will ask for them at these sums insured."),
                 new GoodOrderCheck("referral-consent", "Referral partner consent", "ok", "Marcus may be told the outcome once the cover is in place — no health details."),
-                new GoodOrderCheck("buy-sell", "Buy-sell agreement", "action", "None in place. The owners' lawyer drafts it — Caldova doesn't draft legal documents."),
+                new GoodOrderCheck("buy-sell", "Buy-sell agreement", "action", "None in place. The owners' lawyer drafts it — Life Advice Guru doesn't draft legal documents."),
                 new GoodOrderCheck("commission-consent", "Commission consent", "action", "The SoA must show the commission in dollars, and each policy owner's informed written consent — with the disclosures the law requires and a copy for them — is needed before any cover is issued."),
                 new GoodOrderCheck("second-review", "Second review", "action", "Indicative total cover is about $2.8 million (buy-sell $1.2 million each on the $2.4 million valuation, plus $400,000 key person cover). That's $2,000,000 or more on one case, so Theo's second review is needed before the application."),
             },
@@ -467,10 +467,10 @@ public static class RequestSampleCatalog
                 "AUTHORITY FOR A SUPPORT PERSON\n" +
                 "==============================\n\n" +
                 "I, Tom Bradley (DOB 03/03/1985, client number CL-102265), authorise my wife, Kylie Bradley " +
-                "(mobile 0491 570 737), to act as my support person and to speak with Caldova Life Advice and " +
+                "(mobile 0491 570 737), to act as my support person and to speak with Life Advice Guru and " +
                 "Harbourline Life about my income protection claim on policy HL-23051877, and to receive " +
                 "information about it on my behalf.\n\n" +
-                "I can change or withdraw this authority at any time by telling Caldova.\n\n" +
+                "I can change or withdraw this authority at any time by telling Life Advice Guru.\n\n" +
                 "Signed: Tom Bradley        Date: 11/11/2026\n\n" +
                 "About the claim (as Tom told us on the call)\n" +
                 "Policy: Harbourline Life income protection HL-23051877 (outside super)\n" +
@@ -478,7 +478,7 @@ public static class RequestSampleCatalog
                 "Treatment: surgery 21/10/2026; surgeon expects 4 to 6 months off work\n" +
                 "Last day worked: 14/10/2026",
             ClientFile:
-                "CALDOVA CLIENT FILE — Tom Bradley (CL-102265) — client since 2023\n" +
+                "LIFE ADVICE GURU CLIENT FILE — Tom Bradley (CL-102265) — client since 2023\n" +
                 "Verified contact details: mobile 0491 570 110 · tom.bradley@example.com\n" +
                 "Cover: Harbourline Life income protection HL-23051877 (outside super, stepped), from 15/03/2023 — " +
                 "$7,000 a month (set from $120,000 a year at application), 30-day waiting period, to age 65; " +
@@ -518,7 +518,7 @@ public static class RequestSampleCatalog
             ExpectedChecklist: new[]
             {
                 new GoodOrderCheck("policy", "Policy found and in force", "ok", "Harbourline Life HL-23051877 is on file and in force (from 15 Mar 2023)."),
-                new GoodOrderCheck("support-person", "Support-person authority", "ok", "Tom's written authority (11 Nov 2026) lets Kylie speak with Caldova and Harbourline Life for him — insurers recognise support people under the Life Insurance Code of Practice."),
+                new GoodOrderCheck("support-person", "Support-person authority", "ok", "Tom's written authority (11 Nov 2026) lets Kylie speak with Life Advice Guru and Harbourline Life for him — insurers recognise support people under the Life Insurance Code of Practice."),
                 new GoodOrderCheck("claim-form", "Insurer claim form", "action", "Harbourline Life's claim form to be completed and signed — Ben's agent will prefill it so Tom only has to check and sign."),
                 new GoodOrderCheck("medical-evidence", "Surgeon's report", "action", "The treating surgeon's report is needed: the injury, the surgery on 21 Oct and the expected time off work."),
                 new GoodOrderCheck("earnings-evidence", "Earnings evidence", "action", "BAS and profit and loss for the 12 months before the injury (to 30 Sep 2026) — Kylie is sending them."),
@@ -578,7 +578,7 @@ public static class RequestSampleCatalog
                 "Second attachment: certified copy of a Victorian driver licence — Robert Chen, " +
                 "DOB 30/01/1982, Box Hill VIC 3128 (certified 11/11/2026)",
             ClientFile:
-                "CALDOVA CLIENT FILE — Mei Chen (CL-101934) and Robert Chen (CL-101935) — clients since 2019\n" +
+                "LIFE ADVICE GURU CLIENT FILE — Mei Chen (CL-101934) and Robert Chen (CL-101935) — clients since 2019\n" +
                 "Policy: Corella Life CR-19033105 (outside super) — advised by Amelia, March 2019\n" +
                 "Policy owner and life insured: Mei Chen · Life cover: $1,000,000\n" +
                 "Nominated beneficiary: Robert Chen — 100%\n" +

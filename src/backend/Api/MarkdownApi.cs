@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Markdig;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>
 /// Renders Markdown to HTML server-side using Markdig. Used by the per-agent

@@ -1,5 +1,5 @@
 /**
- * Shared types for the Caldova House storybook (see docs/storybook.md).
+ * Shared types for the Guru House storybook (see docs/storybook.md).
  */
 import type { Mesh, TransformNode } from "@babylonjs/core";
 import type { InfraId, LevelId } from "./houseData";
@@ -23,10 +23,12 @@ export type InspectTarget =
   | { type: "infra"; id: InfraId }
   | { type: "desk" }
   | { type: "visitor" }
-  /** Amelia, Caldova's adviser at the front desk. */
+  /** Amelia, Life Advice Guru's adviser at the front desk. */
   | { type: "adviser" }
   | { type: "party" }
-  | { type: "guest"; id: string };
+  | { type: "guest"; id: string }
+  /** The glass lift from the street up to the roof party. */
+  | { type: "lift" };
 
 /** Metadata stamped on v2 click hitboxes. */
 export interface V2PickMetadata {
@@ -60,6 +62,8 @@ export interface Highlights {
   party: boolean;
   /** Party guests, by guest id. */
   guests: ReadonlySet<string>;
+  /** The glass lift and whoever is riding it. */
+  lift: boolean;
 }
 
 /** One level of the house as built by its level builder. */

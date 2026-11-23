@@ -1,21 +1,21 @@
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Models;
+namespace LifeAdviceGuru.App.Models;
 
 /// <summary>
-/// Verified rules and Caldova practice settings shared by the Paraplanning
+/// Verified rules and Life Advice Guru practice settings shared by the Paraplanning
 /// and Underwriting flows. Regulatory figures come from the FY2026-27 fact
 /// sheet (Corporations Act, Insurance Contracts Act, SIS, ITAA 1997 and the
 /// ASIC life insurance commissions instrument); practice settings (the
-/// adviser, the second-review threshold, Caldova's commission option) are
-/// Caldova's own fictional policy.
+/// adviser, the second-review threshold, Life Advice Guru's commission option) are
+/// Life Advice Guru's own fictional policy.
 /// </summary>
 public static class LifeAdviceFacts
 {
-    /// <summary>Caldova's adviser — gives the advice and signs every SoA.</summary>
+    /// <summary>Life Advice Guru's adviser — gives the advice and signs every SoA.</summary>
     public const string Adviser = "Amelia, Senior Risk Adviser";
 
-    /// <summary>Caldova practice rule: total cover on one case at or above this gets a second review.</summary>
+    /// <summary>Life Advice Guru practice rule: total cover on one case at or above this gets a second review.</summary>
     public const decimal SecondReviewThreshold = 2_000_000m;
 
     /// <summary>LIF cap — upfront commission as a share of the first-year policy cost (ASIC Instrument 2017/510 s5(2)).</summary>
@@ -49,7 +49,7 @@ public static class LifeAdviceFacts
 /// </summary>
 /// <param name="ClauseId">
 /// Clause id cited by checklist items. Prefixes: <c>HLP-</c>, <c>CRP-</c>,
-/// <c>LBP-</c>, <c>NBP-</c> (insurer PDS extracts), <c>FSG-</c> (Caldova's
+/// <c>LBP-</c>, <c>NBP-</c> (insurer PDS extracts), <c>FSG-</c> (Life Advice Guru's
 /// FSG), <c>APL-</c> (approved product list), <c>ADV-</c> (advice rules),
 /// <c>SUP-</c> (insurance inside super), <c>UW-</c> (underwriting),
 /// <c>CLM-</c> (claims rules), <c>TAX-</c> (tax), <c>COM-</c> (commission)
@@ -62,14 +62,14 @@ public record RuleSection(string ClauseId, string Title, string Text, string Leg
 
 /// <summary>
 /// An extract of one document in the <c>life_knowledge</c> index — an
-/// insurer's PDS extract, a Caldova guide or a rule summary — titled exactly
+/// insurer's PDS extract, a Life Advice Guru guide or a rule summary — titled exactly
 /// as the knowledge base titles it, so the agent's citations and the page's
 /// reference panel match.
 /// </summary>
 /// <param name="Id">Stable document id (e.g. <c>advice-rules</c>).</param>
 /// <param name="Number">Position in the rules-and-products list (1–12); 13 for the authority matrix.</param>
 /// <param name="Title">Exact knowledge-base title.</param>
-/// <param name="DocumentType">"PDS extract", "Caldova guide", "Rule summary" or "Practice matrix".</param>
+/// <param name="DocumentType">"PDS extract", "Life Advice Guru guide", "Rule summary" or "Practice matrix".</param>
 /// <param name="Issuer">Who issues the document.</param>
 /// <param name="AppliesTo">What the rules apply to.</param>
 /// <param name="EffectiveDate">Date the extract is current at.</param>
@@ -171,7 +171,7 @@ public record AdviserSignOff(
 /// analysis with the working, the strategy / ownership / rules checklist
 /// with clause references, the draft SoA outline, premiums and commission in
 /// dollars, and the adviser sign-off. Mirrors the trailing JSON block the
-/// <see cref="CaldovaLife.Agents.ParaplanningAgent"/> emits for the
+/// <see cref="LifeAdviceGuru.Agents.ParaplanningAgent"/> emits for the
 /// checklist; claim cases carry a polite pointer to the Claims Agent instead.
 /// </summary>
 public record AdviceReport(
@@ -213,8 +213,8 @@ public static class ProductDocumentCatalog
     private const string DocCorella = "pds-corella";
     private const string DocLyrebird = "pds-lyrebird";
     private const string DocNorthbank = "pds-northbank";
-    private const string DocFsg = "caldova-fsg";
-    private const string DocApl = "caldova-apl";
+    private const string DocFsg = "guru-fsg";
+    private const string DocApl = "guru-apl";
     private const string DocAdvice = "advice-rules";
     private const string DocSuper = "insurance-in-super";
     private const string DocUnderwriting = "underwriting-duty";
@@ -224,7 +224,7 @@ public static class ProductDocumentCatalog
     private const string DocMatrix = "authority-matrix";
 
     private const string RulesAsAt = "As at 23 Nov 2026 (FY2026-27)";
-    private const string Compliance = "Caldova Life Advice — compliance summary of the law";
+    private const string Compliance = "Life Advice Guru — compliance summary of the law";
 
     public static IReadOnlyList<ProductRuleDocument> All { get; } = BuildDocuments();
 
@@ -293,7 +293,7 @@ public static class ProductDocumentCatalog
             Number: 1,
             Title: "Harbourline Life — Protection PDS extract",
             DocumentType: "PDS extract",
-            Issuer: "Harbourline Life Limited (fictional insurer on Caldova's APL)",
+            Issuer: "Harbourline Life Limited (fictional insurer on Life Advice Guru's APL)",
             AppliesTo: "Harbourline Protection Plan (policy numbers HL-…)",
             EffectiveDate: "PDS extract — PDS dated 1 July 2026",
             Summary: "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals, and key person and buy-sell cover for businesses. No super-linking.",
@@ -353,7 +353,7 @@ public static class ProductDocumentCatalog
             Number: 2,
             Title: "Corella Life — Protection PDS extract",
             DocumentType: "PDS extract",
-            Issuer: "Corella Life Limited (fictional insurer on Caldova's APL)",
+            Issuer: "Corella Life Limited (fictional insurer on Life Advice Guru's APL)",
             AppliesTo: "Corella Protection Plan and Corella Super Plan (policy numbers CR-…)",
             EffectiveDate: "PDS extract — PDS dated 1 July 2026",
             Summary: "Super-linking — life and any-occupation TPD inside Corella's super plan, with an own-occupation TPD extension, trauma and income protection outside super — plus exclusion reviews, nominated beneficiaries and key person and buy-sell cover.",
@@ -423,7 +423,7 @@ public static class ProductDocumentCatalog
             Number: 3,
             Title: "Lyrebird Life — Protection PDS extract",
             DocumentType: "PDS extract",
-            Issuer: "Lyrebird Life Limited (fictional insurer on Caldova's APL)",
+            Issuer: "Lyrebird Life Limited (fictional insurer on Life Advice Guru's APL)",
             AppliesTo: "Lyrebird Life Protection (policy numbers LB-…)",
             EffectiveDate: "PDS extract — PDS dated 1 July 2026",
             Summary: "Life cover with a terminal illness benefit, TPD, trauma and income protection for individuals and families — no business protection or super-linking — with Lyrebird's cancer definition and its controls on changes of details and payments.",
@@ -488,7 +488,7 @@ public static class ProductDocumentCatalog
             Number: 4,
             Title: "Northbank Life — Business Protection PDS extract",
             DocumentType: "PDS extract",
-            Issuer: "Northbank Life Limited (fictional insurer on Caldova's APL)",
+            Issuer: "Northbank Life Limited (fictional insurer on Life Advice Guru's APL)",
             AppliesTo: "Northbank Business Protection — buy-sell and key person cover (policy numbers NB-…)",
             EffectiveDate: "PDS extract — PDS dated 1 July 2026",
             Summary: "Buy-sell cover for business owners and key person cover for businesses, with fast financial underwriting.",
@@ -547,57 +547,57 @@ public static class ProductDocumentCatalog
         new ProductRuleDocument(
             Id: DocFsg,
             Number: 5,
-            Title: "Caldova Life Advice — Financial Services Guide and remuneration",
-            DocumentType: "Caldova guide",
-            Issuer: "Caldova Life Advice Pty Ltd (fictional advice practice)",
-            AppliesTo: "Every Caldova client",
+            Title: "Life Advice Guru — Financial Services Guide and remuneration",
+            DocumentType: "Life Advice Guru guide",
+            Issuer: "Life Advice Guru Pty Ltd (fictional advice practice)",
+            AppliesTo: "Every Life Advice Guru client",
             EffectiveDate: "FSG v2026.1 — dated 1 July 2026",
-            Summary: "Who Caldova is, the services it provides, the documents clients receive, how Caldova and its people are paid, its associations, privacy and how to complain.",
+            Summary: "Who Life Advice Guru is, the services it provides, the documents clients receive, how Life Advice Guru and its people are paid, its associations, privacy and how to complain.",
             Sections: new[]
             {
                 S("FSG-1", "Who we are",
-                    "Caldova Life Advice Pty Ltd, Caldova House, Melbourne: a life insurance advice practice licensed for personal advice on, and dealing in, life risk insurance products. Caldova acts for its clients, not for the insurers.",
-                    "Caldova FSG, item 1"),
+                    "Life Advice Guru Pty Ltd, Guru House, Melbourne: a life insurance advice practice licensed for personal advice on, and dealing in, life risk insurance products. Life Advice Guru acts for its clients, not for the insurers.",
+                    "Life Advice Guru FSG, item 1"),
                 S("FSG-2", "Our adviser",
-                    "Amelia, Senior Risk Adviser, gives all of Caldova's personal advice and signs every Statement of Advice. She meets the education standard, completes at least 40 hours of continuing professional development each year, follows the Financial Planners and Advisers Code of Ethics 2019 and is on ASIC's Financial Advisers Register.",
-                    "Caldova FSG, item 2"),
+                    "Amelia, Senior Risk Adviser, gives all of Life Advice Guru's personal advice and signs every Statement of Advice. She meets the education standard, completes at least 40 hours of continuing professional development each year, follows the Financial Planners and Advisers Code of Ethics 2019 and is on ASIC's Financial Advisers Register.",
+                    "Life Advice Guru FSG, item 2"),
                 S("FSG-3", "What we do",
                     "Personal advice on life cover (with a terminal illness benefit), TPD, trauma, income protection and business protection (key person and buy-sell cover), including whether cover is held inside or outside super; applying for cover and supporting clients through underwriting; supporting clients and families through claims; annual reviews. No advice on investments, super investment options, tax or legal matters.",
-                    "Caldova FSG, item 3"),
+                    "Life Advice Guru FSG, item 3"),
                 S("FSG-4", "Documents you receive",
                     "This FSG (or the FSG information on our website); a Statement of Advice for personal advice, showing our remuneration, including commission, in dollars; a Record of Advice for further advice when your circumstances haven't changed significantly; and each insurer's PDS.",
-                    "Caldova FSG, item 4"),
-                S("FSG-5", "How Caldova is paid",
-                    "No advice fee for protection-only advice. The insurer pays Caldova commission within the Life Insurance Framework caps: up to 60% of the first year's policy cost (premiums and fees, excluding GST) and up to 20% of the policy cost in each later year. Example: on a first-year premium of $3,180, up to $1,908 upfront and up to $636 a year ongoing.",
-                    "Caldova FSG, item 5"),
+                    "Life Advice Guru FSG, item 4"),
+                S("FSG-5", "How Life Advice Guru is paid",
+                    "No advice fee for protection-only advice. The insurer pays Life Advice Guru commission within the Life Insurance Framework caps: up to 60% of the first year's policy cost (premiums and fees, excluding GST) and up to 20% of the policy cost in each later year. Example: on a first-year premium of $3,180, up to $1,908 upfront and up to $636 a year ongoing.",
+                    "Life Advice Guru FSG, item 5"),
                 S("FSG-6", "Your consent to commission",
-                    "Caldova only receives commission with your informed consent. Before you consent we tell you the insurer, the rate as a percentage of the policy cost, how often and for how long it's paid (including renewals), the services we provide (annual reviews and claims support), that the law requires your consent and that it can't be withdrawn. You consent in writing (or we keep a written record of verbal consent) and get a copy.",
-                    "Caldova FSG, item 6"),
+                    "Life Advice Guru only receives commission with your informed consent. Before you consent we tell you the insurer, the rate as a percentage of the policy cost, how often and for how long it's paid (including renewals), the services we provide (annual reviews and claims support), that the law requires your consent and that it can't be withdrawn. You consent in writing (or we keep a written record of verbal consent) and get a copy.",
+                    "Life Advice Guru FSG, item 6"),
                 S("FSG-7", "Clawback",
-                    "If a policy is cancelled in its first year, the insurer recovers 100% of the upfront commission from Caldova; in its second year, 60%.",
-                    "Caldova FSG, item 7"),
+                    "If a policy is cancelled in its first year, the insurer recovers 100% of the upfront commission from Life Advice Guru; in its second year, 60%.",
+                    "Life Advice Guru FSG, item 7"),
                 S("FSG-8", "How our people are paid",
-                    "Amelia and the team are paid salaries. Caldova doesn't pay or receive referral fees: referral partners such as Hannah Lewis (Yarra Home Loans) and Marcus Tan (Bayside Business Accountants) aren't paid for referrals.",
-                    "Caldova FSG, item 8"),
+                    "Amelia and the team are paid salaries. Life Advice Guru doesn't pay or receive referral fees: referral partners such as Hannah Lewis (Yarra Home Loans) and Marcus Tan (Bayside Business Accountants) aren't paid for referrals.",
+                    "Life Advice Guru FSG, item 8"),
                 S("FSG-9", "Not independent",
-                    "Because Caldova receives commission from insurers, we don't call ourselves independent, impartial or unbiased.",
-                    "Caldova FSG, item 9"),
+                    "Because Life Advice Guru receives commission from insurers, we don't call ourselves independent, impartial or unbiased.",
+                    "Life Advice Guru FSG, item 9"),
                 S("FSG-10", "Associations",
-                    "No insurer owns Caldova or has a financial interest in it. Caldova recommends cover from the insurers on its APL: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life.",
-                    "Caldova FSG, item 10"),
+                    "No insurer owns Life Advice Guru or has a financial interest in it. Life Advice Guru recommends cover from the insurers on its APL: Harbourline Life, Corella Life, Lyrebird Life and Northbank Life.",
+                    "Life Advice Guru FSG, item 10"),
                 S("FSG-11", "Privacy",
                     "Health information is sensitive: collected with consent, used only for your advice, application or claim, and shared only with the people who need it, such as the insurer. Referral partners are told only what you agree to, never your health details.",
-                    "Caldova FSG, item 11"),
+                    "Life Advice Guru FSG, item 11"),
                 S("FSG-12", "Complaints",
                     "Tell us first; we give a final written response within 30 calendar days. If you're not satisfied, you can take your complaint to the Australian Financial Complaints Authority (AFCA), a free, independent scheme.",
-                    "Caldova FSG, item 12"),
+                    "Life Advice Guru FSG, item 12"),
                 S("FSG-13", "Records",
                     "Records of your advice, including the best-interests steps, are kept for 7 years, and records of your commission consent for at least 5 years.",
-                    "Caldova FSG, item 13"),
+                    "Life Advice Guru FSG, item 13"),
             },
             Requirements: new[]
             {
-                "Date the FSG was given (or the client was pointed to the FSG information on Caldova's website).",
+                "Date the FSG was given (or the client was pointed to the FSG information on Life Advice Guru's website).",
                 "Signed privacy and health-information consent.",
                 "Written commission consent (or a written record of verbal consent), with a copy given to the client.",
             },
@@ -611,9 +611,9 @@ public static class ProductDocumentCatalog
         new ProductRuleDocument(
             Id: DocApl,
             Number: 6,
-            Title: "Caldova Life Advice — Approved product list and research method",
-            DocumentType: "Caldova guide",
-            Issuer: "Caldova Life Advice Pty Ltd (fictional advice practice)",
+            Title: "Life Advice Guru — Approved product list and research method",
+            DocumentType: "Life Advice Guru guide",
+            Issuer: "Life Advice Guru Pty Ltd (fictional advice practice)",
             AppliesTo: "Every product recommendation",
             EffectiveDate: "APL 2026-27 — reviewed 1 July 2026",
             Summary: "The insurers and products Amelia can recommend, and the method Insurance Research uses to research and compare them for every Statement of Advice.",
@@ -621,19 +621,19 @@ public static class ProductDocumentCatalog
             {
                 S("APL-1", "APL insurers for 2026-27",
                     "Harbourline Life (HL-): life, TPD (own occupation outside super only), trauma and income protection; key person and buy-sell; no super-linking. Corella Life (CR-): super-linking (life and any-occupation TPD inside super, own-occupation extension, trauma and income protection outside); key person and buy-sell. Lyrebird Life (LB-): life, TPD, trauma and income protection for individuals and families; no business protection. Northbank Life (NB-): buy-sell and key person cover with fast financial underwriting — always researched for business protection.",
-                    "Caldova APL 2026-27"),
+                    "Life Advice Guru APL 2026-27"),
                 S("APL-2", "How insurers get on the APL",
                     "Insurance Research and Theo review the APL every year against definitions, features and exclusions; premiums over time, stepped and level; underwriting service; claims philosophy and claims data, including APRA's claims statistics; Life Code subscription; and each product's target market determination.",
-                    "Caldova APL 2026-27"),
+                    "Life Advice Guru APL 2026-27"),
                 S("APL-3", "Research for each SoA",
                     "The reasonable investigation of products in the best interests duty: start from the needs analysis and the client's circumstances; compare the definitions that matter for this client; compare features and exclusions; compare premiums in dollars, year 1 and stepped against level over time; shortlist with reasons and a comparison workbook. Cheapest isn't best if the definition won't pay. Amelia decides what to recommend and records why in the SoA.",
-                    "Caldova APL 2026-27; Corporations Act s961B(2)(e)"),
+                    "Life Advice Guru APL 2026-27; Corporations Act s961B(2)(e)"),
                 S("APL-4", "Target market determinations",
                     "Insurers make a TMD for each product. Giving personal advice and arranging a product to implement it are excluded conduct, so the best interests duty governs Amelia's recommendation; Ivy still notes when a client sits outside a product's target market.",
                     "Corporations Act s994A, s994B, s994E(3)"),
                 S("APL-5", "Off-APL products",
-                    "If no APL product suits a client, Amelia can research a product off the APL with Theo's approval, or tell the client that Caldova can't help with that need.",
-                    "Caldova APL 2026-27"),
+                    "If no APL product suits a client, Amelia can research a product off the APL with Theo's approval, or tell the client that Life Advice Guru can't help with that need.",
+                    "Life Advice Guru APL 2026-27"),
             },
             Requirements: new[]
             {
@@ -655,7 +655,7 @@ public static class ProductDocumentCatalog
             Issuer: Compliance,
             AppliesTo: "Personal advice to retail clients on life risk insurance",
             EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
-            Summary: "The best interests duty and related obligations, what an SoA must contain and when, Records of Advice, replacement advice, hawking, design and distribution, and Caldova practice.",
+            Summary: "The best interests duty and related obligations, what an SoA must contain and when, Records of Advice, replacement advice, hawking, design and distribution, and Life Advice Guru practice.",
             Sections: new[]
             {
                 S("ADV-1", "Best interests duty and the safe harbour",
@@ -683,14 +683,14 @@ public static class ProductDocumentCatalog
                     "Shown in dollars in the SoA, with the client's informed consent before it can be received.",
                     "Corporations Act s947B, s963BB"),
                 S("ADV-9", "Hawking",
-                    "Offering a product during unsolicited real-time contact is prohibited, but offers made in the course of personal advice by someone bound by the best interests duty are an exception, and contacting an existing client about a product they already hold isn't hawking. Caldova contacts a referred client only after the referral partner has passed on the client's consent.",
+                    "Offering a product during unsolicited real-time contact is prohibited, but offers made in the course of personal advice by someone bound by the best interests duty are an exception, and contacting an existing client about a product they already hold isn't hawking. Life Advice Guru contacts a referred client only after the referral partner has passed on the client's consent.",
                     "Corporations Act s992A; ASIC RG 38"),
                 S("ADV-10", "Design and distribution",
                     "Giving personal advice and arranging a product to implement it are excluded conduct; insurers still make a target market determination for each product.",
                     "Corporations Act s994A, s994B, s994E(3)"),
-                S("ADV-11", "Caldova practice",
+                S("ADV-11", "Life Advice Guru practice",
                     "Amelia signs every SoA and RoA. Existing cover is never cancelled until the new cover is in force, and replacing or cancelling cover is always the client's decision with Amelia. Advice with total cover of $2,000,000 or more on one case gets Theo's second review.",
-                    "Caldova practice; Matrix — authority, approvals and escalation"),
+                    "Life Advice Guru practice; Matrix — authority, approvals and escalation"),
                 S("ADV-12", "Proposed changes — not law",
                     "The government's announced 'tranche 2' measures (a proposed client advice record, a new class of adviser and removing only the broadest safe-harbour step) aren't law at 23 Nov 2026. The current SoA, RoA and s961B rules apply.",
                     "Treasury announcements, 2025-26 (proposed)"),
@@ -751,7 +751,7 @@ public static class ProductDocumentCatalog
                     "A death benefit lump sum to a death-benefits dependant (a spouse or former spouse, a child under 18, a person in an interdependency relationship, or another dependant) is tax-free; for a non-dependant the taxable component is taxed at up to 15% (taxed element) or 30% (untaxed element) plus the 2% Medicare levy. TPD lump sums are tax-free from age 60; below preservation age (60 for people born from 1 Jul 1964) the taxable component is taxed at up to 20% plus the Medicare levy.",
                     "ITAA 1997 s302-60, s302-195, s302-145, s301-10, s301-35"),
                 S("SUP-11", "Commission",
-                    "Commission on group super cover and default cover in super is conflicted remuneration, so Caldova never receives commission on default cover.",
+                    "Commission on group super cover and default cover in super is conflicted remuneration, so Life Advice Guru never receives commission on default cover.",
                     "Corporations Act s963B(2)"),
             },
             Requirements: new[]
@@ -774,27 +774,27 @@ public static class ProductDocumentCatalog
             Issuer: Compliance,
             AppliesTo: "Every application for life risk cover",
             EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
-            Summary: "What a client must do when applying, how an insurer can respond to a misrepresentation, the genetic information protection from 8 Oct 2026, cooling-off, and how Caldova handles underwriting outcomes.",
+            Summary: "What a client must do when applying, how an insurer can respond to a misrepresentation, the genetic information protection from 8 Oct 2026, cooling-off, and how Life Advice Guru handles underwriting outcomes.",
             Sections: new[]
             {
                 S("UW-1", "Duty to take reasonable care",
                     "Before a consumer insurance contract is entered into, the insured must take reasonable care not to make a misrepresentation. Whether reasonable care was taken depends on the circumstances: the type of contract and its target market, the insurer's material, how clear and specific its questions were, whether an agent acted for the insured, and whether it's a new contract. Not answering, or an obviously incomplete or irrelevant answer, isn't by itself a misrepresentation; a fraudulent misrepresentation is always a breach. Cover owned by a business, such as key person cover, may not be a consumer contract — the insurer's application explains the duty that applies.",
                     "Insurance Contracts Act s20A, s20B (from 5 Oct 2021)"),
                 S("UW-2", "Genetic information",
-                    "From 8 Oct 2026, not disclosing protected genetic information isn't a misrepresentation for life insurance, and insurers can't ask for or use it in underwriting. Caldova's agents never ask for, record or use genetic test results, and tell clients they don't need to disclose them.",
+                    "From 8 Oct 2026, not disclosing protected genetic information isn't a misrepresentation for life insurance, and insurers can't ask for or use it in underwriting. Life Advice Guru's agents never ask for, record or use genetic test results, and tell clients they don't need to disclose them.",
                     "Insurance Contracts Act s20B(5A), s33H"),
                 S("UW-3", "What a life insurer can do after a misrepresentation",
                     "No remedy if the insurer would have entered into the contract anyway. Fraud: the insurer may avoid the contract. Not fraudulent, and the insurer wouldn't have offered cover on any terms: it may avoid the contract, but only within 3 years. Otherwise it may reduce the sum insured to S × P ÷ Q — for death cover only within 3 years — or, for cover such as income protection, TPD or trauma, vary the terms. Variations take effect from the start of the contract.",
                     "Insurance Contracts Act s29"),
                 S("UW-4", "Underwriting outcomes",
                     "Standard rates; a loading (a percentage added to the premium); an exclusion (a condition that isn't covered); or a decline. Accepting a loading, an exclusion or a decline is always the client's decision, made with Amelia. Insurers set their evidence requirements by age and sum insured — see 'Directory — insurers on the approved product list'.",
-                    "Caldova practice"),
+                    "Life Advice Guru practice"),
                 S("UW-5", "Cooling-off",
                     "14 days, starting from the earlier of when the client receives confirmation of the policy and the end of the fifth business day after it's issued. Not available once a claim has been made. The client can give notice in any way the insurer permits.",
                     "Corporations Act s1019B; reg 7.9.64A"),
-                S("UW-6", "Caldova practice",
+                S("UW-6", "Life Advice Guru practice",
                     "Uma's agent explains the duty before the first health question; the client answers every question themselves, carefully and completely; existing cover isn't cancelled until the new cover is in force; health information is shared only with the insurer and the people who need it.",
-                    "Caldova practice"),
+                    "Life Advice Guru practice"),
             },
             Requirements: new[]
             {
@@ -816,7 +816,7 @@ public static class ProductDocumentCatalog
             Issuer: Compliance,
             AppliesTo: "Claims on life risk policies",
             EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026 (Life Code effective 1 Mar 2025)",
-            Summary: "The Life Code standards for claims, how income protection benefits are worked out under APRA's measures, and how Caldova supports a claim.",
+            Summary: "The Life Code standards for claims, how income protection benefits are worked out under APRA's measures, and how Life Advice Guru supports a claim.",
             Sections: new[]
             {
                 S("CLM-1", "The Life Code",
@@ -840,9 +840,9 @@ public static class ProductDocumentCatalog
                 S("CLM-7", "Worked example",
                     "Insured monthly benefit $7,000; average earnings in the 12 months before the disability $8,000 a month; the lesser of the insured benefit and 70% of earnings = $5,600 a month. The benefit is taxable income.",
                     "Life Code; APRA IDII measures"),
-                S("CLM-8", "How Caldova supports a claim",
+                S("CLM-8", "How Life Advice Guru supports a claim",
                     "Ben's agent checks the policy and evidence, builds the claim pack and calculates the expected benefit; Theo approves lodging every claim; Ben lodges and tracks the insurer; Cara keeps the client or family informed; vulnerable clients have one named contact.",
-                    "Caldova practice"),
+                    "Life Advice Guru practice"),
             },
             Requirements: new[]
             {
@@ -861,7 +861,7 @@ public static class ProductDocumentCatalog
             Issuer: Compliance,
             AppliesTo: "Premiums and benefits, outside and inside super",
             EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
-            Summary: "The general tax treatment of life insurance premiums and benefits for individuals and businesses — general information only; Caldova doesn't give tax advice.",
+            Summary: "The general tax treatment of life insurance premiums and benefits for individuals and businesses — general information only; Life Advice Guru doesn't give tax advice.",
             Sections: new[]
             {
                 S("TAX-1", "Income protection outside super",
@@ -871,7 +871,7 @@ public static class ProductDocumentCatalog
                     "Premiums for life, trauma or critical care cover aren't deductible for individuals, and the proceeds are generally not taxable: the CGT exemptions are s118-300 for life policies (for example the original owner) and s118-37(1)(a)(ii) for compensation for an illness or injury to you or a relative. A terminal illness benefit is treated as a payment under a life policy.",
                     "ITAA 1997 s118-300, s118-37; TD 2007/4"),
                 S("TAX-3", "Key person cover",
-                    "Under the ATO's long-standing ruling IT 155, term cover for a revenue purpose (replacing lost revenue or profit) generally has deductible premiums and assessable proceeds; cover for a capital purpose has neither. Whether IT 155 still reflects the ATO's current view hasn't been confirmed, so Caldova always relies on the business's accountant.",
+                    "Under the ATO's long-standing ruling IT 155, term cover for a revenue purpose (replacing lost revenue or profit) generally has deductible premiums and assessable proceeds; cover for a capital purpose has neither. Whether IT 155 still reflects the ATO's current view hasn't been confirmed, so Life Advice Guru always relies on the business's accountant.",
                     "IT 155; Carapark Holdings (1966)"),
                 S("TAX-4", "Buy-sell cover",
                     "Premiums for cover that funds the buy-out of an owner are capital and not deductible. Where each owner insures their own life, the ATO has treated the death proceeds as capital and not assessable. The CGT exemption depends on who owns the policy, so the ownership structure matters, and transferring a policy for consideration can lose the exemption.",
@@ -898,7 +898,7 @@ public static class ProductDocumentCatalog
             Issuer: Compliance,
             AppliesTo: "Commission on life risk insurance (not group or default super cover)",
             EffectiveDate: "Rule guide FY2026-27 v1.0 — current at 23 Nov 2026",
-            Summary: "How life risk commission is capped and clawed back under the Life Insurance Framework, the informed-consent rule from 9 Jul 2025, and how Caldova shows commission in dollars.",
+            Summary: "How life risk commission is capped and clawed back under the Life Insurance Framework, the informed-consent rule from 9 Jul 2025, and how Life Advice Guru shows commission in dollars.",
             Sections: new[]
             {
                 S("COM-1", "When commission is allowed",
@@ -928,9 +928,9 @@ public static class ProductDocumentCatalog
                 S("COM-9", "Dates often misreported",
                     "The caps have applied since 1 Jan 2018 (60% from 1 Jan 2020) and consent since 9 Jul 2025. The instrument is due to sunset on 1 Oct 2027 unless it's remade.",
                     "Federal Register of Legislation"),
-                S("COM-10", "Caldova practice",
+                S("COM-10", "Life Advice Guru practice",
                     "No advice fee for protection-only advice; commission in dollars in the SoA; written consent with the SoA. Example: Corella Life, first-year policy cost $3,180 — upfront 60% = $1,908; ongoing 20% = $636 a year from year 2, changing as the premium changes; amounts exclude GST.",
-                    "Caldova practice; Corporations Act s947B"),
+                    "Life Advice Guru practice; Corporations Act s947B"),
             },
             Requirements: new[]
             {
@@ -948,7 +948,7 @@ public static class ProductDocumentCatalog
             Number: 13,
             Title: "Matrix — authority, approvals and escalation",
             DocumentType: "Practice matrix",
-            Issuer: "Caldova Life Advice — Practice Team Leader",
+            Issuer: "Life Advice Guru — Practice Team Leader",
             AppliesTo: "Every Client Case",
             EffectiveDate: "Current at 23 Nov 2026",
             Summary: "What the team can action and what always needs a human decision — agents gather facts, draft, check, calculate, compare and recommend; people approve.",
@@ -956,34 +956,34 @@ public static class ProductDocumentCatalog
             {
                 S("MAT-1", "Every SoA and RoA",
                     "Amelia signs every Statement of Advice and Record of Advice.",
-                    "Caldova matrix, item 1"),
+                    "Life Advice Guru matrix, item 1"),
                 S("MAT-2", "Replacing or cancelling existing cover",
                     "The client decides with Amelia; the SoA sets out the replacement disclosures.",
-                    "Caldova matrix, item 2"),
+                    "Life Advice Guru matrix, item 2"),
                 S("MAT-3", "Underwriting terms",
                     "Accepting a loading, an exclusion or a decline at underwriting — the client decides with Amelia.",
-                    "Caldova matrix, item 3"),
+                    "Life Advice Guru matrix, item 3"),
                 S("MAT-4", "Claims",
                     "Lodging any claim, and every death or terminal illness claim — Theo approves through the Teams approval card before Ben lodges.",
-                    "Caldova matrix, item 4"),
+                    "Life Advice Guru matrix, item 4"),
                 S("MAT-5", "Financial crime",
                     "Blocking a request on financial-crime grounds, and referring suspected fraud to an insurer — Theo.",
-                    "Caldova matrix, item 5"),
+                    "Life Advice Guru matrix, item 5"),
                 S("MAT-6", "Ownership, beneficiaries and bank details",
                     "Any change — Theo, after Financial Crime has confirmed the request on the client's verified contact details.",
-                    "Caldova matrix, item 6"),
+                    "Life Advice Guru matrix, item 6"),
                 S("MAT-7", "Second review — $2,000,000 or more",
                     "Advice with total cover of $2,000,000 or more on one case gets Theo's second review.",
-                    "Caldova matrix, item 7"),
+                    "Life Advice Guru matrix, item 7"),
                 S("MAT-8", "Complaint responses",
                     "Theo approves every complaint response.",
-                    "Caldova matrix, item 8"),
+                    "Life Advice Guru matrix, item 8"),
                 S("MAT-9", "Sensitive communications",
                     "Any communication to a fraud victim, a seriously ill client or a bereaved family is approved by a person before it goes: Cara for her letters, and Theo for every message to a bereaved family.",
-                    "Caldova matrix, item 9"),
-                S("MAT-10", "Caldova service standards",
+                    "Life Advice Guru matrix, item 9"),
+                S("MAT-10", "Life Advice Guru service standards",
                     "Requests acknowledged within 1 business day; applications lodged within 2 business days of the Authority to Proceed; approved claims lodged the same or next business day; clients updated at least every 10 business days while anything is open; vulnerable clients have one named contact.",
-                    "Caldova matrix — service standards"),
+                    "Life Advice Guru matrix — service standards"),
             },
             Requirements: Array.Empty<string>(),
             Restrictions: new[]
@@ -1139,9 +1139,9 @@ public static class ProductDocumentCatalog
             new SoaSection("commission", "7. Fees and commission", new[]
             {
                 "No advice fee.",
-                "Corella pays Caldova commission: $1,908 upfront (60% of the first-year premium) and $636 a year from year 2 (20%).",
-                "Priya's written informed consent is needed before Caldova receives it; the consent can't be revoked.",
-                "If the policy is cancelled in year 1, Corella claws back 100% of the upfront commission, or 60% in year 2 — Caldova doesn't pass this on.",
+                "Corella pays Life Advice Guru commission: $1,908 upfront (60% of the first-year premium) and $636 a year from year 2 (20%).",
+                "Priya's written informed consent is needed before Life Advice Guru receives it; the consent can't be revoked.",
+                "If the policy is cancelled in year 1, Corella claws back 100% of the upfront commission, or 60% in year 2 — Life Advice Guru doesn't pass this on.",
             }),
             new SoaSection("replacement", "8. Your existing cover (replacement analysis)", new[]
             {
@@ -1177,9 +1177,9 @@ public static class ProductDocumentCatalog
             Upfront: "$1,908 — 60% of the first-year premium",
             Ongoing: "$636 a year from year 2 — 20% of each later year's premium, so it moves with the premium",
             Basis: "Within the LIF caps: upfront up to 60% of the first-year policy cost, ongoing up to 20%. No advice fee for protection-only advice.",
-            Consent: "Priya's written informed consent before Caldova receives commission: the insurer, the rates as a percentage of the policy cost, how often and how long they're paid (including renewals), the services (annual reviews and claims support), that the law requires consent and that it can't be revoked.",
+            Consent: "Priya's written informed consent before Life Advice Guru receives commission: the insurer, the rates as a percentage of the policy cost, how often and how long they're paid (including renewals), the services (annual reviews and claims support), that the law requires consent and that it can't be revoked.",
             Gst: "The caps are tested on the commission excluding GST.",
-            Clawback: "Cancelled in year 1: 100% of the upfront commission ($1,908) is clawed back; in year 2: 60% ($1,144.80) — pro-rated if the cover is reduced instead; nothing after 24 months. Caldova doesn't pass clawbacks on to Priya."),
+            Clawback: "Cancelled in year 1: 100% of the upfront commission ($1,908) is clawed back; in year 2: 60% ($1,144.80) — pro-rated if the cover is reduced instead; nothing after 24 months. Life Advice Guru doesn't pass clawbacks on to Priya."),
         SignOff: new AdviserSignOff(
             Heading: "Adviser sign-off required: Amelia",
             Adviser: LifeAdviceFacts.Adviser,
@@ -1272,13 +1272,13 @@ public static class ProductDocumentCatalog
                 "50% of $2,400,000 each. Self-ownership: each partner owns the policy on their own life, so the proceeds go to the owner whose share is being bought out.",
                 "NBP-1, TAX-4"),
             Item("agreement", "Strategy and ownership", "Buy-sell agreement drafted by their lawyer", ChecklistStatus.Info,
-                "Caldova doesn't draft legal documents. Their lawyer drafts the buy-sell agreement setting out how the shares change hands on death or TPD; the policies fund it.",
+                "Life Advice Guru doesn't draft legal documents. Their lawyer drafts the buy-sell agreement setting out how the shares change hands on death or TPD; the policies fund it.",
                 "NBP-1"),
             Item("key-person", "Strategy and ownership", "Key person: $400,000 life and TPD on George, company-owned", ChecklistStatus.Pass,
                 "Marcus estimates losing George would cost about $400,000 of profit over 18 months while a replacement is found and trained — a revenue purpose. Northcote Custom Joinery Pty Ltd owns the policy and pays the premium.",
                 "NBP-2"),
             Item("tax", "Strategy and ownership", "Tax treatment — confirmed by the accountant", ChecklistStatus.Info,
-                "Key person cover for a revenue purpose: premiums generally deductible and proceeds assessable (IT 155). Self-owned buy-sell: premiums not deductible; death proceeds capital and not assessable. Marcus Tan confirmed the treatment as their accountant — Caldova doesn't give tax advice.",
+                "Key person cover for a revenue purpose: premiums generally deductible and proceeds assessable (IT 155). Self-owned buy-sell: premiums not deductible; death proceeds capital and not assessable. Marcus Tan confirmed the treatment as their accountant — Life Advice Guru doesn't give tax advice.",
                 "TAX-3, TAX-4, NBP-9"),
             Item("research", "Research and premiums", "On the APL, with the research compared", ChecklistStatus.Pass,
                 "Year-1 stepped premiums at standard rates for all three covers: Northbank Life $8,620 (recommended — business-protection features and fast financial underwriting), Corella Life $9,180, Harbourline Life $9,410.",
@@ -1340,8 +1340,8 @@ public static class ProductDocumentCatalog
             new SoaSection("commission", "7. Fees and commission", new[]
             {
                 "No advice fee.",
-                "Northbank pays Caldova commission: $5,172 upfront (60% of the quoted first-year premium) and $1,724 a year from year 2 (20%), recalculated on the final premium.",
-                "Written informed consent from George, Harpreet and the company before Caldova receives it.",
+                "Northbank pays Life Advice Guru commission: $5,172 upfront (60% of the quoted first-year premium) and $1,724 a year from year 2 (20%), recalculated on the final premium.",
+                "Written informed consent from George, Harpreet and the company before Life Advice Guru receives it.",
             }),
             new SoaSection("underwriting", "8. Applying and underwriting", new[]
             {
@@ -1373,7 +1373,7 @@ public static class ProductDocumentCatalog
             Upfront: "$5,172 — 60% of the first-year premium",
             Ongoing: "$1,724 a year from year 2 — 20% of each later year's premium",
             Basis: "Within the LIF caps. The dollar amounts are recalculated on the final premium if underwriting changes it; the rates don't change.",
-            Consent: "Written informed consent from George, Harpreet and the company (as owner of the key person policy) before Caldova receives commission.",
+            Consent: "Written informed consent from George, Harpreet and the company (as owner of the key person policy) before Life Advice Guru receives commission.",
             Gst: "The caps are tested on the commission excluding GST.",
             Clawback: "100% of the upfront commission is clawed back if a policy is cancelled in year 1, 60% in year 2, nothing after 24 months — not passed on to the clients."),
         SignOff: new AdviserSignOff(
@@ -1396,7 +1396,7 @@ public static class ProductDocumentCatalog
         RuleDocumentIds: new[] { DocAdvice, DocNorthbank, DocTax, DocCommission, DocFsg, DocApl, DocUnderwriting, DocMatrix },
         MissingInformation: new[]
         {
-            "The buy-sell agreement — drafted and finalised by their lawyer; the policies fund it, and Caldova doesn't draft it (NBP-1).",
+            "The buy-sell agreement — drafted and finalised by their lawyer; the policies fund it, and Life Advice Guru doesn't draft it (NBP-1).",
         },
         PlainEnglishExplanation:
             "If George or Harpreet died or could never work again, the other would need $1.2 million to buy their half of the business at Marcus's " +

@@ -1,12 +1,14 @@
 /**
- * Caldova House's surroundings: a floating voxel city block on a Melbourne
+ * Guru House's surroundings: a floating voxel city block on a Melbourne
  * corner.
  *
- *  - In front, the main street with the tram line, a tram stop platform, a
- *    bluestone kerb and the footpath where the verandah and the front desk
- *    stand. The street in front of the house (with the earth below it) is a
- *    group of its own, `front`, that fades away when the story looks into the
- *    old bank vault, like a section cut through the ground.
+ *  - In front, the house's own forecourt (it is set back from the street),
+ *    the footpath and bluestone kerb, and the main street with the tram line.
+ *    The tram stop has its own platform out from the kerb on the left, with a
+ *    shelter and bench, the next-tram display and the stop sign, clear of the
+ *    verandah and the front desk. The street in front of the house (with the
+ *    earth below it) is a group of its own, `front`, that fades away when the
+ *    story looks into the old bank vault, like a section cut through the ground.
  *  - Down the left side, a bluestone laneway with street art, neon and
  *    festoon lights, beside a heritage building with the corner café.
  *  - On the right, the cross street at the corner, a pocket park and London
@@ -16,13 +18,30 @@
 import { type AbstractMesh, Mesh, MeshBuilder, type StandardMaterial, TransformNode } from "@babylonjs/core";
 import { Batch, type Kit, rng } from "./kit";
 import { heritageMats, onFace, type Face } from "./heritage";
-import { BLOCK, CROSS, FLOOR_Y, HOUSE, KERB_Z, LANE, ROAD, ROOF_Y, TRACK_Z, TRAM_STOP_X } from "./layout";
+import {
+  BLOCK,
+  CROSS,
+  FLOOR_Y,
+  FORECOURT_Z,
+  HOUSE,
+  KERB_Z,
+  LANE,
+  PLATFORM,
+  PLATFORM_EDGE,
+  ROAD,
+  ROOF_Y,
+  TRACK_Z,
+  TRAM_DOORS,
+  TRAM_STOP_X,
+} from "./layout";
 
 export interface Street {
   /** The street in front of the house (footpath, road, tram line and the earth below), which the front desk builds on. */
   front: TransformNode;
   /** Whether the street in front is showing (it hides when the story looks into the vault). */
   readonly frontVisible: boolean;
+  /** How far the street in front has faded in (0 hidden, 1 showing). */
+  readonly frontAlpha: number;
   update(dt: number, t: number): void;
   /** Fade the street in front of the house out (it hides the front of the vault) or back in. */
   setFrontVisible(visible: boolean): void;
@@ -91,9 +110,11 @@ export function buildStreet(kit: Kit): Street {
   // Rock under the vault.
   kit.block(root, 0, BLOCK.bottom, (HOUSE.z0 + HOUSE.z1) / 2, HOUSE.x1 - HOUSE.x0, FLOOR_Y.engine - 0.5 - BLOCK.bottom, HOUSE.z1 - HOUSE.z0, earth.stone);
   // The block's stepped underside, so it reads as a floating diorama.
-  kit.block(root, 0, -15, -2, 84, 3, 56, deepStone);
-  kit.block(root, 0, -18, -2, 58, 3, 34, deepStone);
-  kit.block(root, 0, -20.5, -1, 30, 2.5, 16, deepStone);
+  const bcz = (BLOCK.z0 + BLOCK.z1) / 2;
+  const bd = BLOCK.z1 - BLOCK.z0;
+  kit.block(root, 0, -15, bcz, 84, 3, bd - 8, deepStone);
+  kit.block(root, 0, -18, bcz, 58, 3, bd - 30, deepStone);
+  kit.block(root, 0, -20.5, bcz + 1, 30, 2.5, 16, deepStone);
 
   // The laneway: bluestone setts with a channel down the middle.
   kit.block(root, (LANE.x0 + LANE.x1) / 2, 0, (HOUSE.z0 + BLOCK.z1) / 2, LANE.x1 - LANE.x0, 0.08, BLOCK.z1 - HOUSE.z0, m.bluestone, { tile: 1.6 });
@@ -113,60 +134,125 @@ export function buildStreet(kit: Kit): Street {
   const frontBatch = new Batch(front, "streetFront");
   kit.useBatch(frontBatch);
   chunk(front, BLOCK.x0, BLOCK.x1, BLOCK.z0, HOUSE.z0, asphalt);
-  // Footpaths, broken by the cross street at the corner.
-  path(front, BLOCK.x0, CROSS.x0, KERB_Z, HOUSE.z0);
+  // Footpaths, broken by the cross street at the corner. In front of the house, its own forecourt
+  // in warm sandstone flags with a bluestone edge, then the public footpath out to the kerb.
+  path(front, BLOCK.x0, HOUSE.x0, KERB_Z, HOUSE.z0);
+  path(front, HOUSE.x0, HOUSE.x1, KERB_Z, FORECOURT_Z);
+  path(front, HOUSE.x0, HOUSE.x1, FORECOURT_Z, HOUSE.z0, kit.mat("#fff1dc", { texture: "paving" }));
+  kit.block(front, 0, 0, FORECOURT_Z + 0.2, HOUSE.x1 - HOUSE.x0, PATH_Y + 0.02, 0.4, m.bluestone, { tile: 1.2 });
+  path(front, HOUSE.x1, CROSS.x0, KERB_Z, HOUSE.z0);
   path(front, CROSS.x1, BLOCK.x1, KERB_Z, HOUSE.z0);
   path(front, BLOCK.x0, BLOCK.x1, BLOCK.z0 + 0.5, ROAD.z0);
   kerb(front, BLOCK.x0, CROSS.x0, KERB_Z - 0.15, KERB_Z + 0.15);
   kerb(front, CROSS.x1, BLOCK.x1, KERB_Z - 0.15, KERB_Z + 0.15);
   kerb(front, BLOCK.x0, BLOCK.x1, ROAD.z0 - 0.15, ROAD.z0 + 0.15);
+  kerb(front, CROSS.x0 - 0.15, CROSS.x0 + 0.15, KERB_Z, HOUSE.z0);
+  kerb(front, CROSS.x1 - 0.15, CROSS.x1 + 0.15, KERB_Z, HOUSE.z0);
   // The tram line: two pairs of rails set into the road, and lane lines either side.
   for (const tz of [TRACK_Z.near, TRACK_Z.far]) {
     kit.block(front, 0, 0, tz, BLOCK.x1 - BLOCK.x0, 0.03, 2.2, kit.mat("#56595f"));
     for (const dz of [-0.72, 0.72]) kit.block(front, 0, 0.03, tz + dz, BLOCK.x1 - BLOCK.x0, 0.05, 0.14, steel);
   }
-  for (const lz of [-22.9, -18.5, -28.5]) {
+  const centreLine = (TRACK_Z.near + TRACK_Z.far) / 2;
+  for (const lz of [centreLine, KERB_Z - 0.9, ROAD.z0 + 0.9]) {
     for (let x = BLOCK.x0 + 1; x < BLOCK.x1 - 1; x += 3.2) {
-      if (lz !== -22.9 && x > CROSS.x0 - 1 && x < CROSS.x1 + 1) continue;
+      if (lz !== centreLine && x > CROSS.x0 - 1 && x < CROSS.x1 + 1) continue;
       kit.block(front, x, 0.02, lz, 1.6, 0.01, 0.16, lineWhite);
     }
   }
   // A pedestrian crossing over the cross street at the corner.
-  for (let x = CROSS.x0 + 0.5; x < CROSS.x1 - 0.2; x += 1.0) kit.block(front, x, 0.02, HOUSE.z0 - 2.3, 0.55, 0.01, 3.4, lineWhite);
+  for (let x = CROSS.x0 + 0.5; x < CROSS.x1 - 0.2; x += 1.0) kit.block(front, x, 0.02, KERB_Z + 2.3, 0.55, 0.01, 3.4, lineWhite);
 
-  // The tram stop: a level-access platform along the kerb, with a shelter and the stop sign.
-  const platZ0 = TRACK_Z.near + 1.4;
-  kit.block(front, TRAM_STOP_X, 0, (platZ0 + KERB_Z) / 2, 17, 0.36, KERB_Z - platZ0, concrete);
-  kit.block(front, TRAM_STOP_X, 0.36, platZ0 + 0.22, 17, 0.02, 0.36, kit.mat("#facc15"));
-  const shelterX = TRAM_STOP_X - 5.2;
-  for (const dx of [-1.9, 1.9]) kit.block(front, shelterX + dx, 0.36, KERB_Z - 0.35, 0.14, 2.9, 0.14, darkSteel);
-  kit.block(front, shelterX, 3.26, KERB_Z - 0.6, 4.4, 0.16, 1.5, kit.mat("#e9edf2"));
-  kit.block(front, shelterX, 3.22, KERB_Z - 1.33, 4.4, 0.12, 0.06, kit.mat("#14b8a6", { unlit: true }));
-  kit.block(front, shelterX, 0.36, KERB_Z - 0.32, 3.4, 0.5, 0.5, kit.mat("#ffffff", { texture: "walnut" }));
-  kit.block(front, shelterX - 2.6, 0.36, KERB_Z - 0.4, 1.1, 2.1, 0.12, darkSteel);
-  kit.block(front, shelterX - 2.6, 0.9, KERB_Z - 0.47, 0.9, 1.4, 0.02, kit.mat("#dbeafe", { unlit: true }));
-  kit.block(front, TRAM_STOP_X + 7.6, 0.36, KERB_Z - 0.7, 0.14, 3.6, 0.14, darkSteel);
+  /* ---------------- The tram stop ---------------- */
+  // Its own level-access platform out from the kerb, on the left of the forecourt and clear of the
+  // verandah: rails at both ends, a shelter with a bench, the next-tram display and the stop sign.
+  const P = PLATFORM;
+  const stopX0 = TRAM_STOP_X - P.half;
+  const stopX1 = TRAM_STOP_X + P.half;
+  const stopTop = P.y;
+  kit.block(front, TRAM_STOP_X, 0, (PLATFORM_EDGE + KERB_Z) / 2, P.half * 2, stopTop, KERB_Z - PLATFORM_EDGE, concrete);
+  kit.block(front, TRAM_STOP_X, stopTop, PLATFORM_EDGE + 0.22, P.half * 2, 0.02, 0.36, kit.mat("#facc15"));
+  kit.block(front, TRAM_STOP_X, 0, PLATFORM_EDGE - 0.04, P.half * 2, stopTop + 0.01, 0.08, m.bluestone);
+  // Safety rails across both ends of the platform.
+  for (const x of [stopX0 + 0.12, stopX1 - 0.12]) {
+    for (const z of [KERB_Z - 0.2, PLATFORM_EDGE + 0.5]) kit.block(front, x, stopTop, z, 0.1, 1.1, 0.1, darkSteel);
+    kit.block(front, x, stopTop + 1.0, (KERB_Z - 0.2 + PLATFORM_EDGE + 0.5) / 2, 0.12, 0.1, KERB_Z - PLATFORM_EDGE - 0.6, steel);
+    kit.block(front, x, stopTop + 0.5, (KERB_Z - 0.2 + PLATFORM_EDGE + 0.5) / 2, 0.06, 0.06, KERB_Z - PLATFORM_EDGE - 0.6, steel);
+  }
+  // The shelter, between the tram's first and middle doors: a canopy on two posts, a bench and a map panel.
+  const shelterX = TRAM_STOP_X - 2.4;
+  const shelterZ = KERB_Z - 0.85;
+  for (const dx of [-2.0, 2.0]) kit.block(front, shelterX + dx, stopTop, KERB_Z - 0.3, 0.14, 2.9, 0.14, darkSteel);
+  kit.block(front, shelterX, stopTop + 2.9, shelterZ, 4.6, 0.16, 1.7, kit.mat("#e9edf2"));
+  kit.block(front, shelterX, stopTop + 2.86, shelterZ - 0.85, 4.6, 0.12, 0.06, kit.mat("#14b8a6", { unlit: true }));
+  kit.block(front, shelterX, stopTop, KERB_Z - 0.45, 3.4, 0.5, 0.5, kit.mat("#ffffff", { texture: "walnut" }));
+  kit.block(front, shelterX - 0.9, stopTop + 0.5, KERB_Z - 0.22, 1.2, 0.5, 0.06, darkSteel);
+  kit.block(front, shelterX + 0.9, stopTop + 0.5, KERB_Z - 0.22, 1.2, 0.5, 0.06, darkSteel);
+  kit.block(front, shelterX + 2.0, stopTop + 0.6, KERB_Z - 0.34, 0.08, 2.0, 1.0, darkSteel);
+  kit.block(front, shelterX + 2.05, stopTop + 0.7, KERB_Z - 0.34, 0.02, 1.8, 0.86, kit.mat("#dbeafe", { unlit: true }));
+  // The next-tram display on a slim totem at the left end of the platform.
+  const totemX = stopX0 + 1.3;
+  kit.block(front, totemX, stopTop, KERB_Z - 0.45, 0.5, 2.5, 0.3, darkSteel);
+  const nextTram = kit.label(front, {
+    lines: [
+      { text: "NEXT TRAM", size: 30, weight: 700, color: "#9fb3c8" },
+      { text: "CITY · 2 min", size: 44, weight: 800, color: "#ffb547" },
+    ],
+    width: 1.15,
+    px: 300,
+    bg: "rgba(10,12,18,1)",
+  });
+  nextTram.position.set(totemX, stopTop + 1.9, KERB_Z - 0.61);
+  // The stop sign at the right end of the platform.
+  const signX = stopX1 - 0.8;
+  kit.block(front, signX, stopTop, KERB_Z - 0.5, 0.14, 3.6, 0.14, darkSteel);
   const stopSign = kit.label(front, {
     lines: [
       { text: "TRAM STOP", size: 54, weight: 800, color: "#ffffff" },
-      { text: "Caldova House", size: 30, weight: 600, color: "#d1fae5" },
+      { text: "Guru House", size: 30, weight: 600, color: "#d1fae5" },
     ],
     width: 2.2,
     px: 420,
     bg: "rgba(15,118,110,0.97)",
   });
-  stopSign.position.set(TRAM_STOP_X + 7.6, 3.6, KERB_Z - 0.8);
+  stopSign.position.set(signX, stopTop + 3.25, KERB_Z - 0.6);
   const stopSignBack = stopSign.clone("v2_stopSignBack");
   stopSignBack.rotation.y = Math.PI;
   stopSignBack.position.z += 0.04;
+  // Where the tram's doors open, marked on the platform's edge.
+  for (const d of TRAM_DOORS) kit.block(front, TRAM_STOP_X + d, stopTop, PLATFORM_EDGE + 0.62, 1.4, 0.02, 0.22, kit.mat("#f4f1ea"));
 
   /* ---------------- The corner café and its building (left) ---------------- */
   kit.useBatch(batch);
+  // Flat roofs in a membrane inside a stone parapet, with plant on top, so the neighbours' roofs
+  // stay quiet beside and behind the house.
+  const membrane = kit.mat("#7d8591");
+  const plantMat = kit.mat("#b8c0ca");
+  const roofUnit = (x: number, y: number, z: number): void => {
+    kit.block(root, x, y, z, 1.6, 0.9, 1.2, plantMat);
+    kit.block(root, x, y + 0.9, z, 0.9, 0.06, 0.9, darkSteel);
+  };
+  const flatRoof = (cx: number, y: number, cz: number, w: number, d: number, units: Array<[number, number]>): void => {
+    kit.block(root, cx, y, cz, w + 0.4, 0.5, d + 0.4, m.stone);
+    kit.block(root, cx, y + 0.5, cz, w - 0.5, 0.04, d - 0.5, membrane);
+    for (const [ux, uz] of units) roofUnit(cx + ux, y + 0.54, cz + uz);
+  };
   const cafe = { x0: BLOCK.x0 + 0.5, x1: LANE.x0, z0: HOUSE.z0, z1: 8, h: 10.6 };
   const cafeW = cafe.x1 - cafe.x0;
   const cafeCx = (cafe.x0 + cafe.x1) / 2;
   const cafeCz = (cafe.z0 + cafe.z1) / 2;
-  kit.block(root, cafeCx, 0, cafeCz, cafeW, cafe.h, cafe.z1 - cafe.z0, m.brick);
+  const cafeD = cafe.z1 - cafe.z0;
+  kit.block(root, cafeCx, 0, cafeCz, cafeW, cafe.h, cafeD, m.brick);
+  // A plain flat roof: one calm membrane over the whole top, inside a low stone parapet on the
+  // laneway, side and back (the front's render parapet stands proud of the street face), with two
+  // small plant units.
+  kit.block(root, cafeCx, cafe.h, cafeCz, cafeW - 0.02, 0.05, cafeD - 0.02, membrane);
+  const coping = 0.5;
+  for (const x of [cafe.x0 + coping / 2 - 0.1, cafe.x1 - coping / 2 + 0.1]) kit.block(root, x, cafe.h, cafeCz, coping, 0.6, cafeD - 0.8, m.stone);
+  kit.block(root, cafeCx, cafe.h, cafe.z1 - coping / 2 + 0.1, cafeW + 0.2, 0.6, coping, m.stone);
+  kit.block(root, cafeCx, cafe.h, cafe.z0 + 0.2, cafeW, 0.8, 0.4, m.render);
+  roofUnit(cafeCx - 5.5, cafe.h + 0.05, cafe.z1 - 4.5);
+  roofUnit(cafeCx + 4.0, cafe.h + 0.05, cafe.z1 - 3.2);
   const cafeFront: Face = { axis: "x", at: cafe.z0, out: -1 };
   // Render front with a cornice and parapet.
   onFace(kit, root, cafeFront, cafeCx, 4.4, cafeW, cafe.h - 4.4, 0.08, m.render);
@@ -334,18 +420,6 @@ export function buildStreet(kit: Kit): Street {
   };
   tower(cafeCx, 20, 16, 15, 30);
   tower(40.5, 25, 12, 8, 25);
-  // Flat roofs in a dark membrane inside a stone parapet, with plant on top, so the neighbours'
-  // roofs stay quiet behind the house.
-  const membrane = kit.mat("#7d8591");
-  const plantMat = kit.mat("#b8c0ca");
-  const flatRoof = (cx: number, y: number, cz: number, w: number, d: number, units: Array<[number, number]>): void => {
-    kit.block(root, cx, y, cz, w + 0.4, 0.5, d + 0.4, m.stone);
-    kit.block(root, cx, y + 0.5, cz, w - 0.5, 0.04, d - 0.5, membrane);
-    for (const [ux, uz] of units) {
-      kit.block(root, cx + ux, y + 0.54, cz + uz, 1.6, 0.9, 1.2, plantMat);
-      kit.block(root, cx + ux, y + 1.44, cz + uz, 0.9, 0.06, 0.9, darkSteel);
-    }
-  };
   kit.block(root, -9, 0, 20.5, 22, 11, 13, m.brick);
   flatRoof(-9, 11, 20.5, 22, 13, [
     [-6, 2],
@@ -394,12 +468,12 @@ export function buildStreet(kit: Kit): Street {
   // In front, trees only beside the house, so they never hide a floor.
   kit.useBatch(frontBatch);
   for (const [x, z, s] of [
-    [-38, -31.4, 1.2],
-    [-25.5, -31.4, 1.1],
-    [27.5, -31.4, 1.15],
-    [40, -31.4, 1.2],
-    [-42.5, -16.2, 1.05],
-    [36, -16.2, 1.1],
+    [-38, BLOCK.z0 + 2.6, 1.2],
+    [-25.5, BLOCK.z0 + 2.6, 1.1],
+    [27.5, BLOCK.z0 + 2.6, 1.15],
+    [40, BLOCK.z0 + 2.6, 1.2],
+    [-42.5, KERB_Z + 1.4, 1.05],
+    [36, KERB_Z + 1.4, 1.1],
   ] as const) {
     plane(front, x, z, s);
   }
@@ -413,7 +487,8 @@ export function buildStreet(kit: Kit): Street {
     kit.block(parent, x, y + 5.78, z, 0.66, 0.16, 0.66, m.iron);
     kit.block(parent, x, y + 5.94, z, 0.2, 0.3, 0.2, m.iron);
   };
-  for (const x of [-44, -31, -18.5, -9.5, 19.5, 33, 44.5]) lamp(front, x, KERB_Z + 0.5);
+  // Along the kerb, clear of the tram stop's platform, the glass lift and the level tags beside the house.
+  for (const x of [-44, -37, 2.6, 19.5, 33, 44.5]) lamp(front, x, KERB_Z + 0.5);
   for (const x of [-40, -20, 0, 20, 40]) lamp(front, x, ROAD.z0 - 0.6);
   kit.useBatch(batch);
   for (const z of [-4, 6, 16, 25]) {
@@ -518,6 +593,9 @@ export function buildStreet(kit: Kit): Street {
     front,
     get frontVisible(): boolean {
       return frontTarget > 0;
+    },
+    get frontAlpha(): number {
+      return frontAlpha;
     },
     setFrontVisible(visible: boolean): void {
       frontTarget = visible ? 1 : 0;

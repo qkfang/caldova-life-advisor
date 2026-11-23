@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json;
-using CaldovaLife.Agents;
-using CaldovaLife.App.Models;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Models;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 record ParaplanningProcessRequest(string CaseNumber);
 
@@ -29,7 +29,7 @@ public static class ParaplanningApi
     public static void MapParaplanningEndpoints(
         this WebApplication app,
         CaseStore store,
-        CaldovaAgentFactory factory,
+        GuruAgentFactory factory,
         ILogger logger)
     {
         // Dropdown source — every Client Case currently held in memory.
@@ -201,7 +201,7 @@ public static class ParaplanningApi
     /// is logged and returned as an error so the stream still completes with
     /// the offline report.
     /// </summary>
-    private static (CaldovaAgent? Agent, string? Error) TryCreateAgent(CaldovaAgentFactory factory, ILogger logger)
+    private static (GuruAgent? Agent, string? Error) TryCreateAgent(GuruAgentFactory factory, ILogger logger)
     {
         if (!factory.IsConfigured) return (null, null);
         try

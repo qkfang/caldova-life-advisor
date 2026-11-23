@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// One evidence requirement an insurer asks for at underwriting, triggered by
@@ -31,11 +31,11 @@ public record RequirementRule(
     string ArrangedBy);
 
 /// <summary>
-/// One insurer on Caldova Life Advice's approved product list (APL), as the
+/// One insurer on Life Advice Guru's approved product list (APL), as the
 /// Underwriting &amp; New Business team sees it — mirrors "Directory — insurers
 /// on the approved product list" in the <c>life_knowledge</c> index:
 /// covers, contacts, service standards, underwriting thresholds and the
-/// Caldova cases with that insurer. Every insurer and contact is fictional.
+/// Life Advice Guru cases with that insurer. Every insurer and contact is fictional.
 /// </summary>
 public record InsurerDirectoryEntry(
     string Name,
@@ -53,7 +53,7 @@ public record InsurerDirectoryEntry(
     string IncomeEvidence,
     string CoolingOff,
     string Notes,
-    string CaldovaCases,
+    string PracticeCases,
     IReadOnlyList<string> Keywords);
 
 /// <summary>One requirement returned by <see cref="InsurerDirectory.CheckRequirements"/>.</summary>
@@ -82,7 +82,7 @@ public record RequirementCheck(
     IReadOnlyList<string> Reminders);
 
 /// <summary>
-/// Deterministic, in-memory directory of the four insurers on Caldova's APL
+/// Deterministic, in-memory directory of the four insurers on Life Advice Guru's APL
 /// — Harbourline Life (<c>HL-</c>), Corella Life (<c>CR-</c>), Lyrebird Life
 /// (<c>LB-</c>) and Northbank Life (<c>NB-</c>) — mirroring the
 /// <c>life_knowledge</c> directory document. Backs the
@@ -114,7 +114,7 @@ public static class InsurerDirectory
         Name: "Harbourline Life",
         ShortName: "Harbourline",
         PolicyPrefix: "HL-",
-        Profile: "Insurer on Caldova's APL — the Harbourline Protection Plan. No super-linking.",
+        Profile: "Insurer on Life Advice Guru's APL — the Harbourline Protection Plan. No super-linking.",
         Covers: "Life (with terminal illness benefit), TPD (any occupation inside or outside super; own occupation outside super only), trauma, income protection; key person and buy-sell cover. No super-linking.",
         NewBusinessContact: "New business · newbusiness@harbourlinelife.example.com.au · (03) 5550 1100",
         UnderwritingContact: "Underwriting · underwriting@harbourlinelife.example.com.au · (03) 5550 1101",
@@ -139,14 +139,14 @@ public static class InsurerDirectory
         IncomeEvidence: "Latest payslip (employees) or two years' tax returns or BAS and profit and loss statements (self-employed).",
         CoolingOff: CoolingOff14,
         Notes: "Income protection pays the lesser of the insured monthly benefit and 70% of average monthly earnings in the 12 months before the disability (policies issued from 1 Oct 2021).",
-        CaldovaCases: "Income protection HL-23051877 (Tom Bradley, REQ-20261111-LIF004 — lodged 12 Nov 2026, accepted 19 Nov 2026).",
+        PracticeCases: "Income protection HL-23051877 (Tom Bradley, REQ-20261111-LIF004 — lodged 12 Nov 2026, accepted 19 Nov 2026).",
         Keywords: new[] { "harbourline", "hl", "income protection", "ip", "self-employed", "key person", "buy-sell" });
 
     public static readonly InsurerDirectoryEntry CorellaLife = new(
         Name: "Corella Life",
         ShortName: "Corella",
         PolicyPrefix: "CR-",
-        Profile: "Insurer on Caldova's APL — the Corella Protection Plan and the Corella Super Plan, with super-linking.",
+        Profile: "Insurer on Life Advice Guru's APL — the Corella Protection Plan and the Corella Super Plan, with super-linking.",
         Covers: "Life (with terminal illness benefit), TPD, trauma, income protection; super-linking — life and any-occupation TPD inside Corella's super plan, with an own-occupation TPD extension, trauma and income protection outside super linked to it; key person and buy-sell cover.",
         NewBusinessContact: "New business · newbusiness@corellalife.example.com.au · (03) 5550 1200",
         UnderwritingContact: "Underwriting · underwriting@corellalife.example.com.au · (03) 5550 1201",
@@ -169,22 +169,22 @@ public static class InsurerDirectory
             Medical("Blood profile", 46, null, Pathology),
             Medical("Medical examination", 51, 1_500_000m, Examination),
         },
-        IncomeEvidence: "Earnings are confirmed at claim time; Caldova keeps the client's latest payslip from the fact find on file.",
+        IncomeEvidence: "Earnings are confirmed at claim time; Life Advice Guru keeps the client's latest payslip from the fact find on file.",
         CoolingOff: CoolingOff14,
         Notes: "Corella reviews an income protection exclusion on request after two symptom-free years. The own-occupation TPD extension can't be bought on its own — it's linked to any-occupation TPD inside the Corella Super Plan.",
-        CaldovaCases: "CR-26118204 (Priya Natarajan, REQ-20261103-LIF001 — tele-interview 10 Nov 2026, decision 16 Nov 2026); CR-19033105 (Mei Chen, REQ-20261113-LIF005 — death claim lodged 16 Nov 2026, accepted 20 Nov 2026, paid 23 Nov 2026).",
+        PracticeCases: "CR-26118204 (Priya Natarajan, REQ-20261103-LIF001 — tele-interview 10 Nov 2026, decision 16 Nov 2026); CR-19033105 (Mei Chen, REQ-20261113-LIF005 — death claim lodged 16 Nov 2026, accepted 20 Nov 2026, paid 23 Nov 2026).",
         Keywords: new[] { "corella", "cr", "family", "families", "physiotherapist", "super", "super-linked", "super-linking", "own occupation", "tpd", "key person", "buy-sell" });
 
     public static readonly InsurerDirectoryEntry LyrebirdLife = new(
         Name: "Lyrebird Life",
         ShortName: "Lyrebird",
         PolicyPrefix: "LB-",
-        Profile: "Insurer on Caldova's APL — Lyrebird Life Protection for individuals and families. No business protection.",
+        Profile: "Insurer on Life Advice Guru's APL — Lyrebird Life Protection for individuals and families. No business protection.",
         Covers: "Life (with terminal illness benefit), TPD, trauma and income protection for individuals and families. No business protection.",
         NewBusinessContact: "New business · newbusiness@lyrebirdlife.example.com.au · (03) 5550 1300",
         UnderwritingContact: "Underwriting · underwriting@lyrebirdlife.example.com.au · (03) 5550 1301",
         ClaimsContact: "Claims · claims@lyrebirdlife.example.com.au · (03) 5550 1302",
-        ClaimsIntegrityContact: "Claims Integrity (fraud) team · integrity@lyrebirdlife.example.com.au · (03) 5550 1303 — for alerts about suspected fraud or identity takeover; Caldova alerts it only after the Practice Team Leader approves.",
+        ClaimsIntegrityContact: "Claims Integrity (fraud) team · integrity@lyrebirdlife.example.com.au · (03) 5550 1303 — for alerts about suspected fraud or identity takeover; Life Advice Guru alerts it only after the Practice Team Leader approves.",
         ServiceLevels: new[]
         {
             "Underwriting decision within 7 business days of the last requirement.",
@@ -200,14 +200,14 @@ public static class InsurerDirectory
         IncomeEvidence: "Earnings evidence for income protection is checked at claim time.",
         CoolingOff: CoolingOff14,
         Notes: "Trauma cancer claims need a specialist's diagnosis supported by histopathology. Lyrebird pays only into an account in the policy owner's name (or the nominated beneficiary's, for life cover).",
-        CaldovaCases: "LB-19004417 (Grace Williams, REQ-20261106-LIF002 — fraud team alerted 6 Nov 2026; no claim lodged).",
+        PracticeCases: "LB-19004417 (Grace Williams, REQ-20261106-LIF002 — fraud team alerted 6 Nov 2026; no claim lodged).",
         Keywords: new[] { "lyrebird", "lb", "trauma", "cancer", "families", "fraud", "integrity" });
 
     public static readonly InsurerDirectoryEntry NorthbankLife = new(
         Name: "Northbank Life",
         ShortName: "Northbank",
         PolicyPrefix: "NB-",
-        Profile: "Insurer on Caldova's APL — strongest in business protection (Northbank Business Protection).",
+        Profile: "Insurer on Life Advice Guru's APL — strongest in business protection (Northbank Business Protection).",
         Covers: "Life (with terminal illness benefit), TPD, trauma and income protection; buy-sell cover (owned by each owner on their own life, or cross-owned) and key person cover (revenue or capital purpose, owned by the business).",
         NewBusinessContact: "New business · business@northbanklife.example.com.au · (03) 5550 1400",
         UnderwritingContact: "Underwriting · underwriting@northbanklife.example.com.au · (03) 5550 1401",
@@ -232,7 +232,7 @@ public static class InsurerDirectory
         IncomeEvidence: "Financial evidence for all business protection: business valuation and two years' financial statements (buy-sell); two years' financial statements and the accountant's estimate of the loss (key person).",
         CoolingOff: CoolingOff14,
         Notes: "Loadings and exclusions are reviewed on request after two years if the client's health results improve. Northbank requires a buy-sell agreement prepared by the owners' lawyer and doesn't draft one.",
-        CaldovaCases: "NB-26300418 (George Papadopoulos, buy-sell), NB-26300419 (Harpreet Kaur, buy-sell) and NB-26300420 (key person on George, owned by Northcote Custom Joinery Pty Ltd) — REQ-20261109-LIF003, in force 20 Nov 2026.",
+        PracticeCases: "NB-26300418 (George Papadopoulos, buy-sell), NB-26300419 (Harpreet Kaur, buy-sell) and NB-26300420 (key person on George, owned by Northcote Custom Joinery Pty Ltd) — REQ-20261109-LIF003, in force 20 Nov 2026.",
         Keywords: new[] { "northbank", "nb", "business", "business protection", "buy-sell", "buy sell", "key person", "company" });
 
     private static readonly IReadOnlyList<InsurerDirectoryEntry> _all = new[]
@@ -240,7 +240,7 @@ public static class InsurerDirectory
         HarbourlineLife, CorellaLife, LyrebirdLife, NorthbankLife
     };
 
-    /// <summary>The four insurers on Caldova's approved product list.</summary>
+    /// <summary>The four insurers on Life Advice Guru's approved product list.</summary>
     public static IReadOnlyList<InsurerDirectoryEntry> All => _all;
 
     /// <summary>
@@ -414,7 +414,7 @@ public static class InsurerDirectory
         incomeEvidence = e.IncomeEvidence,
         coolingOff = e.CoolingOff,
         notes = e.Notes,
-        caldovaCases = e.CaldovaCases,
+        practiceCases = e.PracticeCases,
         chasing = ChasingRule
     };
 

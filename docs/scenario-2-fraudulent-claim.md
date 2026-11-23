@@ -1,6 +1,6 @@
 # Scenario 2: Identity Takeover and a Fake Trauma Claim, Blocked
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Scenario Summary
 
@@ -10,7 +10,7 @@ A trauma claim arrives for a long-standing client: breast cancer, the full $200,
 - document authenticity checks with Azure Content Understanding
 - a risk timeline that connects a phone call, a device login and a claim four days apart
 - an explainable risk rating, with every red flag in plain language
-- a careful, client-first response through the contact details Caldova already trusts
+- a careful, client-first response through the contact details Life Advice Guru already trusts
 
 No one is accused. People decide to block the request and to alert the insurer, and Grace is treated as the likely victim from start to finish.
 
@@ -36,7 +36,7 @@ No one is accused. People decide to block the request and to alert the insurer, 
 **Grace Williams** is a semi-retired school principal from Hawthorn who still does some relief teaching.
 
 - She is 61. She was widowed in 2018, and her sons are Daniel (32) and James (29).
-- She has been a Caldova client since 2019.
+- She has been a Life Advice Guru client since 2019.
 - Verified contact details: grace.williams@example.com · mobile 0491 570 157.
 - She is independent, careful and warm, and she is rattled when she hears what happened.
 
@@ -147,10 +147,10 @@ The **Policy & Evidence Check** assistant checks the claim against the policy (`
 
 - Cara calls Grace herself on her **verified mobile, 0491 570 157**. Grace is in Florence. She confirms she is well and never asked for anything.
 - The **Letters & Updates** assistant drafts a calm **reassurance letter** to Grace's verified email:
-  - what happened, and what Caldova did about it
+  - what happened, and what Life Advice Guru did about it
   - that her cover is safe and no claim was made
   - identity-protection steps, such as changing her email password and watching for unexpected messages
-  - how to reach a person at Caldova
+  - how to reach a person at Life Advice Guru
 - The **Tone & Compliance** assistant checks that the letter is calm, blame-free and in plain English.
 - Every communication to a fraud victim needs human approval. Cara approves the letter before it goes.
 

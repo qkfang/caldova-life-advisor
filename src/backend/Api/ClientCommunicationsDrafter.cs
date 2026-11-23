@@ -1,6 +1,6 @@
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>
 /// Deterministic draft generator for the Client Communications "Try it out"
@@ -67,9 +67,9 @@ internal static class ClientCommunicationsDrafter
     private const string Hours = PracticeContacts.Hours;
 
     private const string AmeliaSignature =
-        "Amelia\nSenior Risk Adviser\nCaldova Life Advice · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone + " · " + PracticeContacts.AmeliaEmail;
+        "Amelia\nSenior Risk Adviser\nLife Advice Guru · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone + " · " + PracticeContacts.AmeliaEmail;
     private const string CaraSignature =
-        "Cara\nClient Communications Specialist\nCaldova Life Advice · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone;
+        "Cara\nClient Communications Specialist\nLife Advice Guru · " + PracticeContacts.Address + "\n" + PracticeContacts.Phone;
 
     private const string SpotCheck =
         "Spot-check — routine message with no vulnerability, decline or partial outcome.";
@@ -77,7 +77,7 @@ internal static class ClientCommunicationsDrafter
     private const string CaraApproves = "Cara (Client Communications Specialist)";
 
     // Knowledge document titles (life_knowledge index).
-    private const string DocFsg = "Caldova Life Advice — Financial Services Guide and remuneration";
+    private const string DocFsg = "Life Advice Guru — Financial Services Guide and remuneration";
     private const string DocAdviceRules = "Advice rules — best interests duty, SoA and replacement advice";
     private const string DocSuperRules = "Insurance inside super — permitted cover, Protecting Your Super and opt-in rules";
     private const string DocUnderwriting = "Underwriting and the duty to take reasonable care";
@@ -137,11 +137,11 @@ internal static class ClientCommunicationsDrafter
             AudienceLabel: "Welcome letter",
             Channel: "Letter (by email)",
             Recipient: $"{r.ClientName} <{r.ClientEmail}>",
-            Subject: "Welcome to Caldova, Priya — your family's cover starts today",
+            Subject: "Welcome to Life Advice Guru, Priya — your family's cover starts today",
             Body: $"""
                 Dear Priya,
 
-                Congratulations on your new home — and welcome to Caldova Life Advice. I'm pleased to confirm that your new cover with Corella Life starts today, **Wednesday 18 November 2026**, so you, Arjun and Asha are protected as your family grows.
+                Congratulations on your new home — and welcome to Life Advice Guru. I'm pleased to confirm that your new cover with Corella Life starts today, **Wednesday 18 November 2026**, so you, Arjun and Asha are protected as your family grows.
 
                 **Your cover at a glance**
 
@@ -182,7 +182,7 @@ internal static class ClientCommunicationsDrafter
                 Pass("No new advice", "Confirms the cover Amelia advised in the signed SoA; any change to the Kestrel cover goes back to Amelia."),
                 Pass("Facts match the policy", "CR-26118204 from 18 Nov 2026; sums insured and premiums as issued by Corella."),
                 Pass("Required disclosures", $"Premiums in dollars (stepped), a cooling-off period of {LifeRules.CoolingOff} (Corporations Act s1019B), how to claim, complaint rights."),
-                Pass("Complaint rights", $"Caldova first (written response within {LifeRules.IdrResponse}), then AFCA with contact details."),
+                Pass("Complaint rights", $"Life Advice Guru first (written response within {LifeRules.IdrResponse}), then AFCA with contact details."),
                 Pass("Health information", "Only Priya's own cover terms — the exclusion is explained in the attached summary."),
             ],
             ApprovalRequired: false,
@@ -285,7 +285,7 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Hi Priya, your Corella Life cover started today (18 Nov). Your welcome letter and policy summary are in your email. Questions? {Phone}",
+            Body: $"Life Advice Guru: Hi Priya, your Corella Life cover started today (18 Nov). Your welcome letter and policy summary are in your email. Questions? {Phone}",
             Tone: "Short and friendly; points to the letter for the detail.",
             Compliance:
             [
@@ -347,7 +347,7 @@ internal static class ClientCommunicationsDrafter
                 - Never ask for passwords, one-time codes or full bank details.
 
                 **1. Introduce yourself and check it's Grace**
-                "Hello, is that Grace Williams? It's Cara from Caldova Life Advice in Melbourne — I work with Amelia. Is now a good time to talk for a few minutes?"
+                "Hello, is that Grace Williams? It's Cara from Life Advice Guru in Melbourne — I work with Amelia. Is now a good time to talk for a few minutes?"
                 Check it's her with something only she and Amelia would know — for example, the travel dates she gave Amelia at her review on 28 September. Never use anything from the claim email.
 
                 **2. Reassure her first**
@@ -361,7 +361,7 @@ internal static class ClientCommunicationsDrafter
                 **4. What we've done**
                 - Stopped the claim and the bank change — nothing was sent to Lyrebird Life and nothing was paid.
                 - Put back her own mobile and email, and removed the details that were added.
-                - Locked online access to her Caldova portal until we can set her up again.
+                - Locked online access to her Life Advice Guru portal until we can set her up again.
                 - Let Lyrebird Life's fraud team know, so they're watching her policy too.
                 - Her life cover ($500,000) and trauma cover ($200,000) haven't changed, and Daniel and James are still her beneficiaries.
 
@@ -411,7 +411,7 @@ internal static class ClientCommunicationsDrafter
                 **What we've done**
                 - Stopped the claim and the bank change — nothing was lodged and nothing was paid.
                 - Put back your own mobile (0491 570 157) and this email address, and removed the details that were added.
-                - Locked online access to your Caldova client portal. We'll help you set up new access whenever you're ready.
+                - Locked online access to your Life Advice Guru client portal. We'll help you set up new access whenever you're ready.
                 - Told Lyrebird Life's fraud team, so they're watching your policy too.
                 - From now on, we'll call you on 0491 570 157 before we change any contact or bank details on your file.
 
@@ -449,7 +449,7 @@ internal static class ClientCommunicationsDrafter
                 Pass("Never implies Grace did anything wrong", "\"None of this happened because of anything you did.\""),
                 Pass("Identity-protection steps", "IDCARE (free), passwords, bank, scam-safe reminders."),
                 Pass("No links or code requests", "Says so explicitly; no links in the email."),
-                Pass("Complaint rights", $"Caldova first (within {LifeRules.IdrResponse}), then AFCA."),
+                Pass("Complaint rights", $"Life Advice Guru first (within {LifeRules.IdrResponse}), then AFCA."),
             ],
             ApprovalRequired: true,
             ApprovalReason: "Communication to a fraud victim — Cara approves it before it is sent.");
@@ -461,7 +461,7 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS — verified mobile only",
             Recipient: $"{r.ClientName} · 0491 570 157 — never 0491 570 159",
             Subject: null,
-            Body: $"Caldova: Hi Grace, it's Cara. As we discussed, your cover is safe and nothing was paid. My letter is in your usual email. We never ask for codes. {Phone}",
+            Body: $"Life Advice Guru: Hi Grace, it's Cara. As we discussed, your cover is safe and nothing was paid. My letter is in your usual email. We never ask for codes. {Phone}",
             Tone: "Brief and reassuring; sent after the call, never instead of it. No links.",
             Compliance:
             [
@@ -509,7 +509,7 @@ internal static class ClientCommunicationsDrafter
             [
                 "Send separate letters to George and Harpreet — each sees only their own cover, and only George's letter mentions his loading.",
                 "Update Marcus with their consent: cover in place and the lawyer finalising the buy-sell agreement — no health or underwriting details.",
-                "Their lawyer drafts and finalises the buy-sell agreement — Caldova doesn't draft legal documents.",
+                "Their lawyer drafts and finalises the buy-sell agreement — Life Advice Guru doesn't draft legal documents.",
                 "Northbank will review George's loading in two years — note it on his file.",
             ]);
 
@@ -538,7 +538,7 @@ internal static class ClientCommunicationsDrafter
                 Northbank looked at your medical results — your cholesterol and blood pressure readings — and added a 25% loading to the premiums for your life and TPD cover. A loading isn't a judgement about you. It's simply how an insurer prices a higher risk, and it changes the price of your cover, not what it covers. Northbank will review the loading on request after two years if your results improve, and we'll help you ask for that review. Thank you for talking it through with me on 19 November.
 
                 **The buy-sell agreement**
-                Your cover works hand in hand with a buy-sell agreement between you and Harpreet, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Caldova doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
+                Your cover works hand in hand with a buy-sell agreement between you and Harpreet, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Life Advice Guru doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
 
                 **Tax**
                 As the company's accountant, Marcus has confirmed how the key person cover is treated for tax. Please speak with him about anything tax-related.
@@ -591,7 +591,7 @@ internal static class ClientCommunicationsDrafter
                 The company also now holds $400,000 of key person cover on George (policy NB-26300420), which protects the business's profit while a replacement is found and trained.
 
                 **The buy-sell agreement**
-                Your cover works hand in hand with the buy-sell agreement between you and George, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Caldova doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
+                Your cover works hand in hand with the buy-sell agreement between you and George, which sets out how the insurance money is used if one of you dies or becomes totally and permanently disabled. Your lawyer is drafting it — Life Advice Guru doesn't prepare legal documents. If anything in the agreement changes the amount of cover you need, please let me know.
 
                 **If you change your mind**
                 {LifeRules.CoolingOffPlain} Northbank's policy documents explain how to cancel.
@@ -654,7 +654,7 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS",
             Recipient: $"George Papadopoulos · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Hi George, your Northbank Life business protection started on 20 Nov. Amelia's letter with the details is in your email. Questions? {Phone}",
+            Body: $"Life Advice Guru: Hi George, your Northbank Life business protection started on 20 Nov. Amelia's letter with the details is in your email. Questions? {Phone}",
             Tone: "Short and positive.",
             Compliance:
             [
@@ -804,7 +804,7 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS — after Amelia's call",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Hi Tom, it's Amelia. As we discussed, Harbourline accepted your claim at $5,600 a month, first payment about 13 Dec. Details by email. {Phone}",
+            Body: $"Life Advice Guru: Hi Tom, it's Amelia. As we discussed, Harbourline accepted your claim at $5,600 a month, first payment about 13 Dec. Details by email. {Phone}",
             Tone: "Plain and kind; sent after the call, never instead of it.",
             Compliance:
             [
@@ -945,7 +945,7 @@ internal static class ClientCommunicationsDrafter
             Channel: "SMS — after Amelia's call",
             Recipient: $"{r.ClientName} · {r.ClientPhone}",
             Subject: null,
-            Body: $"Caldova: Robert, it's Amelia. As we discussed, Mei's life cover has been paid into your account. My letter is in your email. Call me anytime on {Phone}",
+            Body: $"Life Advice Guru: Robert, it's Amelia. As we discussed, Mei's life cover has been paid into your account. My letter is in your email. Call me anytime on {Phone}",
             Tone: "Gentle; sent after the call, never instead of it.",
             Compliance:
             [
@@ -1138,7 +1138,7 @@ internal static class ClientCommunicationsDrafter
                 Body: $"""
                     Hi {partnerFirst},
 
-                    Thank you for referring {r.ClientName} to Caldova Life Advice. With {FirstName(r.ClientName)}'s consent, I'm letting you know we've received the referral, and I'll be in touch with {FirstName(r.ClientName)} shortly.
+                    Thank you for referring {r.ClientName} to Life Advice Guru. With {FirstName(r.ClientName)}'s consent, I'm letting you know we've received the referral, and I'll be in touch with {FirstName(r.ClientName)} shortly.
 
                     We'll only share what {FirstName(r.ClientName)} is happy for us to share — never health information.
 
@@ -1157,9 +1157,9 @@ internal static class ClientCommunicationsDrafter
 
         var smsBody = kind switch
         {
-            "death" => $"Caldova: {first}, we're so sorry for your loss. We've received your message ({r.CaseNumber}) and emailed you what happens next. {Phone}",
-            "claim-bank" => $"Caldova: We've received a claim request on your policy ({r.CaseNumber}). If this wasn't you, call us now on {Phone}.",
-            _ => $"Caldova: Hi {first}, we've received your request ({r.CaseNumber}). Details are in your email. Questions? {Phone}"
+            "death" => $"Life Advice Guru: {first}, we're so sorry for your loss. We've received your message ({r.CaseNumber}) and emailed you what happens next. {Phone}",
+            "claim-bank" => $"Life Advice Guru: We've received a claim request on your policy ({r.CaseNumber}). If this wasn't you, call us now on {Phone}.",
+            _ => $"Life Advice Guru: Hi {first}, we've received your request ({r.CaseNumber}). Details are in your email. Questions? {Phone}"
         };
 
         drafts.Add(new Draft(
@@ -1210,7 +1210,7 @@ internal static class ClientCommunicationsDrafter
             Pass("Next steps", "What happens next, in order."),
             Warn("Timeframes", "No firm dates yet — confirm once the case is assessed."),
             Pass("Contact details", Phone),
-            Pass("Complaint rights", $"Caldova first (within {LifeRules.IdrResponse}), then AFCA."),
+            Pass("Complaint rights", $"Life Advice Guru first (within {LifeRules.IdrResponse}), then AFCA."),
         };
         if (kind is "advice" or "business")
             checks.Add(Pass("How we're paid", "Points to the FSG; commission shown in dollars before the client decides."));

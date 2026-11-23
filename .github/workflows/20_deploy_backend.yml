@@ -27,11 +27,11 @@ jobs:
 
       - name: Restore
         working-directory: src/backend
-        run: dotnet restore cl-backend.csproj
+        run: dotnet restore guru-backend.csproj
 
       - name: Publish
         working-directory: src/backend
-        run: dotnet publish cl-backend.csproj -c Release -o ${{ github.workspace }}/publish --no-restore
+        run: dotnet publish guru-backend.csproj -c Release -o ${{ github.workspace }}/publish --no-restore
 
       - name: Azure CLI Login
         uses: azure/login@v1
@@ -41,5 +41,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: app-caldovacl-backend
+          app-name: app-lifeguru-backend
           package: ${{ github.workspace }}/publish

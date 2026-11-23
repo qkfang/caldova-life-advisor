@@ -1,12 +1,12 @@
-# Storybook — Caldova House
+# Storybook — Guru House
 
-> Part of **Advice Team in a Day** — the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day** — the AI advice practice demo for **Life Advice Guru**.
 
-The frontend, served at **`/`**, tells the Advice Team in a Day story as a storybook. Caldova Life Advice is a life insurance advice practice built for the agentic era. It has **two sides**, Protection Advice and Claims & Care, with a **small team for each side** and **one group of AI agents** that supports both. It works from **Caldova House**, a bank built in 1889 on a Melbourne city corner, with a super modern, futuristic office inside. Viewers read the story from the top of the house to the bottom: the business owner's idea, the two teams, the agents, and the Microsoft IQ and Azure services underneath.
+The frontend, served at **`/`**, tells the Advice Team in a Day story as a storybook. Life Advice Guru is a life insurance advice practice built for the agentic era. It has **two sides**, Protection Advice and Claims & Care, with a **small team for each side** and **one group of AI agents** that supports both. It works from **Guru House**, a bank built in 1889 on a Melbourne city corner, with a super modern, futuristic office inside. Viewers read the story from the top of the house to the bottom: the business owner's idea, the two teams, the agents, and the Microsoft IQ and Azure services underneath.
 
 This document is the source of truth for the frontend: the setting, the cast, every page and how each page behaves. The page text in [`src/frontend/src/v2/storyData.ts`](../src/frontend/src/v2/storyData.ts) mirrors it, so change both together.
 
-![Caldova House: the cover of the storybook](res/storybook/v2-cover.jpg)
+![Guru House: the cover of the storybook](res/storybook/v2-cover.jpg)
 
 ---
 
@@ -24,7 +24,7 @@ This document is the source of truth for the frontend: the setting, the cast, ev
 Each level hangs off the one above it:
 
 - The idea sets the goals and guardrails for both sides.
-- People own the decisions, in two small teams. Amelia, Caldova's adviser, gives the advice.
+- People own the decisions, in two small teams. Amelia, Life Advice Guru's adviser, gives the advice.
 - Each person's agent sits directly underneath them and reports back to them. The agents form one group: dedicated where the work is specialised, shared where it isn't.
 - Microsoft IQ gives every agent the same context, and the Azure services power them all.
 
@@ -44,58 +44,61 @@ Cara and Felix sit with the Claims & Care Team. Their work, communications and f
 
 ---
 
-## The Setting: Caldova House
+## The Setting: Guru House
 
-Caldova Life Advice works from Caldova House, a heritage bank on a Melbourne city corner, built in 1889. Outside, it is the old bank. Inside, it is a super modern, futuristic office. The whole scene is a floating voxel city block, with layers of earth under the street.
+Life Advice Guru works from Guru House, a heritage bank on a Melbourne city corner, built in 1889. Outside, it is the old bank. Inside, it is a super modern, futuristic office. The whole scene is a floating voxel city block, with layers of earth under the street.
 
-- **The house:** three storeys and a basement of 1889 red brick, with cream render cornices and dentils, quoins at the corners, pilasters along the side street, arched windows with keystones and sills, and a bluestone base at street level.
+- **The house:** three storeys and a basement of 1889 red brick, with cream render cornices and dentils, quoins at the corners, pilasters along the side street, tall arched windows with keystones and sills, and a bluestone base at street level. The storeys are tall, like an old bank's, and the banking chamber at street level is the tallest of all, so the camera sees well into every floor through the cut.
   - **The dollhouse cut:** the front of the house is cut away, so every floor reads clearly from the street. Along the cut, each floor's edge is a band of cream render with a cornice, a slim rail and an LED strip in that level's accent colour. There is no glass facade.
-  - **The futuristic inside:** white desks with neon edges, holographic boards, a glowing grid floor in the old banking chamber, and a lift core in the back-left corner with brass cage doors and a floor number lit above them on every level.
+  - **The futuristic inside:** white desks with neon edges, holographic boards, calm, light floors (pale oak under the dome, light stone on the team floor and light cool grey in the old banking chamber), and a lift core for the staff in the back-left corner, with brass cage doors and a floor number lit above them on every level.
   - **The copper dome** rises over Maya's office on Level 3. The cut opens it too: copper standing seams outside, cream and gold coffers inside, a gold rim along the cut, and a lantern and gold finial on top.
-  - **The parapet:** balustrades with piers and urns, and over the street a raised name panel, **CALDOVA HOUSE · 1889**, under a stepped pediment.
+  - **The parapet:** balustrades with piers and urns, and over the street a raised name panel, **GURU HOUSE · 1889**, under a stepped pediment.
 - **Two sides, left and right:** on every floor the Claims & Care side is on the left, the Protection Advice side is on the right, and what both sides share is in the middle.
 - **Edge lights:** each floor's edge glows in that level's accent colour: gold for the idea, coral for the people, cyan for the agents and violet for the engine room.
-- **The roof:** a party deck for Caldova's clients around the dome, under a big glowing CALDOVA LIFE ADVICE sign (see [The Roof](#the-roof-a-party-for-the-clients)), with solar panels and the lift up from below.
+- **The roof:** a party deck for Life Advice Guru's clients around the dome, under a big glowing LIFE ADVICE GURU sign (see [The Roof](#the-roof-a-party-for-the-clients)), with solar panels, the top of the staff lift, and the glass lift's landing at the front-left corner.
+- **The glass lift:** a slim external lift on the front-left corner of the house, beside the tram stop, that takes party guests from the street up to the roof and back down. It is an open frame of dark steel with brass bands, with no glass panes or glow, so it stays crisp and every rider shows. Brass cage doors, like those on the staff lift inside, open onto the forecourt at the bottom and onto a short bridge to the party deck at the top, under a copper cap. A car with lit gold bands and brass rails travels up and down inside it, and a sign over the street doors reads **ROOF PARTY ↑** ("Glass lift to the roof"). The frame is cut like the house: in each chapter, the part of it beside a level that lifts away lifts away too.
 - **Outside:**
-  - **The main street** in front, with tram tracks, bluestone kerbs and a tram stop platform with a shelter ("TRAM STOP · Caldova House"). A modern tram, with "CITY" on its destination display and no route number or livery, comes and goes.
-  - **The front desk** on the footpath, under a cast-iron verandah with a striped bullnose roof and lace frieze, where visitors sign in and Amelia, Caldova's adviser, gets them started (see [The Front Desk](#the-front-desk-and-the-tram)).
-  - **The laneway** down the left side: bluestone, with a mural ("HELLO"), neon signs ("OPEN LATE", a heart and "☕ COFFEE"), festoon lights, wheelie bins and a bike. Across it is a heritage building with a corner café and a florist, with striped awnings, outdoor tables and buckets of flowers.
-  - **The corner** on the right: a cross street with a pedestrian crossing, a pocket park with benches, a heritage terrace row, low buildings at the back and two modern towers.
+  - **The forecourt:** the house is set back from the street behind its own sandstone forecourt with a bluestone edge, so the glass lift, the tram stop and the front desk each have room to breathe.
+  - **The main street** in front, with tram tracks and bluestone kerbs. The **tram stop** has its own level-access platform on the left of the frontage, well clear of the verandah: a shelter with a bench and a map panel, a next-tram display ("NEXT TRAM · CITY · 2 min"), the stop sign ("TRAM STOP · Guru House"), rails across both ends and marks on the edge where the tram's doors open. A modern tram, with "CITY" on its destination display and no route number or livery, comes and goes, and stops with its doors lined up with the platform.
+  - **The front desk** on the forecourt to the right, under a cast-iron verandah with a striped bullnose roof and lace frieze, where visitors sign in and Amelia, Life Advice Guru's adviser, gets them started (see [The Front Desk](#the-front-desk-and-the-tram)).
+  - **The laneway** down the left side: bluestone, with a mural ("HELLO"), neon signs ("OPEN LATE", a heart and "☕ COFFEE"), festoon lights, wheelie bins and a bike. Across it is a heritage building with a corner café and a florist, with striped awnings, outdoor tables and buckets of flowers, under a plain flat roof: one soft grey membrane inside a low stone parapet, with two small plant units.
+  - **The corner** on the right: a cross street with a pedestrian crossing, a pocket park with benches, a heritage terrace row, low buildings at the back with plain flat roofs, and two modern towers.
   - London plane trees, heritage lamp posts, bike hoops, a share e-scooter, a delivery drone circling high above the roof, and clouds drifting below the block. The trees stand only beside the house, so they never hide a floor.
 - **Sky:** a golden-hour gradient. It dims to dusk when the story goes down to the vault. When it does, the street in front is cut away like a section through the ground, so the vault reads clearly.
 
 ```
-             ┌──── roof · CALDOVA LIFE ADVICE sign · the party around the dome ────┐
-  LEVEL 3    │  THE IDEA    Maya's office · the brain under the copper dome         │  cast-iron balcony
-             ├──────────────────────────────────────────────────────────────────────┤
-  LEVEL 2    │  CLAIMS & CARE TEAM  │ Olivia (front door) │  PROTECTION ADVICE TEAM   │
-             │  Ben · Cara · Felix  │ Theo (leads both)   │  Penny · Ivy · Uma        │
-             ├──────────────────────────────────────────────────────────────────────┤
-  LEVEL 1    │  DEDICATED ·         │ SHARED BY BOTH SIDES │  DEDICATED ·             │  verandah · FRONT DESK
-  banking    │  CLAIMS & CARE       │ Client Case at the   │  PROTECTION ADVICE       │  ═══ tram stop ═══ tram
-  chamber    │                      │ old teller counter   │                          │
- ════════════╪══════════════════════════ street level ═════════════════════════════════╪════════════
-  B          │  MICROSOFT IQ deck: Work IQ · Fabric IQ · Foundry IQ · Web IQ          │
-  the vault  │  Microsoft Foundry at the core · Azure services · safe-deposit boxes   │
-             └──────────────── the round vault door, standing open ───────────────────┘
+  glass lift ╱╲
+            ┌──┐ ┌──────── roof · LIFE ADVICE GURU sign · the party around the dome ────────┐
+  LEVEL 3   │  │ │  THE IDEA      Maya's office · the brain under the copper dome           │  cast-iron balcony
+            │  │ ├──────────────────────────────────────────────────────────────────────────┤
+  LEVEL 2   │⇅ │ │  CLAIMS & CARE TEAM    │ Olivia (front door)   │  PROTECTION ADVICE TEAM │
+            │  │ │  Ben · Cara · Felix    │ Theo (leads both)     │  Penny · Ivy · Uma      │
+            │  │ ├──────────────────────────────────────────────────────────────────────────┤
+  LEVEL 1   │  │ │  DEDICATED ·           │ SHARED BY BOTH SIDES  │  DEDICATED ·            │  out front, left to right:
+  banking   │  │ │  CLAIMS & CARE         │ Client Case at the    │  PROTECTION ADVICE      │  glass lift · tram stop · FRONT DESK
+  chamber   └──┘ │                        │ old teller counter    │                         │  ═══ the tram ═══
+ ════════════════╪══════════════════════════════ street level ══════════════════════════════╪════════════
+  B              │  MICROSOFT IQ deck: Work IQ · Fabric IQ · Foundry IQ · Web IQ            │
+  the vault      │  Microsoft Foundry at the core · Azure services · safe-deposit boxes     │
+                 └────────────────── the round vault door, standing open ───────────────────┘
 ```
 
 ---
 
 ## The Cast
 
-### Maya Ashworth — Managing Director, Caldova Life Advice (Business Owner)
+### Maya Ashworth — Managing Director, Life Advice Guru (Business Owner)
 
-Maya is the business owner for **both sides** of Caldova: Protection Advice and Claims & Care. She sets the goals, decides where to invest, and holds the line on one rule: **people approve every decision that matters**. Like the staff, her name follows the role keyword: **M**aya, **M**anaging director. Her full profile is in [characters.md](characters.md#maya-ashworth--managing-director-business-owner).
+Maya is the business owner for **both sides** of Life Advice Guru: Protection Advice and Claims & Care. She sets the goals, decides where to invest, and holds the line on one rule: **people approve every decision that matters**. Like the staff, her name follows the role keyword: **M**aya, **M**anaging director. Her full profile is in [characters.md](characters.md#maya-ashworth--managing-director-business-owner).
 
 - **Personality:** curious, practical and people-first.
 - **Typical line:** "If a family has to chase us at the worst moment of their lives, we've already let them down."
-- **Look:** smart-casual for the office under the dome: a cream knit, slate trousers, a Caldova-gold scarf, glasses and long dark hair.
-- **In her office** she moves between the vision board, the bookshelf, the North Star dashboard on her desk, Biscuit's bed, the boardroom, the scale model of Caldova House and the balcony telescope, where she watches the trams come in. Her home spot is beside the rotunda, facing her idea.
+- **Look:** smart-casual for the office under the dome: a cream knit, slate trousers, a gold scarf, glasses and long dark hair.
+- **In her office** she moves between the vision board, the bookshelf, the North Star dashboard on her desk, Biscuit's bed, the boardroom, the scale model of Guru House and the balcony telescope, where she watches the trams come in. Her home spot is beside the rotunda, facing her idea.
 
 **The idea** carries the product message, held in the brain under the dome:
 
-> Run both sides of Caldova with small expert teams supported by one group of AI agents: dedicated where the work is specialised, shared where it isn't, and all grounded in the same IQ layer on Azure. Requests become clearer, faster and more consistent. The adviser gives the advice, and people approve every decision that matters.
+> Run both sides of Life Advice Guru with small expert teams supported by one group of AI agents: dedicated where the work is specialised, shared where it isn't, and all grounded in the same IQ layer on Azure. Requests become clearer, faster and more consistent. The adviser gives the advice, and people approve every decision that matters.
 
 | Goal | What it means |
 |---|---|
@@ -120,11 +123,11 @@ Agents never give personal advice. Only Amelia, the adviser, gives advice and si
 
 ### Amelia — Senior Risk Adviser, the Front Desk
 
-Amelia is Caldova's senior risk adviser, and she works out front at the front desk under the verandah. Like the staff, her name follows the role keyword: **A**melia, **A**dviser. She gives the advice, which agents never do, signs every Statement of Advice, and links each visitor with the agents that get them started (see [The Front Desk](#the-front-desk-and-the-tram)). Her full profile is in [characters.md](characters.md#amelia--senior-risk-adviser-front-desk).
+Amelia is Life Advice Guru's senior risk adviser, and she works out front at the front desk under the verandah. Like the staff, her name follows the role keyword: **A**melia, **A**dviser. She gives the advice, which agents never do, signs every Statement of Advice, and links each visitor with the agents that get them started (see [The Front Desk](#the-front-desk-and-the-tram)). Her full profile is in [characters.md](characters.md#amelia--senior-risk-adviser-front-desk).
 
 - **Personality:** warm, unhurried and clear.
 - **Typical line:** "Hi Priya! Hannah sent your details ahead — let's look after your family."
-- **Look:** a burgundy blazer with a Caldova-gold badge, charcoal trousers and a dark ponytail. She holds a tablet that lights up in the colour of the agent she is linking.
+- **Look:** a burgundy blazer with a Life Advice Guru-gold badge, charcoal trousers and a dark ponytail. She holds a tablet that lights up in the colour of the agent she is linking.
 - **Between visitors** she reviews and signs Statements of Advice, prepares annual reviews and reads insurers' PDSs.
 
 | She links visitors with | What it does to get them started |
@@ -137,11 +140,11 @@ Amelia is Caldova's senior risk adviser, and she works out front at the front de
 
 ### The People (Level 2)
 
-The eight staff work at standing desks inside the old brick walls, arranged as two wings with the shared middle between them (see [characters.md](characters.md)):
+The eight staff work at standing desks inside the old brick walls, arranged as two wings with the shared middle between them, on a light stone floor where each area is a soft tint of its side's colour (see [characters.md](characters.md)):
 
-- **Left wing, the Claims & Care Team** on a gold rug: Ben (Claims) on the outside, with Cara (Client Communications) and Felix (Financial Crime) beside him.
-- **In the middle,** on a lilac rug: Olivia (Onboarding & Requests) at the front door, where every request comes in, and Theo (Team Leader Office) behind her, leading both teams. Between them is the huddle table ("both teams meet here").
-- **Right wing, the Protection Advice Team** on a teal rug: Penny (Paraplanning), Ivy (Insurance Research) and Uma (Underwriting & New Business).
+- **Left wing, the Claims & Care Team** on a soft gold tint: Ben (Claims) on the outside, with Cara (Client Communications) and Felix (Financial Crime) beside him.
+- **In the middle,** on a soft lilac tint: Olivia (Onboarding & Requests) at the front door, where every request comes in, and Theo (Team Leader Office) behind her, leading both teams. Between them is the huddle table ("both teams meet here").
+- **Right wing, the Protection Advice Team** on a soft teal tint: Penny (Paraplanning), Ivy (Insurance Research) and Uma (Underwriting & New Business).
 
 Nobody is stuck at a desk. Each person heads off on errands as they work and then comes back: a coffee, the printer, the huddle table, the process board, their side's board, the quiet room for sensitive calls, a look at the trams from the front rail, or a quick question at a colleague's desk (only if the colleague is there). A speech bubble says what they are doing, and their card shows it too.
 
@@ -152,7 +155,7 @@ Each person's **Microsoft Foundry agent** has a bay in the old banking chamber, 
 - **The agent** is the big robot, with a glowing sash in its side's colour.
 - **Each assistant** carries a prop for its job: Fact Find Extraction a document, In-Good-Order Checklist a clipboard, Needs Analysis a calculator, SoA Drafting a quill, Policy Comparison a book, Premium Quotes a chart, Document Authenticity a magnifier, Risk Timeline a timeline, Application & Disclosure a form, Underwriting Requirements a stethoscope, Policy & Evidence Check a folder, Benefit & Lodgement a stamp, Letters & Updates an envelope, Tone & Compliance a heart, Pipeline & SLAs a clock and Approvals & File Quality a badge. The voice agent wears a headset.
 
-The chamber is one group of agents in three zones, each named on a sign along the top of the old colonnade, and each bay's frame glows in the colour of its side.
+The chamber is one group of agents in three zones on a light cool-grey floor, each zone a soft pastel of its side's colour and named on a sign along the top of the old colonnade. Each bay is a light pad framed in the colour of its side.
 
 | Zone | Person | Foundry agent | What makes it different |
 |---|---|---|---|
@@ -165,7 +168,7 @@ The chamber is one group of agents in three zones, each named on a sign along th
 | Dedicated · Protection Advice | Ivy | `insurance-research-agent` | MCP tools: read product sheets, compare the APL insurers, build the comparison workbook |
 | Dedicated · Protection Advice | Uma | `underwriting-agent` | MCP tools: look up insurers, check the evidence needed, generate the application summary PDF |
 
-All eight run on Microsoft Foundry and share the Microsoft IQ layer through the `CaldovaAgent` base class. At the front of the chamber, the old teller counter, with its brass grilles, is now the **Client Case**: the one record every agent reads from and writes to, wired to every bay. The old bank safe still stands in the back corner.
+All eight run on Microsoft Foundry and share the Microsoft IQ layer through the `GuruAgent` base class. At the front of the chamber, the old teller counter, with its brass grilles, is now the **Client Case**: the one record every agent reads from and writes to, wired to every bay. The old bank safe still stands in the back corner.
 
 **The roles move about the chamber as they work**, then go back to their bays. A speech bubble says what each one is doing:
 
@@ -187,7 +190,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 |---|---|---|
 | WORK IQ | How people work: the documents, conversations, meetings and past decisions in Microsoft 365, permission-trimmed | Not wired up yet. Referral emails and claim notifications arrive as case documents, and approvals go to Microsoft Teams through an MCP tool. |
 | FABRIC IQ | The state of the business: governed data, business entities, relationships and rules (clients, policies, cover, premiums and claims) across both sides, built on Microsoft Fabric | Not wired up yet. The backend's Client Case store and the case files stand in for it. |
-| FOUNDRY IQ | Policies and documents: the insurers' PDS extracts, Caldova's guides, the advice, claims and tax rules, and the case files, returned with citations | Live. Azure AI Search is now Foundry IQ, and every agent grounds on and cites the `life_knowledge` index (semantic search enabled). |
+| FOUNDRY IQ | Policies and documents: the insurers' PDS extracts, Life Advice Guru's guides, the advice, claims and tax rules, and the case files, returned with citations | Live. Azure AI Search is now Foundry IQ, and every agent grounds on and cites the `life_knowledge` index (semantic search enabled). |
 | WEB IQ | The web, right now: timely, citation-ready context from the public web | Stood in for by the Grounding with Bing Search connection in the Foundry project. |
 
 **The Azure services** fill the rest of the vault. Along the front are the ones particular agents call, and behind the bus, among the safe-deposit boxes, is the platform.
@@ -195,7 +198,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 | Sign | Component | What it does | Used by |
 |---|---|---|---|
 | MICROSOFT FOUNDRY | Agent platform and model | Hosts the nine agents and the `gpt-5.4` deployment (GlobalStandard, default content filters) | Every agent |
-| MCP TOOLS | `caldova-ops-mcp` at `/mcp` | Tools that let agents act on systems | Ivy and Uma (Protection Advice), Ben (Claims & Care) |
+| MCP TOOLS | `guru-ops-mcp` at `/mcp` | Tools that let agents act on systems | Ivy and Uma (Protection Advice), Ben (Claims & Care) |
 | TEAMS APPROVALS | Microsoft Teams adaptive cards | A claim waits for a human approval before it is lodged (sent by `teams_sendApprovalCard`; delivery is simulated in the scenarios) | Ben, approved by Theo |
 | CONTENT UNDERSTANDING | Azure Content Understanding | Legit, suspicious or fake verdicts on IDs, medical reports, death certificates, payslips, BAS and bank statements | Felix (shared) |
 | VOICE LIVE | Azure Voice Live | Talk to Cara's voice agent; the backend proxies the WebSocket | Cara (shared) |
@@ -208,19 +211,19 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 
 ### The Front Desk and the Tram
 
-![The front desk: Priya signs her fact find under the verandah while Amelia links her with the Onboarding and Paraplanning agents and Olivia's Fact Find Extraction agent reads the form](res/storybook/v2-desk.jpg)
+![The front desk: Priya, down from the party in the glass lift, signs her fact find under the verandah while Amelia links her with the Onboarding and Paraplanning agents. The tram stop has its own platform on the left of the forecourt](res/storybook/v2-desk.jpg)
 
-Out front, the house meets the people it serves. Clients, families and referral partners arrive by **tram** at the stop in front of Caldova House. They step off and walk to **the front desk** under the verandah ("FRONT DESK · Welcome to Caldova"), where **the greeter** welcomes them, **Amelia**, Caldova's adviser, gets them started, and they sign their fact find, referral or claim notification.
+Out front, the house meets the people it serves. Clients, families and referral partners arrive by **tram** at the stop on the left of the forecourt. They step off, cross the forecourt and walk under the verandah to **the front desk** ("FRONT DESK · Welcome to Life Advice Guru"), where **the greeter** welcomes them, **Amelia**, Life Advice Guru's adviser, gets them started, and they sign their fact find, referral or claim notification. Clients who are already at the party on the roof come down in the **glass lift** instead.
 
-1. The tram pulls in at the stop, the greeter calls "Welcome to Caldova!", the doors slide open and the visitor steps off, with their business partner or support person where they have one.
+1. The tram pulls in at the stop, the greeter calls "Welcome to Life Advice Guru!", the doors slide open and the visitor steps off, with their business partner or support person where they have one. The tram holds its doors until everyone is off.
 2. Olivia's **Fact Find Extraction** agent walks out from its bay through the colonnade to the desk, and Amelia welcomes the visitor as they walk up.
 3. The visitor signs. Then Amelia links them with the agents that get them started, one at a time: her tablet lights up in each agent's colour, a gold beam runs from her to the agent's bay on Level 1, and the bay lights up.
 4. The paper gets a SIGNED stamp, the agent scans it, and a note reads "Signed · sent to Onboarding": it becomes a new Client Case.
-5. The visitor walks back to the tram stop, waits for the next tram and rides home, and Amelia's beams fade.
+5. The visitor walks back to the tram stop, waits for the next tram and rides home, and Amelia's beams fade. In the finale, a client who came down from the party stays at the desk while their request plays, then says "Back to the party!" and rides the glass lift back up.
 
 | Who comes by | Side | Signs | Amelia links them with |
 |---|---|---|---|
-| Priya, and George with Harpreet, in the finale | Protection Advice | Their fact find (see the [finale](#finale--one-request-top-to-bottom)) | The Onboarding and Paraplanning agents |
+| Priya, and George with Harpreet, in the finale | Protection Advice | Their fact find (see the [finale](#finale--one-request-top-to-bottom)). They ride the glass lift down from the party ("Off to the front desk!"), and back up when the finale moves on ("Back to the party!"). | The Onboarding and Paraplanning agents |
 | Tom with Kylie, his support person, and Robert, in the finale | Claims & Care | Tom's claim notification, and the notification of Mei's death | The Onboarding and Claims agents |
 | For Grace's scenario, someone in a cap and dark glasses, signing in Grace's name | Claims & Care | A trauma claim and a bank change on Grace's policy, while Grace is in Italy | The Onboarding Agent. Felix's Financial Crime Agent checks the request later. |
 | A young couple with their first home | Protection Advice | A fact find for their new home | The Onboarding and Paraplanning agents |
@@ -233,22 +236,22 @@ Amelia's words are kind and plain, especially for Tom's injury and Robert's loss
 
 ![Clicking Amelia: her card shows the front desk, the five agents she links visitors with and what they run on, and gold beams with labels run from her to their bays](res/storybook/v2-adviser.jpg)
 
-Whenever the finale isn't playing, the everyday visitors keep coming, one tram at a time.
+Whenever the finale isn't playing, the everyday visitors keep coming, one tram at a time, and party guests share the same trams on their way to and from the roof (see [The Roof](#the-roof-a-party-for-the-clients)). Guests use the tram's first door, nearest the lift, and visitors to the front desk use the middle one.
 
-> **In the scenarios**, requests arrive as referral emails, enquiries, calls and claim notifications. The front desk and the tram are the storybook's way of showing them coming in.
+> **In the scenarios**, requests arrive as referral emails, enquiries, calls and claim notifications. The front desk, the tram and the glass lift are the storybook's way of showing them coming in.
 
 ### The Roof: a Party for the Clients
 
-![The roof: Caldova's party for its clients around the copper dome, under the CALDOVA LIFE ADVICE sign](res/storybook/v2-party.jpg)
+![The roof: Life Advice Guru's party for its clients around the copper dome, under the LIFE ADVICE GURU sign, with the glass lift up from the street on the front-left corner](res/storybook/v2-party.jpg)
 
-Up on the roof, Caldova Life Advice throws a party for the people the whole house works for: its clients and the referral partners who send them. It is the first thing viewers see on the cover, before the story goes down through the house.
+Up on the roof, Life Advice Guru throws a party for the people the whole house works for: its clients and the referral partners who send them. It is the first thing viewers see on the cover, before the story goes down through the house.
 
-- **The sign:** CALDOVA LIFE ADVICE in big glowing gold voxel letters on a navy board along the back of the roof, framed by chasing marquee bulbs on a steel frame. Fireworks go up behind it every so often.
+- **The sign:** LIFE ADVICE GURU in big glowing gold voxel letters on a navy board along the back of the roof, framed by chasing marquee bulbs on a steel frame. Fireworks go up behind it every so often.
 - **The party deck:** timber decking around the copper dome, with string lights from the front posts up to the sign, and bunting in the party colours (the two sides' gold and teal, the shared lilac, and the levels' coral and cyan).
   - **The DJ booth**, with turntables, speakers that kick on the beat, a lighting truss and a banner: "Celebrating our clients and referral partners".
   - **The dance floor**, with tiles that change colour on the beat and a confetti cannon at each front corner.
   - **The bar**, two cocktail tables and balloons.
-- **The welcome cake** ("Welcome to the Caldova family"), a lounge, the solar panels and the lift that brings the guests up.
+- **The welcome cake** ("Welcome to the Life Advice Guru family"), a lounge, the solar panels and, at the front-left corner, the glass lift's landing, where a short timber bridge with iron rails leads onto the deck.
 - **The dome's gallery rail**, where guests peek down through the cut at the brain glowing in Maya's office.
 
 | Guest | Who they are |
@@ -260,9 +263,12 @@ Up on the roof, Caldova Life Advice throws a party for the people the whole hous
 
 The guests come and go like everyone else in the house. They dance, get a drink at the bar, try the cake, take in the city and peek down at the brain, and always come back to their table or the lounge. A speech bubble says what each is doing. Every so often the DJ calls a toast ("To George and Harpreet's succession plan!", "To Priya and Arjun's new home!" or "To all our clients and referral partners!"): glasses go up, everyone says "Cheers!", and the confetti cannons fire.
 
-The guests are the clients with happy news. The finale's other requests (a scam, an injury and a bereavement) are not party stories, so Grace, Tom and Robert are not on the roof. When the finale plays Priya's or George's request, they leave the party and go down to the front desk to sign (Harpreet goes with George).
+**Coming and going by tram and the glass lift.** Every so often a guest says goodbye ("Thanks for a lovely party!"), crosses the deck to the glass lift and rides down ("Going down!"), walks over to the tram stop, waits on the platform and catches the tram home. A while later they come back on another tram, step off, say "Up to the party!", cross the forecourt to the lift, ride up and step out onto the deck ("Hello again, everyone!") to join in again. Marcus, the retired couple, Hannah and the client back at work take turns, and Marcus is already on his way in on the first tram. At most two of them are out at once and only one uses the lift at a time, so the party stays full. The trips pause while the finale plays.
+
+The guests are the clients with happy news. The finale's other requests (a scam, an injury and a bereavement) are not party stories, so Grace, Tom and Robert are not on the roof. When the finale plays Priya's or George's request, they leave the party and ride the glass lift down to the front desk to sign (Harpreet goes with George). When the finale moves on, they ride back up and rejoin the party.
 
 - **Interaction:** Click the sign, the dance floor, the DJ booth, the bar, the cake or the lounge for the party's card: what it is, who is there and what is happening now. "Take a closer look" flies the camera to the roof. Click a guest for their card. Priya's and George's cards end with "Watch her request ›" or "Watch his request ›", which replays it in the finale.
+- **The glass lift:** click it for its card: what it is, who is riding it now and what it is doing ("Going up with Hannah Lewis", for example). "Take a closer look" flies the camera out to the whole lift, from the tram stop to the roof, and "The celebration" opens the party's card.
 
 ---
 
@@ -276,11 +282,13 @@ The storybook has a cover, four chapters (one per level) and a finale. Each chap
 | **Next › / ‹ Back**, the page dots, or the **arrow keys** | Turn the page; down and right go deeper |
 | **The lift** on the right (⌂, 3, 2, 1, B, ⇅) | Jumps to any level; the display shows the floor and the direction of travel |
 | **The arrows** at the bottom right (‹ ›) | Slide the view left or right, for example to see past a card. A press moves a step, and holding keeps it moving, as far as the edge of the house and the front desk. Turning the page, or pressing the current floor in the lift, brings the view back |
-| **Click** a person, the brain, an agent or one of its assistants, a machine, the front desk, Amelia or a visitor | Opens its card, lights it up and draws its beams through the house |
+| **Click** a person, the brain, an agent or one of its assistants, a machine, the front desk, Amelia, a visitor, the party or the glass lift | Opens its card, lights it up and draws its beams through the house |
 | **Card actions** such as "Follow Cara down to the agent ↓", or any name in a card's **Across the house** | Move along the thread to the level below or above |
 | **A beam's label** in the house, such as "B · Microsoft IQ" | Goes to that end of the beam |
 | **Esc**, or clicking empty space | Closes the card |
-| **–** on the page card | Hides the storybook so the viewer can explore freely; **📖 Open the storybook** brings it back |
+| **− / +** at the top of a panel: the cover, the page card (with the finale's trace), a card, and the lift on the right | **−** shrinks that panel to a slim bar with just its title, such as "2 · The people", a card's name and role, or the lift's floor display, and frees the view. **+** opens it again. The panel stays where it is on screen and keeps its state as the viewer turns the page, with the bar's title following the page. When the cover or the finale's tall card shrinks or grows, the view slides over to use the room, unless the viewer has moved it; a card that shrinks or grows brings what it is about back into view |
+| **− / +** beside the brand bar at the top left | Shrinks every panel at once, or opens them all again. It shows **−** while any panel on screen is open and **+** once they are all shrunk. Each panel's own **− / +** still works afterwards. The rule for a card opened later: it opens the way the last "shrink all" or "expand all" left the cards (or the way the viewer last left a card), so after "shrink all" a newly clicked card opens as a bar |
+| **Explore freely** on the cover | Hides the storybook so the viewer can explore freely; **📖 Open the storybook** brings it back |
 | **Drag / scroll** | Orbit and zoom at any time |
 | **Home / End** | Cover / finale |
 
@@ -294,8 +302,8 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
 
 ![Cover](res/storybook/v2-cover.jpg)
 
-- **Scene:** The whole of Caldova House on its city block at golden hour, with the camera slowly circling until the viewer touches it. The level tags float beside the house, the dollhouse cut shows the gold and teal wings on every floor, a tram brings a visitor to the front desk under the verandah, and the clients' party is in full swing on the roof around the copper dome, under the CALDOVA LIFE ADVICE sign.
-- **Narration:** "Caldova Life Advice is a life insurance advice practice built for the agentic era. It has two sides, Protection Advice and Claims & Care, and runs both from Caldova House, a bank built in 1889 on a Melbourne city corner, with a futuristic office inside. Read it from the top down: the owner's idea under the copper dome, two small teams, one group of AI agents in the old banking chamber and, in the old vault, Microsoft IQ and the Azure services that power it all. Out front, clients arrive by tram and sign in at the front desk under the verandah, where Amelia, Caldova's adviser, gets them started. Up on the roof, Caldova throws a party for them."
+- **Scene:** The whole of Guru House on its city block at golden hour, with the camera slowly circling until the viewer touches it. The level tags float beside the house, the dollhouse cut shows the gold and teal wings on every floor, a tram brings a visitor to the front desk under the verandah, and the clients' party is in full swing on the roof around the copper dome, under the LIFE ADVICE GURU sign. Party guests ride the glass lift on the corner between the tram stop and the roof.
+- **Narration:** "Life Advice Guru is a life insurance advice practice built for the agentic era. It has two sides, Protection Advice and Claims & Care, and runs both from Guru House, a bank built in 1889 on a Melbourne city corner, with a futuristic office inside. Read it from the top down: the owner's idea under the copper dome, two small teams, one group of AI agents in the old banking chamber and, in the old vault, Microsoft IQ and the Azure services that power it all. Out front, clients arrive by tram and sign in at the front desk under the verandah, where Amelia, Life Advice Guru's adviser, gets them started. Up on the roof, Life Advice Guru throws a party for them, and the guests ride the glass lift up from the tram stop."
 - **Interaction:** "Begin the story ›" or "Explore freely". The cover lists the four levels with their colours.
 
 ### Chapter 1 — Level 3 · The Idea
@@ -303,11 +311,12 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
 ![Level 3: The idea](res/storybook/v2-idea.jpg)
 
 - **Scene:** The roof lifts off Maya's office.
+  - The office floor is pale oak in long, calm boards, and so is the balcony, so the desks, Maya and the brain read clearly on it.
   - Under the copper dome is a rotunda: a half-round gold rug with an inlaid ring, and three render columns with gold bands carrying the dome's drum. At its heart is a round white table, and above it floats a voxel brain with **one hemisphere for each side**: gold for Claims & Care and teal for Protection Advice, joined by a lilac bridge for what they share. Four goal tiles orbit it: CLEARER, FASTER, CONSISTENT, PEOPLE APPROVE. Maya stands just outside the rotunda, facing it.
   - On the back wall is a vision board: "The idea · An advice practice for the agentic era · Advice Team in a Day", with three panels (Claims & Care, One group of agents, Protection Advice) and "Grounded in Microsoft IQ on Azure · agents recommend, people approve". Beside it is a bookshelf by the lift, and Maya's desk has a North Star dashboard.
-  - In the lounge corner by the laneway windows are a sofa and a floor lamp, and Biscuit the office dog is asleep on her bed. On the right are the boardroom, with a "Both sides, this week" screen, and a scale model of Caldova House on a plinth ("CALDOVA HOUSE · 1889 · the bank, and now the practice") with two reading chairs.
+  - In the lounge corner by the laneway windows are a sofa and a floor lamp, and Biscuit the office dog is asleep on her bed. On the right are the boardroom, with a "Both sides, this week" screen, and a scale model of Guru House on a plinth ("GURU HOUSE · 1889 · the bank, and now the practice") with two reading chairs.
   - At the front right is a cast-iron lace balcony over the street, with a bistro table and a telescope pointed at the tram line. Maya moves about her office as she works, and stops at the telescope to watch the trams come in.
-- **Narration:** "This is Maya Ashworth's office, under the old copper dome. Maya is Caldova's managing director and the business owner for both sides: Protection Advice, new advice for families and business owners, and Claims & Care, reviews, changes and claims for existing clients. Her idea for the agentic era: run each side with a small expert team, supported by one group of AI agents that are dedicated where the work is specialised and shared where it isn't. Amelia gives the advice, and people approve every decision that matters. The brain under the dome holds the idea, one half for each side."
+- **Narration:** "This is Maya Ashworth's office, under the old copper dome. Maya is Life Advice Guru's managing director and the business owner for both sides: Protection Advice, new advice for families and business owners, and Claims & Care, reviews, changes and claims for existing clients. Her idea for the agentic era: run each side with a small expert team, supported by one group of AI agents that are dedicated where the work is specialised and shared where it isn't. Amelia gives the advice, and people approve every decision that matters. The brain under the dome holds the idea, one half for each side."
 - **Interaction:**
   - **The brain:** its card shows the idea, the two sides with what they look after and their teams, the one group of agents, the four goals, the lifecycle and the guardrails. Gold beams drop from the brain to every person on Level 2, each labelled with their name.
   - **Maya:** her card: her role, the goals she sets and what she is doing now, then **Across the house** (see [Following a Thread](#following-a-thread)): her office at the top, both teams and the shared middle, the one group of agents by side, and everything they run on in the engine room.
@@ -317,10 +326,10 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
 
 ![Level 2: The people](res/storybook/v2-people.jpg)
 
-- **Scene:** Level 3 lifts away to reveal the open-plan team floor inside the old brick walls and arched windows, split into two wings with the shared middle between them.
-  - **Left wing:** the Claims & Care Team on a gold rug, lettered CLAIMS & CARE TEAM, under a CLAIMS & CARE sign (Reviews · changes · claims) and its holographic team board ("Claims & Care · this week": to do, with an agent, waiting on a person).
-  - **Right wing:** the Protection Advice Team on a teal rug, lettered PROTECTION ADVICE TEAM, under a PROTECTION ADVICE sign (Personal · family · business) and its own team board.
-  - **In the middle,** on a lilac rug: Olivia at the front, lettered THE FRONT DOOR, and Theo behind her, lettered LEADING BOTH TEAMS, below the ONE PROCESS FOR BOTH SIDES board (Discover, Verify, Advise, Implement, Confirm). Between them is the huddle table ("both teams meet here").
+- **Scene:** Level 3 lifts away to reveal the open-plan team floor inside the old brick walls and arched windows, split into two wings with the shared middle between them. The floor is light stone in large flags, and each area is a soft tint of its side's colour, with a thin strip of the full colour along the front.
+  - **Left wing:** the Claims & Care Team on a soft gold tint, lettered CLAIMS & CARE TEAM, under a CLAIMS & CARE sign (Reviews · changes · claims) and its holographic team board ("Claims & Care · this week": to do, with an agent, waiting on a person).
+  - **Right wing:** the Protection Advice Team on a soft teal tint, lettered PROTECTION ADVICE TEAM, under a PROTECTION ADVICE sign (Personal · family · business) and its own team board.
+  - **In the middle,** on a soft lilac tint: Olivia at the front, lettered THE FRONT DOOR, and Theo behind her, lettered LEADING BOTH TEAMS, below the ONE PROCESS FOR BOTH SIDES board (Discover, Verify, Advise, Implement, Confirm). Between them is the huddle table ("both teams meet here").
   - Every standing desk has a name panel in the department colour and a prop that says something about the role: Olivia's inbox tray, Penny's calculator beside a draft Statement of Advice, Ivy's stack of PDSs and bar chart, Felix's magnifier, Uma's application on a clipboard and heartbeat screen, Ben's claim folders and stamp, Cara's headset and Theo's dashboard.
   - At the back left is the QUIET ROOM ("for sensitive calls"), a curved white pod with a gold edge. At the back right is the coffee bar, and there is a printer by the laneway wall.
   - People come and go from their desks as they work: Ben takes a quiet call with a family, Penny checks in with Ivy, Olivia collects printouts, and Theo drops by Cara's desk with a quick question. A speech bubble says what each is doing.
@@ -339,8 +348,8 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
 
 ![Level 1: The agents](res/storybook/v2-agents.jpg)
 
-- **Scene:** Level 2 lifts away to reveal the old banking chamber at street level: tall render walls with pilasters, a row of stone columns along the front, and a dark floor with a glowing grid, split into three tinted zones by dashed lines. A sign for each zone runs along the top of the colonnade: DEDICATED · CLAIMS & CARE (gold), SHARED BY BOTH SIDES (lilac) and DEDICATED · PROTECTION ADVICE (teal).
-  - Under every desk is a coloured bay for that person's agent and its two assistants, each a voxel robot. The bay's frame glows in its side's colour.
+- **Scene:** Level 2 lifts away to reveal the old banking chamber at street level: tall render walls with pilasters, a row of stone columns along the front, and a light cool-grey tiled floor, split into three zones in soft pastels of their sides' colours by subtle dashed lines, with a strip of each side's colour along the front. A sign for each zone runs along the top of the colonnade: DEDICATED · CLAIMS & CARE (gold, starting just clear of the glass lift on the corner), SHARED BY BOTH SIDES (lilac) and DEDICATED · PROTECTION ADVICE (teal).
+  - Under every desk is a bay for that person's agent and its two assistants, each a voxel robot. The bay is a light pad in a pastel of the person's colour, a shade darker than its zone so the white robots stand out, framed in its side's colour. It brightens when the bay lights up.
   - Each bay has a holo panel showing the agent's name, its side, its Foundry agent id, its two assistants and "works for {name}".
   - The **Client Case** glows above the old teller counter at the front of the shared zone, behind its brass grilles ("the one record every agent shares"), wired to every bay by circuit traces that carry data packets out and back.
   - Behind it is the **Foundry uplink**, a violet ring that lights up with a beam whenever a robot is calling the model. At the back right is the **MCP tool bench** with four coloured terminals, and at the back left, by the lift, the old bank safe.
@@ -385,10 +394,10 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
 
 ![Finale: the house pulled apart, with a request travelling through it](res/storybook/v2-finale.jpg)
 
-- **Scene:** The finale opens at the front desk with the house together. The client's tram pulls in, they step off and sign under the verandah, Amelia links them with the agents that get them started, and Olivia's Fact Find Extraction agent comes out to read what they sign (see [The Front Desk](#the-front-desk-and-the-tram)). Once it is signed, the request glows above the desk, and the house pulls apart into an exploded view as the request sets off: all four levels stacked with gaps between them. Threads show the whole house as one tree: gold from the brain to every person, coral from each person to their agent, violet from each agent to Microsoft Foundry.
-- **Narration:** "Now watch a real client request travel through the house. It starts at the front desk: the client arrives by tram and signs under the verandah, where Amelia links them with the agents that get them started and Olivia's Fact Find Extraction agent comes out to read what they sign. Then the house pulls apart. Each step starts with a person, dips down to their agent and the engine room, and comes back up for a human decision. New advice runs through the Protection Advice side, claims through Claims & Care, and the shared agents work on every case. The result rises to Maya's floor."
+- **Scene:** The finale opens at the front desk with the house together. The client's tram pulls in and they step off, or, for Priya and George, they ride the glass lift down from the party on the roof. They sign under the verandah, Amelia links them with the agents that get them started, and Olivia's Fact Find Extraction agent comes out to read what they sign (see [The Front Desk](#the-front-desk-and-the-tram)). Once it is signed, the request glows above the desk, and the house pulls apart into an exploded view as the request sets off: all four levels stacked with gaps between them. Threads show the whole house as one tree: gold from the brain to every person, coral from each person to their agent, violet from each agent to Microsoft Foundry.
+- **Narration:** "Now watch a real client request travel through the house. It starts at the front desk: the client arrives by tram, or comes down from the party on the roof in the glass lift, and signs under the verandah, where Amelia links them with the agents that get them started and Olivia's Fact Find Extraction agent comes out to read what they sign. Then the house pulls apart. Each step starts with a person, dips down to their agent and the engine room, and comes back up for a human decision. New advice runs through the Protection Advice side, claims through Claims & Care, and the shared agents work on every case. The result rises to Maya's floor."
 - **The trace:** a glowing orb carries one client's request through the house. The steps come from the scenario beats in `src/frontend/src/scenarios/*.json`, which mirror the five scenario documents. Two are Protection Advice requests and three are Claims & Care requests.
-  1. **Arrival:** the client arrives by tram, Amelia welcomes them, and they sign at the front desk: Priya her fact find, George and Harpreet their business protection fact find, Tom (with Kylie, his support person) his claim notification, and Robert the notification of his wife Mei's death. In Grace's story, someone in a cap and dark glasses signs a trauma claim and a bank change in her name while she is in Italy. When the form is signed, the orb appears above the desk.
+  1. **Arrival:** the client arrives, Amelia welcomes them, and they sign at the front desk. Priya rides the glass lift down from the party to sign her fact find, and George and Harpreet come down the same way for their business protection fact find. Tom (with Kylie, his support person) arrives by tram with his claim notification, and Robert by tram with the notification of his wife Mei's death. In Grace's story, someone in a cap and dark glasses arrives by tram and signs a trauma claim and a bank change in her name while she is in Italy. When the form is signed, the orb appears above the desk.
   2. **Each step:** the orb stops at the person (Level 2), drops to their agent (Level 1), and dips to the engine-room component that agent leans on. It then comes back up to the person, who decides. A handover, such as Ben confirming that no claim was lodged, is just a short stop.
   3. **Result:** the orb rises to the brain on Level 3 with the outcome.
 
@@ -401,11 +410,12 @@ Every page has a deep link, for example `/?page=people`. The address bar updates
   | Robert Chen | Death claim | `REQ-20261113-LIF005` | Olivia → Theo → Felix → Ben → Cara | Completed — $1,000,000 paid to Robert |
 - **Panel:**
   - the client chips: Priya, Grace, George, Tom and Robert (Priya by default)
-  - the current step, with a chip for its side, for example "Step 1 of 9 · Priya Natarajan · arrives by tram · PROTECTION ADVICE REQUEST · Priya Natarajan → Front desk → Fact Find Extraction agent", then "Step 4 of 9 · Penny · Paraplanning · DEDICATED · PROTECTION ADVICE · Penny → Paraplanning Agent → Foundry IQ · life_knowledge"
-  - the narration, and **Pause**, **Next step** and **x1/x2/x4** controls. They work during the arrival too: Pause holds the tram, and Next step skips ahead to the signature.
+  - the current step, with a chip for its side, for example "Step 1 of 9 · Priya Natarajan · comes down in the lift · PROTECTION ADVICE REQUEST · Priya Natarajan → Front desk → Fact Find Extraction agent", then "Step 4 of 9 · Penny · Paraplanning · DEDICATED · PROTECTION ADVICE · Penny → Paraplanning Agent → Foundry IQ · life_knowledge"
+  - the narration, and **Pause**, **Next step** and **x1/x2/x4** controls. They work during the arrival too: Pause holds the tram or the lift, and Next step skips ahead to the signature.
+  - its **−** shrinks the whole panel to a bar ("One request, top to bottom") while the request keeps playing, so the house has the full screen.
 
   The chip reads "Protection Advice request" or "Claims & Care request" on arrival, then "Dedicated · Protection Advice", "Dedicated · Claims & Care" or "Shared · both sides" for each step, with "· called in" if a request ever uses the other side's dedicated agent.
-- **Interaction:** Pick a client to replay their request: the house comes back together at the front desk for their arrival. "Back to the cover ↺" starts the storybook again.
+- **Interaction:** Pick a client to replay their request: the house comes back together at the front desk for their arrival, and a client who came down from the party rides the glass lift back up. "Back to the cover ↺" starts the storybook again.
 
 ---
 
@@ -445,25 +455,29 @@ Amelia's card starts at the front desk instead: the front desk (✍) with Amelia
 | Amelia | Amelia and the bays of the five agents she links visitors with | Amelia → the Onboarding, Paraplanning, Insurance Research, Claims and Client Communications agents | Who she's helping · The front desk · Open the family protection scenario ↗ |
 | The party (its sign, dance floor, DJ booth, bar, cake or lounge) | Every guest and the DJ | — | Take a closer look · Meet George |
 | A party guest | The guest | — | Watch her or his request › (Priya and George) · The celebration |
+| The glass lift | The lift, with a ring at its street doors, and whoever is riding it | — | Take a closer look (the whole lift, from the tram stop to the roof) · The celebration |
 
-Only the level being read is clickable, so a click never lands on something hidden under a floor. The front desk is out front, so it stays clickable whenever the street is showing, and the party is clickable whenever the roof is in place.
+Only the level being read is clickable, so a click never lands on something hidden under a floor. The front desk and the glass lift are out front, so they stay clickable whenever the street is showing, and the party is clickable whenever the roof is in place.
 
 ---
 
 ## Visual Direction
 
 - Voxel and isometric: a miniature diorama of a city block with a high three-quarter camera.
-- **Heritage outside, futuristic inside:** the 1889 bank is crafted in voxels (red brick, cream render, bluestone, arched windows with keystones, cornices with dentils, quoins, pilasters, a balustraded parapet, cast-iron lace and the copper dome), wrapped around a clean, bright, modern office (white desks, neon edge strips, holographic boards, a glowing grid floor, the tram and the drone). Old meets new where it shows: the brass cage lift doors, the teller counter turned into the Client Case, and the vault turned into the engine room. It should never feel like a data centre brochure.
-- **The dollhouse cut:** the front of the house is open, with no glass facade, so every level reads from the orbit camera. Trees and lamp posts stand beside the house, never in front of a floor.
+- **Heritage outside, futuristic inside:** the 1889 bank is crafted in voxels (red brick, cream render, bluestone, arched windows with keystones, cornices with dentils, quoins, pilasters, a balustraded parapet, cast-iron lace and the copper dome), wrapped around a clean, bright, modern office (white desks, neon edge strips, holographic boards, the tram and the drone). Old meets new where it shows: the brass cage lift doors, the glass lift on the corner (a slim steel frame with brass bands and a copper cap), the teller counter turned into the Client Case, and the vault turned into the engine room. It should never feel like a data centre brochure.
+- **The dollhouse cut:** the front of the house is open, with no glass facade, so every level reads from the orbit camera. The storeys are tall, so the camera sees well into each floor, even with the whole house together. Trees and lamp posts stand beside the house, never in front of a floor, and the glass lift is an open frame on the corner, clear of the floors' signs.
+- **Room out front:** the house is set back behind its forecourt, so the glass lift, the tram stop and the front desk each have their own space and never crowd each other.
+- **Quiet neighbours:** the buildings around the house have plain flat roofs, one soft grey membrane inside a low stone parapet, so the eye goes to Guru House.
 - **Sharp, not hazy:** no bloom, glow layer, blur or glass in the way. Lit parts (signs, screens and edge strips) are flat bright colours on solid backings, and the scene draws at the screen's full resolution, so every label reads cleanly. On a window narrower than 16:9, the view widens instead of cropping the sides.
 - **Alive, not busy:** people and robots move about their floors at an easy pace and always come back to their desks and bays. A speech bubble says what each is doing.
 - **One accent per level:** Idea `#ffc35a` (gold) · People `#ff8f6b` (coral) · Agents `#5ce1ff` (cyan) · Engine Room `#a78bfa` (violet).
-- **One colour per side**, used for rugs, signs, zones, bay frames, sashes and badges: Claims & Care `#c9a14a` (gold, on the left) · Protection Advice `#14b8a6` (teal, on the right) · Shared by both `#8b9cf7` (lilac, in the middle). Each department keeps its own colour for its desk and bay. Large floor areas such as the Level 2 rugs use a muted mid-tone of the side's colour: pale colours wash out to white in the sunlight, and then the white desks and the people on them are hard to see.
+- **One colour per side**, used for floor tints, signs, zones, bay frames, sashes and badges: Claims & Care `#c9a14a` (gold, on the left) · Protection Advice `#14b8a6` (teal, on the right) · Shared by both `#8b9cf7` (lilac, in the middle). Each department keeps its own colour for its desk and bay.
+- **Calm, light floors:** Levels 1 to 3 have light floors with no strong pattern: pale oak in long boards under the dome, light stone in large flags on the team floor, and light cool-grey tiles in the banking chamber. The sides show as soft tints of their colours, the bays as light pads with a border in their side's colour, and the zone lines as subtle grey dashes. Judge them on screen, not by their hex values: the sunlight lifts every floor by about a third, so each is set a shade darker than it looks. On screen they read light but never wash out to white, so the white desks, the people, the robots and the floor lettering stay clear. The engine room keeps its dark floor.
 - **Two tiers underground:** Microsoft IQ `#e879f9` (fuchsia) on the raised deck, and Azure services `#60a5fa` (blue) around it.
 - **Readable at a glance:** every desk, bay and machine carries a sign, every assistant carries a prop for its job, and each card says what the thing is in plain English before any technical detail. Cards for Maya, Amelia, people, agents, assistants and visitors stay short: one line, then a few labelled facts, including what they are doing now. Any further detail goes into the card's Across the house cross-section, as names to click rather than more text.
 - **A generic, fictional city:** the tram has no route number or livery (its display reads "CITY"), and the café, florist, towers and street are made up. No real insurer, fund, adviser or business names, logos or addresses.
 - **Words on screen:** never call anything a "demo". Say "scenario" or "use case" instead, for example the "In the scenarios" note on a card and "Open the family protection scenario ↗".
-- **Avoid:** real company logos, readable personal, health or financial details beyond the scenario figures, anything suggesting agents decide or give advice on their own, and claiming the scenarios use an IQ component they don't. The front desk, the tram and the rooftop party are storybook devices: say so wherever they could be mistaken for part of the scenarios.
+- **Avoid:** real company logos, readable personal, health or financial details beyond the scenario figures, anything suggesting agents decide or give advice on their own, and claiming the scenarios use an IQ component they don't. The front desk, the tram, the glass lift and the rooftop party are storybook devices: say so wherever they could be mistaken for part of the scenarios.
 
 ---
 
@@ -474,15 +488,18 @@ Only the level being read is clickable, so a click never lands on something hidd
 | Page text, camera shots (including the finale's front desk shot) and stack modes | `src/frontend/src/v2/storyData.ts` (mirrors this document) |
 | The two sides, Maya, the idea, each agent's side, the roles and their props and tasks, the handoff rules, the IQ tier and Azure services | `src/frontend/src/v2/houseData.ts` |
 | The front desk, Amelia, the finale clients' arrivals (with Amelia's welcome, links and companions), the everyday visitors | `src/frontend/src/v2/houseData.ts` (data) and `frontDesk.ts` (the verandah, desk, greeter, Amelia, the tram and each visit) |
-| The city block: the street, tram stop, laneway, café, park, trees, lamps and drone | `src/frontend/src/v2/street.ts` |
+| The city block: the forecourt, the street, tram stop, laneway, café (and its flat roof), park, trees, lamps and drone | `src/frontend/src/v2/street.ts` |
+| The glass lift: its frame, car, doors, ROOF PARTY sign and rides | `src/frontend/src/v2/lift.ts` |
+| Party guests coming and going by tram and the glass lift | `src/frontend/src/v2/partyTrips.ts` (with `party.ts` and the tram stop in `frontDesk.ts`) |
 | The heritage pieces: brick, render, bluestone, arched windows, cornices, balustrades and cast-iron lace | `src/frontend/src/v2/heritage.ts` (pieces) and `shell.ts` (each floor's slab, walls, facades, rails, lift and level tag) |
 | The party on the roof: its guests and the sign's text | `src/frontend/src/v2/houseData.ts` (data) and `party.ts` (the deck, sign, DJ, dance floor, toasts and fireworks) |
 | Walking: where people, Maya and the robots go on errands, and their speech bubbles | `src/frontend/src/v2/wander.ts` (walking) and `levels/*.ts` (each floor's errands) |
-| Desk positions, wings (Level 2), zones (Level 1), the dome, the street and the front desk | `src/frontend/src/v2/layout.ts` |
+| Storey heights, desk positions, wings (Level 2), zones (Level 1), the dome, the forecourt, the street, the tram stop, the glass lift and the front desk | `src/frontend/src/v2/layout.ts` |
 | Staff, teams, assistants and clients | `src/frontend/src/personaData.ts`, `agentStages.ts` and `characterPalettes.ts` |
 | The finale's steps | `src/frontend/src/scenarios/*.json` (mirror the scenario documents) |
 | The levels, the dome and the roof | `src/frontend/src/v2/levels/*.ts` |
 | Cards, including their Across the house cross-section | `src/frontend/src/v2/inspector.ts` |
+| The panels (the cover, page card, finale trace, lift and cards) and their − / + shrink controls | `src/frontend/src/v2/storybook.ts`, `v2.css` and `src/frontend/index.html` |
 | What a click lights up, and the beams it draws and labels, and Amelia's live beams | `src/frontend/src/v2/main.ts` (which beams), `threads.ts` (drawing them) and `callouts.ts` (their labels) |
 
 **To run it locally**, start the frontend with `npm run dev` in `src/frontend`, then open <http://localhost:5173/>.

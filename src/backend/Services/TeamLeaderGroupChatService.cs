@@ -3,13 +3,13 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using Microsoft.Extensions.AI;
-using CaldovaLife.Agents;
+using LifeAdviceGuru.Agents;
 
-namespace CaldovaLife.App.Services;
+namespace LifeAdviceGuru.App.Services;
 
 /// <summary>
 /// One participant in the Team Leader group chat. <c>Id</c> is the agent's
-/// page route id, <c>AgentRole</c> the preferred <see cref="CaldovaAgentFactory"/> key.
+/// page route id, <c>AgentRole</c> the preferred <see cref="GuruAgentFactory"/> key.
 /// </summary>
 public record GroupChatParticipant(string Id, string Persona, string Role, string AgentRole);
 
@@ -68,7 +68,7 @@ public class GroupChatSession
 /// <c>Microsoft.Agents.AI.Workflows</c> (see
 /// <c>AgentWorkflowBuilder.CreateGroupChatBuilderWith</c>): the Team Leader
 /// Agent (Theo) acts as the group-chat manager (<c>SelectNextAgentAsync</c> +
-/// <c>ShouldTerminateAsync</c>), and the seven other Caldova Life Advice
+/// <c>ShouldTerminateAsync</c>), and the seven other Life Advice Guru
 /// agents — Olivia (Onboarding), Penny (Paraplanning), Ivy (Insurance
 /// Research), Felix (Financial Crime), Uma (Underwriting), Ben (Claims) and
 /// Cara (Client Communications) — take part as specialists.
@@ -101,7 +101,7 @@ public class TeamLeaderGroupChatService
     private const string LeaderRole = "Practice Team Leader";
 
     private readonly CaseStore _store;
-    private readonly CaldovaAgentFactory _agentFactory;
+    private readonly GuruAgentFactory _agentFactory;
     private readonly ILogger<TeamLeaderGroupChatService> _logger;
 
     private readonly ConcurrentDictionary<string, GroupChatSession> _sessions =
@@ -134,7 +134,7 @@ public class TeamLeaderGroupChatService
 
     public TeamLeaderGroupChatService(
         CaseStore store,
-        CaldovaAgentFactory agentFactory,
+        GuruAgentFactory agentFactory,
         ILogger<TeamLeaderGroupChatService> logger)
     {
         _store = store;
@@ -229,7 +229,7 @@ public class TeamLeaderGroupChatService
                 });
 
                 // Specialist step.
-                CaldovaAgent specialist;
+                GuruAgent specialist;
                 try
                 {
                     specialist = CreateSpecialist(participant);
@@ -292,7 +292,7 @@ public class TeamLeaderGroupChatService
         }
     }
 
-    private CaldovaAgent CreateSpecialist(GroupChatParticipant participant)
+    private GuruAgent CreateSpecialist(GroupChatParticipant participant)
     {
         var keys = AgentRoleAliases.TryGetValue(participant.AgentRole, out var aliases)
             ? aliases
@@ -418,7 +418,7 @@ public class TeamLeaderGroupChatService
             "George Papadopoulos, 52 (DOB 19/04/1974), master joiner and co-founder (50%) of Northcote Custom Joinery Pty Ltd (founded 2011, 14 staff, revenue $3.1m, net profit $520,000); lives in Thornbury with his wife Helen. Client CL-104611; george@northcotejoinery.example.com.au; 0491 570 158.",
             "Business partner Harpreet Kaur, 47 (DOB 08/09/1979), operations and finance director (50%). Client CL-104612.",
             "Referred by Marcus Tan (Bayside Business Accountants) on Mon 9 Nov 2026 — no succession plan. Business valued at $2,400,000 (Marcus's valuation at 30 Jun 2026).",
-            "Buy-sell: life and TPD $1,200,000 each (50% of $2.4m); each partner owns the policy on their own life; backed by a buy-sell agreement their lawyer drafts (Caldova doesn't draft legal documents).",
+            "Buy-sell: life and TPD $1,200,000 each (50% of $2.4m); each partner owns the policy on their own life; backed by a buy-sell agreement their lawyer drafts (Life Advice Guru doesn't draft legal documents).",
             "Key person: $400,000 life and TPD on George, owned by the company for a revenue purpose (Marcus estimates losing George would cost about $400,000 of profit over 18 months while a replacement is found and trained). Tax treatment confirmed by Marcus as their accountant.",
             "Total cover on the case $2,800,000 — advice of $2,000,000 or more on one case gets Theo's second review before the SoA is presented.",
             "Research, year-1 stepped premiums at standard rates: Northbank Life $8,620 (recommended: business-protection features and fast financial underwriting), Corella Life $9,180, Harbourline Life $9,410. Northbank split: George buy-sell $4,140, George key person $1,380 (paid by the company), Harpreet buy-sell $3,100.",
@@ -494,7 +494,7 @@ public class TeamLeaderGroupChatService
         var transcript = RenderTranscript(history);
 
         return
-            "You are Theo, the Practice Team Leader at Caldova Life Advice, chairing a group chat with\n" +
+            "You are Theo, the Practice Team Leader at Life Advice Guru, chairing a group chat with\n" +
             "the practice specialists about ONE Client Case. You are the GROUP-CHAT MANAGER: you decide\n" +
             "which specialist speaks next, or whether the team has covered what the case needs and the\n" +
             "discussion should end. Amelia, the Senior Risk Adviser, gives the advice and signs every SoA.\n\n" +
@@ -530,7 +530,7 @@ public class TeamLeaderGroupChatService
     {
         var transcript = RenderTranscript(history);
         return
-            "You are taking part in a Caldova Life Advice practice GROUP CHAT about Client Case\n" +
+            "You are taking part in a Life Advice Guru practice GROUP CHAT about Client Case\n" +
             $"{c.CaseNumber}, chaired by Theo (Practice Team Leader).\n\n" +
             "Stay in character as your role and answer Theo's question directly and concisely\n" +
             "(under 150 words). Do NOT repeat your full standard report — speak conversationally,\n" +

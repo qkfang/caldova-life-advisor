@@ -1,9 +1,9 @@
 /**
- * Content for "Caldova House", the storybook at `/` (see docs/storybook.md).
+ * Content for "Guru House", the storybook at `/` (see docs/storybook.md).
  *
- * Caldova Life Advice is a life insurance advice practice built for the
+ * Life Advice Guru is a life insurance advice practice built for the
  * agentic era. It has two sides, Protection Advice and Claims & Care, and
- * works from Caldova House, a heritage bank building from 1889 on a Melbourne
+ * works from Guru House, a heritage bank building from 1889 on a Melbourne
  * city corner with a futuristic office inside. The house is read from the top
  * down:
  *   Level 3 · The Idea         Maya Ashworth, the business owner for both sides, and her idea,
@@ -14,7 +14,7 @@
  *                              specialised assistants (the roles): dedicated to a side, or shared
  *   B · The Engine Room        Microsoft IQ and the Azure services, in the old bank vault
  *   The front desk             under the verandah, where visitors arrive by tram to sign in
- *   The roof                   a party for the clients, under a big CALDOVA LIFE ADVICE sign
+ *   The roof                   a party for the clients, under a big LIFE ADVICE GURU sign
  *
  * Staff, assistants and scenarios come from the shared canon (personaData.ts,
  * agentStages.ts and scenarios/*.json). This file adds what the storybook needs on top.
@@ -139,20 +139,20 @@ export const OWNER = {
   id: "owner",
   name: "Maya Ashworth",
   firstName: "Maya",
-  role: "Managing Director, Caldova Life Advice",
+  role: "Managing Director, Life Advice Guru",
   badge: "Business owner for both sides",
   color: "#ffc35a",
   personality: "Curious, practical and people-first.",
   typical_line: "If a family has to chase us at the worst moment of their lives, we’ve already let them down.",
   summary:
-    "Maya is the business owner for both sides of Caldova: Protection Advice and Claims & Care. She sets the goals, decides where to invest, and holds the line on one rule: people approve every decision that matters.",
+    "Maya is the business owner for both sides of Life Advice Guru: Protection Advice and Claims & Care. She sets the goals, decides where to invest, and holds the line on one rule: people approve every decision that matters.",
   owns: [
     "The goals both sides work to",
     "The guardrails: when a person must approve, and what agents may never do",
     "Investment in the two teams, the agents and the platform",
     "The results clients, families and referral partners feel",
   ],
-  // Smart-casual for the office under the dome: cream knit, slate trousers, a Caldova-gold scarf.
+  // Smart-casual for the office under the dome: cream knit, slate trousers, a gold scarf.
   palette: {
     skin: "#b27b56",
     hair: "#2a1a12",
@@ -170,7 +170,7 @@ export const IDEA = {
   name: "Advice Team in a Day",
   era: "An advice practice for the agentic era",
   statement:
-    "Run both sides of Caldova with small expert teams supported by one group of AI agents: dedicated where the work is specialised, shared where it isn’t, and all grounded in the same IQ layer on Azure. Requests become clearer, faster and more consistent. The adviser gives the advice, and people approve every decision that matters.",
+    "Run both sides of Life Advice Guru with small expert teams supported by one group of AI agents: dedicated where the work is specialised, shared where it isn’t, and all grounded in the same IQ layer on Azure. Requests become clearer, faster and more consistent. The adviser gives the advice, and people approve every decision that matters.",
   goals: [
     {
       tile: "CLEARER",
@@ -246,7 +246,7 @@ export interface AgentInfo {
   signatureLine: string;
 }
 
-/** Every agent runs on Foundry and inherits the same IQ layer through the CaldovaAgent base class. */
+/** Every agent runs on Foundry and inherits the same IQ layer through the GuruAgent base class. */
 const SHARED: InfraId[] = ["foundry", "workiq", "fabriciq", "foundryiq", "webiq"];
 
 /** Keyed by staff id (personaData.ts). */
@@ -584,7 +584,7 @@ export const INFRA: InfraInfo[] = [
     color: "#c4b5fd",
     scope: "all",
     summary:
-      "Curated knowledge: the insurers’ PDS extracts, Caldova’s guides, the advice, claims and tax rules, and the case files in the life_knowledge index, returned with citations.",
+      "Curated knowledge: the insurers’ PDS extracts, Life Advice Guru’s guides, the advice, claims and tax rules, and the case files in the life_knowledge index, returned with citations.",
     details: [
       "Foundry IQ is the new name for Azure AI Search",
       "Semantic search enabled",
@@ -620,7 +620,7 @@ export const INFRA: InfraInfo[] = [
     summary:
       "Hosts the nine agents (eight staff agents plus Cara’s voice agent) and the gpt-5.4 model they reason with.",
     details: [
-      "Declarative agents created from code with Azure.AI.Projects, on a shared CaldovaAgent base class",
+      "Declarative agents created from code with Azure.AI.Projects, on a shared GuruAgent base class",
       "Model deployment gpt-5.4 (GlobalStandard) with the default responsible-AI content filters",
       "Theo’s group chat coordinates the specialist agents on a single case",
     ],
@@ -629,9 +629,9 @@ export const INFRA: InfraInfo[] = [
   },
   {
     id: "mcp",
-    name: "MCP server · caldova-ops-mcp",
+    name: "MCP server · guru-ops-mcp",
     sign: "MCP TOOLS",
-    tag: "caldova-ops-mcp at /mcp",
+    tag: "guru-ops-mcp at /mcp",
     tier: "azure",
     kind: "Azure · tools that act on systems",
     color: "#f472b6",
@@ -813,7 +813,7 @@ export function agentsUsing(id: InfraId): string[] {
 export const FRONT_DESK = {
   name: "The front desk",
   summary:
-    "Clients, families and referral partners arrive by tram and sign in at the front desk under the verandah: a fact find, a referral or a claim notification. The greeter welcomes them, Amelia, Caldova’s adviser, gets them started with the right agents, and Olivia’s Fact Find Extraction agent reads what they sign straight into a new Client Case.",
+    "Clients, families and referral partners arrive by tram and sign in at the front desk under the verandah: a fact find, a referral or a claim notification. The greeter welcomes them, Amelia, Life Advice Guru’s adviser, gets them started with the right agents, and Olivia’s Fact Find Extraction agent reads what they sign straight into a new Client Case.",
   inScenarios:
     "Requests arrive as referral emails, enquiries, calls and claim notifications. The front desk is the storybook’s way of showing them coming in.",
 };
@@ -826,7 +826,7 @@ export interface AdviserLink {
 }
 
 /**
- * Amelia, Caldova's senior risk adviser at the front desk. She gives the advice (agents never
+ * Amelia, Life Advice Guru's senior risk adviser at the front desk. She gives the advice (agents never
  * do) and signs every Statement of Advice, then links each visitor with the agents that get them
  * started. Like the staff, her name starts with the first letter of her role.
  */
@@ -870,6 +870,8 @@ export interface Companion {
 export interface Arrival {
   /** The client signs, or someone signs in their name (the fraud scenario). */
   visitor: "client" | "impostor";
+  /** By tram (the default), or down from the party on the roof in the glass lift. */
+  by?: "tram" | "lift";
   /** Who comes with them. */
   companion?: Companion;
   /** Painted on the paper they sign. */
@@ -885,8 +887,9 @@ export interface Arrival {
 export const ARRIVALS: Record<ScenarioId, Arrival> = {
   family: {
     visitor: "client",
+    by: "lift",
     doc: "Fact find · family protection",
-    line: "Priya arrives by tram and signs her fact find at the front desk.",
+    line: "Priya comes down from the party on the roof in the glass lift, and signs her fact find at the front desk.",
     welcome: "Hi Priya! Hannah sent your details ahead",
     links: ["onboarding-1", "paraplanning-1"],
   },
@@ -894,14 +897,15 @@ export const ARRIVALS: Record<ScenarioId, Arrival> = {
     visitor: "impostor",
     doc: "Trauma claim and bank change · LB-19004417",
     line: "Someone in a cap and dark glasses arrives by tram and signs at the front desk in Grace’s name. Grace is in Italy.",
-    welcome: "Welcome to Caldova. Let’s get this lodged",
+    welcome: "Welcome to Life Advice Guru. Let’s get this lodged",
     links: ["onboarding-1"],
   },
   business: {
     visitor: "client",
+    by: "lift",
     companion: { id: "harpreet", name: "Harpreet Kaur", palette: PALETTES.clientHarpreet },
     doc: "Fact find · business protection",
-    line: "George and Harpreet arrive by tram to start their business protection advice.",
+    line: "George and Harpreet come down from the party on the roof in the glass lift to start their business protection advice.",
     welcome: "Hi George, hi Harpreet! Marcus sent it all",
     links: ["onboarding-1", "paraplanning-1"],
   },
@@ -1057,7 +1061,7 @@ export const DROP_INS: DropIn[] = [
 export const PARTY = {
   name: "The rooftop celebration",
   summary:
-    "Caldova Life Advice throws a party on the roof for its clients and referral partners: the people the whole house works for.",
+    "Life Advice Guru throws a party on the roof for its clients and referral partners: the people the whole house works for.",
   /** Printed on the front of the DJ booth. */
   tagline: "Celebrating our clients and referral partners",
   guests:
@@ -1065,7 +1069,7 @@ export const PARTY = {
 };
 
 /** The big marquee sign along the back of the roof. */
-export const PARTY_SIGN = "CALDOVA LIFE ADVICE";
+export const PARTY_SIGN = "LIFE ADVICE GURU";
 
 export interface PartyGuest {
   id: string;
@@ -1220,7 +1224,7 @@ export const PARTY_GUESTS: PartyGuest[] = [
   {
     id: "retired-1",
     name: "A retired client",
-    role: "A long-time Caldova client",
+    role: "A long-time Life Advice Guru client",
     line: "A client for years, here with his wife to celebrate with the team.",
     side: "claims",
     palette: {
@@ -1239,7 +1243,7 @@ export const PARTY_GUESTS: PartyGuest[] = [
   {
     id: "retired-2",
     name: "A retired client",
-    role: "A long-time Caldova client",
+    role: "A long-time Life Advice Guru client",
     line: "A client for years, here with her husband to celebrate with the team.",
     side: "claims",
     palette: {

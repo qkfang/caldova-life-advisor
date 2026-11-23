@@ -1,6 +1,6 @@
 # Scenario 4: Income Protection Claim After an Injury
 
-> Part of **Advice Team in a Day**, the AI advice practice demo for **Caldova Life Advice**.
+> Part of **Advice Team in a Day**, the AI advice practice demo for **Life Advice Guru**.
 
 ## Scenario Summary
 
@@ -40,7 +40,7 @@ The agents handle the policy wording and the numbers. People handle Tom.
 **Tom Bradley** is a self-employed electrician in Frankston. He trades as Bradley Electrical, a sole trader business.
 
 - He is 41. His wife, Kylie (39), is a part-time bookkeeper and keeps Tom's books. They have two children, aged 8 and 5.
-- He has been a Caldova client since 2023, when he took out his income protection through Caldova.
+- He has been a Life Advice Guru client since 2023, when he took out his income protection through Life Advice Guru.
 - Contact: tom.bradley@example.com · 0491 570 110.
 - He is practical and proud, he hates paperwork, and right now he's stressed.
 
@@ -50,7 +50,7 @@ The agents handle the policy wording and the numbers. People handle Tom.
 
 On Wed 14 Oct 2026 Tom fell from a ladder on a job and tore the rotator cuff in his right shoulder. He had surgery on 21 Oct, and his surgeon expects him to be off work for four to six months. With no work coming in, money is tight.
 
-On Wed 11 Nov 2026 Tom calls Caldova to make a claim. Kylie joins the call as his support person, with Tom's written authority.
+On Wed 11 Nov 2026 Tom calls Life Advice Guru to make a claim. Kylie joins the call as his support person, with Tom's written authority.
 
 ---
 
@@ -66,7 +66,7 @@ On Wed 11 Nov 2026 Tom calls Caldova to make a claim. Kylie joins the call as hi
 | Identification | ✓ Verified |
 | Support-person authority | ✓ Tom's written authority for Kylie to speak for him |
 | Privacy and health-information consent | ✓ Signed |
-| Authority for Caldova to deal with Harbourline Life on the claim | ✓ Signed |
+| Authority for Life Advice Guru to deal with Harbourline Life on the claim | ✓ Signed |
 | Medical evidence | ✓ Surgeon's report |
 | Earnings evidence | ✓ Business activity statements (BAS) and a profit and loss statement for the 12 months to 30 Sep 2026, sent by Kylie |
 
@@ -151,7 +151,7 @@ On Wed 11 Nov 2026 Tom calls Caldova to make a claim. Kylie joins the call as hi
   - when the money comes: the benefit accrues from 13 Nov 2026 and is paid monthly in arrears, with the first payment about 13 Dec 2026
   - that the benefit is taxable income
   - that Ben stays in touch with Harbourline Life and will tell Tom if they need anything else
-  - his right to complain if he disagrees with the insurer's decision: Harbourline Life's internal dispute resolution, then AFCA, and that Caldova will help him
+  - his right to complain if he disagrees with the insurer's decision: Harbourline Life's internal dispute resolution, then AFCA, and that Life Advice Guru will help him
 - The **Tone & Compliance** assistant checks the letter is warm, clear and free of jargon, and gives no personal advice.
 
 > Cara reviews the letter and sends it after Amelia's call.

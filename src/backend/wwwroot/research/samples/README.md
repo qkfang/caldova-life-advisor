@@ -1,6 +1,6 @@
 # Insurance Research — APL insurer product sheets
 
-One product sheet per insurer on Caldova Life Advice's approved product list
+One product sheet per insurer on Life Advice Guru's approved product list
 (APL), used by the Insurance Research Agent (Ivy) on `/agents/insurance-research`.
 The insurers and products are fictional. Each sheet summarises the insurer's
 PDS extract in the `life_knowledge` index — read and cite the extract by its

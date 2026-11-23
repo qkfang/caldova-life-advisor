@@ -1,5 +1,5 @@
 /**
- * The storybook pages of Caldova House, read from the top of the house down.
+ * The storybook pages of Guru House, read from the top of the house down.
  * Keep the text in sync with docs/storybook.md, which is the source of truth.
  */
 import type { StackMode } from "./types";
@@ -27,6 +27,8 @@ export interface StoryPage {
   shot: CameraShot;
   /** The finale only: where it opens, at the front desk, while the client signs. */
   desk?: CameraShot;
+  /** The finale only: a wider opening that takes in the glass lift, for a client coming down from the party. */
+  lift?: CameraShot;
 }
 
 export const PAGES: StoryPage[] = [
@@ -34,16 +36,16 @@ export const PAGES: StoryPage[] = [
     id: "cover",
     chapter: "Cover",
     floor: "⌂",
-    kicker: "Advice Team in a Day · Caldova House",
+    kicker: "Advice Team in a Day · Guru House",
     title: "One practice, two sides, four levels",
     body: [
-      "Caldova Life Advice is a life insurance advice practice built for the agentic era. It has two sides, Protection Advice and Claims & Care, and runs both from Caldova House, a bank built in 1889 on a Melbourne city corner, with a futuristic office inside.",
-      "Read it from the top down: the owner’s idea under the copper dome, two small teams, one group of AI agents in the old banking chamber and, in the old vault, Microsoft IQ and the Azure services that power it all. Out front, clients arrive by tram and sign in at the front desk under the verandah, where Amelia, Caldova’s adviser, gets them started. Up on the roof, Caldova throws a party for them.",
+      "Life Advice Guru is a life insurance advice practice built for the agentic era. It has two sides, Protection Advice and Claims & Care, and runs both from Guru House, a bank built in 1889 on a Melbourne city corner, with a futuristic office inside.",
+      "Read it from the top down: the owner’s idea under the copper dome, two small teams, one group of AI agents in the old banking chamber and, in the old vault, Microsoft IQ and the Azure services that power it all. Out front, clients arrive by tram and sign in at the front desk under the verandah, where Amelia, Life Advice Guru’s adviser, gets them started. Up on the roof, Life Advice Guru throws a party for them, and the guests ride the glass lift up from the tram stop.",
     ],
     hint: "Drag to look around. Press Begin, or take the lift on the right.",
     accent: "#ffc35a",
     mode: { kind: "house" },
-    shot: { target: [-9, 7, -14], radius: 104, alpha: -1.0, beta: 1.15 },
+    shot: { target: [-9, 9.2, -14], radius: 110, alpha: -1.0, beta: 1.15 },
   },
   {
     id: "idea",
@@ -52,13 +54,13 @@ export const PAGES: StoryPage[] = [
     kicker: "Level 3 · The business owner’s office",
     title: "The idea",
     body: [
-      "This is Maya Ashworth’s office, under the old copper dome. Maya is Caldova’s managing director and the business owner for both sides: Protection Advice, new advice for families and business owners, and Claims & Care, reviews, changes and claims for existing clients.",
+      "This is Maya Ashworth’s office, under the old copper dome. Maya is Life Advice Guru’s managing director and the business owner for both sides: Protection Advice, new advice for families and business owners, and Claims & Care, reviews, changes and claims for existing clients.",
       "Her idea for the agentic era: run each side with a small expert team, supported by one group of AI agents that are dedicated where the work is specialised and shared where it isn’t. Amelia gives the advice, and people approve every decision that matters. The brain under the dome holds the idea, one half for each side.",
     ],
     hint: "Click the brain to see the goals and guardrails, or click Maya to meet her.",
     accent: "#ffc35a",
     mode: { kind: "focus", level: "idea" },
-    shot: { target: [-3.5, 15.2, -6.5], radius: 46, alpha: -1.08, beta: 0.86 },
+    shot: { target: [-3.5, 18.3, -6.5], radius: 47, alpha: -1.08, beta: 0.86 },
   },
   {
     id: "people",
@@ -73,7 +75,7 @@ export const PAGES: StoryPage[] = [
     hint: "Click a person to meet them and see what they are doing, then follow them down to their agent.",
     accent: "#ff8f6b",
     mode: { kind: "focus", level: "people" },
-    shot: { target: [-1.6, 8.3, -5.4], radius: 52, alpha: -1.06, beta: 0.8 },
+    shot: { target: [-1.6, 9.9, -5.4], radius: 52, alpha: -1.06, beta: 0.8 },
   },
   {
     id: "agents",
@@ -112,14 +114,15 @@ export const PAGES: StoryPage[] = [
     kicker: "From the front desk, through all four levels",
     title: "One request, top to bottom",
     body: [
-      "Now watch a real client request travel through the house. It starts at the front desk: the client arrives by tram and signs under the verandah, where Amelia links them with the agents that get them started and Olivia’s Fact Find Extraction agent comes out to read what they sign.",
+      "Now watch a real client request travel through the house. It starts at the front desk: the client arrives by tram, or comes down from the party on the roof in the glass lift, and signs under the verandah, where Amelia links them with the agents that get them started and Olivia’s Fact Find Extraction agent comes out to read what they sign.",
       "Then the house pulls apart. Each step starts with a person, dips down to their agent and the engine room, and comes back up for a human decision. New advice runs through the Protection Advice side, claims through Claims & Care, and the shared agents work on every case. The result rises to Maya’s floor.",
     ],
     hint: "Pick a client to replay their request. Pause or skip at any time.",
     accent: "#ffc35a",
     mode: { kind: "exploded" },
-    shot: { target: [-4, 17, -7], radius: 122, alpha: -0.98, beta: 1.12 },
-    desk: { target: [5.5, 2.2, -17], radius: 34, alpha: -1.2, beta: 1.08 },
+    shot: { target: [-4, 19.6, -7], radius: 130, alpha: -0.98, beta: 1.12 },
+    desk: { target: [-4, 2.6, -19], radius: 44, alpha: -1.34, beta: 1.12 },
+    lift: { target: [-15, 11.3, -16], radius: 70, alpha: -1.36, beta: 1.2 },
   },
 ];
 
@@ -128,4 +131,6 @@ export function pageIndex(id: PageId): number {
 }
 
 /** A closer look at the party on the roof, with the house together (from the party's card). */
-export const PARTY_SHOT: CameraShot = { target: [4, 21, -2.5], radius: 56, alpha: -1.32, beta: 1.0 };
+export const PARTY_SHOT: CameraShot = { target: [4, 25.6, -2.5], radius: 56, alpha: -1.32, beta: 1.0 };
+/** The whole glass lift, street to roof, with the party beyond (from the lift's card). */
+export const LIFT_SHOT: CameraShot = { target: [-10, 19.4, -12], radius: 58, alpha: -1.2, beta: 1.05 };

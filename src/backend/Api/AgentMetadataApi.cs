@@ -1,7 +1,7 @@
-using CaldovaLife.Agents;
-using CaldovaLife.App.Services;
+using LifeAdviceGuru.Agents;
+using LifeAdviceGuru.App.Services;
 
-namespace CaldovaLife.App.Api;
+namespace LifeAdviceGuru.App.Api;
 
 /// <summary>
 /// Lightweight read-only endpoint that powers the "Agent Prompt &amp; Tools"
@@ -23,11 +23,11 @@ public static class AgentMetadataApi
         string[] DefaultTools,
         string[] McpTools);
 
-    // Shared base tools every Caldova agent gets. Surfaced both in the static
+    // Shared base tools every Life Advice Guru agent gets. Surfaced both in the static
     // view (defaultTools) and the runtime view (configuredTools) when the
     // corresponding Foundry connection ids are present in configuration.
     private const string SearchToolDescription =
-        "Azure AI Search — Caldova life knowledge base (life_knowledge: insurer PDS extracts, Caldova's FSG, APL and guides, advice, underwriting, claims, tax and commission rules, client case files)";
+        "Azure AI Search — Life Advice Guru life knowledge base (life_knowledge: insurer PDS extracts, Life Advice Guru's FSG, APL and guides, advice, underwriting, claims, tax and commission rules, client case files)";
     private const string BingToolDescription =
         "Bing Grounding — open-web grounding for current public context (never client details)";
 
@@ -38,7 +38,7 @@ public static class AgentMetadataApi
     ];
 
     // Per-role MCP tool surfaces served by this app at /mcp (server label
-    // caldova-ops-mcp). Each entry is the label shown in the "Tools
+    // guru-ops-mcp). Each entry is the label shown in the "Tools
     // available" list. They mirror the [McpServerTool] methods in
     // src/backend/Mcp/*.cs and are appended to the runtime configuredTools
     // list whenever APP_MCP_URL is set.
@@ -103,7 +103,7 @@ public static class AgentMetadataApi
             "team-leader-agent", TeamLeaderAgent.Instructions, DefaultTools, NoMcpTools),
     };
 
-    public static void MapAgentMetadataEndpoints(this WebApplication app, CaldovaAgentOptions options)
+    public static void MapAgentMetadataEndpoints(this WebApplication app, GuruAgentOptions options)
     {
         app.MapGet("/agents/{role}/metadata", (string role) =>
         {

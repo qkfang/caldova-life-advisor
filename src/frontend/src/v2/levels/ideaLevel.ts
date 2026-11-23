@@ -1,8 +1,8 @@
 /**
- * Level 3 · The Idea — Maya Ashworth's office on the top floor of Caldova
+ * Level 3 · The Idea — Maya Ashworth's office on the top floor of Guru
  * House, and the roof above it.
  *
- * Maya is the business owner for both sides of Caldova. The voxel brain
+ * Maya is the business owner for both sides of Life Advice Guru. The voxel brain
  * floating above the round table is "the idea": one hemisphere for Claims &
  * Care, one for Protection Advice, joined by what they share. It floats under
  * the old copper dome, which the dollhouse cut opens like everything else on
@@ -16,7 +16,7 @@ import { VoxelCharacter } from "../../voxelCharacter";
 import { balustrade, heritageMats, lace, type HeritageMats } from "../heritage";
 import { IDEA, OWNER, SIDES, levelInfo } from "../houseData";
 import { Batch, type Kit, rng } from "../kit";
-import { CHARACTER_SCALE, CORE, DOME, FLOOR_Y, HOUSE, INSIDE, ROOF_Y, SLAB, faceAngle } from "../layout";
+import { CHARACTER_SCALE, CORE, DOME, FLOOR_Y, HOUSE, INSIDE, LIFT, ROOF_Y, SLAB, faceAngle } from "../layout";
 import { SIDE_BAYS, buildShell } from "../shell";
 import type { Anchor, Highlights, LevelBuild } from "../types";
 import { SpotBook, Wanderer, type Outing, type Spot } from "../wander";
@@ -30,6 +30,11 @@ const TABLE = { x: DOME.x, z: DOME.z + 2.6 };
 const ORBIT = { rx: 2.7, rz: 1.4 };
 /** The balcony over the street, at the front right. */
 const BALCONY = { x0: 7, x1: 17.5, z0: HOUSE.z0 - 2.4 };
+/**
+ * The office floor: pale oak. Darker in hex than it looks, because the sun and sky lift every top
+ * face by about a third: on screen it reads as a light, warm oak that the desks and Maya stand out on.
+ */
+const PALE_OAK = "#b0aca4";
 
 export interface IdeaLevelBuild extends LevelBuild {
   /** What Maya is doing right now, for the inspector. */
@@ -187,7 +192,9 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
     level: info,
     floorY: y,
     storey: "upper",
-    floor: kit.mat("#ffffff", { texture: "parquet" }),
+    // Pale oak in long, calm boards.
+    floor: kit.mat(PALE_OAK, { texture: "paleOak" }),
+    floorTile: 4,
     windows: { left: [-10.6, -6.2, -1.8], right: SIDE_BAYS, back: [-14.6, 1.2, 8.6, 15.4] },
     cove: true,
     rail: { skip: [[BALCONY.x0, BALCONY.x1]] },
@@ -439,7 +446,7 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
   kit.finish(boardMesh, root, kit.screen(boardScreen));
   kit.block(root, INSIDE.x1 - 0.06, y + 1.55, 3.6, 0.08, 2.3, 3.8, steel);
 
-  // A scale model of Caldova House on a plinth, on a rug with two reading chairs, by the balcony.
+  // A scale model of Guru House on a plinth, on a rug with two reading chairs, by the balcony.
   const model = { x: 7.6, z: -7.4 };
   kit.block(root, 12.0, y, -7.2, 11.6, 0.05, 6.6, kit.mat("#4a5a78"));
   for (const [x, z, w, d] of [
@@ -461,7 +468,7 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
   kit.finish(mini, root, hm.copper);
   const modelTag = kit.label(root, {
     lines: [
-      { text: "CALDOVA HOUSE · 1889", size: 40, weight: 800, color: "#7a5a12", serif: true },
+      { text: "GURU HOUSE · 1889", size: 40, weight: 800, color: "#7a5a12", serif: true },
       { text: "the bank, and now the practice", size: 26, weight: 600, color: "#5b6476" },
     ],
     width: 2.4,
@@ -509,7 +516,7 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
   const bcx = (BALCONY.x0 + BALCONY.x1) / 2;
   const bcz = (BALCONY.z0 + HOUSE.z0) / 2;
   kit.block(root, bcx, y - 0.35, bcz, bw, 0.35, HOUSE.z0 - BALCONY.z0, hm.stone);
-  kit.block(root, bcx, y - 0.02, bcz, bw - 0.1, 0.04, HOUSE.z0 - BALCONY.z0 - 0.1, kit.mat("#ffffff", { texture: "parquet" }));
+  kit.block(root, bcx, y - 0.02, bcz, bw - 0.1, 0.04, HOUSE.z0 - BALCONY.z0 - 0.1, kit.mat(PALE_OAK, { texture: "paleOak" }), { tile: 4 });
   for (let x = BALCONY.x0 + 0.5; x < BALCONY.x1; x += 1.4) {
     kit.block(root, x, y - 0.65, HOUSE.z0 - 0.4, 0.3, 0.3, 0.8, hm.stone);
   }
@@ -549,7 +556,7 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
     { spot: { at: [6.0, 0.6], face: 0, via: [[6.0, CZ]] }, task: "Checking the North Star", where: "her desk", weight: 2 },
     { spot: { at: [-15.4, -1.4], face: faceAngle(-1.4, -1.0), via: [[-15.4, CZ]] }, task: "Saying hello to Biscuit", where: "Biscuit", weight: 1 },
     { spot: { at: [10.4, 3.6], face: Math.PI / 2, via: [[10.4, CZ]] }, task: "Reading the board pack", where: "the boardroom", weight: 1 },
-    { spot: { at: [model.x + 1.9, model.z + 0.2], face: -Math.PI / 2, via: [[model.x + 1.9, CZ]] }, task: "Looking over the model of the old bank", where: "the model of Caldova House", weight: 1 },
+    { spot: { at: [model.x + 1.9, model.z + 0.2], face: -Math.PI / 2, via: [[model.x + 1.9, CZ]] }, task: "Looking over the model of the old bank", where: "the model of Guru House", weight: 1 },
     {
       spot: { at: [14.0, BALCONY.z0 + 0.9], face: Math.PI, via: [[8.0, CZ], [8.0, BALCONY.z0 + 0.9]] },
       task: "Watching the trams come in",
@@ -628,9 +635,9 @@ export function buildIdeaLevel(kit: Kit): IdeaLevelBuild {
 }
 
 /**
- * The roof: the main cornice and the parapet, with CALDOVA HOUSE · 1889 over
+ * The roof: the main cornice and the parapet, with GURU HOUSE · 1889 over
  * the street, a gallery rail round the dome, solar panels and the lift up
- * from below. Caldova's party for its clients fills the rest of it (the deck,
+ * from below. Life Advice Guru's party for its clients fills the rest of it (the deck,
  * the sign and the party are built in party.ts).
  */
 export function buildRoof(kit: Kit): TransformNode {
@@ -688,8 +695,10 @@ export function buildRoof(kit: Kit): TransformNode {
   balustrade(kit, root, HOUSE.x0 + inset, HOUSE.z1 - inset, HOUSE.x1 - inset, HOUSE.z1 - inset, top, rail);
   balustrade(kit, root, HOUSE.x0 + inset, HOUSE.z0 + inset, HOUSE.x0 + inset, HOUSE.z1 - inset, top, rail);
   balustrade(kit, root, HOUSE.x1 - inset, HOUSE.z0 + inset, HOUSE.x1 - inset, HOUSE.z1 - inset, top, rail);
-  balustrade(kit, root, HOUSE.x0 + inset, HOUSE.z0 + inset, DOME.x - notch - 0.3, HOUSE.z0 + inset, top, rail);
-  // Over the street, the name: CALDOVA HOUSE · 1889 on a raised panel under a pediment.
+  // Along the front, a gap at the corner just wide enough for the bridge from the glass lift.
+  balustrade(kit, root, LIFT.x + 1.25, HOUSE.z0 + inset, DOME.x - notch - 0.3, HOUSE.z0 + inset, top, rail);
+  kit.block(root, (HOUSE.x0 + inset + LIFT.x - 1.25) / 2, top, HOUSE.z0 + inset, LIFT.x - 1.25 - HOUSE.x0 - inset, 1.15, 0.46, hm.render);
+  // Over the street, the name: GURU HOUSE · 1889 on a raised panel under a pediment.
   const panel = { x0: DOME.x + notch + 0.6, x1: HOUSE.x1 - inset };
   const pw = panel.x1 - panel.x0;
   const pcx = (panel.x0 + panel.x1) / 2;
@@ -715,7 +724,7 @@ export function buildRoof(kit: Kit): TransformNode {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = '700 108px "Iowan Old Style", "Palatino Linotype", Georgia, serif';
-    const text = "CALDOVA HOUSE · 1889";
+    const text = "GURU HOUSE · 1889";
     ctx.fillStyle = "rgba(255,248,230,0.95)";
     ctx.fillText(text, w / 2 + 4, h / 2 + 5, w - 40);
     ctx.fillStyle = "#6e5320";
@@ -755,7 +764,7 @@ export function buildRoof(kit: Kit): TransformNode {
     const p = kit.block(root, px, top + 0.48, pz, 2.0, 0.08, 1.4, panelMat);
     p.rotation.x = -0.32;
   }
-  // The lift comes up through the roof, so the guests can come up to the party.
+  // The staff lift comes up through the roof at the back: its overrun, with brass cage doors.
   const ccx = (CORE.x0 + CORE.x1) / 2;
   const ccz = (CORE.z0 + CORE.z1) / 2;
   const steel = kit.mat("#2b3240", { specular: 0.25 });

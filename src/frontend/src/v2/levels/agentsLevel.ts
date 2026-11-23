@@ -18,7 +18,7 @@
  * Olivia's Fact Find Extraction agent also walks out to the front desk under
  * the verandah whenever a visitor signs.
  */
-import { Color3, Mesh, MeshBuilder, StandardMaterial, Texture, TransformNode, Vector3 } from "@babylonjs/core";
+import { Color3, Mesh, MeshBuilder, StandardMaterial, TransformNode, Vector3 } from "@babylonjs/core";
 import { STAFF_PERSONAS, findStaffById } from "../../personaData";
 import { heritageMats } from "../heritage";
 import {
@@ -33,8 +33,8 @@ import {
   type RoleProp,
   type SideId,
 } from "../houseData";
-import { Batch, type Kit, rng } from "../kit";
-import { FLOOR_Y, FRONT_DESK, HOUSE, HUB, INSIDE, SPARE_CELLS, STATIONS, STOREY, ZONES } from "../layout";
+import { Batch, type Kit, mixHex, rng } from "../kit";
+import { FLOOR_Y, FRONT_DESK, HOUSE, HUB, INSIDE, LIFT, SPARE_CELLS, STATIONS, STOREY, ZONES } from "../layout";
 import { SIDE_BAYS, buildShell } from "../shell";
 import type { Anchor, Highlights, LevelBuild } from "../types";
 import { SpotBook, Wanderer, type Outing, type Pt, type Spot } from "../wander";
@@ -54,12 +54,19 @@ const BENCH_COLORS = ["#f59e0b", "#10b981", "#6366f1", "#818cf8"];
 const COLUMNS_X = [-15, -7.5, 7.5, 15];
 const COLUMN_Z = HOUSE.z0 + 0.55;
 
-/** Lettering for each zone, in a lighter tint of the side colour so it reads on the dark floor. */
+/** Lettering for each zone, in a lighter tint of the side colour so it reads on the dark signs. */
 const ZONE_TEXT: Record<SideId, { text: string; color: string }> = {
   claims: { text: "DEDICATED · CLAIMS & CARE", color: "#e9c877" },
   shared: { text: "SHARED BY BOTH SIDES", color: "#b9c3ff" },
   protection: { text: "DEDICATED · PROTECTION ADVICE", color: "#5eead4" },
 };
+
+/**
+ * The floor: a light, cool grey (darker in hex than it looks, because the sun and sky lift every
+ * top face by about a third), and each zone a soft pastel of its side's colour on it.
+ */
+const L1_FLOOR = "#a1afc8";
+const zoneTint = (side: SideId): string => mixHex(L1_FLOOR, SIDES[side].color, 0.25);
 
 /** Where each role stands in its bay: the agent behind, its assistants in front. */
 const HOME_OFFSETS: Record<number, Array<[number, number]>> = {
@@ -76,7 +83,7 @@ const HOME_OFFSETS: Record<number, Array<[number, number]>> = {
   ],
 };
 
-/** What each agent does at the MCP tool bench (the tool families in caldova-ops-mcp). */
+/** What each agent does at the MCP tool bench (the tool families in guru-ops-mcp). */
 const TOOL_WORK: Record<string, { bench: number; tasks: string[] }> = {
   "research-1": { bench: 0, tasks: ["Reading a product sheet", "Comparing the APL insurers", "Building the comparison workbook"] },
   "underwriting-1": { bench: 1, tasks: ["Looking up an insurer", "Checking the evidence needed", "Generating the application summary"] },
@@ -99,7 +106,10 @@ interface Pod {
   node: TransformNode;
   ring: Mesh;
   pad: StandardMaterial;
+  /** The pad's pastel at rest, stronger while lit, and the bare zone it powers up from. */
   padBase: Color3;
+  padLit: Color3;
+  zoneBase: Color3;
   power: number;
 }
 
@@ -302,26 +312,14 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   const between = (a: number, b: number): number => a + (b - a) * r();
   const hm = heritageMats(kit);
 
-  // Glowing grid floor, one cell every two units: the new floor laid in the old banking chamber.
-  const gridTex = kit.canvas("v2_agentGrid", 128, 128, (ctx, w, hh) => {
-    ctx.fillStyle = "#13233f";
-    ctx.fillRect(0, 0, w, hh);
-    ctx.strokeStyle = "rgba(110,193,255,0.55)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(0, 0, w, hh);
-  });
-  gridTex.wrapU = Texture.WRAP_ADDRESSMODE;
-  gridTex.wrapV = Texture.WRAP_ADDRESSMODE;
-  const gridMat = new StandardMaterial("v2_agentGridMat", scene);
-  gridMat.diffuseTexture = gridTex;
-  gridMat.emissiveColor = new Color3(0.42, 0.48, 0.6);
-  gridMat.specularColor = Color3.Black();
+  // A light, cool grey tiled floor: the new floor laid in the old banking chamber.
+  const floorMat = kit.mat(L1_FLOOR, { texture: "tiles" });
   const { tag } = buildShell(kit, {
     root,
     level: info,
     floorY: y,
     storey: "ground",
-    floor: gridMat,
+    floor: floorMat,
     inner: hm.render,
     windows: { left: [-10.6, -6.2], right: SIDE_BAYS },
     cove: true,
@@ -345,29 +343,35 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   }
 
   /* ---------------- The zones ---------------- */
+  // Each zone is a soft pastel of its side's colour on the grey, with a strip of the full colour
+  // along the front and subtle dashed lines where the zones meet.
   const z0 = HOUSE.z0 + 0.1;
   const z1 = INSIDE.z1 - 0.3;
   for (const side of ["claims", "shared", "protection"] as const) {
     const zone = ZONES[side];
     const cx = (zone.x0 + zone.x1) / 2;
     const w = zone.x1 - zone.x0 - 0.3;
-    kit.block(root, cx, y + 0.004, (z0 + z1) / 2, w, 0.012, z1 - z0, kit.mat(SIDES[side].color, { unlit: true, alpha: 0.26 }));
+    kit.block(root, cx, y + 0.004, (z0 + z1) / 2, w, 0.012, z1 - z0, kit.mat(zoneTint(side), { texture: "tiles" }));
     kit.block(root, cx, y + 0.01, z0 + 0.12, w, 0.04, 0.16, kit.mat(SIDES[side].color, { unlit: true }));
     // A sign for each zone along the top of the colonnade, like the old bank's counter signs, so
-    // it reads from the street and is never hidden behind the agents' cards.
+    // it reads from the street and is never hidden behind the agents' cards. The Claims & Care
+    // sign starts just clear of the glass lift on the corner, so the lift never hides it.
+    const width = side === "claims" ? 7.6 : 8.6;
     const banner = kit.label(root, {
       lines: [{ text: ZONE_TEXT[side].text, size: 60, weight: 800, color: ZONE_TEXT[side].color }],
-      width: 8.6,
+      width,
       px: 1100,
-      pxHeight: 110,
+      // Same height as the other zone signs; the text is just a little smaller.
+      pxHeight: Math.round((110 * 8.6) / width),
       bg: "rgba(10,20,40,0.95)",
       accent: SIDES[side].color,
       bar: "left",
     });
-    banner.position.set(cx, y + h - 0.75, HOUSE.z0 - 0.08);
+    const bx = side === "claims" ? LIFT.x + LIFT.w / 2 + 0.25 + width / 2 : cx;
+    banner.position.set(bx, y + h - 0.75, HOUSE.z0 - 0.08);
   }
   // Dashed lines where the zones meet.
-  const dash = kit.mat("#c7d2fe", { unlit: true });
+  const dash = kit.mat("#8a95aa");
   for (const x of [ZONES.claims.x1, ZONES.protection.x0]) {
     for (let z = z0 + 0.6; z < z1 - 0.4; z += 1.5) kit.block(root, x, y + 0.01, z + 0.4, 0.12, 0.04, 0.8, dash);
   }
@@ -440,18 +444,21 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     if (!st || !agent) continue;
     const side = SIDES[agent.side];
     const cz = st.z + 0.2;
+    // A light pad: a pastel of the person's colour on the zone, framed in the side's colour, a
+    // touch darker than the floor so the white robots stand out on it.
+    const zoneBase = Color3.FromHexString(zoneTint(agent.side));
+    const padBase = Color3.FromHexString(mixHex(zoneTint(agent.side), p.color, 0.3)).scale(0.94);
+    const padLit = Color3.FromHexString(mixHex(zoneTint(agent.side), p.color, 0.55)).scale(0.94);
     const padMat = new StandardMaterial(`v2_pad_${p.id}`, scene);
-    const padBase = Color3.FromHexString(p.color);
-    padMat.diffuseColor = padBase.scale(0.6);
-    padMat.emissiveColor = padBase.scale(0.35);
+    padMat.diffuseColor = padBase.clone();
     padMat.specularColor = Color3.Black();
     kit.block(root, st.x, y, cz, POD_W, 0.06, POD_D, padMat);
     const frameMat = kit.mat(side.color, { unlit: true });
     for (const [fw, fd, fx, fz] of [
-      [POD_W, 0.14, 0, -POD_D / 2],
-      [POD_W, 0.14, 0, POD_D / 2],
-      [0.14, POD_D, -POD_W / 2, 0],
-      [0.14, POD_D, POD_W / 2, 0],
+      [POD_W, 0.22, 0, -POD_D / 2],
+      [POD_W, 0.22, 0, POD_D / 2],
+      [0.22, POD_D, -POD_W / 2, 0],
+      [0.22, POD_D, POD_W / 2, 0],
     ] as const) {
       kit.block(root, st.x + fx, y + 0.02, cz + fz, fw, 0.08, fd, frameMat);
     }
@@ -490,7 +497,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     ring.setEnabled(false);
     // A low click target over the pad, so the roles standing on it can be clicked on their own.
     kit.hitbox(root, st.x, y, cz, POD_W, 0.5, POD_D, { type: "agent", id: p.id });
-    pods.push({ id: p.id, node, ring, pad: padMat, padBase, power: 1 });
+    pods.push({ id: p.id, node, ring, pad: padMat, padBase, padLit, zoneBase, power: 1 });
 
     const offsets = HOME_OFFSETS[roles.length] ?? HOME_OFFSETS[3];
     const handoffs = [...(HANDOFFS[p.id] ?? []), ...(p.id === "lead-1" ? [] : ["lead-1"])];
@@ -564,7 +571,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   kit.block(root, HUB.x, y + 0.01, (BUS_Z + hubBack) / 2, 0.14, 0.04, BUS_Z - hubBack, traceMat);
 
   /* ---------------- The Foundry uplink ---------------- */
-  kit.cyl(root, UPLINK.x, y, UPLINK.z, 2.3, 0.04, kit.mat("#141a30"), { tess: 32 });
+  kit.cyl(root, UPLINK.x, y, UPLINK.z, 2.3, 0.04, kit.mat("#9f98c9"), { tess: 32 });
   kit.cyl(root, UPLINK.x, y + 0.01, UPLINK.z, 1.4, 0.05, kit.mat("#4c3a99", { unlit: true }), { tess: 24 });
   const uplinkRing = MeshBuilder.CreateTorus("v2_uplinkRing", { diameter: 2.1, thickness: 0.1, tessellation: 40 }, scene);
   uplinkRing.position.set(UPLINK.x, y + 0.06, UPLINK.z);
@@ -576,7 +583,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   });
   uplinkBeam.setEnabled(false);
   const uplinkText = kit.label(root, {
-    lines: [{ text: "FOUNDRY UPLINK", size: 60, weight: 800, color: "#c4b5fd" }],
+    lines: [{ text: "FOUNDRY UPLINK", size: 60, weight: 800, color: "#4c1d95" }],
     width: 2.6,
     px: 640,
     pxHeight: 96,
@@ -592,7 +599,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     kit.block(root, x, y + 1.08, BENCH_Z, 0.78, 0.46, 0.02, kit.mat(BENCH_COLORS[i], { unlit: true }));
   });
   const benchText = kit.label(root, {
-    lines: [{ text: "MCP TOOL BENCH", size: 60, weight: 800, color: "#f9a8d4" }],
+    lines: [{ text: "MCP TOOL BENCH", size: 60, weight: 800, color: "#9d174d" }],
     width: 4.2,
     px: 768,
     pxHeight: 96,
@@ -618,7 +625,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
     const plate = kit.label(root, {
       lines: [
         { text: "THE OLD SAFE", size: 40, weight: 800, color: "#7a5a12", serif: true },
-        { text: "Caldova House · 1889", size: 28, weight: 600, color: "#5b6476" },
+        { text: "Guru House · 1889", size: 28, weight: 600, color: "#5b6476" },
       ],
       width: 2.0,
       px: 420,
@@ -700,7 +707,7 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
   anchors.set("hub", { node: hub, group: "agents", dy: 0 });
 
   /* ---------------- Data packets ---------------- */
-  const packetMat = kit.mat("#ffffff", { unlit: true });
+  const packetMat = kit.mat("#0e7490", { unlit: true });
   const packets: Packet[] = [];
   for (const [i, p] of STAFF_PERSONAS.entries()) {
     const st = STATIONS[p.id];
@@ -764,10 +771,9 @@ export function buildAgentsLevel(kit: Kit): AgentsLevelBuild {
       if (deskCalled && !deskPinned && !lifted) sendToDesk();
       pods.forEach((pod, i) => {
         const on = lit(pod.id);
-        // Bays power up one after another during the chapter intro.
+        // Bays power up one after another during the chapter intro, from the bare zone to their colour.
         pod.power = introT >= 0 ? Math.min(1, Math.max(0, (introT - i * 0.18) / 0.5)) : 1;
-        const glow = (0.12 + 0.28 * pod.power) * (on ? 1.6 : 1);
-        pod.pad.emissiveColor.copyFrom(pod.padBase).scaleInPlace(glow);
+        Color3.LerpToRef(pod.zoneBase, on ? pod.padLit : pod.padBase, pod.power, pod.pad.diffuseColor);
         if (on) pod.ring.scaling.setAll(1 + Math.sin(t * 5) * 0.05);
       });
       if (introT > 3) introT = -1;
