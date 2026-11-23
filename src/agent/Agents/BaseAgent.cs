@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace LifeAdviceGuru.Agents;
 
@@ -74,6 +75,15 @@ public abstract class BaseAgent
 
     /// <summary>The system instructions/prompt the agent was created with.</summary>
     public string Instructions { get; }
+
+    // The Azure AI Search tool leaves source markers such as 【4:0†source】 in the
+    // output text. The citations come from the annotations (ExtractCitations), so
+    // the markers are dropped rather than shown to the reader.
+    private static readonly Regex SourceMarkerPattern = new(@"[ \t]?【\d+:\d+†[^】]*】", RegexOptions.Compiled);
+
+    /// <summary>Removes search-tool source markers (e.g. 【4:0†source】) from agent text.</summary>
+    public static string StripSourceMarkers(string text) =>
+        string.IsNullOrEmpty(text) ? text : SourceMarkerPattern.Replace(text, string.Empty);
 
     protected BaseAgent(AIProjectClient aiProjectClient, string agentId, string deploymentName, string instructions, IList<ResponseTool>? tools = null, ILogger? logger = null)
         : this(aiProjectClient, agentId, deploymentName, instructions, tools, null, logger)
@@ -156,7 +166,7 @@ public abstract class BaseAgent
         sw.Stop();
         _logger.LogInformation("Agent {AgentId} completed in {Duration}ms", _agentId, sw.ElapsedMilliseconds);
 
-        var text = result?.GetOutputText() ?? string.Empty;
+        var text = StripSourceMarkers(result?.GetOutputText() ?? string.Empty);
         var citations = ExtractCitations(result);
         var rawItems = SerializeOutputItems(allOutputItems);
 
@@ -213,7 +223,7 @@ public abstract class BaseAgent
         sw.Stop();
         _logger.LogInformation("Agent {AgentId} resume completed in {Duration}ms", _agentId, sw.ElapsedMilliseconds);
 
-        var text = result?.GetOutputText() ?? string.Empty;
+        var text = StripSourceMarkers(result?.GetOutputText() ?? string.Empty);
         var citations = ExtractCitations(result);
         var rawItems = SerializeOutputItems(allOutputItems);
 
@@ -295,7 +305,7 @@ public abstract class BaseAgent
         var rawItems = SerializeOutputItems(allOutputItems);
         var trace = new AgentTraceResult(
             Input: message,
-            Text: textBuilder.ToString(),
+            Text: StripSourceMarkers(textBuilder.ToString()),
             Citations: citations,
             OutputItems: rawItems,
             ResponseId: completedResponse?.Id,
@@ -376,7 +386,7 @@ public abstract class BaseAgent
         var rawItems = SerializeOutputItems(allOutputItems);
         var trace = new AgentTraceResult(
             Input: message,
-            Text: textBuilder.ToString(),
+            Text: StripSourceMarkers(textBuilder.ToString()),
             Citations: citations,
             OutputItems: rawItems,
             ResponseId: completedResponse?.Id,
@@ -489,7 +499,7 @@ public abstract class BaseAgent
         }
 
         _logger.LogInformation("Agent {AgentId} step completed", _agentId);
-        return new AgentStepResult(result.GetOutputText(), null, result.Id);
+        return new AgentStepResult(StripSourceMarkers(result.GetOutputText()), null, result.Id);
     }
 
     private IReadOnlyList<SearchCitation> ExtractCitations(ResponseResult? result)

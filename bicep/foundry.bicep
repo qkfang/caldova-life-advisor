@@ -52,10 +52,11 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
     project
   ]
   // DataZoneStandard has its own quota; the subscription's GlobalStandard gpt-5.4 quota in
-  // eastus2 is almost fully used by other workloads.
+  // eastus2 is almost fully used by other workloads. 300 = 300K tokens a minute: the Team
+  // Leader group chat and the research runs (MCP tool output) hit 429s at 100K.
   sku: {
     name: 'DataZoneStandard'
-    capacity: 100
+    capacity: 300
   }
   properties: {
     model: {

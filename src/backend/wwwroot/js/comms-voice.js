@@ -85,6 +85,10 @@
                 const empty = transcriptEl.querySelector('.voice-empty');
                 if (empty) empty.remove();
             }
+            // Drop search-tool source markers (e.g. 【4:0†source】) from the transcript.
+            function cleanText(text) {
+                return typeof window.zcStripSourceMarkers === 'function' ? window.zcStripSourceMarkers(text, false) : text;
+            }
             function appendMessage(role, text) {
                 clearEmpty();
                 const div = document.createElement('div');
@@ -97,7 +101,7 @@
                 }
                 const textSpan = document.createElement('span');
                 textSpan.className = 'voice-msg-text';
-                textSpan.textContent = text;
+                textSpan.textContent = cleanText(text);
                 div.appendChild(textSpan);
                 transcriptEl.appendChild(div);
                 transcriptEl.scrollTop = transcriptEl.scrollHeight;
@@ -105,7 +109,7 @@
             }
             function appendOrUpdate(role, text, currentRef) {
                 if (currentRef && currentRef.parentNode) {
-                    currentRef.querySelector('.voice-msg-text').textContent = text;
+                    currentRef.querySelector('.voice-msg-text').textContent = cleanText(text);
                     transcriptEl.scrollTop = transcriptEl.scrollHeight;
                     return currentRef;
                 }

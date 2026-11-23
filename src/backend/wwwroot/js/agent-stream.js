@@ -25,6 +25,17 @@
  * plain JSON POST so the page still works without streaming.
  */
 (function () {
+    // The search tool leaves source markers such as 【4:0†source】 in agent text;
+    // the citations are listed separately, so they're stripped. While streaming,
+    // a partial marker at the end is held back until it completes.
+    const SOURCE_MARKER = /[ \t]?【\d+:\d+†[^】]*】/g;
+    const PARTIAL_MARKER = /[ \t]?【\d*(?::\d*(?:†[^】]*)?)?$/;
+    function stripSourceMarkers(text, holdPartial) {
+        const s = String(text == null ? '' : text).replace(SOURCE_MARKER, '');
+        return holdPartial ? s.replace(PARTIAL_MARKER, '') : s;
+    }
+    window.zcStripSourceMarkers = stripSourceMarkers;
+
     function isStreamSupported() {
         return typeof window !== 'undefined'
             && typeof window.fetch === 'function'
@@ -116,7 +127,7 @@
                     const chunk = (payload && typeof payload.text === 'string') ? payload.text : '';
                     if (chunk) {
                         fullText += chunk;
-                        if (typeof opts.onDelta === 'function') opts.onDelta(chunk, fullText);
+                        if (typeof opts.onDelta === 'function') opts.onDelta(chunk, stripSourceMarkers(fullText, true));
                     }
                 } else if (event === 'error') {
                     const message = (payload && payload.message) || 'Agent error';
