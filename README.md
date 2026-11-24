@@ -86,12 +86,13 @@ Each staff role is a **Microsoft Foundry** agent. Every agent showcases at least
 |---|---|---|
 | **Declarative agents** (`Azure.AI.Projects`) | Each role is a Foundry agent created from code on a shared `GuruAgent` base class, with its own instructions and structured output. | All nine (eight staff agents plus Cara's voice agent) |
 | **Azure AI Search grounding** | Answers are grounded in, and cite, the `life_knowledge` index: the insurers' PDS extracts, Life Advice Guru's Financial Services Guide and APL, the rules on advice, insurance in super, underwriting, claims, tax and commission, Life Advice Guru's guides, and the case files. | All. Paraplanning cites a rule for every step |
-| **Bing grounding** | Public web grounding for up-to-date reference information. | All, through the shared base class |
+| **Web search, powered by Web IQ** | Public web search for up-to-date reference information, such as a current super or tax rule, with a citation for each source. Added directly to each agent, so it needs no connection. | All, through the shared base class |
 | **MCP tools** (served by the backend at `/mcp`, server label `guru-ops-mcp`) | **Insurance Research:** analyse policy documents, compare insurers, build the comparison workbook. **Underwriting:** look up insurers, check underwriting requirements, generate the application summary PDF. **Claims:** validate the claimant, check the policy, calculate the benefit, check the approval rules, request and track approval, and lodge the claim. **Teams:** send the approval card. | Ivy, Uma, Ben |
 | **Azure Content Understanding** | Checks the authenticity of IDs, medical reports, death certificates, payslips, BAS and bank statements, and returns a legit, suspicious or fake verdict with the reasons. | Felix |
 | **Microsoft Teams adaptive-card approvals** | A claim is lodged only after a person approves the card in Teams. | Ben, with Theo approving |
 | **Voice Live** | Talk to Cara by voice about a case. | Cara (voice agent) |
 | **Multi-agent group chat** | Theo orchestrates the seven specialists on a single case. | Theo |
+| **Tracing** | The Foundry project is connected to Application Insights, so every agent run is traced (model calls and tool calls) and shows in the Foundry portal's Traces tab. | All |
 
 ---
 
@@ -105,7 +106,9 @@ Each staff role is a **Microsoft Foundry** agent. Every agent showcases at least
 - A Microsoft Foundry project with:
   - a model deployment
   - an Azure AI Search connection to the `life_knowledge` index (see [ai-search/README.md](ai-search/README.md) to build it)
-  - a Bing grounding connection
+  - an Application Insights connection, for tracing (optional)
+
+  Web search needs no connection: the agents add the Foundry web search tool directly, and Web IQ powers it.
 
 **Configuration.** Set these keys in `src/backend/appsettings.json` and `src/agent/appsettings.json`, or as environment variables:
 
@@ -114,7 +117,7 @@ Each staff role is a **Microsoft Foundry** agent. Every agent showcases at least
 - `AZURE_TENANT_ID` (optional)
 - `AZURE_AI_SEARCH_CONNECTION_ID`
 - `AZURE_AI_SEARCH_INDEX_NAME`, set to `life_knowledge`
-- `AZURE_BING_CONNECTION_ID`
+- `AZURE_AI_WEB_SEARCH_ENABLED` (optional). Web search is on unless this is `false`.
 
 The backend also uses `APP_MCP_URL`, the public base URL where Foundry reaches the backend's `/mcp` endpoint. When you run locally, point it at the deployed `app-lifeguru-backend` or at a dev tunnel.
 

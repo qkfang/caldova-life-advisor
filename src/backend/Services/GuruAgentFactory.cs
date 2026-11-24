@@ -52,7 +52,7 @@ public class GuruAgentFactory
     /// <param name="role">Kebab-case role key or route id.</param>
     /// <param name="extraTools">Optional Foundry response tools (e.g. an
     /// MCP tool surface) to wire onto the agent in addition to the default
-    /// Azure AI Search and Bing tools.</param>
+    /// Azure AI Search and web search tools.</param>
     public GuruAgent Create(string role, IList<ResponseTool>? extraTools = null)
     {
         if (!IsConfigured)
@@ -139,7 +139,7 @@ public class GuruAgentFactory
         var deployment = _options.ModelDeploymentName!;
         var search = _options.SearchConnectionId;
         var index = _options.SearchIndexName;
-        var bing = _options.BingConnectionId;
+        var web = _options.WebSearchEnabled;
         var mcpUri = string.IsNullOrWhiteSpace(_options.AppMcpUrl)
             ? null
             : $"{_options.AppMcpUrl!.TrimEnd('/')}/mcp";
@@ -147,23 +147,23 @@ public class GuruAgentFactory
         return role.ToLowerInvariant() switch
         {
             "onboarding" or "intake"
-                => new OnboardingAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<OnboardingAgent>()),
+                => new OnboardingAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<OnboardingAgent>()),
             "paraplanning"
-                => new ParaplanningAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<ParaplanningAgent>()),
+                => new ParaplanningAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ParaplanningAgent>()),
             "research" or "insurance-research"
-                => new InsuranceResearchAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<InsuranceResearchAgent>(), mcpUri),
+                => new InsuranceResearchAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<InsuranceResearchAgent>(), mcpUri),
             "fincrime" or "financial-crime"
-                => new FinancialCrimeAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<FinancialCrimeAgent>()),
+                => new FinancialCrimeAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<FinancialCrimeAgent>()),
             "underwriting"
-                => new UnderwritingAgent(client, deployment, search, index, bing, mcpUri, _loggerFactory.CreateLogger<UnderwritingAgent>()),
+                => new UnderwritingAgent(client, deployment, search, index, web, mcpUri, _loggerFactory.CreateLogger<UnderwritingAgent>()),
             "claims"
-                => new ClaimsAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<ClaimsAgent>(), extraTools),
+                => new ClaimsAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ClaimsAgent>(), extraTools),
             "communications" or "client-communications"
-                => new ClientCommunicationsAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
+                => new ClientCommunicationsAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
             "communications-voice" or "client-communications-voice"
-                => new ClientCommunicationsVoiceAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<ClientCommunicationsVoiceAgent>()),
+                => new ClientCommunicationsVoiceAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ClientCommunicationsVoiceAgent>()),
             "team-leader" or "leader"
-                => new TeamLeaderAgent(client, deployment, search, index, bing, _loggerFactory.CreateLogger<TeamLeaderAgent>()),
+                => new TeamLeaderAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<TeamLeaderAgent>()),
             _ => throw new ArgumentException($"Unknown Life Advice Guru agent role: '{role}'.", nameof(role))
         };
     }

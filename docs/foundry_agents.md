@@ -17,9 +17,10 @@ All agents read from and write to one shared object, the **Client Case**. Amelia
 - The agents are declarative Foundry agents created from code with `Azure.AI.Projects`.
 - They share a `GuruAgent` base class, which wires up two grounding sources:
   - **Azure AI Search** over the `life_knowledge` index
-  - **Bing**
+  - **Web search**, powered by Web IQ, for current public context
 - The agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `guru-ops-mcp`): Ivy's Insurance Research Agent, Uma's Underwriting Agent and Ben's Claims Agent.
 - Every agent has its own page in the backend console at `/agents/{route id}`.
+- The Foundry project is connected to Application Insights, so every agent run is traced.
 
 ---
 
@@ -91,7 +92,7 @@ Capture every request accurately, run the fact find and the in-good-order checkl
 ### Tools
 
 - Azure AI Search over `life_knowledge`: *Guide — in-good-order checklist for advice and claims*, *Life Advice Guru — Financial Services Guide and remuneration*, *Insurance inside super — permitted cover, Protecting Your Super and opt-in rules*, and the case files
-- Bing grounding
+- Web search, powered by Web IQ
 - Structured field extraction into the Client Case
 - Backend `/onboarding/*` endpoints, which open the case in `CaseStore` and route it
 
@@ -151,7 +152,7 @@ Work out how much cover is needed and how to hold it, and draft the Statement of
   - *Life Advice Guru — Financial Services Guide and remuneration*
   - the insurers' PDS extracts
 - Product and rule document texts used for citations (`ProductDocuments`)
-- Bing grounding
+- Web search, powered by Web IQ
 - Backend `/paraplanning/*` endpoints
 
 ### Outputs
@@ -250,7 +251,7 @@ Verify identity, check documents, and detect fraud, scams and identity takeover,
 - **Azure Content Understanding**, using a shared authenticity field schema: document type, issuer, holder name, document number, issue and expiry dates, tamper indicators, security features, and a consistency summary
 - A deterministic checks layer that turns the extracted fields into a verdict: legit, suspicious, tampered or fake
 - Azure AI Search over *Guide — financial crime red flags and controls for life insurance* and the case files
-- Bing grounding
+- Web search, powered by Web IQ
 - Backend `/fincrime/*` endpoints
 
 ### Outputs
@@ -314,7 +315,7 @@ Take each application through underwriting with the insurer, explain the client'
   - `underwriting_checkRequirements`: the medical and financial evidence needed for the client's age and sums insured
   - `underwriting_generateApplicationSummaryPdf`: the application and disclosure summary PDF
 - Azure AI Search over *Underwriting and the duty to take reasonable care*, *Directory — insurers on the approved product list* and the insurers' PDS extracts
-- Bing grounding
+- Web search, powered by Web IQ
 - Backend `/underwriting/*` endpoints
 
 ### Outputs
@@ -420,7 +421,7 @@ Draft clear, empathetic and compliant communications for clients, families and r
 - The drafting service (`ClientCommunicationsDrafter`)
 - Azure AI Search over the case files and rule documents, for facts and required disclosures
 - A compliance check: no personal advice, the required disclosures, and IDR and AFCA rights
-- Bing grounding
+- Web search, powered by Web IQ
 - Backend `/communications/*` endpoints
 
 ### Outputs
@@ -513,7 +514,7 @@ Lead the practice: monitor the pipeline, service levels and complaint clocks, pr
 - Azure AI Search over *Matrix — authority, approvals and escalation*, *Claims rules — Life Insurance Code of Practice and income protection benefits*, *Advice rules — best interests duty, SoA and replacement advice* and the case files
 - The practice dashboard, through `/team-leader/*`
 - A multi-agent group chat (`TeamLeaderGroupChatApi`), in which Theo's agent coordinates the seven specialist agents
-- Bing grounding
+- Web search, powered by Web IQ
 
 ### Outputs
 

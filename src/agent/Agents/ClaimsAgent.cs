@@ -118,10 +118,10 @@ public class ClaimsAgent : GuruAgent
         string deploymentName,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        string? bingConnectionId = null,
+        bool webSearch = false,
         ILogger? logger = null,
         IList<ResponseTool>? extraTools = null)
-        : base(aiProjectClient, AgentId, "Ben", "Benefit Claims Advocate", "Claims", "\u001b[35m", deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId, logger, mcpServerUri: null, mcpServerLabel: null, extraTools: extraTools)
+        : base(aiProjectClient, AgentId, "Ben", "Benefit Claims Advocate", "Claims", "\u001b[35m", deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch, logger, mcpServerUri: null, mcpServerLabel: null, extraTools: extraTools)
     {
     }
 }

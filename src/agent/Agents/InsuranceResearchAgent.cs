@@ -13,7 +13,7 @@ namespace LifeAdviceGuru.Agents;
 /// the Claims Agent.
 ///
 /// In addition to the shared Foundry tools (Azure AI Search over the
-/// <c>life_knowledge</c> index + Bing grounding), this agent is wired up with
+/// <c>life_knowledge</c> index + web search), this agent is wired up with
 /// three research MCP tools served by the backend:
 ///
 ///   - <c>research_analysePolicyDocument</c>     — read an APL insurer's product
@@ -122,12 +122,12 @@ public class InsuranceResearchAgent : GuruAgent
         string deploymentName,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        string? bingConnectionId = null,
+        bool webSearch = false,
         ILogger? logger = null,
         string? mcpServerUri = null)
         : base(aiProjectClient, AgentId, "Ivy", "Insurance Research Analyst", "Insurance Research", "\u001b[33m",
               deploymentName, Instructions,
-              searchConnectionId, searchIndexName, bingConnectionId, logger,
+              searchConnectionId, searchIndexName, webSearch, logger,
               mcpServerUri, DefaultMcpServerLabel)
     {
     }

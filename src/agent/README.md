@@ -16,7 +16,7 @@ The C# pattern is modelled on
 - `Agents/GuruAgent.cs` — shared base for every staff agent; wires up
   Azure AI Search grounding over the `life_knowledge` index (insurer PDS
   extracts, Life Advice Guru's guides, advice, underwriting, claims, tax and commission
-  rules, and client case files), Bing grounding, and an optional MCP tool
+  rules, and client case files), web search (powered by Web IQ), and an optional MCP tool
   surface (server label `guru-ops-mcp`).
 - One class per staff character, each with its own Foundry agent id, persona,
   instructions and structured output format.
@@ -55,7 +55,7 @@ Set the following keys in `appsettings.json` (or as environment variables):
 | `AZURE_TENANT_ID` | Optional tenant ID for `DefaultAzureCredential` |
 | `AZURE_AI_SEARCH_CONNECTION_ID` | Foundry connection ID for the Azure AI Search service |
 | `AZURE_AI_SEARCH_INDEX_NAME` | Knowledge index name (`life_knowledge`) |
-| `AZURE_BING_CONNECTION_ID` | Foundry Bing grounding connection ID |
+| `AZURE_AI_WEB_SEARCH_ENABLED` | Optional. Web search, powered by Web IQ, is on unless this is `false`; it needs no connection |
 
 Authentication uses `DefaultAzureCredential`, so any locally configured
 identity (Azure CLI, Managed Identity, etc.) will work. The CLI creates the

@@ -53,7 +53,8 @@ using var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
 
 var searchConnectionId = config["AZURE_AI_SEARCH_CONNECTION_ID"];
 var searchIndexName = config["AZURE_AI_SEARCH_INDEX_NAME"];
-var bingConnectionId = config["AZURE_BING_CONNECTION_ID"];
+// Web search (powered by Web IQ) needs no connection; on unless set to "false".
+var webSearch = !string.Equals(config["AZURE_AI_WEB_SEARCH_ENABLED"], "false", StringComparison.OrdinalIgnoreCase);
 
 string? flag = args.Length > 0 ? args[0] : null;
 string request = args.Length > 1
@@ -63,21 +64,21 @@ string request = args.Length > 1
 GuruAgent? agent = flag switch
 {
     "--onboarding"
-        => new OnboardingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<OnboardingAgent>()),
+        => new OnboardingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<OnboardingAgent>()),
     "--paraplanning"
-        => new ParaplanningAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ParaplanningAgent>()),
+        => new ParaplanningAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<ParaplanningAgent>()),
     "--research"
-        => new InsuranceResearchAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<InsuranceResearchAgent>()),
+        => new InsuranceResearchAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<InsuranceResearchAgent>()),
     "--fincrime"
-        => new FinancialCrimeAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<FinancialCrimeAgent>()),
+        => new FinancialCrimeAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<FinancialCrimeAgent>()),
     "--underwriting"
-        => new UnderwritingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, mcpServerUri: null, logger: loggerFactory.CreateLogger<UnderwritingAgent>()),
+        => new UnderwritingAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, mcpServerUri: null, logger: loggerFactory.CreateLogger<UnderwritingAgent>()),
     "--claims"
-        => new ClaimsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ClaimsAgent>()),
+        => new ClaimsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<ClaimsAgent>()),
     "--communications"
-        => new ClientCommunicationsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
+        => new ClientCommunicationsAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
     "--team-leader"
-        => new TeamLeaderAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, bingConnectionId, loggerFactory.CreateLogger<TeamLeaderAgent>()),
+        => new TeamLeaderAgent(aiProjectClient, deploymentName, searchConnectionId, searchIndexName, webSearch, loggerFactory.CreateLogger<TeamLeaderAgent>()),
     _ => null
 };
 

@@ -25,16 +25,16 @@ public static class AgentMetadataApi
 
     // Shared base tools every Life Advice Guru agent gets. Surfaced both in the static
     // view (defaultTools) and the runtime view (configuredTools) when the
-    // corresponding Foundry connection ids are present in configuration.
+    // search connection is configured and web search is enabled.
     private const string SearchToolDescription =
         "Azure AI Search — Life Advice Guru life knowledge base (life_knowledge: insurer PDS extracts, Life Advice Guru's FSG, APL and guides, advice, underwriting, claims, tax and commission rules, client case files)";
-    private const string BingToolDescription =
-        "Bing Grounding — open-web grounding for current public context (never client details)";
+    private const string WebSearchToolDescription =
+        "Web search — Web IQ: current public context from the open web, with citations (never client details)";
 
     private static readonly string[] DefaultTools =
     [
         SearchToolDescription,
-        BingToolDescription
+        WebSearchToolDescription
     ];
 
     // Per-role MCP tool surfaces served by this app at /mcp (server label
@@ -116,8 +116,8 @@ public static class AgentMetadataApi
             var configuredTools = new List<string>();
             if (!string.IsNullOrWhiteSpace(options.SearchConnectionId) && !string.IsNullOrWhiteSpace(options.SearchIndexName))
                 configuredTools.Add($"Azure AI Search — index '{options.SearchIndexName}'");
-            if (!string.IsNullOrWhiteSpace(options.BingConnectionId))
-                configuredTools.Add("Bing Grounding (web)");
+            if (options.WebSearchEnabled)
+                configuredTools.Add("Web search — Web IQ");
             if (!string.IsNullOrWhiteSpace(options.AppMcpUrl) && m.McpTools.Length > 0)
                 configuredTools.AddRange(m.McpTools);
 

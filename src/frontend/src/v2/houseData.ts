@@ -604,9 +604,14 @@ export const INFRA: InfraInfo[] = [
     color: "#38bdf8",
     scope: "all",
     summary: "Timely, citation-ready context from the public web, so agents can check up-to-date reference information.",
-    details: ["Part of Microsoft IQ"],
-    security: "Web grounding goes through the Foundry project connection, so the apps hold no web-search keys.",
-    inScenarios: "The Grounding with Bing Search connection in the Foundry project stands in for it.",
+    details: [
+      "The Foundry web search tool on every agent, powered by Web IQ",
+      "Searches from Melbourne, Victoria, and cites each source",
+      "Part of Microsoft IQ",
+    ],
+    security:
+      "Added directly to each agent, web search needs no connection or keys. Agents send search queries only, never client details.",
+    inScenarios: "Live: every agent can search the public web through Web IQ, for example to confirm a current super or tax rule.",
   },
   {
     id: "foundry",
@@ -758,8 +763,13 @@ export const INFRA: InfraInfo[] = [
     kind: "Azure · observability",
     color: "#f59e0b",
     scope: "platform",
-    summary: "Both web apps send telemetry to Application Insights, backed by a Log Analytics workspace.",
-    details: ["The connection string is set on both App Service apps", "30-day retention in Log Analytics"],
+    summary:
+      "Both web apps send telemetry to Application Insights, backed by a Log Analytics workspace. The Foundry project is connected too, so every agent run is traced.",
+    details: [
+      "The connection string is set on both App Service apps",
+      "Foundry traces each agent run (model calls and tool calls) to the same Application Insights",
+      "30-day retention in Log Analytics",
+    ],
     security: "Workspace-based Application Insights, so telemetry lands in the Log Analytics workspace.",
   },
   {

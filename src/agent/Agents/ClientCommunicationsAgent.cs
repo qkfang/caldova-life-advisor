@@ -80,7 +80,7 @@ public class ClientCommunicationsAgent : GuruAgent
         Life Advice — Financial Services Guide and remuneration", "Guide —
         financial crime red flags and controls for life insurance", "Matrix
         — authority, approvals and escalation", the insurer PDS extracts and
-        the case files ("Case REQ-… — …"). You have no MCP tools; use Bing
+        the case files ("Case REQ-… — …"). You have no MCP tools; use web search
         only for public, non-client context.
 
         Human approval ("Matrix — authority, approvals and escalation"):
@@ -105,8 +105,8 @@ public class ClientCommunicationsAgent : GuruAgent
         5. **Human Approval Required** — Yes/No, who approves and why.
         """;
 
-    public ClientCommunicationsAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, string? bingConnectionId = null, ILogger? logger = null)
-        : base(aiProjectClient, AgentId, "Cara", "Client Communications Specialist", "Client Communications", "\u001b[96m", deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId, logger)
+    public ClientCommunicationsAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, bool webSearch = false, ILogger? logger = null)
+        : base(aiProjectClient, AgentId, "Cara", "Client Communications Specialist", "Client Communications", "\u001b[96m", deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch, logger)
     {
     }
 }

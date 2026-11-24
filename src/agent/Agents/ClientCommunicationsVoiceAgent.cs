@@ -102,11 +102,11 @@ public class ClientCommunicationsVoiceAgent : GuruAgent
         string deploymentName,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        string? bingConnectionId = null,
+        bool webSearch = false,
         ILogger? logger = null)
         : base(aiProjectClient, AgentId, "Cara", "Client Communications Specialist (Voice)",
                "Client Communications", "\u001b[96m", deploymentName, Instructions,
-               searchConnectionId, searchIndexName, bingConnectionId, logger)
+               searchConnectionId, searchIndexName, webSearch, logger)
     {
     }
 }

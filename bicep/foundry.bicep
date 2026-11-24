@@ -13,6 +13,9 @@ param aiSearchEndpoint string = ''
 @description('Azure AI Search resource ID to connect to the Foundry project (optional)')
 param aiSearchResourceId string = ''
 
+@description('Application Insights component (same resource group) connected to the Foundry project for agent tracing')
+param appInsightsName string
+
 resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   name: name
   location: location
@@ -69,16 +72,6 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   }
 }
 
-resource bingAccount 'Microsoft.Bing/accounts@2020-06-10' = {
-  name: '${name}-bing'
-  location: 'global'
-  tags: tags
-  kind: 'Bing.Grounding'
-  sku: {
-    name: 'G1'
-  }
-}
-
 // Azure AI Search connections — exposed to the Foundry account and to the
 // project so the AzureAISearchTool wired up on each GuruAgent can resolve
 // the connection by id. Mirrors the quant-agent foundry.bicep.
@@ -118,48 +111,31 @@ resource aiSearchProjectConnection 'Microsoft.CognitiveServices/accounts/project
   }
 }
 
-#disable-next-line BCP081
-resource bingSearchConnection 'Microsoft.CognitiveServices/accounts/connections@2025-10-01-preview' = {
-  parent: foundry
-  name: '${name}-bingsearchconnection'
+// Application Insights connected to the project: Foundry turns on server-side
+// tracing for every agent in the project (the Traces tab in the portal). Same
+// shape as the azd azure.ai.projects monitoring connection; the connection
+// string is resolved inside ARM and never output. Web grounding needs no
+// connection: the agents' web search tool is powered by Web IQ.
+resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: appInsightsName
+}
+
+resource appInsightsProjectConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-10-01-preview' = {
+  parent: project
+  name: '${name}-appinsights'
   dependsOn: [
     aiSearchProjectConnection
   ]
   properties: {
+    category: 'AppInsights'
     authType: 'ApiKey'
-    category: 'GroundingWithBingSearch'
-    target: 'https://api.bing.microsoft.com/'
+    target: appInsights.id
     credentials: {
-      key: bingAccount.listKeys().key1
+      key: appInsights.properties.ConnectionString
     }
     metadata: {
-      displayName: '${name}-bing'
-      type: 'bing_grounding'
       ApiType: 'Azure'
-      ResourceId: bingAccount.id
-    }
-  }
-}
-
-#disable-next-line BCP081
-resource bingSearchProjectConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-10-01-preview' = {
-  parent: project
-  name: '${name}-bingsearchconnection-project'
-  dependsOn: [
-    bingSearchConnection
-  ]
-  properties: {
-    authType: 'ApiKey'
-    category: 'GroundingWithBingSearch'
-    target: 'https://api.bing.microsoft.com/'
-    credentials: {
-      key: bingAccount.listKeys().key1
-    }
-    metadata: {
-      displayName: '${name}-bing'
-      type: 'bing_grounding'
-      ApiType: 'Azure'
-      ResourceId: bingAccount.id
+      ResourceId: appInsights.id
     }
   }
 }
@@ -170,8 +146,7 @@ output projectName string = project.name
 output projectEndpoint string = project.properties.endpoints['AI Foundry API']
 output deploymentName string = modelDeployment.name
 output principalId string = foundry.identity.principalId
-output bingAccountName string = bingAccount.name
-output bingProjectConnectionId string = bingSearchProjectConnection.id
 output projectPrincipalId string = project.identity.principalId
+output appInsightsConnectionName string = appInsightsProjectConnection.name
 output aiSearchConnectionId string = aiSearchEndpoint != '' ? aiSearchConnection.id : ''
 output aiSearchProjectConnectionId string = aiSearchEndpoint != '' ? aiSearchProjectConnection.id : ''

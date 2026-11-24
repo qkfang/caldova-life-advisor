@@ -84,7 +84,7 @@ public class OnboardingAgent : GuruAgent
 
         Tools
         Search the life_knowledge index for Life Advice Guru's guides, insurer PDS
-        extracts, rules and case files; cite titles in brackets. Use Bing only for
+        extracts, rules and case files; cite titles in brackets. Use web search only for
         public context, never client details.
 
         Constraints
@@ -109,8 +109,8 @@ public class OnboardingAgent : GuruAgent
         Keep it under 450 words.
         """;
 
-    public OnboardingAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, string? bingConnectionId = null, ILogger? logger = null)
-        : base(aiProjectClient, AgentId, "Olivia", "Onboarding & Requests Officer", "Onboarding & Requests", "\u001b[36m", deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId, logger)
+    public OnboardingAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, bool webSearch = false, ILogger? logger = null)
+        : base(aiProjectClient, AgentId, "Olivia", "Onboarding & Requests Officer", "Onboarding & Requests", "\u001b[36m", deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch, logger)
     {
     }
 }

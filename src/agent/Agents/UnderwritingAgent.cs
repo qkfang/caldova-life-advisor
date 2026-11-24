@@ -112,11 +112,11 @@ public class UnderwritingAgent : GuruAgent
         string deploymentName,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        string? bingConnectionId = null,
+        bool webSearch = false,
         string? mcpServerUri = null,
         ILogger? logger = null)
         : base(aiProjectClient, AgentId, "Uma", "Underwriting Coordinator", "Underwriting & New Business", "\u001b[32m",
-            deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId,
+            deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch,
             logger, mcpServerUri, DefaultMcpServerLabel)
     {
     }

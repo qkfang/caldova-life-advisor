@@ -127,7 +127,7 @@ the same Foundry configuration keys as the CLI host. Set them in
 | `AZURE_TENANT_ID` | Optional tenant ID for `DefaultAzureCredential` |
 | `AZURE_AI_SEARCH_CONNECTION_ID` | Foundry connection ID for Azure AI Search |
 | `AZURE_AI_SEARCH_INDEX_NAME` | Knowledge index (`life_knowledge` — see [`ai-search/`](../../ai-search)) |
-| `AZURE_BING_CONNECTION_ID` | Foundry Bing grounding connection ID |
+| `AZURE_AI_WEB_SEARCH_ENABLED` | Optional. Web search, powered by Web IQ, is on unless this is `false`; it needs no connection |
 | `APP_MCP_URL` | Public base URL of this app (e.g. a dev tunnel or `https://app-lifeguru-backend.azurewebsites.net`) so Foundry can reach `/mcp`. Leave it unset for purely local runs — otherwise agents call the MCP tools on that host. |
 | `FoundryAgent:EndpointUrl` | Optional. Agent endpoint for the "Ask AI" assistant; without it the assistant answers offline |
 | `AZURE_CONTENT_UNDERSTANDING_ENDPOINT` | Optional. Azure Content Understanding endpoint for the Financial Crime document checks (falls back to the manifest's expected verdicts when unset) |

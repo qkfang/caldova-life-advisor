@@ -13,7 +13,9 @@ namespace LifeAdviceGuru.Agents;
 /// and is wired up with the same Foundry tools: Azure AI Search over the
 /// <c>life_knowledge</c> index (insurer PDS extracts, Life Advice Guru's guides, advice,
 /// underwriting, claims, tax and commission rules, and client case files) and
-/// Bing grounding for current public context. The Insurance Research,
+/// web search for current public context (the Foundry web search tool, which
+/// is powered by Web IQ when added directly to an agent and needs no
+/// connection). The Insurance Research,
 /// Underwriting and Claims agents also get the MCP tool surface served by the
 /// backend (server label <c>guru-ops-mcp</c>).
 /// Analogous to <c>QuantAgent</c> in
@@ -54,7 +56,7 @@ public class GuruAgent : BaseAgent
         string instructions,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        string? bingConnectionId = null,
+        bool webSearch = false,
         ILogger? logger = null,
         string? mcpServerUri = null,
         string? mcpServerLabel = null,
@@ -67,10 +69,9 @@ public class GuruAgent : BaseAgent
                         new AzureAISearchToolIndex { ProjectConnectionId = searchConnectionId, IndexName = searchIndexName, QueryType = AzureAISearchQueryType.Simple, TopK = 5 }
                     ])));
 
-                if (!string.IsNullOrWhiteSpace(bingConnectionId))
-                    agentDef.Tools.Add(new BingGroundingTool(new BingGroundingSearchToolOptions([
-                        new BingGroundingSearchConfiguration(bingConnectionId)
-                    ])));
+                if (webSearch)
+                    agentDef.Tools.Add(ResponseTool.CreateWebSearchTool(
+                        userLocation: WebSearchToolLocation.CreateApproximateLocation(country: "AU", region: "Victoria", city: "Melbourne")));
 
                 if (!string.IsNullOrWhiteSpace(mcpServerUri))
                 {
@@ -99,8 +100,8 @@ public class GuruAgent : BaseAgent
         var tools = new List<string>();
         if (!string.IsNullOrWhiteSpace(searchConnectionId) && !string.IsNullOrWhiteSpace(searchIndexName))
             tools.Add($"Azure AI Search — index '{searchIndexName}'");
-        if (!string.IsNullOrWhiteSpace(bingConnectionId))
-            tools.Add("Bing Grounding (web)");
+        if (webSearch)
+            tools.Add("Web search — Web IQ");
         if (!string.IsNullOrWhiteSpace(mcpServerUri))
             tools.Add($"MCP server '{mcpServerLabel ?? DefaultMcpServerLabel}' at {mcpServerUri}");
         if (extraTools != null && extraTools.Count > 0)

@@ -52,9 +52,6 @@ param searchConnectionId string = ''
 @description('Azure AI Search index name for the Life Advice Guru knowledge base')
 param searchIndexName string = 'life_knowledge'
 
-@description('Foundry project Bing grounding connection ID')
-param bingConnectionId string
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: appServicePlanName
   location: location
@@ -164,10 +161,6 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'AZURE_AI_SEARCH_INDEX_NAME'
           value: searchIndexName
-        }
-        {
-          name: 'AZURE_BING_CONNECTION_ID'
-          value: bingConnectionId
         }
         {
           name: 'APP_MCP_URL'

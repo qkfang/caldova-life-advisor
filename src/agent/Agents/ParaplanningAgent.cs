@@ -73,7 +73,7 @@ public class ParaplanningAgent : GuruAgent
         life insurance — premiums and benefits", "Life Advice Guru —
         Financial Services Guide and remuneration", "Life Advice Guru —
         Approved product list and research method", "Matrix — authority,
-        approvals and escalation" and the insurer's PDS extract. Use Bing
+        approvals and escalation" and the insurer's PDS extract. Use web search
         only to confirm current public rules; proposed reforms aren't law.
 
         Human approval, always: Amelia signs every SoA and RoA; replacing or
@@ -119,8 +119,8 @@ public class ParaplanningAgent : GuruAgent
         clauseRef. Keep the reply under 900 words, excluding the JSON block.
         """;
 
-    public ParaplanningAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, string? bingConnectionId = null, ILogger? logger = null)
-        : base(aiProjectClient, AgentId, "Penny", "Paraplanner", "Paraplanning", "\u001b[34m", deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId, logger)
+    public ParaplanningAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, bool webSearch = false, ILogger? logger = null)
+        : base(aiProjectClient, AgentId, "Penny", "Paraplanner", "Paraplanning", "\u001b[34m", deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch, logger)
     {
     }
 }

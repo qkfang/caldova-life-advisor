@@ -13,7 +13,13 @@ public class GuruAgentOptions
     public string? TenantId { get; set; }
     public string? SearchConnectionId { get; set; }
     public string? SearchIndexName { get; set; }
-    public string? BingConnectionId { get; set; }
+
+    /// <summary>
+    /// Adds the Foundry web search tool to every agent. Added directly to an
+    /// agent, web search is powered by Web IQ and needs no project connection.
+    /// On unless <c>AZURE_AI_WEB_SEARCH_ENABLED</c> is <c>false</c>.
+    /// </summary>
+    public bool WebSearchEnabled { get; set; } = true;
 
     /// <summary>
     /// Base URL of the in-process MCP server exposed by this app

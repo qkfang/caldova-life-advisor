@@ -90,6 +90,7 @@ module foundry 'foundry.bicep' = {
     tags: commonTags
     aiSearchEndpoint: aiSearch.outputs.endpoint
     aiSearchResourceId: aiSearch.outputs.id
+    appInsightsName: monitoring.outputs.appInsightsName
   }
 }
 
@@ -108,7 +109,6 @@ module appService 'appservice.bicep' = {
     appInsightsInstrumentationKey: monitoring.outputs.appInsightsInstrumentationKey
     projectEndpoint: foundry.outputs.projectEndpoint
     modelDeploymentName: foundry.outputs.deploymentName
-    bingConnectionId: foundry.outputs.bingProjectConnectionId
     searchConnectionId: foundry.outputs.aiSearchProjectConnectionId
     searchIndexName: 'life_knowledge'
   }

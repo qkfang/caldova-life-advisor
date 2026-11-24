@@ -191,7 +191,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 | WORK IQ | How people work: the documents, conversations, meetings and past decisions in Microsoft 365, permission-trimmed | Not wired up yet. Referral emails and claim notifications arrive as case documents, and approvals go to Microsoft Teams through an MCP tool. |
 | FABRIC IQ | The state of the business: governed data, business entities, relationships and rules (clients, policies, cover, premiums and claims) across both sides, built on Microsoft Fabric | Not wired up yet. The backend's Client Case store and the case files stand in for it. |
 | FOUNDRY IQ | Policies and documents: the insurers' PDS extracts, Life Advice Guru's guides, the advice, claims and tax rules, and the case files, returned with citations | Live. Azure AI Search is now Foundry IQ, and every agent grounds on and cites the `life_knowledge` index (semantic search enabled). |
-| WEB IQ | The web, right now: timely, citation-ready context from the public web | Stood in for by the Grounding with Bing Search connection in the Foundry project. |
+| WEB IQ | The web, right now: timely, citation-ready context from the public web | Live. Every agent has the Foundry web search tool, which Web IQ powers, and cites the pages it finds. |
 
 **The Azure services** fill the rest of the vault. Along the front are the ones particular agents call, and behind the bus, among the safe-deposit boxes, is the platform.
 
@@ -207,7 +207,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 | KEY VAULT | Azure Key Vault | Provisioned for secrets and keys; drawn as a deposit-box cabinet with a floating key | Platform |
 | STORAGE | StorageV2 account | Provisioned for documents and generated files | Platform |
 | APP SERVICE | Two Linux web apps | The frontend (Node 20) and the backend (.NET 10: agent console, APIs, Client Case store, MCP endpoint) | Platform |
-| APP INSIGHTS | Application Insights and Log Analytics | Telemetry from both web apps | Platform |
+| APP INSIGHTS | Application Insights and Log Analytics | Telemetry from both web apps, and Foundry's traces of every agent run | Platform |
 
 ### The Front Desk and the Tram
 

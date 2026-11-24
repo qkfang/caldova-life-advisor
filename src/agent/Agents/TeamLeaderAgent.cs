@@ -104,8 +104,8 @@ public class TeamLeaderAgent : GuruAgent
         Keep responses under 700 words.
         """;
 
-    public TeamLeaderAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, string? bingConnectionId = null, ILogger? logger = null)
-        : base(aiProjectClient, AgentId, "Theo", "Practice Team Leader", "Team Leader Office", "\u001b[95m", deploymentName, Instructions, searchConnectionId, searchIndexName, bingConnectionId, logger)
+    public TeamLeaderAgent(AIProjectClient aiProjectClient, string deploymentName, string? searchConnectionId = null, string? searchIndexName = null, bool webSearch = false, ILogger? logger = null)
+        : base(aiProjectClient, AgentId, "Theo", "Practice Team Leader", "Team Leader Office", "\u001b[95m", deploymentName, Instructions, searchConnectionId, searchIndexName, webSearch, logger)
     {
     }
 }

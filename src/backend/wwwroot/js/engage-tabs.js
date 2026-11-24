@@ -211,7 +211,7 @@
     }
 
     // Classify a citation entry into a UI category (web link vs document /
-    // search-index hit). Bing-grounded citations always have an http(s)
+    // search-index hit). Web search citations always have an http(s)
     // URL; Azure AI Search / Document Intelligence hits either have no URL
     // or a non-http identifier (file id / blob path).
     function classifyReference(c) {

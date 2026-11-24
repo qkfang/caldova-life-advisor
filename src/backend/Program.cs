@@ -19,8 +19,8 @@ builder.Services.AddRazorComponents()
 // ChatService backs the Account page's "Ask AI" assistant (/api/chat/ask).
 builder.Services.AddHttpClient<ChatService>();
 
-// Bind Foundry configuration (project endpoint, model deployment, search /
-// Bing connections) and register a singleton factory that the web app uses
+// Bind Foundry configuration (project endpoint, model deployment, search
+// connection, web search) and register a singleton factory that the web app uses
 // to invoke agents from the referenced `agent` library — the same agents the
 // CLI host in `src/agent` exposes.
 var agentOptions = new GuruAgentOptions
@@ -30,7 +30,9 @@ var agentOptions = new GuruAgentOptions
     TenantId = builder.Configuration["AZURE_TENANT_ID"],
     SearchConnectionId = builder.Configuration["AZURE_AI_SEARCH_CONNECTION_ID"],
     SearchIndexName = builder.Configuration["AZURE_AI_SEARCH_INDEX_NAME"],
-    BingConnectionId = builder.Configuration["AZURE_BING_CONNECTION_ID"],
+    // Web search (powered by Web IQ) needs no connection, so it's on unless
+    // AZURE_AI_WEB_SEARCH_ENABLED is "false".
+    WebSearchEnabled = !string.Equals(builder.Configuration["AZURE_AI_WEB_SEARCH_ENABLED"], "false", StringComparison.OrdinalIgnoreCase),
     // APP_MCP_URL must be a publicly reachable URL (e.g. a dev tunnel) because
     // the Foundry Responses API enumerates MCP tools from the cloud — it
     // cannot reach http://localhost on the developer's machine. When unset,
