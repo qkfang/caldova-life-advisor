@@ -17,7 +17,7 @@ All agents read from and write to one shared object, the **Client Case**. Amelia
 - The agents are declarative Foundry agents created from code with `Azure.AI.Projects`.
 - They share a `GuruAgent` base class, which wires up two grounding sources:
   - **Azure AI Search** over the `life_knowledge` index
-  - **Web search**, powered by Web IQ, for current public context
+  - **Web search**, powered by Web IQ, for current public context (on every agent except Cara's voice agent)
 - The agents that act on systems call **MCP tools** served by the backend at `/mcp` (server label `guru-ops-mcp`): Ivy's Insurance Research Agent, Uma's Underwriting Agent and Ben's Claims Agent.
 - Every agent has its own page in the backend console at `/agents/{route id}`.
 - The Foundry project is connected to Application Insights, so every agent run is traced.
@@ -467,6 +467,7 @@ Let clients, families and referral partners talk to Cara by voice about a case.
 
 - **Voice Live**, for real-time speech in and out, through the backend's Voice Live proxy (`CommunicationsVoiceLiveProxy`)
 - The same `life_knowledge` grounding as the other agents
+- No web search: it always cites its sources inline, and Voice Live would read each link aloud
 
 ### Outputs
 

@@ -37,6 +37,10 @@ public static class AgentMetadataApi
         WebSearchToolDescription
     ];
 
+    // Cara's voice agent has no web search: Voice Live would read the
+    // citations' URLs aloud.
+    private static readonly string[] VoiceTools = [SearchToolDescription];
+
     // Per-role MCP tool surfaces served by this app at /mcp (server label
     // guru-ops-mcp). Each entry is the label shown in the "Tools
     // available" list. They mirror the [McpServerTool] methods in
@@ -97,7 +101,7 @@ public static class AgentMetadataApi
             "client-communications-agent", ClientCommunicationsAgent.Instructions, DefaultTools, NoMcpTools),
         ["client-communications-voice"] = new(
             "client-communications-voice", "Cara", "Client Communications Specialist (Voice)", "Client Communications",
-            "client-communications-voice-agent", ClientCommunicationsVoiceAgent.Instructions, DefaultTools, NoMcpTools),
+            "client-communications-voice-agent", ClientCommunicationsVoiceAgent.Instructions, VoiceTools, NoMcpTools),
         ["team-leader"] = new(
             "team-leader", "Theo", "Practice Team Leader", "Team Leader Office",
             "team-leader-agent", TeamLeaderAgent.Instructions, DefaultTools, NoMcpTools),
@@ -116,7 +120,7 @@ public static class AgentMetadataApi
             var configuredTools = new List<string>();
             if (!string.IsNullOrWhiteSpace(options.SearchConnectionId) && !string.IsNullOrWhiteSpace(options.SearchIndexName))
                 configuredTools.Add($"Azure AI Search — index '{options.SearchIndexName}'");
-            if (options.WebSearchEnabled)
+            if (options.WebSearchEnabled && m.DefaultTools.Contains(WebSearchToolDescription))
                 configuredTools.Add("Web search — Web IQ");
             if (!string.IsNullOrWhiteSpace(options.AppMcpUrl) && m.McpTools.Length > 0)
                 configuredTools.AddRange(m.McpTools);

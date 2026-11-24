@@ -161,7 +161,7 @@ public class GuruAgentFactory
             "communications" or "client-communications"
                 => new ClientCommunicationsAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ClientCommunicationsAgent>()),
             "communications-voice" or "client-communications-voice"
-                => new ClientCommunicationsVoiceAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<ClientCommunicationsVoiceAgent>()),
+                => new ClientCommunicationsVoiceAgent(client, deployment, search, index, _loggerFactory.CreateLogger<ClientCommunicationsVoiceAgent>()),
             "team-leader" or "leader"
                 => new TeamLeaderAgent(client, deployment, search, index, web, _loggerFactory.CreateLogger<TeamLeaderAgent>()),
             _ => throw new ArgumentException($"Unknown Life Advice Guru agent role: '{role}'.", nameof(role))

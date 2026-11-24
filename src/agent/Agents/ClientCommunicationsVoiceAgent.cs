@@ -97,16 +97,17 @@ public class ClientCommunicationsVoiceAgent : GuruAgent
         help you today?" — and then listen.
         """;
 
+    // No web search on the voice channel: web search always cites its sources
+    // inline, and Voice Live reads each citation's full URL aloud.
     public ClientCommunicationsVoiceAgent(
         AIProjectClient aiProjectClient,
         string deploymentName,
         string? searchConnectionId = null,
         string? searchIndexName = null,
-        bool webSearch = false,
         ILogger? logger = null)
         : base(aiProjectClient, AgentId, "Cara", "Client Communications Specialist (Voice)",
                "Client Communications", "\u001b[96m", deploymentName, Instructions,
-               searchConnectionId, searchIndexName, webSearch, logger)
+               searchConnectionId, searchIndexName, webSearch: false, logger)
     {
     }
 }

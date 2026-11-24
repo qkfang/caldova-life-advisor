@@ -605,13 +605,14 @@ export const INFRA: InfraInfo[] = [
     scope: "all",
     summary: "Timely, citation-ready context from the public web, so agents can check up-to-date reference information.",
     details: [
-      "The Foundry web search tool on every agent, powered by Web IQ",
+      "The Foundry web search tool on the eight staff agents, powered by Web IQ",
       "Searches from Melbourne, Victoria, and cites each source",
       "Part of Microsoft IQ",
     ],
     security:
       "Added directly to each agent, web search needs no connection or keys. Agents send search queries only, never client details.",
-    inScenarios: "Live: every agent can search the public web through Web IQ, for example to confirm a current super or tax rule.",
+    inScenarios:
+      "Live: the eight staff agents can search the public web through Web IQ, for example to confirm a current super or tax rule. Cara’s voice agent doesn’t, so a call never reads out links.",
   },
   {
     id: "foundry",

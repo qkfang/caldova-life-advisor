@@ -191,7 +191,7 @@ The engine room is the old bank vault in the basement. Its round vault door stan
 | WORK IQ | How people work: the documents, conversations, meetings and past decisions in Microsoft 365, permission-trimmed | Not wired up yet. Referral emails and claim notifications arrive as case documents, and approvals go to Microsoft Teams through an MCP tool. |
 | FABRIC IQ | The state of the business: governed data, business entities, relationships and rules (clients, policies, cover, premiums and claims) across both sides, built on Microsoft Fabric | Not wired up yet. The backend's Client Case store and the case files stand in for it. |
 | FOUNDRY IQ | Policies and documents: the insurers' PDS extracts, Life Advice Guru's guides, the advice, claims and tax rules, and the case files, returned with citations | Live. Azure AI Search is now Foundry IQ, and every agent grounds on and cites the `life_knowledge` index (semantic search enabled). |
-| WEB IQ | The web, right now: timely, citation-ready context from the public web | Live. Every agent has the Foundry web search tool, which Web IQ powers, and cites the pages it finds. |
+| WEB IQ | The web, right now: timely, citation-ready context from the public web | Live. The eight staff agents have the Foundry web search tool, which Web IQ powers, and cite the pages they find. Cara's voice agent doesn't, so a call never reads out links. |
 
 **The Azure services** fill the rest of the vault. Along the front are the ones particular agents call, and behind the bus, among the safe-deposit boxes, is the platform.
 
